@@ -1,0 +1,4 @@
+# Keep shell scripts and git hooks LF-terminated on every platform, so the
+# pre-commit hook runs correctly after a clone on Windows (a CRLF shebang breaks it).
+*.sh text eol=lf
+scripts/hooks/pre-commit text eol=lf
