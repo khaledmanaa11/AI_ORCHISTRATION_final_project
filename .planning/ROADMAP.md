@@ -42,7 +42,8 @@ Plans:
 - [ ] 01-01: Board model + orthogonal movement/validation, all values from config
 - [ ] 01-02: Barrier placement with quota enforcement
 - [ ] 01-03: Capture and end-condition detection + scoring table
-- [ ] 01-99: Update `docs/TODO.md` — mark Phase 1 tasks done, roll definition-of-done
+- [ ] 01-97: Create/refresh `docs/phases/phase-1/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 01-99: On verify-work, mark all Phase 1 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 2: FastMCP Infrastructure
 **Goal**: Two separate processes exposing geometric tools over localhost, coordinates only.
@@ -59,7 +60,8 @@ Plans:
 - [ ] 02-02: Orchestrator, state machine, illegal-transition reporting
 - [ ] 02-03: Watchdog, deadline tracker, byte-for-byte config verification
 - [ ] 02-04: Write `docs/PRD_mcp_transport.md` (the FastMCP peer layer)
-- [ ] 02-99: Update `docs/TODO.md` — mark Phase 2 tasks done, roll definition-of-done
+- [ ] 02-97: Create/refresh `docs/phases/phase-2/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 02-99: On verify-work, mark all Phase 2 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 3: Blind Strategy Module (RL policy)
 **Goal**: The Q-Learning decision engine, with no scent and no natural language yet.
@@ -76,7 +78,8 @@ Plans:
 - [ ] 03-02: State encoding + tabular Q-learning policy and ε-greedy action selection
 - [ ] 03-03: Offline self-play training harness + learning-curve instrumentation
 - [ ] 03-04: Write `docs/PRD_rl_strategy.md` (the Q-Learning policy)
-- [ ] 03-99: Update `docs/TODO.md` — mark Phase 3 tasks done, roll definition-of-done
+- [ ] 03-97: Create/refresh `docs/phases/phase-3/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 03-99: On verify-work, mark all Phase 3 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 4: Language and Scent
 **Goal**: Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
@@ -93,7 +96,8 @@ Plans:
 - [ ] 04-02: Bayesian belief map fusing scent + hint evidence
 - [ ] 04-03: LLM hint decode (inference) + LLM bluff generation with intent flag
 - [ ] 04-04: Write `docs/PRD_scent_map.md`, `docs/PRD_belief_map.md`, `docs/PRD_deception.md`
-- [ ] 04-99: Update `docs/TODO.md` — mark Phase 4 tasks done, roll definition-of-done
+- [ ] 04-97: Create/refresh `docs/phases/phase-4/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 04-99: On verify-work, mark all Phase 4 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 5: Cloud Exposure and Tunneling
 **Goal**: Expose the local FastMCP server publicly via ngrok or Localtonet.
@@ -107,7 +111,8 @@ Plans:
 Plans:
 - [ ] 05-01: Tunnel integration + public URL wiring into the peer config
 - [ ] 05-02: Remote end-to-end round validation
-- [ ] 05-99: Update `docs/TODO.md` — mark Phase 5 tasks done, roll definition-of-done
+- [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 6: Security and Cryptography
 **Goal**: Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration.
@@ -124,7 +129,8 @@ Plans:
 - [ ] 06-02: Four-phase commit-reveal protocol wired into the orchestrator
 - [ ] 06-03: Step-0 hardware declaration + end-game mutual log audit
 - [ ] 06-04: Write `docs/PRD_commit_reveal.md` (the cryptographic protocol)
-- [ ] 06-99: Update `docs/TODO.md` — mark Phase 6 tasks done, roll definition-of-done
+- [ ] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 7: Reporting and Visualization Shell
 **Goal**: Gmail API reporting via OAuth 2.0, live GUI, replay viewer application.
@@ -141,7 +147,8 @@ Plans:
 - [ ] 07-02: Four JSON artifacts (`declaration_`/`config_`/`log_`/`result_`) + automatic end-of-game reporting + token accounting
 - [ ] 07-03: Local-truth live GUI + verifying replay viewer
 - [ ] 07-04: Write `docs/PRD_gatekeeper.md` (rate limiting and reporting)
-- [ ] 07-99: Update `docs/TODO.md` — mark Phase 7 tasks done, roll definition-of-done
+- [ ] 07-97: Create/refresh `docs/phases/phase-7/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 07-99: On verify-work, mark all Phase 7 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 8: Submission and League Operations
 **Goal**: Split into two public GitHub repos, academic README, Git tag, play league games.
@@ -158,13 +165,15 @@ Plans:
 - [ ] 08-02: Academic README (six sections + learning curves + Verified-OK screenshots) + Git tag + 8-char team code
 - [ ] 08-03: Play ≥2 scored league games vs different teams; auto-report results + per-game commit hash
 - [ ] 08-04: Submission form (PDF, unaltered), per-member submission, code-quality self-assessment
-- [ ] 08-99: Update `docs/TODO.md` — mark Phase 8 tasks done, final definition-of-done
+- [ ] 08-97: Create/refresh `docs/phases/phase-8/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 08-99: On verify-work, mark all Phase 8 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ## Cross-cutting (every phase)
 
 These apply to all phases and are verified continuously, not in a single phase:
 - **QUAL-01…QUAL-13** — the §19.1 Table 5 code-quality gate (uv, ≤150 lines, ruff 0, coverage ≥85%, no hardcoded values, no secrets, SDK layer, gatekeeper, TDD, versioning, no duplication).
 - **DOC-01/DOC-02** — `docs/PRD.md`/`PLAN.md`/`TODO.md` kept current; per-mechanism PRDs written in the phase that builds each mechanism.
+- **Per-phase triplet (enforced — see CLAUDE.md)** — every phase creates `docs/phases/phase-<N>/{PRD,PLAN,TODO}.md` at `plan-phase` (from `docs/phases/_TEMPLATE/`), keeps the phase TODO current during `execute-phase`, and has **all** its TODOs marked `[x]` at `verify-work`. A phase is not verified until its triplet is complete and checked.
 
 ## Progress
 

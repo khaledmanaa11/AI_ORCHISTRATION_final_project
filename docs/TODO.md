@@ -149,4 +149,22 @@ Verified on every commit; blocks merge if failing (Table 5 / QUAL-01…13).
 | Prompt-engineering log maintained (§8.3) | P2 | ☐ | Khaled | Significant prompts logged with context/outputs |
 
 ---
+
+## Per-phase documentation triplets (`docs/phases/phase-<N>/`)
+
+Created at `plan-phase`, checked at `verify-work` — see the *Per-phase documentation triplet*
+standing rule in [CLAUDE.md](../CLAUDE.md). A phase is not verified until its row is all ☑.
+
+| Phase | PRD.md | PLAN.md | TODO.md | All TODOs ☑ |
+|-------|--------|---------|---------|-------------|
+| 1 Base Logic | ☐ | ☐ | ☐ | ☐ |
+| 2 FastMCP Infrastructure | ☐ | ☐ | ☐ | ☐ |
+| 3 Blind Strategy (RL) | ☐ | ☐ | ☐ | ☐ |
+| 4 Language & Scent | ☐ | ☐ | ☐ | ☐ |
+| 5 Cloud Tunneling | ☐ | ☐ | ☐ | ☐ |
+| 6 Security & Crypto | ☐ | ☐ | ☐ | ☐ |
+| 7 Reporting Shell | ☐ | ☐ | ☐ | ☐ |
+| 8 Submission & League | ☐ | ☐ | ☐ | ☐ |
+
+---
 *Keep this file updated with progress (§2.5 step 6). Each `0N-99` task rolls its phase to ☑.*

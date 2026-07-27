@@ -128,3 +128,27 @@ do not re-derive a phase breakdown. Standard loop per phase:
 
 Working solo: there are no teammates on this project. Do not assume review by another
 person — the quality gates above are the review.
+
+## Per-phase documentation triplet — grader-facing, enforced
+
+Beyond the project-level `docs/PRD.md` · `docs/PLAN.md` · `docs/TODO.md` and the
+per-mechanism `docs/PRD_<mechanism>.md`, **every phase keeps its own triplet** at:
+
+```
+docs/phases/phase-<N>/PRD.md    — what this phase delivers; its §10.4 milestone gate = acceptance criteria; REQ-IDs covered; phase in/out of scope
+docs/phases/phase-<N>/PLAN.md   — how it is built: components, files, interfaces, test plan, phase-specific ADRs, links to per-mechanism PRDs
+docs/phases/phase-<N>/TODO.md   — the phase task list with priority, status, owner, definition of done
+```
+
+Copy the skeletons from `docs/phases/_TEMPLATE/`. Enforcement across the GSD loop:
+
+- **`/gsd:plan-phase N`** — in addition to the normal `.planning/` plan, **create or refresh
+  `docs/phases/phase-<N>/{PRD,PLAN,TODO}.md`**. Approve them before executing (§2.5 step 5).
+- **`/gsd:execute-phase N`** — keep `docs/phases/phase-<N>/TODO.md` status current as tasks land.
+- **`/gsd:verify-work N`** — **mark every task in `docs/phases/phase-<N>/TODO.md` as `[x]`
+  done**, and tick the matching rows in the root `docs/TODO.md`. A phase is **not verified**
+  until its triplet exists and all its TODOs are checked.
+
+This is deliberately stronger than Segal §2.2 (which requires only the single project triplet
++ per-mechanism PRDs). It exists so the grader can open `docs/phases/` and see a complete,
+checked triplet for **every** phase.
