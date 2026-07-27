@@ -31,7 +31,7 @@ You need a **unique 8-character code, no spaces** (rule 45). It goes in every re
 Write it here and never change it:
 
 ```
-TEAM ID: ________
+TEAM ID: khm-mn17
 ```
 
 Suggestion: `KM26CTP1` (Khaled Manaa, 2026, Cop-Thief P2P, v1). Any 8 chars work.
