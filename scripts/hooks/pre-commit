@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+# GSD project pre-commit gate — blocks commits that break the fixed quality rules.
+# Activate once per clone:  git config core.hooksPath scripts/hooks
+#
+# Enforces the machine-checkable rows of Segal §19.1 Table 5. The line-limit gate
+# runs with zero dependencies so it works before `uv sync`. Ruff/pytest gates are
+# added below once the uv project exists.
+set -eu
+
+root=$(git rev-parse --show-toplevel)
+
+# --- Gate 1: file line limit (<=150 code lines) -----------------------------
+sh "$root/scripts/check_line_limit.sh" || {
+  echo "Commit blocked by line-limit gate. Do NOT bypass with --no-verify."
+  exit 1
+}
+
+# --- Gate 2 (enabled once uv project exists): ruff -------------------------
+# if command -v uv >/dev/null 2>&1 && [ -f "$root/pyproject.toml" ]; then
+#   uv run ruff check "$root" || { echo "Commit blocked by ruff gate."; exit 1; }
+# fi
+
+exit 0

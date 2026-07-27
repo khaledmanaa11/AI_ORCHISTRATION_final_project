@@ -78,6 +78,7 @@ Plans:
 - [ ] 03-02: State encoding + tabular Q-learning policy and ε-greedy action selection
 - [ ] 03-03: Offline self-play training harness + learning-curve instrumentation
 - [ ] 03-04: Write `docs/PRD_rl_strategy.md` (the Q-Learning policy)
+- [ ] 03-96: Build the graphify graph — run `/gsd:graphify` at plan-phase (first build; `src/` now exists) and refresh after execute
 - [ ] 03-97: Create/refresh `docs/phases/phase-3/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 03-99: On verify-work, mark all Phase 3 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
@@ -96,6 +97,7 @@ Plans:
 - [ ] 04-02: Bayesian belief map fusing scent + hint evidence
 - [ ] 04-03: LLM hint decode (inference) + LLM bluff generation with intent flag
 - [ ] 04-04: Write `docs/PRD_scent_map.md`, `docs/PRD_belief_map.md`, `docs/PRD_deception.md`
+- [ ] 04-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 04-97: Create/refresh `docs/phases/phase-4/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 04-99: On verify-work, mark all Phase 4 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
@@ -111,6 +113,7 @@ Plans:
 Plans:
 - [ ] 05-01: Tunnel integration + public URL wiring into the peer config
 - [ ] 05-02: Remote end-to-end round validation
+- [ ] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
@@ -129,6 +132,7 @@ Plans:
 - [ ] 06-02: Four-phase commit-reveal protocol wired into the orchestrator
 - [ ] 06-03: Step-0 hardware declaration + end-game mutual log audit
 - [ ] 06-04: Write `docs/PRD_commit_reveal.md` (the cryptographic protocol)
+- [ ] 06-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
@@ -147,6 +151,7 @@ Plans:
 - [ ] 07-02: Four JSON artifacts (`declaration_`/`config_`/`log_`/`result_`) + automatic end-of-game reporting + token accounting
 - [ ] 07-03: Local-truth live GUI + verifying replay viewer
 - [ ] 07-04: Write `docs/PRD_gatekeeper.md` (rate limiting and reporting)
+- [ ] 07-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 07-97: Create/refresh `docs/phases/phase-7/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 07-99: On verify-work, mark all Phase 7 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
@@ -165,6 +170,7 @@ Plans:
 - [ ] 08-02: Academic README (six sections + learning curves + Verified-OK screenshots) + Git tag + 8-char team code
 - [ ] 08-03: Play ≥2 scored league games vs different teams; auto-report results + per-game commit hash
 - [ ] 08-04: Submission form (PDF, unaltered), per-member submission, code-quality self-assessment
+- [ ] 08-96: Refresh the graphify graph (`/gsd:graphify`); commit `.planning/graphs/` for the submission showcase
 - [ ] 08-97: Create/refresh `docs/phases/phase-8/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 08-99: On verify-work, mark all Phase 8 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 

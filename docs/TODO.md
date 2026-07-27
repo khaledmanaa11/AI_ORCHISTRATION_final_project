@@ -142,7 +142,8 @@ Verified on every commit; blocks merge if failing (Table 5 / QUAL-01…13).
 |-------|-----|--------|-------|--------------------|
 | `uv run ruff check` → 0 violations | P0 | ☐ | Khaled | Clean on all committed code (QUAL-09) |
 | `uv run pytest --cov` ≥ 85% | P0 | ☐ | Khaled | `fail_under=85` enforced (QUAL-10) |
-| Every source/test file ≤ 150 lines | P0 | ☐ | Khaled | Split when over; never compress (QUAL-08) |
+| Every source/test file ≤ 150 lines | P0 | ☑ | Khaled | **Hard-enforced**: `scripts/check_line_limit.sh` via pre-commit hook (`core.hooksPath=scripts/hooks`) + CI (`.github/workflows/quality-gate.yml`); never `--no-verify` (QUAL-08) |
+| Build/refresh graphify graph (Phase 3+) | P1 | ☐ | Khaled | `/gsd:graphify` at plan-phase & after execute for phases 3–8; `.planning/graphs/` current |
 | 0 hardcoded values / 0 secrets | P0 | ☐ | Khaled | config/constants/Enum; `os.environ.get()` only (QUAL-11/12) |
 | SDK layer + single gatekeeper + no duplication | P1 | ☐ | Khaled | Logic behind SDK; all external calls via gatekeeper (QUAL-01/02/03) |
 | TDD + versioning 1.00 | P1 | ☐ | Khaled | Tests before/with code; version tracked (QUAL-06/07) |

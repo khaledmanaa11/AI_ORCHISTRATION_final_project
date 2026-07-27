@@ -51,7 +51,7 @@ machine-checkable; treat them as a pre-commit gate.
 
 | Rule | Threshold |
 |---|---|
-| File size | **≤ 150 lines** (excluding blanks/comments) — **split files, never compress code to fit** |
+| File size | **≤ 150 lines** (excluding blanks/comments) — **split files, never compress code to fit**. **Hard-enforced**: `scripts/check_line_limit.sh` runs as a git **pre-commit hook** (`core.hooksPath=scripts/hooks`) and in **CI** (`.github/workflows/quality-gate.yml`). Never bypass with `--no-verify`. |
 | Linter | **`ruff check` → 0 violations** |
 | Test coverage | **`pytest --cov` → ≥ 85%** (`fail_under = 85`) |
 | Secrets | **0 in source**, `.env-example` committed with dummy values |
@@ -152,3 +152,20 @@ Copy the skeletons from `docs/phases/_TEMPLATE/`. Enforcement across the GSD loo
 This is deliberately stronger than Segal §2.2 (which requires only the single project triplet
 + per-mechanism PRDs). It exists so the grader can open `docs/phases/` and see a complete,
 checked triplet for **every** phase.
+
+## Knowledge graph (graphify) — from Phase 3 onward
+
+`graphify.enabled=true`. The graph lives in `.planning/graphs/` and is a **manual
+navigation aid** (GSD agents do not auto-source context from it — see [[per-phase-doc-triplet]]).
+Lifecycle, starting at Phase 3 (the first phase with substantial `src/`):
+
+- **`/gsd:plan-phase N` (N ≥ 3)** — **before planning, the agent must tell the user to run
+  `/gsd:graphify`** to build (N = 3) or refresh (N > 3) the graph. A plan-phase agent cannot
+  spawn another skill autonomously, so it surfaces this as an explicit instruction and pauses
+  for it if the graph is stale/missing.
+- **`/gsd:execute-phase N` (N ≥ 3)** — after new code lands, **refresh the graph** so it
+  reflects the phase's implementation.
+- **`/gsd:verify-work N` (N ≥ 3)** — confirm `.planning/graphs/` was refreshed this phase.
+
+Before Phase 3 there is no meaningful code to graph, so no graph step runs. ROADMAP.md
+encodes this as task `0N-96` in phases 3–8.

@@ -1,0 +1,26 @@
+name: quality-gate
+
+# Segal §19.1 Table 5 machine-checkable gate. The line-limit check has zero
+# dependencies and runs on every push/PR, so a file over 150 code lines can never
+# land on the repo — even if a local pre-commit hook is bypassed with --no-verify.
+on:
+  push:
+  pull_request:
+
+jobs:
+  line-limit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: File line limit (<=150 code lines, blanks/comments excluded)
+        run: sh scripts/check_line_limit.sh
+
+  # ruff + pytest --cov are added here once the uv project exists:
+  # lint-and-test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: astral-sh/setup-uv@v5
+  #     - run: uv sync
+  #     - run: uv run ruff check .
+  #     - run: uv run pytest --cov
