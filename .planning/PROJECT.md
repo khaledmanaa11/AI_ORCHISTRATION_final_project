@@ -70,7 +70,8 @@ GUI zeroes the game no matter how well the strategy played.
 - **Architecture**: cop and thief as **separate processes and repos** under `config/police/` vs `config/thief/`, **no shared runtime state**, all business logic behind the SDK layer, thin GUI/CLI shells.
 - **Protocol**: MCP via FastMCP; each peer is simultaneously server and client (symmetric); natural-language comms only; hints ≤15 words.
 - **Numeric**: all values from [docs/PARAMETERS.md](../docs/PARAMETERS.md) — `fixed` non-negotiable, `minimum` upward only; never read a number from book prose.
-- **Process**: 7-stage build order (§10.3), each proven end-to-end before the next; never lie in a capture/barrier declaration or misreport games played.
+- **Process**: 8-phase build order (§10.3 stages 1–7, each proven end-to-end before the next, + Phase 8 submission/league); never lie in a capture/barrier declaration or misreport games played.
+- **Documentation**: `docs/PRD.md`, `docs/PLAN.md`, `docs/TODO.md` exist as full documents (Segal §2.2), plus a `docs/PRD_<mechanism>.md` per algorithm/mechanism (§2.3); the `.planning/` files do not satisfy this — the grader looks in `docs/`.
 
 ## Key Decisions
 
@@ -81,7 +82,8 @@ GUI zeroes the game no matter how well the strategy played.
 | Reinforcement learning (tabular Q-learning) over pure heuristics | Game is a Dec-POMDP; a learned policy beats predictable heuristics; reward maps directly from the scoring table (§B) | — Pending |
 | Keep a Bayes + Manhattan heuristic fallback | Bounds damage when the Q-table hits an unvisited state in a non-stationary (co-learning) environment | — Pending |
 | FastMCP for the P2P protocol | MCP is the book's requirement; A2A/ACP are optional complements | — Pending |
-| Fixed 7-stage sequential build order | Book §10.3/§10.4 — a fault in a lower layer must not hide behind the one above it | — Pending |
+| Fixed 8-phase build order (book §10.3 stages 1–7 + submission phase 8) | §10.3/§10.4 — a fault in a lower layer must not hide behind the one above it; phases are not merged/split/reordered | — Pending |
+| Real `docs/PRD.md`/`PLAN.md`/`TODO.md` + per-mechanism PRDs, not `.planning/` pointers | Segal §2.2–2.3 — the grader looks in `docs/`; pointer files do not satisfy the requirement | — Pending |
 | GSD config: Balanced models, Interactive mode, branching = none, docs committed | Chosen during initialization this session | — Pending |
 
 ## Evolution
