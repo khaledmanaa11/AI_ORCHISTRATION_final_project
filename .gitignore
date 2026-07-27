@@ -1,0 +1,98 @@
+# ---------------------------------------------------------------------------
+# SECRETS
+# Two sources require this section:
+#   - Game rulebook rules 39-40 (docs/RULES.md): never push secrets or
+#     credentials, even to a private repo shared only with the lecturer.
+#     Sanction: severe security failure and project failure.
+#   - Engineering standard §7.4 (docs/SEGAL_GUIDELINES.md): .gitignore MUST
+#     include .env, *.key, *.pem, credentials.json. Checked by automatic scan.
+# These entries exist BEFORE the OAuth code does. Do not remove them.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+credentials.json
+*.key
+*.pem
+
+# .env-example carries dummy values and MUST be committed (§7.4)
+!.env-example
+
+client_secret*.json
+token.json
+token.pickle
+*.token
+secrets/
+.secrets/
+*_secret*
+*-secret*
+
+# Nonces must stay secret until end of game (rule 18) — never commit live ones
+nonces/
+*.nonce
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.python-version
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# Project runtime artifacts
+# ---------------------------------------------------------------------------
+# Trained Q-tables can be large; commit deliberately, not by accident
+*.qtable
+models/checkpoints/
+
+# Local run output. NOTE: the four required JSON artifacts
+# (declaration_/config_/log_/result_) MUST be committed per rule 50 and
+# Appendix F rule 4 — keep them out of this ignore list.
+logs/
+*.log
+runs/
+tmp/
+
+# Tunnel config may embed auth tokens
+ngrok.yml
+ngrok.yaml
+.localtonet/
+
+# ---------------------------------------------------------------------------
+# Source specification PDFs — copyrighted course material
+# Rule 49 requires both submission repos to be PUBLIC. These PDFs are
+# (c) Dr. Yoram Segal and are not ours to redistribute. They stay on disk as
+# the local source of truth; the translated extracts in docs/ are committed
+# instead. Remove these two lines only if the lecturer authorises publishing.
+# ---------------------------------------------------------------------------
+police_thief_p2p.pdf
+software_submission_guidelines-V3.pdf
+
+# ---------------------------------------------------------------------------
+# OS / editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
