@@ -36,3 +36,10 @@ class GameState:
     barriers: frozenset  # frozenset[Coord]
     barriers_placed: int
     turn: int
+
+
+def increment_turn(state: "GameState") -> "GameState":
+    """Return a new GameState with the turn counter advanced by one step."""
+    import dataclasses  # noqa: PLC0415 — local import avoids circular dep risk
+
+    return dataclasses.replace(state, turn=state.turn + 1)
