@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-03 executed (turn state machine); 7 plans remain (02-04…02-10)
-last_updated: "2026-07-28T17:15:00Z"
-last_activity: 2026-07-28 -- Executed 02-03-PLAN.md (State enum D-09, ALLOWED_TRANSITIONS D-12, TransitionSeverity/RECOVERABLE_ATTEMPTS D-10, transition() reports every illegal attempt NET-05, TurnStateMachine NET-02)
+stopped_at: Phase 02 — plan 02-04 executed (JSONL event log + watchdog); 6 plans remain (02-05…02-10)
+last_updated: "2026-07-28T20:16:00Z"
+last_activity: 2026-07-28 -- Executed 02-04-PLAN.md (JSONL event log event_log.py -- EventType/EventField/build_event/append_event/console_line, validate->serialize->write->flush->fsync->echo ordering D-11/D-14; watchdog.py -- Watchdog daemon thread, on_freeze then injected exit_action ordering per RESEARCH Pitfall 6, threshold_seconds/poll_seconds required no-default kwargs D-18/NET-07)
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 9
+  completed_plans: 10
   percent: 13
 ---
 
@@ -25,22 +25,26 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-03 done)
-Plan: 4 of 11 executed (02-00, 02-01, 02-02, 02-03 done; 02-04 … 02-10 remain across Waves 1-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-04
-  (JSONL event log + watchdog) or run /gsd:execute-phase 2 again to pick up where this
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-04 done)
+Plan: 5 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04 done; 02-05 … 02-10 remain across Waves 1-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-05
+  (docs/PRD_mcp_transport.md) or run /gsd:execute-phase 2 again to pick up where this
   session stopped.
-Last activity: 2026-07-28 -- Executed 02-03-PLAN.md: added src/pursuit/network/state_machine.py
-  (State enum — six D-09 members; ALLOWED_TRANSITIONS explicit dict D-12, no FSM library;
-  TERMINAL_STATES; TransitionSeverity + RECOVERABLE_ATTEMPTS D-10; TransitionReporter
-  Protocol injected, not imported, so this module has zero dependency on 02-04's event
-  log; TransitionResult frozen dataclass with continues property; classify_severity();
-  transition() reports every illegal attempt exactly once before branching NET-05;
-  TurnStateMachine holds per-instance state only, NET-02). Task 1 RED was already
-  committed from a prior interrupted session (6d04e81) and verified still valid; Task 2
-  GREEN committed this session (be453cc); Task 3 REFACTOR required zero changes (GREEN
-  already passed every gate). uv run pytest tests/unit/ -x -q: 95 passed, 34 skipped,
-  0 regressions. Coverage of state_machine.py 100%; zero numeric literals (AST-verified).
+Last activity: 2026-07-28 -- Executed 02-04-PLAN.md: added src/pursuit/network/event_log.py
+  (EventType six members incl. ILLEGAL_TRANSITION/WATCHDOG_INCIDENT; EventField; build_event()
+  omits absent optionals; append_event() validate->serialize->write->flush->os.fsync->echo,
+  in that literal order, D-11; console_line() pure) and src/pursuit/network/watchdog.py
+  (Watchdog daemon thread — touch/start/stop/check_once; check_once() strict-> threshold
+  compare, on_freeze then injected exit_action in that order per RESEARCH Pitfall 6, a
+  raising on_freeze suppressed via contextlib.suppress so exit still fires; WatchdogExit
+  IntEnum; threshold_seconds/poll_seconds required keyword-only, no default in source, D-18).
+  tests/unit/test_watchdog.py split into two files at the 150-line limit (plan-anticipated);
+  a flaky real-thread lifecycle test fixed with a threading.Event sync barrier instead of a
+  timed sleep. uv run pytest tests/unit/ -x -q: 108 passed, 25 skipped, 0 regressions.
+  Coverage: event_log.py 100%, watchdog.py 98% (only the real os._exit() call untested by
+  design). Plan-internal "watchdog" substring tension (required EventType.WATCHDOG_INCIDENT
+  enum value vs. the plan's own substring-scan verify checks) documented in the SUMMARY,
+  same resolution pattern as 02-03's event_log tension.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -73,6 +77,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 02-fastmcp-infrastructure P01 | 18min | 3 tasks | 6 files |
 | Phase 02-fastmcp-infrastructure P02 | 12min | 3 tasks | 4 files |
 | Phase 02-fastmcp-infrastructure P03 | 12min | 3 tasks | 3 files |
+| Phase 02-fastmcp-infrastructure P04 | 13min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -116,6 +121,10 @@ Recent decisions affecting current work:
 - [Phase 02-03]: NET-05: transition() calls the injected reporter from a single call site before the outcome branch, guaranteeing every illegal attempt is reported exactly once and a legal transition reports zero times
 - [Phase 02-03]: reporter is injected as a TransitionReporter Protocol parameter, not imported — state_machine.py has zero dependency on 02-04's event log, keeping 02-03/02-04 same-wave-safe; 02-04's adapter must match the exact keyword-only __call__(*, current, target, severity, reason) -> None shape
 - [Phase 02-03]: NET-02: TurnStateMachine keeps state on the instance only (self._state); no module-level mutable current-state variable anywhere in state_machine.py
+- [Phase 02-04]: D-11/NET-05/NET-07: append_event() enforces validate->serialize->write->flush->os.fsync->echo, in that literal order — a rejected record never creates/grows the log, durability always precedes the console echo
+- [Phase 02-04]: D-14/D-18/NET-07 (RESEARCH Pitfall 6): Watchdog.check_once() runs on_freeze (suppressing exceptions) THEN the injected exit_action, verified by reading the incident file from inside the exit callable itself; threshold_seconds/poll_seconds are required keyword-only constructor args with no default in source
+- [Phase 02-04]: watchdog_poll_seconds was already present in NetworkParams/network.json (=1, D-18) before this plan ran — no hand-off gap to close at 02-09
+- [Phase 02-04]: Plan-internal tension (same category as 02-03's event_log substring issue): EventType.WATCHDOG_INCIDENT = "watchdog_incident" is required verbatim by the interfaces contract, but the plan's own verify/decoupling-audit scripts substring-scan for "watchdog" in event_log.py and flag it. Resolved by rewording every avoidable docstring mention (in both event_log.py and watchdog.py) and documenting the one irreducible, schema-required occurrence in the SUMMARY; true import-level decoupling (no `import` of watchdog in event_log.py or vice versa) independently re-verified and holds
 
 ### Pending Todos
 
@@ -137,15 +146,15 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T17:15:00Z
-Stopped at: Completed 02-03-PLAN.md (State enum D-09, ALLOWED_TRANSITIONS D-12,
-  TransitionSeverity/RECOVERABLE_ATTEMPTS D-10, transition() illegal-attempt reporting
-  NET-05, TurnStateMachine NET-02). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-03-SUMMARY.md.
+Last session: 2026-07-28T20:16:00Z
+Stopped at: Completed 02-04-PLAN.md (JSONL event log event_log.py — D-11/NET-05/NET-07;
+  watchdog daemon thread watchdog.py — D-14/D-18/NET-07, incident-before-exit ordering
+  per RESEARCH Pitfall 6). SUMMARY at
+  .planning/phases/02-fastmcp-infrastructure/02-04-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-04..02-10
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-05..02-10
   ticked as those plans land, and the full sweep at /gsd:verify-work time.
-Resume file: None — continue with plan 02-04 (JSONL event log + watchdog) via
+Resume file: None — continue with plan 02-05 (docs/PRD_mcp_transport.md) via
   /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
