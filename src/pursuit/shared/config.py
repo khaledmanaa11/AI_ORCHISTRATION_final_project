@@ -30,6 +30,8 @@ class GameParams:
     score_survival_cop: int
     score_survival_thief: int
     score_tie: int
+    score_technical_loss_cop: int
+    score_technical_loss_thief: int
     version: str
 
 
@@ -87,7 +89,7 @@ def load_game_params(path: "Path | str") -> GameParams:
     capture = _require_key(scoring, ConfigKey.SCORE_CAPTURE)
     survival = _require_key(scoring, ConfigKey.SCORE_SURVIVAL)
     tie = _require_key(scoring, ConfigKey.SCORE_TIE)
-    _require_key(scoring, ConfigKey.SCORE_TECHNICAL_LOSS)
+    technical_loss = _require_key(scoring, ConfigKey.SCORE_TECHNICAL_LOSS)
 
     return GameParams(
         board_size=board_size,
@@ -101,5 +103,7 @@ def load_game_params(path: "Path | str") -> GameParams:
         score_survival_cop=survival[0],
         score_survival_thief=survival[1],
         score_tie=tie[0],
+        score_technical_loss_cop=technical_loss[0],
+        score_technical_loss_thief=technical_loss[1],
         version=version,
     )

@@ -1,12 +1,8 @@
 """Maps Outcome enum values to (cop_score, thief_score) tuples.
 
 All score values are read exclusively from GameParams fields loaded at
-startup from game_params.json (D-14).
-
-The only numeric literals permitted in this module are the two zeros used
-for Outcome.TECHNICAL_LOSS — there is no 'score_technical_loss' field in
-GameParams because PARAMETERS Table 17 lists 0/0 as a fixed value that
-cannot vary by configuration.
+startup from game_params.json (D-14).  This module contains zero numeric
+literals — every score comes from a params.score_* field.
 """
 
 from __future__ import annotations
@@ -18,8 +14,8 @@ from pursuit.shared.config import GameParams
 def score_outcome(outcome: Outcome, params: GameParams) -> tuple[int, int]:
     """Return (cop_score, thief_score) for a completed game outcome.
 
-    All score values come exclusively from params.score_* fields; no
-    numeric literals except the two zeros for TECHNICAL_LOSS.
+    All score values come exclusively from params.score_* fields; this
+    function contains no numeric literals.
 
     Parameters
     ----------
@@ -37,11 +33,6 @@ def score_outcome(outcome: Outcome, params: GameParams) -> tuple[int, int]:
     ------
     ValueError
         If *outcome* is not a recognised Outcome member.
-
-    Notes
-    -----
-    TECHNICAL_LOSS returns (0, 0) using literal zeros — only literal
-    permitted. All other outcomes read from params.score_* fields.
     """
     if outcome is Outcome.CAPTURE:
         return (params.score_capture_cop, params.score_capture_thief)
@@ -50,6 +41,6 @@ def score_outcome(outcome: Outcome, params: GameParams) -> tuple[int, int]:
     elif outcome is Outcome.TIE:
         return (params.score_tie, params.score_tie)
     elif outcome is Outcome.TECHNICAL_LOSS:
-        return (0, 0)
+        return (params.score_technical_loss_cop, params.score_technical_loss_thief)
     else:
         raise ValueError(f"Unrecognised outcome: {outcome!r}")
