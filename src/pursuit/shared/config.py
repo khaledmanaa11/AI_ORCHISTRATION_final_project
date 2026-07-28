@@ -10,6 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pursuit.constants import ConfigKey
+from pursuit.shared.loader_helpers import require_int, require_key
+
+GAME_PARAMS_SOURCE = "game_params.json"
 
 
 @dataclass(frozen=True)
@@ -33,23 +36,6 @@ class GameParams:
     score_technical_loss_cop: int
     score_technical_loss_thief: int
     version: str
-
-
-def _require_key(data: dict, key: str) -> object:
-    """Raise KeyError with a descriptive message if key is absent from data."""
-    if key not in data:
-        raise KeyError(f"Required key '{key}' missing from game_params.json")
-    return data[key]
-
-
-def _require_int(data: dict, key: str) -> int:
-    """Return data[key] as int; raise TypeError if the value is not an int."""
-    value = _require_key(data, key)
-    if not isinstance(value, int):
-        raise TypeError(
-            f"game_params.json field '{key}' must be int, got {type(value).__name__!r}"
-        )
-    return value
 
 
 def load_game_params(path: "Path | str") -> GameParams:
@@ -76,20 +62,26 @@ def load_game_params(path: "Path | str") -> GameParams:
         data = json.load(fh)
 
     # Validate and extract top-level required keys.
-    board_size = _require_int(data, ConfigKey.BOARD_SIZE)
-    barrier_quota = _require_int(data, ConfigKey.BARRIER_QUOTA)
-    move_ceiling = _require_int(data, ConfigKey.MOVE_CEILING)
-    survival_threshold = _require_int(data, ConfigKey.SURVIVAL_THRESHOLD)
-    cop_start = tuple(_require_key(data, ConfigKey.COP_START))
-    thief_start = tuple(_require_key(data, ConfigKey.THIEF_START))
-    version = str(_require_key(data, ConfigKey.VERSION))
+    board_size = require_int(data, ConfigKey.BOARD_SIZE, source=GAME_PARAMS_SOURCE)
+    barrier_quota = require_int(data, ConfigKey.BARRIER_QUOTA, source=GAME_PARAMS_SOURCE)
+    move_ceiling = require_int(data, ConfigKey.MOVE_CEILING, source=GAME_PARAMS_SOURCE)
+    survival_threshold = require_int(
+        data, ConfigKey.SURVIVAL_THRESHOLD, source=GAME_PARAMS_SOURCE
+    )
+    cop_start = tuple(require_key(data, ConfigKey.COP_START, source=GAME_PARAMS_SOURCE))
+    thief_start = tuple(
+        require_key(data, ConfigKey.THIEF_START, source=GAME_PARAMS_SOURCE)
+    )
+    version = str(require_key(data, ConfigKey.VERSION, source=GAME_PARAMS_SOURCE))
 
     # Validate scoring sub-object.
-    scoring = _require_key(data, ConfigKey.SCORING)
-    capture = _require_key(scoring, ConfigKey.SCORE_CAPTURE)
-    survival = _require_key(scoring, ConfigKey.SCORE_SURVIVAL)
-    tie = _require_key(scoring, ConfigKey.SCORE_TIE)
-    technical_loss = _require_key(scoring, ConfigKey.SCORE_TECHNICAL_LOSS)
+    scoring = require_key(data, ConfigKey.SCORING, source=GAME_PARAMS_SOURCE)
+    capture = require_key(scoring, ConfigKey.SCORE_CAPTURE, source=GAME_PARAMS_SOURCE)
+    survival = require_key(scoring, ConfigKey.SCORE_SURVIVAL, source=GAME_PARAMS_SOURCE)
+    tie = require_key(scoring, ConfigKey.SCORE_TIE, source=GAME_PARAMS_SOURCE)
+    technical_loss = require_key(
+        scoring, ConfigKey.SCORE_TECHNICAL_LOSS, source=GAME_PARAMS_SOURCE
+    )
 
     return GameParams(
         board_size=board_size,
