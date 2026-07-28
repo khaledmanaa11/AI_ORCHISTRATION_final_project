@@ -85,3 +85,13 @@ def test_config_board_size_is_int(default_params: GameParams) -> None:
     """board_size accessor returns an int, not a string or float."""
     params = load_game_params(POLICE_CONFIG)
     assert isinstance(params.board_size, int)
+
+
+def test_config_uses_shared_loader_helpers() -> None:
+    """QUAL-02: config.py consumes the shared helpers, it does not keep a private copy."""
+    import pursuit.shared.config as config_module
+
+    source = Path(config_module.__file__).read_text(encoding="utf-8")
+    assert "from pursuit.shared.loader_helpers import" in source
+    assert "def _require_key" not in source
+    assert "def _require_int" not in source
