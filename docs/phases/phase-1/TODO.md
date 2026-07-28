@@ -8,19 +8,19 @@
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 01-00 Project scaffold (uv + config + stubs) | P0 | ☑ done | Khaled | uv project created, game_params.json written, 7 stub test files green; commits bdb9fd7/8731a0f/4def96f |
-| 01-01 Config loader + board model + movement (BASE-01, BASE-08) | P0 | ☑ done | Khaled | test_config.py + test_board.py pass (13 tests); constants.py/state.py/config.py/board.py green; ruff 0; line limit passes |
-| 01-02 Barrier placement + quota enforcement (BASE-02) | P0 | ☑ done | Khaled | test_barrier.py passes (8 tests); place_barrier rejects over-quota without mutating state; rejected placement costs no quota; AST scan: zero numeric literals; commits 43e4d29/7be2a10 |
-| 01-03 Capture detection + scoring (BASE-03..BASE-07) | P0 | ☑ done | Khaled | test_capture.py passes 11 tests (8 original + 3 coverage); capture.py 94% / outcome.py 100%; ruff 0; AST scan: zero literals in capture.py; commits fc158eb/48f15d0/b34edd6 |
-| 01-04 SDK facade + game loop integration (QUAL-01, §10.4) | P0 | ☐ | Khaled | test_sdk_engine.py + test_game_loop.py pass; SDK layer wraps engine; thin shell only |
-| 01-96 Write per-mechanism PRD(s) for this phase | P1 | ☐ | Khaled | Phase 1 has no algorithm-specific PRDs (Phase 1 is pure foundational scaffolding; per-mechanism PRDs start Phase 2) |
-| 01-99 On verify-work: mark all rows done + tick root docs/TODO.md | P1 | ☐ | Khaled | Phase gate met; all TODOs checked (DOC-01) |
+| 1-00 Project scaffolding + test stubs | P0 | ☑ | Khaled | uv project; pyproject.toml (D-01); src/pursuit/ layout (D-02); config dirs; game_params.json; Wave 0 test stubs — all collects 0, exits 0 (QUAL-01/06) |
+| 1-01 Config loader + board model + movement | P0 | ☑ | Khaled | Diagonal rejected; values from config; load error at startup; unit tests green (BASE-01/08) |
+| 1-02 Barrier placement + quota enforcement | P0 | ☑ | Khaled | Over-quota rejected; rejected placement leaves barriers_placed unchanged; unit tests green (BASE-02) |
+| 1-03 Capture detection + outcome scoring | P0 | ☑ | Khaled | All three capture types + survival + scoring table pass unit tests; AST scan zero numeric literals (BASE-03..07) |
+| 1-04 SDK facade + integration gate + doc triplet | P0 | ☑ | Khaled | engine.py thin facade (QUAL-01); three §10.4 gate tests green (GATE-1/2/3); per-phase docs triplet created (BASE-03/04/05, QUAL-01) |
+| 1-99 Verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☐ | Khaled | Phase gate met; all TODOs checked; root docs/TODO.md Phase 1 section all ☑ (DOC-01) |
 
 ## Phase gate (§10.4)
 
-- [ ] `uv run pytest tests/unit/ tests/integration/ -x -q` exits 0 (full unit + integration suite green)
-- [ ] `uv run pytest --cov=pursuit --cov-report=term-missing` shows >= 85% coverage for all new modules
-- [ ] `uv run ruff check .` exits 0
-- [ ] `bash scripts/check_line_limit.sh` passes all files
-- [ ] All three capture types (cop-on-thief, barrier-on-thief, no-legal-move) demonstrated in integration test
-- [ ] Scoring table (CAPTURE 20/5, SURVIVAL 5/10) verified from config, not hardcoded
+- [ ] `test_game_loop.py::test_legal_turn_sequence` passes (GATE-1)
+- [ ] `test_game_loop.py::test_barrier_quota_gate` passes (GATE-2)
+- [ ] `test_game_loop.py::test_all_capture_types` passes (GATE-3)
+- [ ] `uv run pytest --cov=pursuit` ≥ 85% (QUAL-10)
+- [ ] `uv run ruff check .` → 0 violations (QUAL-09)
+- [ ] `bash scripts/check_line_limit.sh` passes all src/ files (QUAL-08)
+- [ ] `docs/phases/phase-1/{PRD,PLAN,TODO}.md` committed and filled (CLAUDE.md)

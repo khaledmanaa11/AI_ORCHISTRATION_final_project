@@ -34,6 +34,7 @@ Gate: legal movement; over-quota barrier rejected; capture on overlap.
 | 01-01 Board + orthogonal movement from config | P0 | ☐ | Khaled | Diagonal rejected; values from config; unit tests happy+error (BASE-01/08) |
 | 01-02 Barrier placement + quota enforcement | P0 | ☐ | Khaled | Barrier beyond quota rejected; tested (BASE-02) |
 | 01-03 Capture + end conditions + scoring | P0 | ☐ | Khaled | 3 capture conditions + survival + scoring table pass tests (BASE-03…07) |
+| 01-04 SDK facade + integration gate + doc triplet | P0 | ☐ | Khaled | engine.py thin facade (QUAL-01); GATE-1/2/3 pass; docs/phases/phase-1/{PRD,PLAN,TODO}.md created (BASE-03/04/05, QUAL-01) |
 | 01-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | This table marked ☑; DoD rolled (DOC-01) |
 
 ---
@@ -158,7 +159,7 @@ standing rule in [CLAUDE.md](../CLAUDE.md). A phase is not verified until its ro
 
 | Phase | PRD.md | PLAN.md | TODO.md | All TODOs ☑ |
 |-------|--------|---------|---------|-------------|
-| 1 Base Logic | ☐ | ☐ | ☐ | ☐ |
+| 1 Base Logic | ◐ | ◐ | ◐ | ☐ |
 | 2 FastMCP Infrastructure | ☐ | ☐ | ☐ | ☐ |
 | 3 Blind Strategy (RL) | ☐ | ☐ | ☐ | ☐ |
 | 4 Language & Scent | ☐ | ☐ | ☐ | ☐ |
