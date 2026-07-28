@@ -4,6 +4,11 @@ Every test injects a fake clock and a fake sleeper — nothing here calls
 time.sleep and nothing calls os._exit. The threshold/poll values below are
 test fixtures, not game parameters; the real 60 s threshold and 1 s poll
 live in config/{police,thief}/network.json and are injected by 02-09.
+
+The daemon-thread lifecycle test lives in test_watchdog_thread.py — split
+out to keep this file under the 150 code-line limit (split, never
+compress); it shares this module's fixture constants and fakes via
+`from tests.unit.test_watchdog import ...`.
 """
 
 from pursuit.network.event_log import EventType, append_event, build_event
@@ -147,35 +152,5 @@ def test_touch_resets_the_clock():
     wd.touch()
 
     assert wd.check_once() is False
-    assert on_freeze.calls == 0
-    assert exit_action.calls == 0
-
-
-def test_thread_lifecycle_is_daemon_and_stops_cleanly():
-    clock = _FakeClock()
-    on_freeze = _Recorder()
-    exit_action = _Recorder()
-    wd = Watchdog(
-        threshold_seconds=_TEST_THRESHOLD,
-        poll_seconds=_TEST_POLL,
-        on_freeze=on_freeze,
-        exit_action=exit_action,
-        clock=clock,
-    )
-    sleep_calls = []
-
-    def fake_sleeper(dt):
-        sleep_calls.append(dt)
-        if len(sleep_calls) >= 2:
-            wd.stop()
-
-    wd._sleeper = fake_sleeper
-
-    wd.start()
-    assert wd._thread.is_alive()
-    assert wd._thread.daemon is True
-
-    wd._thread.join(timeout=_JOIN_TIMEOUT)
-    assert not wd._thread.is_alive()
     assert on_freeze.calls == 0
     assert exit_action.calls == 0
