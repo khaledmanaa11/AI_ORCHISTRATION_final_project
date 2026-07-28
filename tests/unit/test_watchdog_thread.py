@@ -58,3 +58,26 @@ def test_thread_lifecycle_is_daemon_and_stops_cleanly():
     assert not wd._thread.is_alive()
     assert on_freeze.calls == 0
     assert exit_action.calls == 0
+
+
+def test_run_returns_after_detecting_a_freeze():
+    # Exercises _run()'s freeze-triggered return branch synchronously (no
+    # real thread, no real sleeping) — the fake sleeper advances the fake
+    # clock past the threshold on its first call.
+    clock = _FakeClock()
+    on_freeze = _Recorder()
+    exit_action = _Recorder()
+    wd = Watchdog(
+        threshold_seconds=_TEST_THRESHOLD,
+        poll_seconds=_TEST_POLL,
+        on_freeze=on_freeze,
+        exit_action=exit_action,
+        clock=clock,
+        sleeper=lambda _dt: clock.advance(_TEST_THRESHOLD * 2),
+    )
+    wd.touch()
+
+    wd._run()
+
+    assert on_freeze.calls == 1
+    assert exit_action.calls == 1
