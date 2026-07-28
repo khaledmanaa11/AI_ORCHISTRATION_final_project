@@ -10,7 +10,7 @@
 |------|-----|--------|-------|--------------------|
 | 01-00 Project scaffold (uv + config + stubs) | P0 | ☑ done | Khaled | uv project created, game_params.json written, 7 stub test files green; commits bdb9fd7/8731a0f/4def96f |
 | 01-01 Config loader + board model + movement (BASE-01, BASE-08) | P0 | ☑ done | Khaled | test_config.py + test_board.py pass (13 tests); constants.py/state.py/config.py/board.py green; ruff 0; line limit passes |
-| 01-02 Barrier placement + quota enforcement (BASE-02) | P0 | ☐ | Khaled | test_barrier.py passes; place_barrier rejects over-quota without mutating state; rejected placement costs no quota |
+| 01-02 Barrier placement + quota enforcement (BASE-02) | P0 | ☑ done | Khaled | test_barrier.py passes (8 tests); place_barrier rejects over-quota without mutating state; rejected placement costs no quota; AST scan: zero numeric literals; commits 43e4d29/7be2a10 |
 | 01-03 Capture detection + scoring (BASE-03..BASE-07) | P0 | ☐ | Khaled | test_capture.py passes all 3 capture types + survival + scoring; detect_capture + compute_score correct |
 | 01-04 SDK facade + game loop integration (QUAL-01, §10.4) | P0 | ☐ | Khaled | test_sdk_engine.py + test_game_loop.py pass; SDK layer wraps engine; thin shell only |
 | 01-96 Write per-mechanism PRD(s) for this phase | P1 | ☐ | Khaled | Phase 1 has no algorithm-specific PRDs (Phase 1 is pure foundational scaffolding; per-mechanism PRDs start Phase 2) |
