@@ -1,5 +1,7 @@
 """Tests for capture detection and outcome scoring (BASE-03..07)."""
 
+import dataclasses
+
 from pursuit.constants import Outcome
 from pursuit.shared.capture import detect_capture, evaluate_turn_end
 from pursuit.shared.outcome import score_outcome
@@ -114,10 +116,26 @@ def test_tie_score(default_params) -> None:
 
 
 def test_technical_loss_score(default_params) -> None:
-    """TECHNICAL_LOSS outcome returns (0, 0) — only literal zero permitted."""
+    """TECHNICAL_LOSS outcome scores come from params.score_technical_loss_* (BASE-07)."""
     cop_score, thief_score = score_outcome(Outcome.TECHNICAL_LOSS, default_params)
-    assert cop_score == 0
-    assert thief_score == 0
+    assert cop_score == default_params.score_technical_loss_cop
+    assert thief_score == default_params.score_technical_loss_thief
+
+
+def test_technical_loss_score_from_config(default_params) -> None:
+    """TECHNICAL_LOSS score is config-sourced, not hardcoded (CR-02, BASE-07).
+
+    Build a params object with non-zero technical_loss values and confirm
+    score_outcome returns those exact values, proving no literal (0, 0) exists.
+    """
+    custom = dataclasses.replace(
+        default_params,
+        score_technical_loss_cop=7,
+        score_technical_loss_thief=3,
+    )
+    cop_score, thief_score = score_outcome(Outcome.TECHNICAL_LOSS, custom)
+    assert cop_score == 7
+    assert thief_score == 3
 
 
 def test_score_outcome_invalid_raises(default_params) -> None:
