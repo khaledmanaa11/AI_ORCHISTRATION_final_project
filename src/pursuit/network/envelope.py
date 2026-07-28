@@ -20,8 +20,9 @@ from enum import Enum
 class MessageType(Enum):
     """The four Phase-2 message kinds matching the 02-06 tool surface (D-05).
 
-    Phase 4 adds HINT, Phase 6 adds the commit-reveal kinds, as NEW MEMBERS of
-    this same enum — never as a second envelope shape. Do not add them early.
+    A later phase adds a hint kind and another adds the commit-reveal kinds,
+    each as a NEW MEMBER of this same enum — never as a second envelope
+    shape. Neither is added yet; that is out of Phase-2 scope.
     """
 
     HANDSHAKE = "handshake"

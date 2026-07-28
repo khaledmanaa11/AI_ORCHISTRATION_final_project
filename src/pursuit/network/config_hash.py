@@ -11,9 +11,9 @@ so reusing it here keeps exactly one canonicalisation in the repo — Phase 6's
 commit-reveal hash MUST call canonical_json() rather than re-writing its own
 json.dumps call (QUAL-02).
 
-This module hashes game_params.json ONLY. It never hashes network.json,
-which legitimately differs per agent (different port, different opponent
-URL — D-04); hashing it would abort every game.
+This module hashes game_params.json ONLY. It never hashes the per-agent
+network configuration file, which legitimately differs per agent (different
+port, different opponent URL — D-04); hashing it would abort every game.
 """
 
 import hashlib
