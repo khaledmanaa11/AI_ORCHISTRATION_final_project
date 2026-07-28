@@ -1,0 +1,17 @@
+{
+  "board_size": 7,
+  "origin": "top-left",
+  "cop_start": [0, 0],
+  "thief_start": [3, 3],
+  "movement": "orthogonal",
+  "barrier_quota": 14,
+  "move_ceiling": 35,
+  "survival_threshold": 35,
+  "version": "1.00",
+  "scoring": {
+    "capture": [20, 5],
+    "survival": [5, 10],
+    "tie": [2, 2],
+    "technical_loss": [0, 0]
+  }
+}
