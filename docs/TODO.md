@@ -45,10 +45,17 @@ Gate: geometric message A→B over localhost decoded correctly.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 02-01 FastMCP server+client scaffold + geometric tools | P0 | ☐ | Khaled | Symmetric peer; A→B localhost message decoded (NET-03/08) |
-| 02-02 Orchestrator + state machine + illegal-transition report | P0 | ☐ | Khaled | Single entry point; illegal transitions reported (NET-04/05) |
-| 02-03 Watchdog + deadline tracker + byte-identical config check | P0 | ☐ | Khaled | No hang on silent opponent; config verified identical (NET-06/07/09) |
-| 02-04 Write `docs/PRD_mcp_transport.md` | P1 | ☐ | Khaled | Full per-mechanism PRD (§2.3) committed (DOC-02) |
+| 02-00 Phase-2 scaffold + test stubs | P0 | ☐ | Khaled | `uv add fastmcp` (3.4.5) + `pytest-asyncio`; per-agent `network.json`; stubs collect and exit 0 (QUAL-11/12/13) |
+| 02-01 Network config loader + `loader_helpers` extraction | P0 | ☐ | Khaled | Fail-loud `NetworkParams`; one validator shared by both loaders (NET-01/02, QUAL-02) |
+| 02-02 Message envelope + canonical-JSON config digest | P0 | ☐ | Khaled | `{type,turn,sender,payload}` round-trips; key-order difference hashes equal (NET-08/09) |
+| 02-03 Turn state machine + illegal-transition reporting | P0 | ☐ | Khaled | Enum + transitions table, no FSM library; every illegal attempt rejected **and** reported (NET-04/05) |
+| 02-04 JSONL event log + watchdog | P0 | ☐ | Khaled | `flush()`+`fsync()` per write; incident record durable **before** exit fires (NET-05/07) |
+| 02-05 Write `docs/PRD_mcp_transport.md` | P1 | ☐ | Khaled | Full per-mechanism PRD (§2.3) at v1.00, written before the code (DOC-02) |
+| 02-06 Tool surface + peer runtime | P0 | ☐ | Khaled | Four `async def` tools; `receive_move` enqueues without blocking; shutdown releases port (NET-02/03/08) |
+| 02-07 Deadline tracker + technical win | P0 | ☐ | Khaled | 30/3/5 from config; `ToolError` never becomes a technical win; truthful evidence (NET-06) |
+| 02-08 Handshake + config-digest exchange | P0 | ☐ | Khaled | Mismatch aborts before move 1 with both digests logged; unreachable ≠ mismatch (NET-03/05/09) |
+| 02-09 Orchestrator + thin `main.py` + dev launcher | P0 | ☐ | Khaled | Turn loop drives the machine; no shared runtime state; launcher is not a referee (NET-01/02/04/05/06/07) |
+| 02-10 §10.4 gate tests + coverage audit | P0 | ☐ | Khaled | GATE-1/2/3 map to named tests; NET-01…09 audit closes; real two-process launch (NET-01…09) |
 | 02-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
 
 ---

@@ -69,11 +69,18 @@ Plans:
 
 Plans:
 
-- [ ] 02-01: FastMCP server+client scaffold + geometric tool definitions (symmetric peer)
-- [ ] 02-02: Orchestrator, state machine, illegal-transition reporting
-- [ ] 02-03: Watchdog, deadline tracker, byte-for-byte config verification
-- [ ] 02-04: Write `docs/PRD_mcp_transport.md` (the FastMCP peer layer)
-- [ ] 02-97: Create/refresh `docs/phases/phase-2/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [ ] 02-00: Phase-2 scaffold — `uv add fastmcp` + `pytest-asyncio`, per-agent `network.json`, test stubs
+- [ ] 02-01: Network config loader + `loader_helpers.py` extraction (QUAL-02)
+- [ ] 02-02: Message envelope + canonical-JSON config digest
+- [ ] 02-03: Turn state machine + severity-based illegal-transition reporting
+- [ ] 02-04: JSONL event log + watchdog daemon thread
+- [ ] 02-05: Write `docs/PRD_mcp_transport.md` (the FastMCP peer layer)
+- [ ] 02-06: FastMCP tool surface (4 async stubs) + peer runtime (server+client, one loop)
+- [ ] 02-07: Deadline tracker + technical-win verdict
+- [ ] 02-08: Handshake — connectivity + config-digest exchange, abort before move 1
+- [ ] 02-09: Per-agent orchestrator + thin `main.py` + dev launcher (no referee)
+- [ ] 02-10: §10.4 gate tests (GATE-1/2/3) + NET coverage audit
+- [x] 02-97: Create/refresh `docs/phases/phase-2/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 02-99: On verify-work, mark all Phase 2 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 3: Blind Strategy Module (RL policy)
