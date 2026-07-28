@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-00 executed (FastMCP foundation); 10 plans remain (02-01…02-10)
-last_updated: "2026-07-28T16:09:00Z"
-last_activity: 2026-07-28 -- Executed 02-00-PLAN.md (fastmcp+pytest-asyncio deps, network.json, NetworkConfigKey, 13 test stubs)
+stopped_at: Phase 02 — plan 02-01 executed (network config loader); 9 plans remain (02-02…02-10)
+last_updated: "2026-07-28T17:00:00Z"
+last_activity: 2026-07-28 -- Executed 02-01-PLAN.md (loader_helpers extraction, NetworkParams loader, D-16 env override, QUAL-02 guard)
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 6
+  completed_plans: 7
   percent: 13
 ---
 
@@ -25,14 +25,19 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 0 / plan 02-00 done)
-Plan: 1 of 11 executed (02-00 done; 02-01 … 02-10 remain across Waves 1-5, 34 tasks total)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-01
-  (loader) or run /gsd:execute-phase 2 again to pick up where this session stopped.
-Last activity: 2026-07-28 -- Executed 02-00-PLAN.md: uv-added fastmcp 3.4.5 +
-  pytest-asyncio 1.4.0, asyncio_mode="auto", config/{police,thief}/network.json,
-  NetworkConfigKey, .env-example overrides, conftest network fixtures, 13 named
-  skipped test stubs for 02-01…02-10. uv run pytest -q: 43 passed, 62 skipped, 0 errors.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-01 done)
+Plan: 2 of 11 executed (02-00, 02-01 done; 02-02 … 02-10 remain across Waves 1-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-02
+  (envelope + config digest) or run /gsd:execute-phase 2 again to pick up where this
+  session stopped.
+Last activity: 2026-07-28 -- Executed 02-01-PLAN.md: extracted require_key/require_int/
+  require_str into src/pursuit/shared/loader_helpers.py (QUAL-02), re-pointed config.py
+  at it (behaviour-preserving, verified against all 5 original test_config.py tests),
+  added src/pursuit/shared/network_config.py with frozen NetworkParams + fail-loud
+  load_network_config (NET-01, NET-02, QUAL-11), D-16 env override
+  (PURSUIT_HOST/PORT/OPPONENT_URL) applied after file validation. uv run pytest
+  tests/unit/ -x -q: 60 passed, 48 skipped, 0 regressions. Coverage of both new
+  modules 100%; project total 99.21%.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -62,6 +67,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 01 P03 | 5min | 3 tasks | 4 files |
 | Phase 01-base-logic P04 | 9min | 4 tasks | 8 files |
 | Phase 02-fastmcp-infrastructure P00 | 12min | 3 tasks | 20 files |
+| Phase 02-fastmcp-infrastructure P01 | 18min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -94,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase Phase 01-04]: D-12: engine wires the turn boundary: apply_cop_action does cop-acts + capture-check, apply_thief_move does thief-move + turn-increment + survival-check
 - [Phase Phase 01-04]: increment_turn() added to state.py so engine.py has zero non-zero numeric literals (AST scan clean)
 - [Phase 02-00]: D-04/D-16/D-17/D-18: config/{police,thief}/network.json holds every network number; ports 8001/8002 and watchdog_poll_seconds=1 are engineering defaults not traced to PARAMETERS.md; retry_count=3/backoff_seconds=5 reused from Table 19 Gatekeeper rows
+- [Phase 02-01]: QUAL-02: require_key/require_int/require_str extracted to src/pursuit/shared/loader_helpers.py at the second consumer (network_config.py); config.py re-pointed at it, zero private validator copies remain
+- [Phase 02-01]: NET-02 guaranteed by construction: load_network_config returns a fresh NetworkParams every call, no module-level cache/singleton; verified by identity checks in both directions (police vs thief, and two calls to the same file)
+- [Phase 02-01]: Reused 02-00's NetworkConfigKey.ENV_HOST/ENV_PORT/ENV_OPPONENT_URL for the D-16 override names instead of adding a duplicate NetworkEnvVar class
 
 ### Pending Todos
 
@@ -115,13 +124,13 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T16:09:00Z
-Stopped at: Completed 02-00-PLAN.md (fastmcp deps, network.json, NetworkConfigKey,
-  13 test stubs). SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-00-SUMMARY.md.
+Last session: 2026-07-28T17:00:00Z
+Stopped at: Completed 02-01-PLAN.md (loader_helpers extraction, NetworkParams loader).
+  SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-01-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-00 ticked
-  at /gsd:verify-work time.
-Resume file: None — continue with plan 02-01 (network config loader) via
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-00 and
+  02-01 ticked at /gsd:verify-work time.
+Resume file: None — continue with plan 02-02 (envelope + config digest) via
   /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
