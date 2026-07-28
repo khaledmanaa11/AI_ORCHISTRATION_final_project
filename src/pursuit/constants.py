@@ -64,3 +64,24 @@ class ConfigKey:
     SCORE_SURVIVAL = "survival"
     SCORE_TIE = "tie"
     SCORE_TECHNICAL_LOSS = "technical_loss"
+
+
+class NetworkConfigKey:
+    """String keys matching the exact field names in network.json (D-04).
+
+    Structural only — no numeric value appears here. Every network number lives
+    in config/{police,thief}/network.json (QUAL-11). The ENV_* entries are the
+    D-16 override variable names 02-01 passes to os.environ.get().
+    """
+
+    HOST = "host"
+    PORT = "port"
+    OPPONENT_URL = "opponent_url"
+    RESPONSE_TIMEOUT = "response_timeout"
+    WATCHDOG_THRESHOLD = "watchdog_threshold"
+    WATCHDOG_POLL_SECONDS = "watchdog_poll_seconds"
+    RETRY_COUNT = "retry_count"
+    BACKOFF_SECONDS = "backoff_seconds"
+    ENV_HOST = "PURSUIT_HOST"
+    ENV_PORT = "PURSUIT_PORT"
+    ENV_OPPONENT_URL = "PURSUIT_OPPONENT_URL"
