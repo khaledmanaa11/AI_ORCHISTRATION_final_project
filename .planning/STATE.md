@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-07-28T12:03:00Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-07-28T12:18:00Z"
 last_activity: 2026-07-28
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 50
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 01 (base-logic) — EXECUTING
-Plan: 5 of 5
-Status: Ready to execute
+Phase: 01 (base-logic) — COMPLETE (all 5 plans executed)
+Plan: 5 of 5 (all complete)
+Status: Awaiting verify-work
 Last activity: 2026-07-28
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████░░░░░░] 40%
 | Phase 01-base-logic P01 | 15min | 3 tasks | 9 files |
 | Phase 01 P02 | 10min | 3 tasks | 6 files |
 | Phase 01 P03 | 5min | 3 tasks | 4 files |
+| Phase 01-base-logic P04 | 9min | 4 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 01-03]: D-14: score_outcome reads exclusively from params.score_* fields; only literal 0 for TECHNICAL_LOSS
 - [Phase 01-03]: D-15: Phase 1 produces only CAPTURE/SURVIVAL; TIE/TECHNICAL_LOSS unreachable but scored for completeness
 - [Phase 01-03]: D-16: evaluate_turn_end uses params.survival_threshold (no hardcoded value)
+- [Phase Phase 01-04]: D-09: engine.apply_cop_action wires cop move + barrier placement in one cop action
+- [Phase Phase 01-04]: D-12: engine wires the turn boundary: apply_cop_action does cop-acts + capture-check, apply_thief_move does thief-move + turn-increment + survival-check
+- [Phase Phase 01-04]: increment_turn() added to state.py so engine.py has zero non-zero numeric literals (AST scan clean)
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T12:03:00Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-07-28T12:18:00Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
