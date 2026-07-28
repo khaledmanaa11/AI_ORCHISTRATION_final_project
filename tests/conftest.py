@@ -1,36 +1,33 @@
 """Shared pytest fixtures for all test waves."""
 
-import json
 import pathlib
 
 import pytest
 
+from pursuit.shared.config import GameParams, load_game_params
+from pursuit.shared.state import GameState
+
+_POLICE_CONFIG = (
+    pathlib.Path(__file__).parent.parent / "config" / "police" / "game_params.json"
+)
+
 
 @pytest.fixture(scope="session")
-def default_params() -> dict:
+def default_params() -> GameParams:
     """Load and return the canonical game parameters from config/police/game_params.json."""
-    config_path = (
-        pathlib.Path(__file__).parent.parent
-        / "config"
-        / "police"
-        / "game_params.json"
-    )
-    with config_path.open() as fh:
-        return json.load(fh)
+    return load_game_params(_POLICE_CONFIG)
 
 
 @pytest.fixture
-def start_state(default_params: dict) -> dict:
-    """Return a dict representing the canonical initial game state.
+def start_state(default_params: GameParams) -> GameState:
+    """Return the canonical initial GameState drawn from default_params.
 
-    Values are drawn from default_params only — no hardcoded numbers.
+    Values come from default_params only — no hardcoded numbers.
     """
-    cop_start = tuple(default_params["cop_start"])
-    thief_start = tuple(default_params["thief_start"])
-    return {
-        "cop_pos": cop_start,
-        "thief_pos": thief_start,
-        "barriers": frozenset(),
-        "turn": 0,
-        "barrier_quota_remaining": default_params["barrier_quota"],
-    }
+    return GameState(
+        cop=default_params.cop_start,
+        thief=default_params.thief_start,
+        barriers=frozenset(),
+        barriers_placed=0,
+        turn=0,
+    )

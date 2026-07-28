@@ -3,13 +3,13 @@
 from pathlib import Path
 
 from pursuit.shared.board import apply_move, get_legal_moves
-from pursuit.shared.config import load_game_params
+from pursuit.shared.config import GameParams, load_game_params
 from pursuit.shared.state import GameState
 
 POLICE_CONFIG = Path(__file__).parent.parent.parent / "config" / "police" / "game_params.json"
 
 
-def test_orthogonal_move_accepted(default_params: dict) -> None:
+def test_orthogonal_move_accepted(default_params: GameParams) -> None:
     """An orthogonal (N/S/E/W) step to an empty cell is accepted."""
     params = load_game_params(POLICE_CONFIG)
     state = GameState(
@@ -27,7 +27,7 @@ def test_orthogonal_move_accepted(default_params: dict) -> None:
     assert (1, 1) in moves  # STAY
 
 
-def test_diagonal_move_rejected(default_params: dict) -> None:
+def test_diagonal_move_rejected(default_params: GameParams) -> None:
     """A diagonal step is always rejected."""
     params = load_game_params(POLICE_CONFIG)
     state = GameState(
@@ -44,7 +44,7 @@ def test_diagonal_move_rejected(default_params: dict) -> None:
     assert (2, 2) not in moves  # SE diagonal
 
 
-def test_stay_is_legal(default_params: dict) -> None:
+def test_stay_is_legal(default_params: GameParams) -> None:
     """Staying in place is always a legal move, even when surrounded by barriers."""
     params = load_game_params(POLICE_CONFIG)
     state = GameState(
@@ -59,7 +59,7 @@ def test_stay_is_legal(default_params: dict) -> None:
     assert len(moves) == 1  # only stay (all orthogonal neighbors are barriers)
 
 
-def test_out_of_bounds_rejected(default_params: dict) -> None:
+def test_out_of_bounds_rejected(default_params: GameParams) -> None:
     """A move that would leave the board is rejected."""
     params = load_game_params(POLICE_CONFIG)
     state = GameState(
@@ -74,7 +74,7 @@ def test_out_of_bounds_rejected(default_params: dict) -> None:
     assert (0, -1) not in moves  # west of col 0 is OOB
 
 
-def test_onto_barrier_rejected(default_params: dict) -> None:
+def test_onto_barrier_rejected(default_params: GameParams) -> None:
     """A move onto a barriered cell is rejected (D-08)."""
     params = load_game_params(POLICE_CONFIG)
     state = GameState(
@@ -88,7 +88,7 @@ def test_onto_barrier_rejected(default_params: dict) -> None:
     assert (1, 2) not in moves  # barriered cell not in legal moves
 
 
-def test_apply_move_returns_new_state(default_params: dict) -> None:
+def test_apply_move_returns_new_state(default_params: GameParams) -> None:
     """apply_move returns a new GameState; original is unchanged (immutable)."""
     state = GameState(
         cop=(3, 3),
@@ -103,7 +103,7 @@ def test_apply_move_returns_new_state(default_params: dict) -> None:
     assert new_state is not state
 
 
-def test_apply_move_thief(default_params: dict) -> None:
+def test_apply_move_thief(default_params: GameParams) -> None:
     """apply_move repositions the thief; original state is unchanged."""
     state = GameState(
         cop=(0, 0),
