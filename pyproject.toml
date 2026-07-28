@@ -3,7 +3,9 @@ name = "pursuit"
 version = "1.00.0"
 requires-python = ">=3.10"
 description = "Cops-and-robbers pursuit engine"
-dependencies = []
+dependencies = [
+    "fastmcp>=3.4.5",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -30,10 +32,12 @@ fail_under = 85
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--tb=short"
+asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.0",
 ]
