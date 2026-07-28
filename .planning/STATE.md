@@ -95,8 +95,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Team code (SUB-06) and per-game config naming are league prerequisites — decide before first scored game
+- ~~Team code (SUB-06)~~ **Decided: `khm-mn17`** (08-CONTEXT.md); per-game config naming still a league prerequisite
 - Reporting (REPORT-01) is submission-critical: a missing/contradictory report zeroes both teams
+- League opponents must be contacted early (this week) — scored games realistically Aug 11–12 post-exam
 
 ## Deferred Items
 
@@ -109,5 +110,9 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-07-28T14:30:00Z
-Stopped at: Phase 01 executed + verified (3/3 §10.4 gates); code review CR-02 fixed, CR-01 deferred to Phase 2
-Resume file: None — ready to start Phase 02 (/gsd:discuss-phase 2 or /gsd:plan-phase 2)
+Stopped at: Phase 01 executed + verified (3/3 §10.4 gates); code review CR-02 fixed, CR-01 deferred to Phase 2.
+  In parallel: discuss marathon captured CONTEXT.md for ALL of phases 2–8 (front-loaded so
+  each remaining work day is plan → execute → verify only).
+Resume file: None — ready for Phase 02: /gsd:plan-phase 2 --chunked (context already gathered).
+  Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
+  → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
