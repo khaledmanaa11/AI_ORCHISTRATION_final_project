@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 planned — 11 plans, plan-checker PASSED (iteration 2/3)
-last_updated: "2026-07-28T18:10:00Z"
-last_activity: 2026-07-28 -- Phase 02 planning finished + verified; ready to execute
+stopped_at: Phase 02 — plan 02-00 executed (FastMCP foundation); 10 plans remain (02-01…02-10)
+last_updated: "2026-07-28T16:09:00Z"
+last_activity: 2026-07-28 -- Executed 02-00-PLAN.md (fastmcp+pytest-asyncio deps, network.json, NetworkConfigKey, 13 test stubs)
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 5
+  completed_plans: 6
   percent: 13
 ---
 
@@ -21,16 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 02 — fastmcp-infrastructure (Phase 01 complete)
+**Current focus:** Phase 02 — fastmcp-infrastructure (Phase 01 complete; Wave 0 of Phase 02 executed)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — PLANNED & PLAN-CHECKED, not yet executed
-Plan: 0 of 11 executed (02-00 … 02-10 across 6 waves; all structurally valid, 34 tasks)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: /gsd:execute-phase 2
-Last activity: 2026-07-28 -- plan-phase 2 finished; gsd-plan-checker VERIFICATION PASSED
-  after one revision round (the 02-06 handshake_handler seam was not consumed by 02-09;
-  02-09 now injects 02-08's respond_to_handshake at PeerRuntime construction time)
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 0 / plan 02-00 done)
+Plan: 1 of 11 executed (02-00 done; 02-01 … 02-10 remain across Waves 1-5, 34 tasks total)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-01
+  (loader) or run /gsd:execute-phase 2 again to pick up where this session stopped.
+Last activity: 2026-07-28 -- Executed 02-00-PLAN.md: uv-added fastmcp 3.4.5 +
+  pytest-asyncio 1.4.0, asyncio_mode="auto", config/{police,thief}/network.json,
+  NetworkConfigKey, .env-example overrides, conftest network fixtures, 13 named
+  skipped test stubs for 02-01…02-10. uv run pytest -q: 43 passed, 62 skipped, 0 errors.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -59,6 +61,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 01 P02 | 10min | 3 tasks | 6 files |
 | Phase 01 P03 | 5min | 3 tasks | 4 files |
 | Phase 01-base-logic P04 | 9min | 4 tasks | 8 files |
+| Phase 02-fastmcp-infrastructure P00 | 12min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -90,6 +93,7 @@ Recent decisions affecting current work:
 - [Phase Phase 01-04]: D-09: engine.apply_cop_action wires cop move + barrier placement in one cop action
 - [Phase Phase 01-04]: D-12: engine wires the turn boundary: apply_cop_action does cop-acts + capture-check, apply_thief_move does thief-move + turn-increment + survival-check
 - [Phase Phase 01-04]: increment_turn() added to state.py so engine.py has zero non-zero numeric literals (AST scan clean)
+- [Phase 02-00]: D-04/D-16/D-17/D-18: config/{police,thief}/network.json holds every network number; ports 8001/8002 and watchdog_poll_seconds=1 are engineering defaults not traced to PARAMETERS.md; retry_count=3/backoff_seconds=5 reused from Table 19 Gatekeeper rows
 
 ### Pending Todos
 
@@ -111,10 +115,13 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T18:10:00Z
-Stopped at: Phase 02 planning complete — 11 plans (02-00 … 02-10), 6 waves, plan-checker PASSED.
-  Phase-2 triplet written at docs/phases/phase-2/{PRD,PLAN,TODO}.md (ROADMAP task 02-97 ticked).
-  Carried forward: Phase-01 code review CR-01 still deferred into Phase 2.
-Resume file: None — ready to execute: /gsd:execute-phase 2 (clear context first).
+Last session: 2026-07-28T16:09:00Z
+Stopped at: Completed 02-00-PLAN.md (fastmcp deps, network.json, NetworkConfigKey,
+  13 test stubs). SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-00-SUMMARY.md.
+  Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-00 ticked
+  at /gsd:verify-work time.
+Resume file: None — continue with plan 02-01 (network config loader) via
+  /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
