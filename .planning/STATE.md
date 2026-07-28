@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-00-PLAN.md
-last_updated: "2026-07-28T11:20:14.096Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-07-28T11:39:13.901Z"
 last_activity: 2026-07-28
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 01 (base-logic) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-07-28
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [██░░░░░░░░] 20%
 
 *Updated after each plan completion*
 | Phase 01-base-logic P00 | 9min | 3 tasks | 23 files |
+| Phase 01-base-logic P01 | 15min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,11 @@ Recent decisions affecting current work:
 - [Phase ?]: D-05: all game numerics in game_params.json — zero hardcoded values in any src/ file (Appendix F §2 rule 1)
 - [Phase ?]: D-06: game_params.json duplicated byte-for-byte in config/police/ and config/thief/ for Phase-2 NET-09 identity check
 - [Phase ?]: D-04: package name is pursuit — neutral, usable by both cop and thief repos at Phase 8 split
+- [Phase 01-01]: D-07: constants.py/Enum hold only structural non-numeric values; zero game numbers hardcoded
+- [Phase 01-01]: D-08: barriered cell is impassable; get_legal_moves excludes it (prerequisite for BASE-05)
+- [Phase 01-01]: D-12: GameState @dataclass(frozen=True); immutable snapshot pattern; dataclasses.replace for transitions
+- [Phase 01-01]: D-13: STAY (current position) always in legal moves; agent can always pass even surrounded by barriers
+- [Phase 01-01]: D-14: Outcome enum names all four outcomes; only CAPTURE/SURVIVAL produced in Phase 1
 
 ### Pending Todos
 
@@ -88,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T11:20:13.961Z
+Last session: 2026-07-28T11:39:13.869Z
 Stopped at: Completed 01-00-PLAN.md
 Resume file: None

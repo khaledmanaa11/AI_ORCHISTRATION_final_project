@@ -13,14 +13,14 @@
 
 ### Base Logic (BASE) — Phase 1
 
-- [ ] **BASE-01**: Agents move only orthogonally (one step or stay); diagonal moves are rejected (rules 13–14)
+- [x] **BASE-01**: Agents move only orthogonally (one step or stay); diagonal moves are rejected (rules 13–14)
 - [ ] **BASE-02**: The cop may place at most the barrier quota; a barrier beyond quota is rejected (rule 15 placement; barrier quota, minimum)
 - [ ] **BASE-03**: Capture is detected when the cop lands on the thief's cell (rule 46)
 - [ ] **BASE-04**: Capture is detected when a barrier is placed on the thief's cell at the moment of contact (rule 46)
 - [ ] **BASE-05**: Capture is detected when the thief is left with no legal move (rule 47)
 - [ ] **BASE-06**: The thief wins by surviving the survival-threshold turns (minimum)
 - [ ] **BASE-07**: Every end scenario scores per the scoring table — capture 20/5, survival 5/10, tie 2, technical loss 0/0 (rule 48)
-- [ ] **BASE-08**: All numeric parameters load from config; zero hardcoded game values (PARAMETERS.md)
+- [x] **BASE-08**: All numeric parameters load from config; zero hardcoded game values (PARAMETERS.md)
 
 ### P2P / FastMCP Infrastructure (NET) — Phase 2
 

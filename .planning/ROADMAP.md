@@ -45,7 +45,7 @@ completion.
 Plans:
 **Wave 1**
 
-- [ ] 01-01: Board model + orthogonal movement/validation, all values from config
+- [x] 01-01: Board model + orthogonal movement/validation, all values from config
 - [ ] 01-02: Barrier placement with quota enforcement
 - [ ] 01-97: Create/refresh `docs/phases/phase-1/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 01-99: On verify-work, mark all Phase 1 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -226,7 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Base Logic | 1/5 | In Progress|  |
+| 1. Base Logic | 2/5 | In Progress|  |
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 0/5 | Not started | - |
