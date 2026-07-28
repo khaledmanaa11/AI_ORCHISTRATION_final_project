@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-04 executed (JSONL event log + watchdog); 6 plans remain (02-05…02-10)
-last_updated: "2026-07-28T20:16:00Z"
-last_activity: 2026-07-28 -- Executed 02-04-PLAN.md (JSONL event log event_log.py -- EventType/EventField/build_event/append_event/console_line, validate->serialize->write->flush->fsync->echo ordering D-11/D-14; watchdog.py -- Watchdog daemon thread, on_freeze then injected exit_action ordering per RESEARCH Pitfall 6, threshold_seconds/poll_seconds required no-default kwargs D-18/NET-07)
+stopped_at: Phase 02 — plan 02-05 executed (docs/PRD_mcp_transport.md per-mechanism PRD); 5 plans remain (02-06…02-10)
+last_updated: "2026-07-28T20:30:00Z"
+last_activity: 2026-07-28 -- Executed 02-05-PLAN.md (docs/PRD_mcp_transport.md -- per-mechanism PRD for the FastMCP peer layer, DOC-02/SEGAL 2.3, written in Wave 1 before the transport code it describes; covers topology D-01/D-03, transport composition + run_async-not-constructor rule, four-tool surface D-05, envelope D-06, push turn-passing D-07, handshake+config-digest D-08/D-15, state machine + severity policy D-09/D-10/D-12, deadline/watchdog resilience D-13/D-14, parameter table sourced to PARAMETERS.md Table 19 rows 3/4/6/7 with D-17 reuse rationale, engineering-defaults section D-16/D-18 explicitly separated from PARAMETERS.md values; numeric-provenance scanner + secrets/link checks all clean)
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 10
+  completed_plans: 11
   percent: 13
 ---
 
@@ -25,26 +25,28 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-04 done)
-Plan: 5 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04 done; 02-05 … 02-10 remain across Waves 1-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-05
-  (docs/PRD_mcp_transport.md) or run /gsd:execute-phase 2 again to pick up where this
-  session stopped.
-Last activity: 2026-07-28 -- Executed 02-04-PLAN.md: added src/pursuit/network/event_log.py
-  (EventType six members incl. ILLEGAL_TRANSITION/WATCHDOG_INCIDENT; EventField; build_event()
-  omits absent optionals; append_event() validate->serialize->write->flush->os.fsync->echo,
-  in that literal order, D-11; console_line() pure) and src/pursuit/network/watchdog.py
-  (Watchdog daemon thread — touch/start/stop/check_once; check_once() strict-> threshold
-  compare, on_freeze then injected exit_action in that order per RESEARCH Pitfall 6, a
-  raising on_freeze suppressed via contextlib.suppress so exit still fires; WatchdogExit
-  IntEnum; threshold_seconds/poll_seconds required keyword-only, no default in source, D-18).
-  tests/unit/test_watchdog.py split into two files at the 150-line limit (plan-anticipated);
-  a flaky real-thread lifecycle test fixed with a threading.Event sync barrier instead of a
-  timed sleep. uv run pytest tests/unit/ -x -q: 108 passed, 25 skipped, 0 regressions.
-  Coverage: event_log.py 100%, watchdog.py 98% (only the real os._exit() call untested by
-  design). Plan-internal "watchdog" substring tension (required EventType.WATCHDOG_INCIDENT
-  enum value vs. the plan's own substring-scan verify checks) documented in the SUMMARY,
-  same resolution pattern as 02-03's event_log tension.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-05 done)
+Plan: 6 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05 done; 02-06 … 02-10 remain
+  across Waves 2-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-06
+  (FastMCP tool surface + PeerRuntime, NET-02/03/08) or run /gsd:execute-phase 2 again to
+  pick up where this session stopped.
+Last activity: 2026-07-28 -- Executed 02-05-PLAN.md (documentation-only plan, no source
+  touched): wrote docs/PRD_mcp_transport.md, the per-mechanism PRD for the FastMCP peer
+  layer (DOC-02, CLAUDE.md/SEGAL 2.3), approved and committed in Wave 1 before any
+  transport code exists (SEGAL 2.5 step 5). Sections 1-6 (topology D-01/D-03, transport
+  composition + the run_async-not-constructor and never-call-run() rules, four-tool
+  surface D-05, {type,turn,sender,payload} envelope D-06, push turn-passing via
+  asyncio.Queue D-07) committed first; sections 7-11 (handshake+config-digest D-08/D-15,
+  state diagram + severity policy D-09/D-10/D-12, deadline/MCPError-vs-ToolError/watchdog
+  resilience D-13/D-14, parameter table sourced to PARAMETERS.md Table 19 rows 3/4/6/7
+  with the D-17 reuse rationale in prose, engineering-defaults subsection D-16/D-18
+  explicitly labelled NOT PARAMETERS.md values, restated acceptance criteria) appended
+  second. Task 2's first draft (307 lines) exceeded the plan's own <260-line verify gate;
+  rewrote by collapsing word-wrapped prose into single unwrapped lines (no content
+  change) to 182 lines. Task 3's numeric-provenance scanner, secrets scanner, link
+  checker, and manual 12-18-range eyeball pass all found zero violations on first run.
+  docs/phases/phase-2/TODO.md row 2-05 and its phase-gate DOC-02 checkbox marked done.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -125,6 +127,9 @@ Recent decisions affecting current work:
 - [Phase 02-04]: D-14/D-18/NET-07 (RESEARCH Pitfall 6): Watchdog.check_once() runs on_freeze (suppressing exceptions) THEN the injected exit_action, verified by reading the incident file from inside the exit callable itself; threshold_seconds/poll_seconds are required keyword-only constructor args with no default in source
 - [Phase 02-04]: watchdog_poll_seconds was already present in NetworkParams/network.json (=1, D-18) before this plan ran — no hand-off gap to close at 02-09
 - [Phase 02-04]: Plan-internal tension (same category as 02-03's event_log substring issue): EventType.WATCHDOG_INCIDENT = "watchdog_incident" is required verbatim by the interfaces contract, but the plan's own verify/decoupling-audit scripts substring-scan for "watchdog" in event_log.py and flag it. Resolved by rewording every avoidable docstring mention (in both event_log.py and watchdog.py) and documenting the one irreducible, schema-required occurrence in the SUMMARY; true import-level decoupling (no `import` of watchdog in event_log.py or vice versa) independently re-verified and holds
+- [Phase 02-05]: DOC-02: docs/PRD_mcp_transport.md written and approved in Wave 1, before any transport source exists (SEGAL §2.5 step 5) — documentation-only plan, zero source/config touched
+- [Phase 02-05]: D-16/D-18 category separation enforced structurally: §10.1 (PARAMETERS.md-traced: 30s/60s/3/5s, Table 19 rows 6/7/4/3) and §10.2 (engineering defaults: ports 8001/8002, watchdog_poll_seconds=1) are two visually distinct tables so neither reader nor future phase can conflate them
+- [Phase 02-05]: D-17 reuse of Table 19 Gatekeeper rows 3-4 for the NET-06 retry/backoff pair documented in prose as a deliberate, auditable reuse (both minimum status, may be raised never lowered) rather than an invented second pair of numbers
 
 ### Pending Todos
 
@@ -146,15 +151,16 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T20:16:00Z
-Stopped at: Completed 02-04-PLAN.md (JSONL event log event_log.py — D-11/NET-05/NET-07;
-  watchdog daemon thread watchdog.py — D-14/D-18/NET-07, incident-before-exit ordering
-  per RESEARCH Pitfall 6). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-04-SUMMARY.md.
+Last session: 2026-07-28T20:30:00Z
+Stopped at: Completed 02-05-PLAN.md (docs/PRD_mcp_transport.md — per-mechanism PRD for
+  the FastMCP peer layer, DOC-02, written before the transport code per SEGAL §2.5 step
+  5; documentation-only plan, zero source/config touched). SUMMARY at
+  .planning/phases/02-fastmcp-infrastructure/02-05-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-05..02-10
-  ticked as those plans land, and the full sweep at /gsd:verify-work time.
-Resume file: None — continue with plan 02-05 (docs/PRD_mcp_transport.md) via
-  /gsd:execute-phase 2 (clear context first).
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-05 and its DOC-02 phase-gate
+  checkbox now ticked; rows for 02-06..02-10 still need ticking as those plans land, and
+  the full sweep (plus root docs/TODO.md) at /gsd:verify-work time.
+Resume file: None — continue with plan 02-06 (FastMCP tool surface + PeerRuntime,
+  NET-02/03/08) via /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N

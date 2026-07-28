@@ -13,7 +13,7 @@
 | 2-02 Envelope + canonical-JSON config digest | P0 | ☑ | Khaled | `{type,turn,sender,payload}` round-trips losslessly; malformed rejected; key-order difference hashes **equal**, one-key difference hashes **unequal** (NET-08/09) |
 | 2-03 Turn state machine + illegal-transition reporting | P0 | ☑ | Khaled | `State` enum + `ALLOWED_TRANSITIONS` table, no FSM library; every illegal attempt rejected **and** reported; recoverable keeps playing, protocol violation → `ERROR` (NET-04/05) |
 | 2-04 JSONL event log + watchdog | P0 | ☑ | Khaled | One JSON object per line, `flush()` + `os.fsync()` per write; on a stale timestamp the incident record is durable **before** the injected exit fires (NET-05/07) |
-| 2-05 `docs/PRD_mcp_transport.md` | P0 | ☐ | Khaled | v1.00; parameter table with a Source column; ports + poll interval labelled engineering defaults; `run_async()`-not-constructor rule pinned. Written **before** the transport code (DOC-02, SEGAL §2.5) |
+| 2-05 `docs/PRD_mcp_transport.md` | P0 | ☑ | Khaled | v1.00; parameter table with a Source column; ports + poll interval labelled engineering defaults; `run_async()`-not-constructor rule pinned. Written **before** the transport code (DOC-02, SEGAL §2.5) |
 | 2-06 Tool surface + peer runtime | P0 | ☐ | Khaled | Four `async def` tools registered and callable in-memory; `receive_move` enqueues and returns without blocking; server shutdown releases the port (NET-02/03/08) |
 | 2-07 Deadline tracker + technical win | P0 | ☐ | Khaled | Timeout ladder uses config 30/3/5; `ToolError` never laundered into a technical win; verdict carries truthful evidence; no test sleeps on real time (NET-06) |
 | 2-08 Handshake + config-digest exchange | P0 | ☐ | Khaled | Matching digests advance past `HANDSHAKE`; mismatch **aborts before move 1** with both digests recorded; unreachable peer is a distinct outcome from mismatch (NET-03/05/09) |
@@ -31,5 +31,5 @@
 - [ ] `uv run pytest --cov=pursuit` ≥ 85% (QUAL-10)
 - [ ] `uv run ruff check .` → 0 violations (QUAL-09)
 - [ ] `bash scripts/check_line_limit.sh` passes all src/ and tests/ files (QUAL-08)
-- [ ] `docs/PRD_mcp_transport.md` committed at v1.00 (DOC-02)
+- [x] `docs/PRD_mcp_transport.md` committed at v1.00 (DOC-02)
 - [ ] `docs/phases/phase-2/{PRD,PLAN,TODO}.md` committed and filled (CLAUDE.md)
