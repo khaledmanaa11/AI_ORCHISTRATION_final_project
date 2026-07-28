@@ -46,7 +46,7 @@ Plans:
 **Wave 1**
 
 - [x] 01-01: Board model + orthogonal movement/validation, all values from config
-- [ ] 01-02: Barrier placement with quota enforcement
+- [x] 01-02: Barrier placement with quota enforcement
 - [ ] 01-97: Create/refresh `docs/phases/phase-1/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 01-99: On verify-work, mark all Phase 1 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
