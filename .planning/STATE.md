@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-28T10:57:53.286Z"
-last_activity: 2026-07-28 -- Phase 01 planning complete
+stopped_at: Completed 01-00-PLAN.md
+last_updated: "2026-07-28T11:20:14.096Z"
+last_activity: 2026-07-28
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 1 — Base Logic
+**Current focus:** Phase 01 — base-logic
 
 ## Current Position
 
-Phase: 1 of 8 (Base Logic)
-Plan: 0 of 4 in current phase
+Phase: 01 (base-logic) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-28 -- Phase 01 planning complete
+Last activity: 2026-07-28
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01-base-logic P00 | 9min | 3 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - Init: Fixed 8-phase build order (book §10.3 stages 1–7 + submission phase 8) — phases are not re-derived
 - Init: Real `docs/PRD.md`, `docs/PLAN.md`, `docs/TODO.md` (Segal §2.2), not `.planning/` pointers
 - Init: GSD config — Balanced models, Interactive mode, branching none, TDD on, UI phases off
+- [Phase ?]: D-05: all game numerics in game_params.json — zero hardcoded values in any src/ file (Appendix F §2 rule 1)
+- [Phase ?]: D-06: game_params.json duplicated byte-for-byte in config/police/ and config/thief/ for Phase-2 NET-09 identity check
+- [Phase ?]: D-04: package name is pursuit — neutral, usable by both cop and thief repos at Phase 8 split
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-27T19:00:11.625Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-base-logic/01-CONTEXT.md
+Last session: 2026-07-28T11:20:13.961Z
+Stopped at: Completed 01-00-PLAN.md
+Resume file: None

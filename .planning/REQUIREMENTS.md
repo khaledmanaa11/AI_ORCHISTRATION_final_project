@@ -101,12 +101,12 @@
 
 From [docs/SEGAL_GUIDELINES.md](../docs/SEGAL_GUIDELINES.md) §19.1 Table 5.
 
-- [ ] **QUAL-01**: All business logic sits behind an SDK layer; GUI/CLI are thin shells (Table 5)
+- [x] **QUAL-01**: All business logic sits behind an SDK layer; GUI/CLI are thin shells (Table 5)
 - [ ] **QUAL-02**: OOP with no duplication — extract at 2+ copies into a shared module/base class/mixin (Table 5)
 - [ ] **QUAL-03**: Every external API call passes through a single API gatekeeper (Table 5)
 - [ ] **QUAL-04**: Rate limits live in configuration, never in source (Table 5)
 - [ ] **QUAL-05**: On overflow the gatekeeper queues (FIFO), never crashes (Table 5)
-- [ ] **QUAL-06**: Version tracking starts at 1.00 in `version.py` and in the config JSON files (Table 5)
+- [x] **QUAL-06**: Version tracking starts at 1.00 in `version.py` and in the config JSON files (Table 5)
 - [ ] **QUAL-07**: TDD — red → green → refactor; tests cover happy path and error case; external services mocked (Table 5)
 - [ ] **QUAL-08**: Every source and test file is ≤150 lines (excluding blanks/comments) — split, never compress (Table 5)
 - [ ] **QUAL-09**: `ruff check` reports zero violations (Table 5)
