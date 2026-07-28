@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-01 executed (network config loader); 9 plans remain (02-02…02-10)
-last_updated: "2026-07-28T17:00:00Z"
-last_activity: 2026-07-28 -- Executed 02-01-PLAN.md (loader_helpers extraction, NetworkParams loader, D-16 env override, QUAL-02 guard)
+stopped_at: Phase 02 — plan 02-02 executed (envelope + config digest); 8 plans remain (02-03…02-10)
+last_updated: "2026-07-28T17:30:00Z"
+last_activity: 2026-07-28 -- Executed 02-02-PLAN.md (D-06 typed message Envelope + fail-loud from_dict, canonical-JSON config_digest/digests_match, NET-08/NET-09)
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 7
+  completed_plans: 8
   percent: 13
 ---
 
@@ -25,19 +25,17 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-01 done)
-Plan: 2 of 11 executed (02-00, 02-01 done; 02-02 … 02-10 remain across Waves 1-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-02
-  (envelope + config digest) or run /gsd:execute-phase 2 again to pick up where this
-  session stopped.
-Last activity: 2026-07-28 -- Executed 02-01-PLAN.md: extracted require_key/require_int/
-  require_str into src/pursuit/shared/loader_helpers.py (QUAL-02), re-pointed config.py
-  at it (behaviour-preserving, verified against all 5 original test_config.py tests),
-  added src/pursuit/shared/network_config.py with frozen NetworkParams + fail-loud
-  load_network_config (NET-01, NET-02, QUAL-11), D-16 env override
-  (PURSUIT_HOST/PORT/OPPONENT_URL) applied after file validation. uv run pytest
-  tests/unit/ -x -q: 60 passed, 48 skipped, 0 regressions. Coverage of both new
-  modules 100%; project total 99.21%.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-02 done)
+Plan: 3 of 11 executed (02-00, 02-01, 02-02 done; 02-03 … 02-10 remain across Waves 1-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-03
+  (state machine) or run /gsd:execute-phase 2 again to pick up where this session stopped.
+Last activity: 2026-07-28 -- Executed 02-02-PLAN.md: added src/pursuit/network/envelope.py
+  (MessageType enum, EnvelopeKey, frozen Envelope with to_dict/from_dict, D-06/NET-08
+  fail-loud decode: bool-before-int turn check, empty-sender check, unknown-type
+  re-raise) and src/pursuit/network/config_hash.py (canonical_json/config_digest/
+  digests_match, D-08/D-15/NET-09 — digest over canonically re-serialized JSON, never
+  raw bytes; secrets.compare_digest). uv run pytest tests/unit/ -x -q: 85 passed,
+  39 skipped, 0 regressions. Coverage of both new modules 100%; project total 99.37%.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -68,6 +66,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 01-base-logic P04 | 9min | 4 tasks | 8 files |
 | Phase 02-fastmcp-infrastructure P00 | 12min | 3 tasks | 20 files |
 | Phase 02-fastmcp-infrastructure P01 | 18min | 3 tasks | 6 files |
+| Phase 02-fastmcp-infrastructure P02 | 12min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -103,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase 02-01]: QUAL-02: require_key/require_int/require_str extracted to src/pursuit/shared/loader_helpers.py at the second consumer (network_config.py); config.py re-pointed at it, zero private validator copies remain
 - [Phase 02-01]: NET-02 guaranteed by construction: load_network_config returns a fresh NetworkParams every call, no module-level cache/singleton; verified by identity checks in both directions (police vs thief, and two calls to the same file)
 - [Phase 02-01]: Reused 02-00's NetworkConfigKey.ENV_HOST/ENV_PORT/ENV_OPPONENT_URL for the D-16 override names instead of adding a duplicate NetworkEnvVar class
+- [Phase 02-02]: D-06: Envelope frozen dataclass fixed at exactly four keys {type, turn, sender, payload}; from_dict accepts wire `type` as a string only, never a MessageType instance; Phase-4 hint / Phase-6 commit arrive as new MessageType members, never new envelope keys
+- [Phase 02-02]: D-08/D-15: config_digest hashes canonically re-serialized JSON (sort_keys=True, separators=(",", ":")), never raw file bytes, so formatting drift can never fake a NET-09 config mismatch; canonical_json() is the single project-wide canonicalisation Phase 6's commit-reveal hash must reuse (QUAL-02)
+- [Phase 02-02]: digests_match uses secrets.compare_digest per CLAUDE.md's standing digest-comparison idiom, ahead of Phase 6 where it becomes security-critical
 
 ### Pending Todos
 
@@ -124,13 +126,13 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T17:00:00Z
-Stopped at: Completed 02-01-PLAN.md (loader_helpers extraction, NetworkParams loader).
-  SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-01-SUMMARY.md.
+Last session: 2026-07-28T17:30:00Z
+Stopped at: Completed 02-02-PLAN.md (D-06 typed message Envelope, D-08/D-15 canonical-JSON
+  config digest). SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-02-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-00 and
-  02-01 ticked at /gsd:verify-work time.
-Resume file: None — continue with plan 02-02 (envelope + config digest) via
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) still needs its TODO rows for 02-00, 02-01
+  and 02-02 ticked at /gsd:verify-work time.
+Resume file: None — continue with plan 02-03 (state machine) via
   /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
