@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-07-28T11:51:00Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-07-28T12:03:00Z"
 last_activity: 2026-07-28
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 01 (base-logic) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-28
 
@@ -55,6 +55,7 @@ Progress: [████░░░░░░] 40%
 | Phase 01-base-logic P00 | 9min | 3 tasks | 23 files |
 | Phase 01-base-logic P01 | 15min | 3 tasks | 9 files |
 | Phase 01 P02 | 10min | 3 tasks | 6 files |
+| Phase 01 P03 | 5min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,11 @@ Recent decisions affecting current work:
 - [Phase 01-02]: D-10: barrier-on-thief IS accepted; capture consequence owned by detect_capture (01-03)
 - [Phase 01-02]: D-11: quota enforced via params.barrier_quota only; zero numeric literals in barrier.py (AST verified)
 - [Phase 01-02]: Validate-first order in place_barrier prevents Pitfall 2 (spurious quota consumption on invalid placements)
+- [Phase 01-03]: D-12 check order: BASE-03 (cop==thief) -> BASE-04 (thief in barriers) -> BASE-05 (no legal moves) -> None
+- [Phase 01-03]: D-13 note: BASE-05 independent trigger geometrically impossible; STAY always legal unless BASE-04 fires first
+- [Phase 01-03]: D-14: score_outcome reads exclusively from params.score_* fields; only literal 0 for TECHNICAL_LOSS
+- [Phase 01-03]: D-15: Phase 1 produces only CAPTURE/SURVIVAL; TIE/TECHNICAL_LOSS unreachable but scored for completeness
+- [Phase 01-03]: D-16: evaluate_turn_end uses params.survival_threshold (no hardcoded value)
 
 ### Pending Todos
 
@@ -98,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T11:51:00Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-07-28T12:03:00Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

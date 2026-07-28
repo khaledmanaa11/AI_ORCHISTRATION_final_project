@@ -52,7 +52,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03: Capture and end-condition detection + scoring table
+- [x] 01-03: Capture and end-condition detection + scoring table
 
 ### Phase 2: FastMCP Infrastructure
 
