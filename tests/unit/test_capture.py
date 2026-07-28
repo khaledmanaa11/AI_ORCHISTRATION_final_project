@@ -1,9 +1,8 @@
 """Tests for capture detection and outcome scoring (BASE-03..07)."""
 
+from pursuit.constants import Outcome
 from pursuit.shared.capture import detect_capture, evaluate_turn_end
 from pursuit.shared.outcome import score_outcome
-
-from pursuit.constants import Outcome
 from pursuit.shared.state import GameState
 
 
@@ -105,3 +104,25 @@ def test_survival_score(default_params) -> None:
     cop_score, thief_score = score_outcome(Outcome.SURVIVAL, default_params)
     assert cop_score == default_params.score_survival_cop
     assert thief_score == default_params.score_survival_thief
+
+
+def test_tie_score(default_params) -> None:
+    """TIE outcome returns (score_tie, score_tie) from params (D-14)."""
+    cop_score, thief_score = score_outcome(Outcome.TIE, default_params)
+    assert cop_score == default_params.score_tie
+    assert thief_score == default_params.score_tie
+
+
+def test_technical_loss_score(default_params) -> None:
+    """TECHNICAL_LOSS outcome returns (0, 0) — only literal zero permitted."""
+    cop_score, thief_score = score_outcome(Outcome.TECHNICAL_LOSS, default_params)
+    assert cop_score == 0
+    assert thief_score == 0
+
+
+def test_score_outcome_invalid_raises(default_params) -> None:
+    """Unrecognised outcome raises ValueError (correctness guard)."""
+    import pytest
+
+    with pytest.raises(ValueError, match="Unrecognised outcome"):
+        score_outcome("not_an_outcome", default_params)  # type: ignore[arg-type]
