@@ -1,18 +1,78 @@
-"""Stubs for QUAL-01 — SDK engine facade tests."""
+"""QUAL-01 delegation tests for the SDK engine facade (plan 01-04).
 
-import pytest
+One test per SDK method. Each test verifies delegation behaviour only —
+internal logic (movement, barrier rules, capture conditions) is covered by
+the respective shared-module test files (test_board.py, test_barrier.py,
+test_capture.py).  No numeric game-parameter values are hardcoded here.
+"""
 
-
-def test_engine_exposes_make_move() -> None:
-    """The SDK engine exposes a make_move callable at the public interface."""
-    pytest.skip("stub — implemented in plan 01-04")
-
-
-def test_engine_exposes_place_barrier() -> None:
-    """The SDK engine exposes a place_barrier callable at the public interface."""
-    pytest.skip("stub — implemented in plan 01-04")
+from pursuit.constants import Outcome
+from pursuit.sdk import engine
+from pursuit.shared.state import GameState
 
 
-def test_engine_exposes_detect_capture() -> None:
-    """The SDK engine exposes a detect_capture callable at the public interface."""
-    pytest.skip("stub — implemented in plan 01-04")
+def test_make_state(default_params):
+    """make_state returns a canonical GameState from config start positions."""
+    state = engine.make_state(default_params)
+    assert state.cop == default_params.cop_start
+    assert state.thief == default_params.thief_start
+    assert state.barriers == frozenset()
+    assert state.barriers_placed == 0
+    assert state.turn == 0
+
+
+def test_legal_moves_delegates(default_params, start_state):
+    """legal_moves delegates to get_legal_moves; stay is always legal."""
+    moves = engine.legal_moves(start_state, "thief", default_params)
+    assert isinstance(moves, list)
+    assert start_state.thief in moves
+
+
+def test_apply_cop_action_move_only(default_params, start_state):
+    """apply_cop_action with move only: cop repositioned, no capture."""
+    dest = (0, 1)
+    new_state, outcome = engine.apply_cop_action(start_state, dest, None, default_params)
+    assert new_state.cop == dest
+    assert new_state.thief == start_state.thief
+    assert outcome is None
+
+
+def test_apply_cop_action_barrier(default_params, start_state):
+    """apply_cop_action with move + barrier: barrier added, quota incremented."""
+    dest = (0, 1)
+    barrier = (1, 1)
+    new_state, outcome = engine.apply_cop_action(
+        start_state, dest, barrier, default_params
+    )
+    assert barrier in new_state.barriers
+    assert new_state.barriers_placed == start_state.barriers_placed + 1
+    assert outcome is None
+
+
+def test_apply_thief_move_increments_turn(default_params, start_state):
+    """apply_thief_move repositions thief and increments turn counter."""
+    dest = (3, 4)
+    new_state, outcome = engine.apply_thief_move(start_state, dest, default_params)
+    assert new_state.thief == dest
+    assert new_state.turn == start_state.turn + 1
+    assert outcome is None
+
+
+def test_check_capture_delegates(default_params):
+    """check_capture delegates to detect_capture; cop==thief yields CAPTURE."""
+    state = GameState(
+        cop=(3, 3),
+        thief=(3, 3),
+        barriers=frozenset(),
+        barriers_placed=0,
+        turn=0,
+    )
+    result = engine.check_capture(state, default_params)
+    assert result is Outcome.CAPTURE
+
+
+def test_score_delegates(default_params):
+    """score delegates to score_outcome; values match params.score_capture_*."""
+    cop_score, thief_score = engine.score(Outcome.CAPTURE, default_params)
+    assert cop_score == default_params.score_capture_cop
+    assert thief_score == default_params.score_capture_thief
