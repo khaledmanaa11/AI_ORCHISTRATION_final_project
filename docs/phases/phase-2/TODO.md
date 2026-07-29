@@ -16,8 +16,8 @@
 | 2-05 `docs/PRD_mcp_transport.md` | P0 | ☑ | Khaled | v1.00; parameter table with a Source column; ports + poll interval labelled engineering defaults; `run_async()`-not-constructor rule pinned. Written **before** the transport code (DOC-02, SEGAL §2.5) |
 | 2-06 Tool surface + peer runtime | P0 | ☑ | Khaled | Four `async def` tools registered and callable in-memory; `receive_move` enqueues and returns without blocking; server shutdown releases the port (NET-02/03/08) |
 | 2-07 Deadline tracker + technical win | P0 | ☑ | Khaled | Timeout ladder uses config 30/3/5; `ToolError` never laundered into a technical win; verdict carries truthful evidence; no test sleeps on real time (NET-06) |
-| 2-08 Handshake + config-digest exchange | P0 | ☐ | Khaled | Matching digests advance past `HANDSHAKE`; mismatch **aborts before move 1** with both digests recorded; unreachable peer is a distinct outcome from mismatch (NET-03/05/09) |
-| 2-09 Orchestrator + thin `main.py` + dev launcher | P0 | ☐ | Khaled | Turn loop drives the state machine; no shared runtime state between agents (two named tests); launcher is not a referee; `GAME_OVER` releases the port (NET-01/02/04/05/06/07) |
+| 2-08 Handshake + config-digest exchange | P0 | ☑ | Khaled | Matching digests advance past `HANDSHAKE`; mismatch **aborts before move 1** with both digests recorded; unreachable peer is a distinct outcome from mismatch (NET-03/05/09) |
+| 2-09 Orchestrator + thin `main.py` + dev launcher | P0 | ☑ | Khaled | Turn loop drives the state machine; no shared runtime state between agents (two named tests); launcher is not a referee; `GAME_OVER` releases the port (NET-01/02/04/05/06/07) |
 | 2-10 §10.4 gate tests + coverage audit | P0 | ☐ | Khaled | GATE-1/2/3 each map to named runnable tests; NET-01…NET-09 coverage audit closes; real two-process standalone launch succeeds |
 | 2-97 Phase doc triplet at plan-phase | P1 | ☑ | Khaled | `docs/phases/phase-2/{PRD,PLAN,TODO}.md` created and filled (CLAUDE.md) |
 | 2-99 Verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☐ | Khaled | Phase gate met; all TODOs checked; root docs/TODO.md Phase 2 section all ☑ (DOC-01) |

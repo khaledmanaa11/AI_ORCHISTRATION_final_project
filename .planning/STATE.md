@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-07 executed (NET-06 deadline tracker + retry/backoff + technical-win verdict); 3 plans remain (02-08…02-10)
-last_updated: "2026-07-29T12:19:08+03:00"
-last_activity: 2026-07-29 -- Executed 02-07-PLAN.md (src/pursuit/network/deadline.py + src/pursuit/network/verdict.py, TDD RED/GREEN/REFACTOR): wait_for_opponent(queue, *, timeout) bounds a single queued-envelope wait; call_with_retry(send, *, timeout, retries, backoff, sleep, clock) runs a narrow retries+1-attempt retry ladder with except ToolError: raise placed BEFORE except RETRYABLE_TRANSPORT_ERRORS = (McpError, DeadlineExpired), so an opponent tool-body rejection can never be laundered into an unearned technical win (RESEARCH Pitfall 4); exhausted retries return a CallOutcome carrying a TechnicalWin with measured evidence (attempts/elapsed_seconds/last_error), never a side effect. Task 1 STEP 0 found 02-RESEARCH.md's cited `MCPError` does not exist in the installed fastmcp 3.4.5/mcp packages -- the real class is `McpError` (mixed case) -- corrected throughout. All eight tests passed first try after that fix; coverage 100%, full suite green (136 passed, 16 skipped), ruff/line-limit clean repo-wide.
+stopped_at: Phase 02 — plan 02-09 executed (turn orchestrator + agent lifecycle wiring, NET-01/02/04/05/06/07/09); 1 plan remains (02-10)
+last_updated: "2026-07-29T14:20:00+03:00"
+last_activity: 2026-07-29 -- Executed 02-09-PLAN.md (src/pursuit/network/turn_events.py, orchestrator.py + turn_actions.py, agent_lifecycle.py + agent_wiring.py, src/pursuit/main.py, scripts/dev_launch.py; TDD RED/GREEN + thin-shell task): the per-agent MY_TURN <-> WAIT_OPPONENT turn loop composes 02-01/02/03/04/06/07/08 into two standalone, independent processes sharing no runtime object (NET-02, static + dynamic proof); default_context wires 02-08's respond_to_handshake behind 02-06's real handshake tool at PeerRuntime construction time (NET-09), proved against a real in-memory FastMCP server; a silent opponent yields a clean technical win (NET-06) and GAME_OVER releases the port (RESEARCH Open Question 2 re-confirmed). orchestrator.py and agent_lifecycle.py both had to split at the 150-line gate (turn_actions.py, agent_wiring.py) -- the orchestrator split needed a PEP 562 module __getattr__ to avoid a real circular import. Both --check-config invocations exit 0 independently; dev_launch.py is AST-verified to import nothing from pursuit. Full suite 170 passed, 7 skipped, coverage 96.86%; ruff/line-limit clean repo-wide.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 15
   percent: 13
 ---
 
@@ -25,35 +25,33 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 2 / plan 02-07 done)
-Plan: 8 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06, 02-07 done;
-  02-08…02-10 remain across Waves 3-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-08
-  (handshake responder) or run /gsd:execute-phase 2 again to pick up where this session
-  stopped.
-Last activity: 2026-07-29 -- Executed 02-07-PLAN.md (TDD RED/GREEN/REFACTOR). Task 1
-  STEP 0: verified the exception surface before writing any test -- `from mcp import
-  MCPError` (as 02-RESEARCH.md's cited snippet spells it) raises ImportError against the
-  installed fastmcp 3.4.5/mcp packages; the real class is `McpError` (mixed case),
-  confirmed against mcp.shared.exceptions.McpError's source and the Raises: docstrings in
-  fastmcp/client/mixins/tools.py; issubclass(ToolError, McpError) is False. Wrote the
-  eight-test NET-06 suite (split into test_deadline.py + test_deadline_retry.py at the
-  150-line gate, shared fakes in the former per QUAL-02); confirmed ModuleNotFoundError
-  RED gate. Task 2 GREEN: implemented src/pursuit/network/verdict.py
-  (TechnicalWinReason/TechnicalWin/CallOutcome, pre-authorised split) and
-  src/pursuit/network/deadline.py (DeadlineExpired, RETRYABLE_TRANSPORT_ERRORS =
-  (McpError, DeadlineExpired), a single _bounded asyncio.wait_for site, wait_for_opponent,
-  call_with_retry with except ToolError: raise placed before except
-  RETRYABLE_TRANSPORT_ERRORS) -- all eight tests passed first try; fixed two blocking
-  issues found while running the plan's own gates (deadline.py measured 171 code lines on
-  first draft, compacted docstrings to fit under 150 without dropping content; the
-  docstring's own "no bare except Exception" sentence tripped the plan's bare-except grep
-  audit, reworded without weakening the rule). Task 3 REFACTOR: coverage 100% (58/58
-  statements, all branches), full suite green (136 passed, 16 skipped, no regression),
-  all four static audits (numeric literals, no-default signatures, ToolError exclusion,
-  no module-level mutable state) re-confirmed, decision-trace greps (Table 19, minimum)
-  present in the module docstring, git status confirmed zero overlap with 02-06 -- no
-  further code changes needed so no separate Task 3 commit.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 4 / plan 02-09 done)
+Plan: 10 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06, 02-07, 02-08,
+  02-09 done; 02-10 remains, Wave 5 — the phase gate/coverage-audit plan)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-10
+  (§10.4 gate tests + coverage audit) or run /gsd:execute-phase 2 again to pick up where
+  this session stopped.
+Last activity: 2026-07-29 -- Executed 02-09-PLAN.md (TDD RED/GREEN + Task 3 thin shells).
+  Task 1 RED: wrote 22 named tests across test_turn_events.py, test_orchestrator.py +
+  test_orchestrator_loop.py, test_agent_lifecycle.py + test_agent_lifecycle_resilience.py,
+  plus a shared tests/unit/_fakes_agent.py (FakeReporter/FakeWatchdog/FakeClient/
+  FakeRuntime + make_ctx); confirmed ImportError RED gate against turn_events/
+  orchestrator/agent_lifecycle. Task 2 GREEN: implemented turn_events.py (5 pure D-11
+  builders), orchestrator.py + turn_actions.py (AgentContext + the MY_TURN <->
+  WAIT_OPPONENT loop, game logic reached only via pursuit.sdk.engine), agent_lifecycle.py
+  + agent_wiring.py (config load, the NET-09 handshake-responder seam bound at
+  PeerRuntime construction, run_agent). Fixed two test-authorship bugs found during
+  GREEN (make_ctx's response_timeout=0 default cancelled a should-succeed FakeClient push
+  before it could run; the port-release probe busy-waited without yielding to the event
+  loop) and one asyncio.CancelledError-vs-Exception suppress bug in a test double. Both
+  orchestrator.py and agent_lifecycle.py exceeded the 150-line gate on first draft (212
+  and 222 lines) -- split into turn_actions.py and agent_wiring.py respectively; the
+  orchestrator/turn_actions split needed a PEP 562 module __getattr__ (an eager
+  cross-import was a genuine circular import under one load order, reproduced and
+  fixed). Task 3: wrote src/pursuit/main.py (thin standalone entry point) and
+  scripts/dev_launch.py (convenience launcher, AST-verified no pursuit import); both
+  --check-config invocations exit 0 independently. Full suite 170 passed, 7 skipped, 0
+  regressions; coverage 96.86% (>=85%); ruff/line-limit clean repo-wide.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -90,6 +88,8 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 02-fastmcp-infrastructure P05 | 10min | 3 tasks | 1 file |
 | Phase 02-fastmcp-infrastructure P06 | 25min | 3 tasks | 5 files |
 | Phase 02-fastmcp-infrastructure P07 | 20min | 3 tasks | 4 files |
+| Phase 02-fastmcp-infrastructure P08 | 30min | 3 tasks | 5 files |
+| Phase 02 P09 | 75min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -147,6 +147,9 @@ Recent decisions affecting current work:
 - [Phase 02-07]: Exception-surface correction for all later plans touching NET-06/transport errors: the installed fastmcp 3.4.5/mcp packages spell the transport exception `McpError` (mixed case), NOT `MCPError` as 02-RESEARCH.md's cited snippet spells it -- `from mcp import MCPError` raises ImportError; `from mcp import McpError` is correct. issubclass(ToolError, McpError) is False, so RESEARCH Pitfall 4's except-clause design (ToolError excluded from the retryable set) is unaffected, only the import spelling
 - [Phase 02-07]: D-13/D-17 implemented: RETRYABLE_TRANSPORT_ERRORS = (McpError, DeadlineExpired); except ToolError: raise placed BEFORE except RETRYABLE_TRANSPORT_ERRORS inside call_with_retry so an application-level tool rejection can never become an unearned technical win; exhausted retries return a CallOutcome carrying a TechnicalWin (reason, attempts, timeout_seconds, backoff_seconds, elapsed_seconds, last_error) as a returned value only -- deadline.py never ends the game, scores, or logs
 - [Phase 02-07]: __all__ written as an immutable tuple, not a list, in deadline.py -- satisfies both the plan's literal "export the seven public names" instruction and the NET-02 AST guard that forbids module-level list/dict/set literals
+- [Phase 02-09]: Design note 8 resolved: call_with_retry DOES retry DeadlineExpired (RETRYABLE_TRANSPORT_ERRORS includes it), so await_opponent_turn wraps wait_for_opponent in call_with_retry rather than declaring a technical win on the first inbound timeout; retries_attempted is always the measured attempt count, never a constant
+- [Phase 02-09]: Two 150-line-gate splits: orchestrator.py -> {orchestrator.py, turn_actions.py} (not pre-authorised by the plan, done anyway per Segal's hard line limit) and agent_lifecycle.py -> {agent_lifecycle.py, agent_wiring.py} (pre-authorised). The orchestrator/turn_actions re-export needed a PEP 562 module __getattr__ instead of an eager import -- an eager cross-import was reproduced as a genuine circular import when turn_actions.py was imported first, verified fixed under both import orders
+- [Phase 02-09]: fastmcp.Client is a required async context manager (Client.__aenter__ calls self._connect()) -- take_my_turn/run_agent always enter it via `async with` before calling a tool; the plan's own pseudocode omitted this and was adapted accordingly
 
 ### Pending Todos
 
@@ -168,17 +171,18 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T12:19:08+03:00
-Stopped at: Completed 02-07-PLAN.md (src/pursuit/network/deadline.py +
-  src/pursuit/network/verdict.py — NET-06 deadline tracker + retry/backoff +
-  technical-win verdict, D-13/D-17, TDD RED/GREEN/REFACTOR; Task 1 STEP 0 found and fixed
-  the MCPError -> McpError exception-spelling drift from 02-RESEARCH.md). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-07-SUMMARY.md.
+Last session: 2026-07-29T14:20:00+03:00
+Stopped at: Completed 02-09-PLAN.md (src/pursuit/network/turn_events.py, orchestrator.py +
+  turn_actions.py, agent_lifecycle.py + agent_wiring.py, src/pursuit/main.py,
+  scripts/dev_launch.py — the per-agent turn orchestrator + startup/handshake/shutdown
+  wiring, NET-01/02/04/05/06/07/09, TDD RED/GREEN + thin-shell task). SUMMARY at
+  .planning/phases/02-fastmcp-infrastructure/02-09-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-06 ticked; row 2-07 still needs
-  ticking, plus rows for 02-08..02-10 as those plans land, and the full sweep (plus root
-  docs/TODO.md) at /gsd:verify-work time.
-Resume file: None — continue with plan 02-08 (handshake responder) via
-  /gsd:execute-phase 2 (clear context first).
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO rows 2-08 and 2-09 ticked this session
+  (2-08 had landed in a prior session but was not yet marked); row 2-10 still needs
+  ticking once that plan lands, plus the full sweep (and root docs/TODO.md) at
+  /gsd:verify-work time.
+Resume file: None — continue with plan 02-10 (§10.4 phase-gate tests + coverage audit,
+  the final Phase-2 plan) via /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
