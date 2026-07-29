@@ -110,11 +110,14 @@ async def test_handshake_tool_answers_a_real_peer(tmp_path):
 
 def test_modules_declare_no_module_level_mutable_state():
     """THE NET-02 STATIC GATE: no module-level container or constructed
-    instance in either module -- only imports, constants, functions, classes."""
+    instance in either module -- only imports, constants, functions, classes.
+    Also scans the two files each split into at the 150-line gate
+    (agent_wiring.py, turn_actions.py), if present, for the same property."""
     targets = list(_STATIC_TARGETS)
-    wiring = pathlib.Path("src/pursuit/network/agent_wiring.py")
-    if wiring.exists():
-        targets.append(str(wiring))
+    for extra in ("agent_wiring.py", "turn_actions.py"):
+        path = pathlib.Path("src/pursuit/network") / extra
+        if path.exists():
+            targets.append(str(path))
     for path in targets:
         tree = ast.parse(pathlib.Path(path).read_text(encoding="utf-8"))
         for node in tree.body:
@@ -150,7 +153,7 @@ class _TaskRuntime:
         self.shutdowns += 1
         if not self.task.done():
             self.task.cancel()
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.task
 
 

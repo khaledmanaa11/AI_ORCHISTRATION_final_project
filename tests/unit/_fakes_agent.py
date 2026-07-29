@@ -20,6 +20,8 @@ from pursuit.network import orchestrator
 from pursuit.network.state_machine import State, TurnStateMachine
 from pursuit.sdk import engine
 
+_FAST_TIMEOUT = 0.05  # test scaffolding only; NOT a PARAMETERS.md value
+
 
 class FakeReporter:
     """Records every illegal-transition report (NET-05), never touches disk."""
@@ -103,14 +105,23 @@ def make_ctx(
 ):
     """Assemble a fully-independent AgentContext from fakes plus a REAL
     TurnStateMachine (02-03) and a REAL engine.make_state (Phase 1). Nothing
-    here is a module-level global (NET-02)."""
+    here is a module-level global (NET-02).
+
+    `response_timeout` defaults to `_FAST_TIMEOUT`, not 0: a literal-0
+    deadline cancels `asyncio.wait_for`'s wrapped task before it gets a
+    single scheduling turn, which also kills a same-loop FakeClient push
+    that would otherwise succeed instantly. `_FAST_TIMEOUT` lets an
+    already-resolved fake resolve well within budget, while a genuinely
+    empty queue still times out fast (test scaffolding only -- mirrors
+    test_deadline.py's own `_TEST_DEADLINE_SECONDS` precedent, NOT a
+    PARAMETERS.md value)."""
     reporter = FakeReporter()
     machine = TurnStateMachine(reporter, initial=initial_state)
     watchdog = FakeWatchdog()
     runtime = FakeRuntime(client=client)
     net = dataclasses.replace(
         network_params,
-        response_timeout=0,
+        response_timeout=_FAST_TIMEOUT,
         retry_count=1,
         backoff_seconds=0,
         watchdog_threshold=0,

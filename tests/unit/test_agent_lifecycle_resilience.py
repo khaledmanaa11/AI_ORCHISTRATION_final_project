@@ -3,6 +3,7 @@ gate (Segal Table 5): the freeze handler, config-sourced Watchdog
 construction, and the RESEARCH Open Question 2 port-release proof.
 """
 
+import asyncio
 import contextlib
 import dataclasses
 import json
@@ -64,6 +65,7 @@ async def test_game_over_releases_the_port(tmp_path, network_params):
     deadline = time.monotonic() + 2.0
     bound = False
     while time.monotonic() < deadline and not bound:
+        await asyncio.sleep(0.01)  # yield to the loop so the server task can bind
         with contextlib.suppress(OSError), socket.create_connection(
             ("127.0.0.1", port), timeout=0.1
         ):
