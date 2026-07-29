@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-06 executed (FastMCP tool surface + PeerRuntime, NET-02/03/08); 4 plans remain (02-07…02-10)
-last_updated: "2026-07-29T11:47:22+03:00"
-last_activity: 2026-07-29 -- Executed 02-06-PLAN.md (src/pursuit/network/tools.py + src/pursuit/network/peer_runtime.py, TDD RED/GREEN/REFACTOR): register_tools(mcp, queue, *, handshake_handler=None) attaches the four D-05 async tools through one shared _accept decode/enqueue/ack helper (QUAL-02); PeerRuntime factory-builds a server+client+queue per process (NET-02/03) with the handshake_handler seam forwarded through both build_server and PeerRuntime for 02-08/02-09; RESEARCH Open Question 2 (uvicorn shutdown) resolved by measurement -- task.cancel() alone left the port bound (DIRTY), fixed by having PeerRuntime own its listening socket via run_async's sockets= parameter so stop() closes it directly (re-measured CLEAN); full suite green, coverage 100%/90%, ruff/line-limit clean.
+stopped_at: Phase 02 — plan 02-07 executed (NET-06 deadline tracker + retry/backoff + technical-win verdict); 3 plans remain (02-08…02-10)
+last_updated: "2026-07-29T12:19:08+03:00"
+last_activity: 2026-07-29 -- Executed 02-07-PLAN.md (src/pursuit/network/deadline.py + src/pursuit/network/verdict.py, TDD RED/GREEN/REFACTOR): wait_for_opponent(queue, *, timeout) bounds a single queued-envelope wait; call_with_retry(send, *, timeout, retries, backoff, sleep, clock) runs a narrow retries+1-attempt retry ladder with except ToolError: raise placed BEFORE except RETRYABLE_TRANSPORT_ERRORS = (McpError, DeadlineExpired), so an opponent tool-body rejection can never be laundered into an unearned technical win (RESEARCH Pitfall 4); exhausted retries return a CallOutcome carrying a TechnicalWin with measured evidence (attempts/elapsed_seconds/last_error), never a side effect. Task 1 STEP 0 found 02-RESEARCH.md's cited `MCPError` does not exist in the installed fastmcp 3.4.5/mcp packages -- the real class is `McpError` (mixed case) -- corrected throughout. All eight tests passed first try after that fix; coverage 100%, full suite green (136 passed, 16 skipped), ruff/line-limit clean repo-wide.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 13
   percent: 13
 ---
 
@@ -25,30 +25,35 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 2 / plan 02-06 done)
-Plan: 7 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06 done; 02-07 …
-  02-10 remain across Waves 3-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-07
-  (deadline tracker + technical win, NET-06) or run /gsd:execute-phase 2 again to pick up
-  where this session stopped.
-Last activity: 2026-07-29 -- Executed 02-06-PLAN.md (TDD RED/GREEN/REFACTOR; this
-  execution continued a session interrupted mid-Task-1 by an API session-limit error
-  before any commit existed). Task 1 RED: verified the pre-existing uncommitted
-  test_tools.py/test_tools_dispatch.py were faithful to the plan spec (kept as-is) and
-  wrote the missing test_peer_runtime.py from scratch; confirmed ModuleNotFoundError RED
-  gate. Task 2 GREEN: implemented src/pursuit/network/tools.py (register_tools with a
-  shared _accept decode/enqueue/ack helper, QUAL-02, and the handshake_handler
-  dependency-injection seam, NET-09) and src/pursuit/network/peer_runtime.py
-  (build_server + PeerRuntime, NET-02/03) -- all 17 tests passed first try. Task 3
-  REFACTOR: RESEARCH Open Question 2 (does task.cancel() alone release the port) was
-  measured, not assumed -- first run DIRTY (WinError 10048: FastMCP 3.4.5's
-  run_http_async builds its uvicorn.Server as a local variable with no exposed
-  should_exit handle, so cancellation skips uvicorn's own Server.shutdown()); fixed by
-  having PeerRuntime._run_http bind its own listening socket and pass it to run_async via
-  the documented sockets= parameter so stop() closes it directly; re-measured CLEAN. Full
-  suite green (128 passed, 22 skipped), coverage tools.py 100% / peer_runtime.py 90%
-  (uncovered: the real socket-binding body, exercised only by the out-of-pytest probe per
-  the plan's own allowance), ruff and line-limit clean repo-wide.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 2 / plan 02-07 done)
+Plan: 8 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06, 02-07 done;
+  02-08…02-10 remain across Waves 3-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-08
+  (handshake responder) or run /gsd:execute-phase 2 again to pick up where this session
+  stopped.
+Last activity: 2026-07-29 -- Executed 02-07-PLAN.md (TDD RED/GREEN/REFACTOR). Task 1
+  STEP 0: verified the exception surface before writing any test -- `from mcp import
+  MCPError` (as 02-RESEARCH.md's cited snippet spells it) raises ImportError against the
+  installed fastmcp 3.4.5/mcp packages; the real class is `McpError` (mixed case),
+  confirmed against mcp.shared.exceptions.McpError's source and the Raises: docstrings in
+  fastmcp/client/mixins/tools.py; issubclass(ToolError, McpError) is False. Wrote the
+  eight-test NET-06 suite (split into test_deadline.py + test_deadline_retry.py at the
+  150-line gate, shared fakes in the former per QUAL-02); confirmed ModuleNotFoundError
+  RED gate. Task 2 GREEN: implemented src/pursuit/network/verdict.py
+  (TechnicalWinReason/TechnicalWin/CallOutcome, pre-authorised split) and
+  src/pursuit/network/deadline.py (DeadlineExpired, RETRYABLE_TRANSPORT_ERRORS =
+  (McpError, DeadlineExpired), a single _bounded asyncio.wait_for site, wait_for_opponent,
+  call_with_retry with except ToolError: raise placed before except
+  RETRYABLE_TRANSPORT_ERRORS) -- all eight tests passed first try; fixed two blocking
+  issues found while running the plan's own gates (deadline.py measured 171 code lines on
+  first draft, compacted docstrings to fit under 150 without dropping content; the
+  docstring's own "no bare except Exception" sentence tripped the plan's bare-except grep
+  audit, reworded without weakening the rule). Task 3 REFACTOR: coverage 100% (58/58
+  statements, all branches), full suite green (136 passed, 16 skipped, no regression),
+  all four static audits (numeric literals, no-default signatures, ToolError exclusion,
+  no module-level mutable state) re-confirmed, decision-trace greps (Table 19, minimum)
+  present in the module docstring, git status confirmed zero overlap with 02-06 -- no
+  further code changes needed so no separate Task 3 commit.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -84,6 +89,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 02-fastmcp-infrastructure P04 | 13min | 3 tasks | 6 files |
 | Phase 02-fastmcp-infrastructure P05 | 10min | 3 tasks | 1 file |
 | Phase 02-fastmcp-infrastructure P06 | 25min | 3 tasks | 5 files |
+| Phase 02-fastmcp-infrastructure P07 | 20min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -138,6 +144,9 @@ Recent decisions affecting current work:
 - [Phase 02-06]: QUAL-02: all four D-05 handlers share one _accept(queue, message_type, turn, sender, payload) helper that translates Envelope.from_dict's TypeError/KeyError/ValueError into fastmcp.exceptions.ToolError, decode-before-enqueue so nothing half-parsed ever reaches the queue
 - [Phase 02-06]: RESEARCH Open Question 2 resolved by measurement, not assumption: task.cancel() alone left the listening port bound (FastMCP 3.4.5's run_http_async has no exposed uvicorn should_exit handle); PeerRuntime now binds its own listening socket and hands it to run_async via sockets=[...] so stop() closes the real OS socket directly -- re-measured SHUTDOWN CLEAN
 - [Phase 02-06]: fastmcp 3.4.5 API shape notes for later plans -- no plural mcp.get_tools(); use (await mcp.get_tool(name)).fn for the coroutine-function guard; Client has no public timeout attribute, only the private _session_kwargs['read_timeout_seconds'], but client.transport.url is public
+- [Phase 02-07]: Exception-surface correction for all later plans touching NET-06/transport errors: the installed fastmcp 3.4.5/mcp packages spell the transport exception `McpError` (mixed case), NOT `MCPError` as 02-RESEARCH.md's cited snippet spells it -- `from mcp import MCPError` raises ImportError; `from mcp import McpError` is correct. issubclass(ToolError, McpError) is False, so RESEARCH Pitfall 4's except-clause design (ToolError excluded from the retryable set) is unaffected, only the import spelling
+- [Phase 02-07]: D-13/D-17 implemented: RETRYABLE_TRANSPORT_ERRORS = (McpError, DeadlineExpired); except ToolError: raise placed BEFORE except RETRYABLE_TRANSPORT_ERRORS inside call_with_retry so an application-level tool rejection can never become an unearned technical win; exhausted retries return a CallOutcome carrying a TechnicalWin (reason, attempts, timeout_seconds, backoff_seconds, elapsed_seconds, last_error) as a returned value only -- deadline.py never ends the game, scores, or logs
+- [Phase 02-07]: __all__ written as an immutable tuple, not a list, in deadline.py -- satisfies both the plan's literal "export the seven public names" instruction and the NET-02 AST guard that forbids module-level list/dict/set literals
 
 ### Pending Todos
 
@@ -159,17 +168,17 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T11:47:22+03:00
-Stopped at: Completed 02-06-PLAN.md (src/pursuit/network/tools.py +
-  src/pursuit/network/peer_runtime.py — D-05 tool surface + PeerRuntime, NET-02/03/08,
-  TDD RED/GREEN/REFACTOR; RESEARCH Open Question 2 resolved by measurement, DIRTY then
-  fixed to CLEAN). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-06-SUMMARY.md.
+Last session: 2026-07-29T12:19:08+03:00
+Stopped at: Completed 02-07-PLAN.md (src/pursuit/network/deadline.py +
+  src/pursuit/network/verdict.py — NET-06 deadline tracker + retry/backoff +
+  technical-win verdict, D-13/D-17, TDD RED/GREEN/REFACTOR; Task 1 STEP 0 found and fixed
+  the MCPError -> McpError exception-spelling drift from 02-RESEARCH.md). SUMMARY at
+  .planning/phases/02-fastmcp-infrastructure/02-07-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-06 now ticked; rows for
-  02-07..02-10 still need ticking as those plans land, and the full sweep (plus root
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-06 ticked; row 2-07 still needs
+  ticking, plus rows for 02-08..02-10 as those plans land, and the full sweep (plus root
   docs/TODO.md) at /gsd:verify-work time.
-Resume file: None — continue with plan 02-07 (deadline tracker + technical win, NET-06)
-  via /gsd:execute-phase 2 (clear context first).
+Resume file: None — continue with plan 02-08 (handshake responder) via
+  /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
