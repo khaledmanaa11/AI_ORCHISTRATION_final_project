@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-05 executed (docs/PRD_mcp_transport.md per-mechanism PRD); 5 plans remain (02-06…02-10)
-last_updated: "2026-07-28T20:30:00Z"
-last_activity: 2026-07-28 -- Executed 02-05-PLAN.md (docs/PRD_mcp_transport.md -- per-mechanism PRD for the FastMCP peer layer, DOC-02/SEGAL 2.3, written in Wave 1 before the transport code it describes; covers topology D-01/D-03, transport composition + run_async-not-constructor rule, four-tool surface D-05, envelope D-06, push turn-passing D-07, handshake+config-digest D-08/D-15, state machine + severity policy D-09/D-10/D-12, deadline/watchdog resilience D-13/D-14, parameter table sourced to PARAMETERS.md Table 19 rows 3/4/6/7 with D-17 reuse rationale, engineering-defaults section D-16/D-18 explicitly separated from PARAMETERS.md values; numeric-provenance scanner + secrets/link checks all clean)
+stopped_at: Phase 02 — plan 02-06 executed (FastMCP tool surface + PeerRuntime, NET-02/03/08); 4 plans remain (02-07…02-10)
+last_updated: "2026-07-29T11:47:22+03:00"
+last_activity: 2026-07-29 -- Executed 02-06-PLAN.md (src/pursuit/network/tools.py + src/pursuit/network/peer_runtime.py, TDD RED/GREEN/REFACTOR): register_tools(mcp, queue, *, handshake_handler=None) attaches the four D-05 async tools through one shared _accept decode/enqueue/ack helper (QUAL-02); PeerRuntime factory-builds a server+client+queue per process (NET-02/03) with the handshake_handler seam forwarded through both build_server and PeerRuntime for 02-08/02-09; RESEARCH Open Question 2 (uvicorn shutdown) resolved by measurement -- task.cancel() alone left the port bound (DIRTY), fixed by having PeerRuntime own its listening socket via run_async's sockets= parameter so stop() closes it directly (re-measured CLEAN); full suite green, coverage 100%/90%, ruff/line-limit clean.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 11
+  completed_plans: 12
   percent: 13
 ---
 
@@ -25,28 +25,30 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 1 / plan 02-05 done)
-Plan: 6 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05 done; 02-06 … 02-10 remain
-  across Waves 2-5)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-06
-  (FastMCP tool surface + PeerRuntime, NET-02/03/08) or run /gsd:execute-phase 2 again to
-  pick up where this session stopped.
-Last activity: 2026-07-28 -- Executed 02-05-PLAN.md (documentation-only plan, no source
-  touched): wrote docs/PRD_mcp_transport.md, the per-mechanism PRD for the FastMCP peer
-  layer (DOC-02, CLAUDE.md/SEGAL 2.3), approved and committed in Wave 1 before any
-  transport code exists (SEGAL 2.5 step 5). Sections 1-6 (topology D-01/D-03, transport
-  composition + the run_async-not-constructor and never-call-run() rules, four-tool
-  surface D-05, {type,turn,sender,payload} envelope D-06, push turn-passing via
-  asyncio.Queue D-07) committed first; sections 7-11 (handshake+config-digest D-08/D-15,
-  state diagram + severity policy D-09/D-10/D-12, deadline/MCPError-vs-ToolError/watchdog
-  resilience D-13/D-14, parameter table sourced to PARAMETERS.md Table 19 rows 3/4/6/7
-  with the D-17 reuse rationale in prose, engineering-defaults subsection D-16/D-18
-  explicitly labelled NOT PARAMETERS.md values, restated acceptance criteria) appended
-  second. Task 2's first draft (307 lines) exceeded the plan's own <260-line verify gate;
-  rewrote by collapsing word-wrapped prose into single unwrapped lines (no content
-  change) to 182 lines. Task 3's numeric-provenance scanner, secrets scanner, link
-  checker, and manual 12-18-range eyeball pass all found zero violations on first run.
-  docs/phases/phase-2/TODO.md row 2-05 and its phase-gate DOC-02 checkbox marked done.
+Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 2 / plan 02-06 done)
+Plan: 7 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06 done; 02-07 …
+  02-10 remain across Waves 3-5)
+Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-07
+  (deadline tracker + technical win, NET-06) or run /gsd:execute-phase 2 again to pick up
+  where this session stopped.
+Last activity: 2026-07-29 -- Executed 02-06-PLAN.md (TDD RED/GREEN/REFACTOR; this
+  execution continued a session interrupted mid-Task-1 by an API session-limit error
+  before any commit existed). Task 1 RED: verified the pre-existing uncommitted
+  test_tools.py/test_tools_dispatch.py were faithful to the plan spec (kept as-is) and
+  wrote the missing test_peer_runtime.py from scratch; confirmed ModuleNotFoundError RED
+  gate. Task 2 GREEN: implemented src/pursuit/network/tools.py (register_tools with a
+  shared _accept decode/enqueue/ack helper, QUAL-02, and the handshake_handler
+  dependency-injection seam, NET-09) and src/pursuit/network/peer_runtime.py
+  (build_server + PeerRuntime, NET-02/03) -- all 17 tests passed first try. Task 3
+  REFACTOR: RESEARCH Open Question 2 (does task.cancel() alone release the port) was
+  measured, not assumed -- first run DIRTY (WinError 10048: FastMCP 3.4.5's
+  run_http_async builds its uvicorn.Server as a local variable with no exposed
+  should_exit handle, so cancellation skips uvicorn's own Server.shutdown()); fixed by
+  having PeerRuntime._run_http bind its own listening socket and pass it to run_async via
+  the documented sockets= parameter so stop() closes it directly; re-measured CLEAN. Full
+  suite green (128 passed, 22 skipped), coverage tools.py 100% / peer_runtime.py 90%
+  (uncovered: the real socket-binding body, exercised only by the out-of-pytest probe per
+  the plan's own allowance), ruff and line-limit clean repo-wide.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 
@@ -80,6 +82,8 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 02-fastmcp-infrastructure P02 | 12min | 3 tasks | 4 files |
 | Phase 02-fastmcp-infrastructure P03 | 12min | 3 tasks | 3 files |
 | Phase 02-fastmcp-infrastructure P04 | 13min | 3 tasks | 6 files |
+| Phase 02-fastmcp-infrastructure P05 | 10min | 3 tasks | 1 file |
+| Phase 02-fastmcp-infrastructure P06 | 25min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -130,6 +134,10 @@ Recent decisions affecting current work:
 - [Phase 02-05]: DOC-02: docs/PRD_mcp_transport.md written and approved in Wave 1, before any transport source exists (SEGAL §2.5 step 5) — documentation-only plan, zero source/config touched
 - [Phase 02-05]: D-16/D-18 category separation enforced structurally: §10.1 (PARAMETERS.md-traced: 30s/60s/3/5s, Table 19 rows 6/7/4/3) and §10.2 (engineering defaults: ports 8001/8002, watchdog_poll_seconds=1) are two visually distinct tables so neither reader nor future phase can conflate them
 - [Phase 02-05]: D-17 reuse of Table 19 Gatekeeper rows 3-4 for the NET-06 retry/backoff pair documented in prose as a deliberate, auditable reuse (both minimum status, may be raised never lowered) rather than an invented second pair of numbers
+- [Phase 02-06]: NET-09 seam: register_tools/build_server/PeerRuntime all accept a keyword-only handshake_handler; None keeps the D-05 generic ack (pinned so 02-08's fake-peer tests stay valid), a supplied async handler's reply is returned verbatim and nothing is enqueued -- the exact hook 02-09 uses to bind 02-08's respond_to_handshake without editing tools.py
+- [Phase 02-06]: QUAL-02: all four D-05 handlers share one _accept(queue, message_type, turn, sender, payload) helper that translates Envelope.from_dict's TypeError/KeyError/ValueError into fastmcp.exceptions.ToolError, decode-before-enqueue so nothing half-parsed ever reaches the queue
+- [Phase 02-06]: RESEARCH Open Question 2 resolved by measurement, not assumption: task.cancel() alone left the listening port bound (FastMCP 3.4.5's run_http_async has no exposed uvicorn should_exit handle); PeerRuntime now binds its own listening socket and hands it to run_async via sockets=[...] so stop() closes the real OS socket directly -- re-measured SHUTDOWN CLEAN
+- [Phase 02-06]: fastmcp 3.4.5 API shape notes for later plans -- no plural mcp.get_tools(); use (await mcp.get_tool(name)).fn for the coroutine-function guard; Client has no public timeout attribute, only the private _session_kwargs['read_timeout_seconds'], but client.transport.url is public
 
 ### Pending Todos
 
@@ -151,16 +159,17 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-28T20:30:00Z
-Stopped at: Completed 02-05-PLAN.md (docs/PRD_mcp_transport.md — per-mechanism PRD for
-  the FastMCP peer layer, DOC-02, written before the transport code per SEGAL §2.5 step
-  5; documentation-only plan, zero source/config touched). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-05-SUMMARY.md.
+Last session: 2026-07-29T11:47:22+03:00
+Stopped at: Completed 02-06-PLAN.md (src/pursuit/network/tools.py +
+  src/pursuit/network/peer_runtime.py — D-05 tool surface + PeerRuntime, NET-02/03/08,
+  TDD RED/GREEN/REFACTOR; RESEARCH Open Question 2 resolved by measurement, DIRTY then
+  fixed to CLEAN). SUMMARY at
+  .planning/phases/02-fastmcp-infrastructure/02-06-SUMMARY.md.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-05 and its DOC-02 phase-gate
-  checkbox now ticked; rows for 02-06..02-10 still need ticking as those plans land, and
-  the full sweep (plus root docs/TODO.md) at /gsd:verify-work time.
-Resume file: None — continue with plan 02-06 (FastMCP tool surface + PeerRuntime,
-  NET-02/03/08) via /gsd:execute-phase 2 (clear context first).
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-06 now ticked; rows for
+  02-07..02-10 still need ticking as those plans land, and the full sweep (plus root
+  docs/TODO.md) at /gsd:verify-work time.
+Resume file: None — continue with plan 02-07 (deadline tracker + technical win, NET-06)
+  via /gsd:execute-phase 2 (clear context first).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
