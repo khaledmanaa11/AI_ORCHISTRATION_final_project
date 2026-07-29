@@ -1,13 +1,13 @@
 """Standalone per-agent league entry point (NET-01, NET-04, D-02).
 
-    uv run python -m pursuit.main --config-dir config/police
-    uv run python -m pursuit.main --config-dir config/thief
-    uv run python -m pursuit.main --config-dir config/police --check-config
+    uv run python -m pursuit.main --config-dir <this agent's config directory>
+    uv run python -m pursuit.main --config-dir <this agent's config directory> --check-config
 
 This process is one complete, independent agent. The other side is a
-separate process started the SAME way with a different --config-dir. The
-two share no runtime state (NET-02) and there is no referee (D-01) --
-scripts/dev_launch.py only spawns two copies of this exact command.
+separate process started the SAME way, pointed at the OTHER role's own
+config directory via a different --config-dir. The two share no runtime
+state (NET-02) and there is no referee (D-01) -- scripts/dev_launch.py only
+spawns two copies of this exact command, one per role's directory.
 
 A thin shell: it parses --config-dir, loads the resolved config, and hands
 off to `agent_lifecycle.run_agent`. It holds no game rule, no turn logic and
@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run one pursuit agent, standalone.")
     parser.add_argument(
         "--config-dir", required=True,
-        help="Per-agent config directory, e.g. config/police or config/thief",
+        help="Per-agent config directory, e.g. this agent's own role directory under config/",
     )
     parser.add_argument(
         "--check-config", action="store_true",
