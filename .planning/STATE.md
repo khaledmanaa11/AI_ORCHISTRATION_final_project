@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-09 executed (turn orchestrator + agent lifecycle wiring, NET-01/02/04/05/06/07/09); 1 plan remains (02-10)
-last_updated: "2026-07-29T14:20:00+03:00"
-last_activity: 2026-07-29 -- Executed 02-09-PLAN.md (src/pursuit/network/turn_events.py, orchestrator.py + turn_actions.py, agent_lifecycle.py + agent_wiring.py, src/pursuit/main.py, scripts/dev_launch.py; TDD RED/GREEN + thin-shell task): the per-agent MY_TURN <-> WAIT_OPPONENT turn loop composes 02-01/02/03/04/06/07/08 into two standalone, independent processes sharing no runtime object (NET-02, static + dynamic proof); default_context wires 02-08's respond_to_handshake behind 02-06's real handshake tool at PeerRuntime construction time (NET-09), proved against a real in-memory FastMCP server; a silent opponent yields a clean technical win (NET-06) and GAME_OVER releases the port (RESEARCH Open Question 2 re-confirmed). orchestrator.py and agent_lifecycle.py both had to split at the 150-line gate (turn_actions.py, agent_wiring.py) -- the orchestrator split needed a PEP 562 module __getattr__ to avoid a real circular import. Both --check-config invocations exit 0 independently; dev_launch.py is AST-verified to import nothing from pursuit. Full suite 170 passed, 7 skipped, coverage 96.86%; ruff/line-limit clean repo-wide.
+stopped_at: Phase 02 — plan 02-10 executed (§10.4 phase gate + NET-01..09 coverage audit + real two-process launch); Phase 02 code plans complete, awaiting /gsd:verify-work 2
+last_updated: "2026-07-29T17:15:00+03:00"
+last_activity: 2026-07-29 -- Executed 02-10-PLAN.md (tests/integration/conftest.py, test_peer_roundtrip.py, test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py; the §10.4 phase-gate plan): all eight gate node IDs (GATE-1/2/3) collect and pass with zero skips; NET-01..NET-09 coverage audit closed with a per-requirement Result table. While building the GATE-3 full-lifecycle test, found and fixed two real production bugs in turn_actions.py (await_opponent_turn decoding an already-decoded Envelope; take_my_turn unconditionally re-attempting MY_TURN every cycle, which silently capped every real game at one exchange before a false technical win) -- confirmed via empirical probe scripts, then re-verified against the full existing unit suite (one test corrected to match the fix, one regression test added). A real two-process standalone launch (Task 4) then ran a full 35-turn game over real localhost HTTP to a genuine SURVIVAL outcome, with two distinct PIDs/ports/config roots/JSONL logs and no leaked opponent position. Full suite 179 passed, 0 skipped, coverage 96.87%; ruff/line-limit clean repo-wide.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 13
 ---
 
@@ -25,35 +25,35 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTING (Wave 4 / plan 02-09 done)
-Plan: 10 of 11 executed (02-00, 02-01, 02-02, 02-03, 02-04, 02-05, 02-06, 02-07, 02-08,
-  02-09 done; 02-10 remains, Wave 5 — the phase gate/coverage-audit plan)
-Status: Phase 1 of 8 done — 7 phases remaining. Next: continue Phase 02 with plan 02-10
-  (§10.4 gate tests + coverage audit) or run /gsd:execute-phase 2 again to pick up where
-  this session stopped.
-Last activity: 2026-07-29 -- Executed 02-09-PLAN.md (TDD RED/GREEN + Task 3 thin shells).
-  Task 1 RED: wrote 22 named tests across test_turn_events.py, test_orchestrator.py +
-  test_orchestrator_loop.py, test_agent_lifecycle.py + test_agent_lifecycle_resilience.py,
-  plus a shared tests/unit/_fakes_agent.py (FakeReporter/FakeWatchdog/FakeClient/
-  FakeRuntime + make_ctx); confirmed ImportError RED gate against turn_events/
-  orchestrator/agent_lifecycle. Task 2 GREEN: implemented turn_events.py (5 pure D-11
-  builders), orchestrator.py + turn_actions.py (AgentContext + the MY_TURN <->
-  WAIT_OPPONENT loop, game logic reached only via pursuit.sdk.engine), agent_lifecycle.py
-  + agent_wiring.py (config load, the NET-09 handshake-responder seam bound at
-  PeerRuntime construction, run_agent). Fixed two test-authorship bugs found during
-  GREEN (make_ctx's response_timeout=0 default cancelled a should-succeed FakeClient push
-  before it could run; the port-release probe busy-waited without yielding to the event
-  loop) and one asyncio.CancelledError-vs-Exception suppress bug in a test double. Both
-  orchestrator.py and agent_lifecycle.py exceeded the 150-line gate on first draft (212
-  and 222 lines) -- split into turn_actions.py and agent_wiring.py respectively; the
-  orchestrator/turn_actions split needed a PEP 562 module __getattr__ (an eager
-  cross-import was a genuine circular import under one load order, reproduced and
-  fixed). Task 3: wrote src/pursuit/main.py (thin standalone entry point) and
-  scripts/dev_launch.py (convenience launcher, AST-verified no pursuit import); both
-  --check-config invocations exit 0 independently. Full suite 170 passed, 7 skipped, 0
-  regressions; coverage 96.86% (>=85%); ruff/line-limit clean repo-wide.
+Phase: 02 (fastmcp-infrastructure) — EXECUTED (Wave 5 / plan 02-10 done — all 11 code plans complete)
+Plan: 11 of 11 executed (02-00 .. 02-10 all done). No plan remains for Phase 02; next step
+  is /gsd:verify-work 2 to close the phase (tick docs/phases/phase-2/TODO.md row 2-99,
+  root docs/TODO.md, confirm the .planning/graphs/ refresh).
+Status: Phase 1 of 8 done, Phase 2's code plans all executed — 6 phases remaining after
+  verify-work closes Phase 2. Next: run /gsd:verify-work 2, then /gsd:discuss-phase 3.
+Last activity: 2026-07-29 -- Executed 02-10-PLAN.md (§10.4 phase-gate integration tests +
+  NET-01..09 coverage audit + real two-process launch). Task 1: tests/integration/conftest.py
+  (shared fixtures) + test_peer_roundtrip.py (GATE-1, coordinate-faithful move envelope
+  through the real tool surface). Task 2: test_turn_isolation.py (GATE-2, NET-02 asserted
+  positively) + test_turn_lifecycle.py (GATE-3 core, full lifecycle + illegal-transition
+  severity) + test_turn_resilience.py (GATE-3 resilience, technical win + watchdog
+  ordering) -- three modules, not two, after a second 150-line-gate split. While writing
+  the full-lifecycle test, found and fixed two real bugs in turn_actions.py: (1)
+  await_opponent_turn called Envelope.from_dict on an already-decoded Envelope (tools.py's
+  real _accept enqueues an Envelope instance, never a dict); (2) take_my_turn
+  unconditionally re-attempted the MY_TURN transition every call, colliding with the state
+  await_opponent_turn's own prior call legitimately leaves it in every cycle after the
+  first -- silently capping every real game at ONE exchange before a false technical win
+  (rules 16/22). Both confirmed via standalone probe scripts before fixing; one existing
+  unit test corrected to match the fix, one regression test added. Task 3: coverage audit
+  closed (8/8 gate nodes pass, NET-01..09 each mapped). Task 4: a REAL two-process
+  standalone launch (uv run python -m pursuit.main --config-dir config/police|thief) ran a
+  full 35-turn game over real localhost HTTP to a clean SURVIVAL outcome -- two distinct
+  PIDs, ports, config roots, and JSONL logs; no leaked opponent position. Full suite 179
+  passed, 0 skipped, 0 regressions; coverage 96.87% (>=85%); ruff/line-limit clean
+  repo-wide.
 
-Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
+Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete, pending verify-work)
 
 ## Performance Metrics
 
@@ -90,6 +90,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases)
 | Phase 02-fastmcp-infrastructure P07 | 20min | 3 tasks | 4 files |
 | Phase 02-fastmcp-infrastructure P08 | 30min | 3 tasks | 5 files |
 | Phase 02 P09 | 75min | 3 tasks | 15 files |
+| Phase 02 P10 | 110min | 4 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -150,6 +151,9 @@ Recent decisions affecting current work:
 - [Phase 02-09]: Design note 8 resolved: call_with_retry DOES retry DeadlineExpired (RETRYABLE_TRANSPORT_ERRORS includes it), so await_opponent_turn wraps wait_for_opponent in call_with_retry rather than declaring a technical win on the first inbound timeout; retries_attempted is always the measured attempt count, never a constant
 - [Phase 02-09]: Two 150-line-gate splits: orchestrator.py -> {orchestrator.py, turn_actions.py} (not pre-authorised by the plan, done anyway per Segal's hard line limit) and agent_lifecycle.py -> {agent_lifecycle.py, agent_wiring.py} (pre-authorised). The orchestrator/turn_actions re-export needed a PEP 562 module __getattr__ instead of an eager import -- an eager cross-import was reproduced as a genuine circular import when turn_actions.py was imported first, verified fixed under both import orders
 - [Phase 02-09]: fastmcp.Client is a required async context manager (Client.__aenter__ calls self._connect()) -- take_my_turn/run_agent always enter it via `async with` before calling a tool; the plan's own pseudocode omitted this and was adapted accordingly
+- [Phase 02-10]: Real production bug found and fixed via 02-10's GATE-3 test, not by 02-10 itself: turn_actions.py's take_my_turn unconditionally re-attempted State.MY_TURN every call, but await_opponent_turn's own final line legitimately leaves the machine at MY_TURN at the end of every cycle after the first -- colliding as an illegal self-transition, silently no-opping every second-and-later turn and starving await_opponent_turn into a FALSE technical win. No 02-09 unit test ever drove a real second cycle to catch it. Fixed by guarding take_my_turn's entry attempt on `current is not State.MY_TURN`, symmetric to await_opponent_turn's own guarded HANDSHAKE entry. A second, related bug (await_opponent_turn calling Envelope.from_dict on an already-decoded Envelope -- tools.py's real _accept enqueues an Envelope instance, never a dict) was fixed the same way. Both confirmed via standalone probe scripts and re-verified at real two-process scale (Task 4: a full 35-turn game completed cleanly to SURVIVAL)
+- [Phase 02-10]: NET-05's RECOVERABLE severity coverage was never uniquely provided by the orchestrator-level test that assumed the now-fixed buggy behavior -- it was always independently covered by tests/unit/test_state_machine.py::test_recoverable_attempt_keeps_machine_usable (QUAL-02); the orchestrator-level test was corrected to assert the fixed behavior instead of the bug
+- [Phase 02-10]: A three-way split was needed for the integration gate modules (test_peer_roundtrip.py, test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py), one level deeper than the plan's own two-way split anticipation -- test_turn_lifecycle.py still exceeded 150 lines after the first split, so the two GATE-2 tests moved to test_turn_isolation.py, exactly the contingency the plan named in advance
 
 ### Pending Todos
 
@@ -171,18 +175,20 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T14:20:00+03:00
-Stopped at: Completed 02-09-PLAN.md (src/pursuit/network/turn_events.py, orchestrator.py +
-  turn_actions.py, agent_lifecycle.py + agent_wiring.py, src/pursuit/main.py,
-  scripts/dev_launch.py — the per-agent turn orchestrator + startup/handshake/shutdown
-  wiring, NET-01/02/04/05/06/07/09, TDD RED/GREEN + thin-shell task). SUMMARY at
-  .planning/phases/02-fastmcp-infrastructure/02-09-SUMMARY.md.
+Last session: 2026-07-29T17:15:00+03:00
+Stopped at: Completed 02-10-PLAN.md (tests/integration/conftest.py, test_peer_roundtrip.py,
+  test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py — the §10.4
+  phase-gate + NET-01..09 coverage-audit + real two-process-launch plan, the final Phase-2
+  plan). SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-10-SUMMARY.md, including
+  the corrected NET-01..09 audit table and the "§10.4 criterion 2 — real process evidence"
+  section from Task 4.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO rows 2-08 and 2-09 ticked this session
-  (2-08 had landed in a prior session but was not yet marked); row 2-10 still needs
-  ticking once that plan lands, plus the full sweep (and root docs/TODO.md) at
-  /gsd:verify-work time.
-Resume file: None — continue with plan 02-10 (§10.4 phase-gate tests + coverage audit,
-  the final Phase-2 plan) via /gsd:execute-phase 2 (clear context first).
+  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-10 and the phase-gate checklist
+  ticked this session; row 2-99 (verify-work's full sweep + root docs/TODO.md) remains.
+Resume file: None — Phase 2's code plans are ALL complete. Next step is
+  /gsd:verify-work 2 (confirm the phase gate, tick 2-99 + root docs/TODO.md, confirm the
+  .planning/graphs/ refresh happened this phase), then start Phase 3 with /gsd:graphify
+  (mandatory before /gsd:plan-phase 3 for N>=3 per CLAUDE.md) followed by
+  /gsd:discuss-phase 3 --batch.
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
