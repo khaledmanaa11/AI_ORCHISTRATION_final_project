@@ -43,12 +43,28 @@ def _log_illegal(ctx: AgentContext, current: State, target: State, result: Trans
 async def take_my_turn(ctx: AgentContext) -> Outcome | None:
     """One MY_TURN cycle: choose and apply this agent's move via the SDK
     only, push it to the opponent, persist the turn, hand off to
-    WAIT_OPPONENT."""
+    WAIT_OPPONENT.
+
+    Entry is guarded symmetrically with `await_opponent_turn`'s own guarded
+    entry (its `if state is HANDSHAKE: attempt(WAIT_OPPONENT)` clause):
+    `attempt(MY_TURN)` fires only when the machine is not ALREADY at
+    MY_TURN. Every completed `await_opponent_turn` call ends by legitimately
+    transitioning WAIT_OPPONENT -> MY_TURN itself (D-09's repeatable
+    MY_TURN <-> WAIT_OPPONENT cycle), so the very next `take_my_turn` call in
+    `run_turn_loop` always finds the machine already there -- attempting
+    MY_TURN unconditionally would re-collide with that same state as an
+    illegal (MY_TURN, MY_TURN) self-transition every cycle after the first,
+    silently turning every second-and-later turn into a no-op that starves
+    `await_opponent_turn` into a false technical win (rules 16/22). Only a
+    genuinely different starting state (HANDSHAKE for the first mover, or an
+    out-of-order state) still goes through `attempt()` and is reported here.
+    """
     current = ctx.machine.state
-    result = ctx.machine.attempt(State.MY_TURN)
-    if not result.accepted:
-        _log_illegal(ctx, current, State.MY_TURN, result)
-        return None
+    if current is not State.MY_TURN:
+        result = ctx.machine.attempt(State.MY_TURN)
+        if not result.accepted:
+            _log_illegal(ctx, current, State.MY_TURN, result)
+            return None
 
     chooser = ctx.choose_move or first_legal_move
     agent = engine_agent(ctx.role)
@@ -120,7 +136,8 @@ async def await_opponent_turn(ctx: AgentContext) -> Outcome | None:
         ctx.machine.attempt(State.GAME_OVER)
         return Outcome.TECHNICAL_LOSS
 
-    envelope = Envelope.from_dict(call_outcome.value)
+    queued = call_outcome.value
+    envelope = queued if isinstance(queued, Envelope) else Envelope.from_dict(queued)
     dest = (envelope.payload["x"], envelope.payload["y"])
     ctx.state, outcome = apply_role_move(ctx.state, envelope.sender, dest, ctx.params)
 
