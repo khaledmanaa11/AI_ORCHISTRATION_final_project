@@ -67,3 +67,44 @@ def require_str(data: dict, key: str, *, source: str) -> str:
             f"{source} field '{key}' must be str, got {type(value).__name__!r}"
         )
     return value
+
+
+def require_float(data: dict, key: str, *, source: str) -> float:
+    """Return data[key] as float; raise TypeError if not int or float.
+
+    A JSON int (e.g. `1`) is accepted and coerced to float — JSON has no
+    separate "this is meant to be a float" marker, and a whole-number learning
+    rate is a legitimate value.
+
+    Raises
+    ------
+    KeyError
+        If key is not present in data (checked before the type check).
+    TypeError
+        If the value stored at data[key] is not numeric, or is a bool
+        (bool is a subclass of int in Python and would otherwise pass silently).
+    """
+    value = require_key(data, key, source=source)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise TypeError(
+            f"{source} field '{key}' must be float, got {type(value).__name__!r}"
+        )
+    return float(value)
+
+
+def require_list(data: dict, key: str, *, source: str) -> list:
+    """Return data[key] as list; raise TypeError if the value is not a list.
+
+    Raises
+    ------
+    KeyError
+        If key is not present in data (checked before the type check).
+    TypeError
+        If the value stored at data[key] is not a list.
+    """
+    value = require_key(data, key, source=source)
+    if not isinstance(value, list):
+        raise TypeError(
+            f"{source} field '{key}' must be list, got {type(value).__name__!r}"
+        )
+    return value
