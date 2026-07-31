@@ -3,7 +3,7 @@
 No numeric game values live here (D-07). All game numbers are in game_params.json.
 """
 
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class Direction(Enum):
@@ -154,3 +154,36 @@ class TrainingKey(str, Enum):
     EVAL_SEED_OFFSET = "eval_seed_offset"
     FALLBACK_RATE_ALERT = "fallback_rate_alert"
     Q_MARGIN_ALERT = "q_margin_alert"
+
+
+class MoveSource(str, Enum):
+    """Decision.source provenance (AI-SPEC Sec5 E2/E3); never defaults to QTABLE."""
+
+    QTABLE = "qtable"
+    FALLBACK = "fallback"
+    HEURISTIC = "heuristic"
+
+
+class Action(IntEnum):
+    """Canonical 5-action space (STRAT-01); order is FROZEN -- never renumber."""
+
+    NORTH = 0
+    SOUTH = 1
+    EAST = 2
+    WEST = 3
+    STAY = 4
+
+
+def cell_for(action: Action, own_cell: tuple[int, int]) -> tuple[int, int]:
+    """Return the cell reached by taking action from own_cell."""
+    row_delta, col_delta = Direction[action.name].value
+    return (own_cell[0] + row_delta, own_cell[1] + col_delta)
+
+
+def action_for(own_cell: tuple[int, int], dest: tuple[int, int]) -> Action:
+    """Return the Action from own_cell to dest; raises ValueError if not adjacent."""
+    delta = (dest[0] - own_cell[0], dest[1] - own_cell[1])
+    for action in Action:
+        if Direction[action.name].value == delta:
+            return action
+    raise ValueError(f"No Action maps {own_cell} to {dest} (delta {delta})")
