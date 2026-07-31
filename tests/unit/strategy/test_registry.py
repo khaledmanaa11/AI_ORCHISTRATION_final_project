@@ -65,3 +65,56 @@ def test_registry_module_calls_no_eval_or_exec() -> None:
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
     }
     assert not called_names & {"eval", "exec"}
+
+
+# --- STRAT-03 / STRAT-07 package-wide structural isolation gates ---------
+
+_FORBIDDEN_IMPORTS = (
+    # STRAT-07 (rule 25): an LLM-chosen move is disqualification-grade, so
+    # the decision path must be structurally unable to reach a language
+    # model, an HTTP client, subprocess, or a raw socket. Named deny-list,
+    # not a prose promise -- see 03-02-PLAN.md's verify step for the
+    # temporarily-add-then-revert proof that this test can actually fail.
+    "socket",
+    "subprocess",
+    "http",
+    "requests",
+    "httpx",
+    "aiohttp",
+    "urllib3",
+    "openai",
+    "anthropic",
+    "google.generativeai",
+    "cohere",
+)
+
+
+def _strategy_module_paths() -> list[pathlib.Path]:
+    return sorted(pathlib.Path("src/pursuit/strategy").rglob("*.py"))
+
+
+def _imported_module_names(path: pathlib.Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    names: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.append(node.module)
+    return names
+
+
+def test_strategy_package_imports_no_networking() -> None:
+    """STRAT-03: strategy must be usable and testable with no networking."""
+    for path in _strategy_module_paths():
+        for name in _imported_module_names(path):
+            assert not name.startswith("pursuit.network"), f"{path} imports {name!r}"
+
+
+def test_strategy_package_has_no_llm_or_subprocess_path() -> None:
+    """STRAT-07: rule 25 -- the decision path must never reach an LLM."""
+    for path in _strategy_module_paths():
+        for name in _imported_module_names(path):
+            top = name.split(".")[0]
+            assert name not in _FORBIDDEN_IMPORTS, f"{path} imports {name!r}"
+            assert top not in _FORBIDDEN_IMPORTS, f"{path} imports {name!r}"
