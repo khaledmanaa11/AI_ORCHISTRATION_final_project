@@ -27,7 +27,8 @@
 | `training/harness.py` | Episode loop stepping `pursuit.sdk.engine` directly — **no network, no sockets** (see ADR P3-2) |
 | `training/sparring.py` | Opponent pool + sampling rule: heuristic / past-self checkpoints / reference implementation (STRAT-06) |
 | `training/checkpoint.py` | Atomic Q-table write (temp file + `os.replace`), seed logging, resume-from-latest |
-| `training/curves.py` | CSV append per episode: `episode, reward, win_rate_vs_baseline, epsilon` (rule 42) |
+| `src/pursuit/shared/durable_write.py` | Temp→fsync→rotate `.prev`→`os.replace` with WinError-32 retry, plus validate-with-fallback load. Shared by the Q-table and the training checkpoint (`os.replace` is not atomic on Windows) |
+| `training/curves.py` | CSV append per episode: `episode, epsilon, alpha, mean_reward, winrate_vs_baseline, fallback_rate, role` (rule 42) |
 | `training/plot_curves.py` | matplotlib → README PNGs. The only matplotlib importer in the repo |
 | `artifacts/qtable_{police,thief}.json` | The shipped trained tables — human-readable and diffable, never pickle |
 
@@ -51,19 +52,27 @@ class Decision:
     barrier: tuple[int, int] | None = None   # cop-only; the thief's is always None
 
 class BrainBase(ABC):
-    def _pick_move(self, obs: Observation) -> tuple[int, int]: ...   # algorithm decides, never the LLM
-    def _decide_move(self, obs: Observation) -> Decision: ...        # movement + barrier sub-policy
+    # Both take the GameState explicitly: Observation is the encoded Q-key input and
+    # deliberately carries no board, but bfs/fallback/choose_barrier all need the real one.
+    def _pick_move(self, obs: Observation, state: GameState) -> Decision: ...
+    def _decide_move(self, obs: Observation, state: GameState) -> Decision: ...
+
+# constants.py — the canonical action space; order is FROZEN (renumbering invalidates
+# every trained table while still loading successfully)
+class Action(IntEnum): NORTH; SOUTH; EAST; WEST; STAY
+cell_for(action, own_cell) -> tuple[int, int]
+action_for(own_cell, dest) -> Action
 
 # strategy/registry.py
 build_brain(role, params) -> BrainBase        # role: "cop" | "thief"; unknown class name raises
 
 # strategy/pathfind.py
-bfs(state, start, goal, params) -> tuple[int, tuple[int, int] | None]
+bfs(state, start, goal, agent, params) -> tuple[int, tuple[int, int] | None]
                                               # (optimal distance, next step) — barrier-aware.
-                                              # Unreachable goal returns (INF, None), never raises
+                                              # Unreachable goal returns (UNREACHABLE, None)
 
 # strategy/prior.py
-spread(prior, params) -> dict[tuple[int, int], float]     # prediction step, no evidence
+spread(prior, state, agent, params) -> dict[tuple[int, int], float]   # prediction step, no evidence
 argmax_cell(prior) -> tuple[int, int]
 
 # strategy/encoding.py
