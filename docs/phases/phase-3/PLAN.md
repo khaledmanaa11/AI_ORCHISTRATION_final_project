@@ -46,6 +46,8 @@ class Observation:
 @dataclass(frozen=True)
 class Decision:
     move: tuple[int, int]
+    source: MoveSource                       # QTABLE | FALLBACK | HEURISTIC — provenance is
+                                             # a field, not an inference (AI-SPEC E2, E3)
     barrier: tuple[int, int] | None = None   # cop-only; the thief's is always None
 
 class BrainBase(ABC):
