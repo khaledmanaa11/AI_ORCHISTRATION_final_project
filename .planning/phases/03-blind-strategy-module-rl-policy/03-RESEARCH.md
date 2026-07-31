@@ -90,9 +90,9 @@ makes Q oscillate rather than converge — add an `alpha` schedule beside the `e
 cop and thief will not converge at the same rate. Alternate which role learns per episode and log **two separate
 curves and win-rates** — one shared threshold marks one role done while the other is still random.
 
-**Impact on the plan:** config gains `pool_weights`, `selfplay_delta`, `checkpoint_interval`, `pool_size`, and
-an alpha schedule. `training/sparring.py` needs episode-level sampling, a frozen read-only opponent table, and
-a ring buffer with a pinned anchor. The eval harness needs held-out seeds.
+**Impact on the plan:** config gains `pool_weights`, `selfplay_delta`, `checkpoint_interval`, `pool_size`, and an
+alpha schedule. `training/sparring.py` needs episode-level sampling, a frozen read-only opponent table, and a ring
+buffer with a pinned anchor; the eval harness needs held-out seeds.
 
 ## 3. Resumable, reproducible overnight runs on Windows/OneDrive
 
