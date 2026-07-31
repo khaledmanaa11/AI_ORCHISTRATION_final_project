@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-02 executed (src/pursuit/strategy/{base,registry}.py — BrainBase ABC + frozen Observation/Decision + build_brain, STRAT-03/07); 8 more Phase-3 plans remain (03-03..03-10)
-last_updated: "2026-07-31T19:45:21+03:00"
-last_activity: 2026-07-31 -- Executed 03-02-PLAN.md (src/pursuit/strategy/{__init__,base,registry}.py + constants.py Action/MoveSource, no networking or LLM/HTTP/subprocess/socket import anywhere in the package): Task 1 wrote base.py's frozen Observation (own_cell/target_cell/blocked_mask/barriers_used/turn_index, D-11 believed-target contract in the docstring) and Decision (move/source/barrier=None), plus constants.py's MoveSource str Enum and the order-frozen 5-action Action IntEnum (NORTH=0/SOUTH=1/EAST=2/WEST=3/STAY=4) with cell_for/action_for reusing Direction's deltas via Direction[action.name]; BrainBase(ABC) declares _pick_move/_decide_move, both taking GameState explicitly (D-05, STRAT-07). Task 2 wrote registry.py's build_brain(role, params), resolving params.brain_class through an explicit _BRAIN_REGISTRY dict -- never eval/exec/importlib -- raising ValueError naming the offending value and every known name on an unknown class (D-07); registry ships empty of real entries, 03-04/03-06 register HeuristicBrain/QLearningBrain. Task 3 added AST-walk structural tests scanning every module under src/pursuit/strategy/ for imports: no pursuit.network (STRAT-03) and no socket/subprocess/HTTP-client/LLM-SDK import (STRAT-07, rule 25) -- both demonstrated to actually fail (temporarily added `import socket` to base.py, confirmed RED, reverted, confirmed GREEN). constants.py landed at exactly 150 code lines, confirmed via scripts/check_line_limit.sh. Full repo gates green (ruff 0, line-limit clean, 207 tests passed, coverage 97.06%). Graphify graph rebuilt (2188 nodes/3069 edges) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-02 ticked. No deviations.
+stopped_at: Phase 03 — plan 03-03 executed (src/pursuit/strategy/pathfind.py — barrier-aware BFS distance oracle bfs()/UNREACHABLE, STRAT-04/D-09/QUAL-02); 7 more Phase-3 plans remain (03-04..03-10)
+last_updated: "2026-07-31T20:03:18+03:00"
+last_activity: 2026-07-31 -- Executed 03-03-PLAN.md (src/pursuit/strategy/pathfind.py + tests/unit/strategy/test_pathfind.py, no other source touched): Task 1 wrote bfs(state, start, goal, agent, params) -> (distance, next_step), breadth-first over cells reached via board.get_legal_moves on a per-step probe state (dataclasses.replace(state, cop=cell) or thief=cell) -- zero reimplemented adjacency/barrier logic (QUAL-02); UNREACHABLE=-1 sentinel returned with None for a walled-off goal, never raises; neighbours sorted ascending (row, col) before every expansion for deterministic tie-breaking. Task 2 added the 7-test battery: open-board Manhattan equivalence, a walk-proof (repeated next_step application reaches goal in exactly the reported distance, budget-capped by move_ceiling), a named barrier-pocket case (wall with gaps only at the two far edges -- Manhattan-nearest neighbour stalls at the wall forever, bfs() detours through a gap), fully-walled-off goal (sentinel + None), adjacent/identical-cell edge cases, determinism + tie-break stability, and a second termination-bound test. Deviation-rule QA performed live: bfs()'s body was temporarily replaced with a one-step Manhattan-greedy stepper, confirmed the walk-proof and barrier-pocket tests fail against it (3 failed, 4 passed), then reverted (git diff on pathfind.py empty, full suite green again). Full repo gates green (ruff 0, line-limit clean, 214 tests passed, coverage 97.14%, pathfind.py itself 100%). Graphify graph rebuilt (2244 nodes/3179 edges/177 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-03 ticked. No deviations to the module itself; one test-design adaptation documented in the SUMMARY.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 19
+  completed_plans: 20
   percent: 13
 ---
 
@@ -21,42 +21,51 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 02 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 03 of 11 executed)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-02 of 11 done)
-Plan: 3 of 11 executed (03-00, 03-01, 03-02 done; 03-03..03-10 remain). Next plan is 03-03
-  (BFS pathfinding + distance oracle, STRAT-04).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-03 of 11 done)
+Plan: 4 of 11 executed (03-00, 03-01, 03-02, 03-03 done; 03-04..03-10 remain). Next plan is
+  03-04 (Bayes motion prior + fallback + `HeuristicBrain`, STRAT-02).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
-  Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), and the strategy seam
-  (03-02: `BrainBase`/`Observation`/`Decision`/`build_brain`) all landed. 5 phases remain
-  after Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-03.
-Last activity: 2026-07-31 -- Executed 03-02-PLAN.md (`src/pursuit/strategy/{__init__,base,
-  registry}.py`, no source/config beyond that + `constants.py`'s `Action`/`MoveSource`
-  touched). Task 1: frozen `Observation` (own_cell/target_cell/blocked_mask/barriers_used/
-  turn_index, D-11 believed-target contract stated in the docstring) and `Decision`
-  (move/source/barrier=None) in `base.py`; `MoveSource` str Enum and the order-frozen
-  5-action `Action` IntEnum (NORTH=0/SOUTH=1/EAST=2/WEST=3/STAY=4) plus `cell_for`/
-  `action_for` (reusing `Direction`'s deltas via `Direction[action.name]`, zero duplication)
-  in `constants.py`; `BrainBase(ABC)` declares `_pick_move`/`_decide_move`, both taking
-  `GameState` explicitly as a second argument (D-05, STRAT-07). Task 2: `registry.py`'s
-  `build_brain(role, params)` resolves `params.brain_class` through an explicit
-  `_BRAIN_REGISTRY` dict -- never `eval`/`exec`/importlib -- raising `ValueError` naming the
-  offending value and every known name on an unknown class (D-07, fail-loud, no silent
-  default brain); registry ships empty of real entries, `HeuristicBrain`/`QLearningBrain`
-  register in 03-04/03-06. Task 3: package-wide AST-walk structural tests in
-  `test_registry.py` scanning every module under `src/pursuit/strategy/` for imports -- no
-  `pursuit.network` (STRAT-03) and no socket/subprocess/HTTP-client/LLM-SDK import (STRAT-07,
-  rule 25) -- both demonstrated to actually fail (temporarily added `import socket` to
-  `base.py`, confirmed RED, reverted clean, confirmed GREEN). `constants.py` landed at
-  exactly 150 code lines (confirmed via `scripts/check_line_limit.sh`, not a manual count).
-  Full repo gates green: `ruff check .` 0 violations, line-limit clean, 207 tests passed,
-  coverage 97.06%. Graphify graph rebuilt (2188 nodes/3069 edges/178 communities) and
-  `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/TODO.md` row 03-02 ticked. No deviations.
+  Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), and
+  the barrier-aware BFS distance oracle (03-03: `bfs()`/`UNREACHABLE`) all landed. 5 phases
+  remain after Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-04.
+Last activity: 2026-07-31 -- Executed 03-03-PLAN.md (`src/pursuit/strategy/pathfind.py` +
+  `tests/unit/strategy/test_pathfind.py`, no other source/config touched). Task 1:
+  `bfs(state, start, goal, agent, params) -> (distance, next_step)`, breadth-first over
+  cells reached via `board.get_legal_moves` on a per-step probe state
+  (`dataclasses.replace(state, cop=cell)` or `thief=cell`) -- zero reimplemented
+  adjacency/barrier-membership logic anywhere in the module (QUAL-02); `UNREACHABLE: int = -1`
+  module-level sentinel returned with `None` for a goal the cop has walled off, never raises;
+  neighbours sorted ascending `(row, col)` before every expansion for deterministic
+  tie-breaking (documented so a replayed game reproduces the same move). Task 2: the 7-test
+  battery that actually proves STRAT-04 -- open-board Manhattan equivalence; a walk-proof
+  (repeated `next_step` application reaches goal in exactly the reported distance, budget-
+  capped by `move_ceiling` so an oscillating implementation fails loudly instead of hanging
+  the suite); a named barrier-pocket case (a wall with gaps only at the two far board edges
+  -- the Manhattan-nearest neighbour walks straight into the wall and stalls there forever,
+  `bfs()` detours through a gap and actually arrives, D-09); a fully-walled-off goal
+  (sentinel + `None`); adjacent/identical-cell edge cases (distance 0 returns no next step,
+  not a self-move); determinism + tie-break stability on a genuine distance tie; and a second
+  termination-bound test on a corner-to-corner traversal. Deviation-rule QA performed live and
+  reverted, per the plan's own explicit verification instruction: `bfs()`'s body was
+  temporarily replaced with a one-step Manhattan-greedy stepper, the walk-proof and
+  barrier-pocket tests were confirmed to fail against it (3 failed, 4 passed -- the
+  fully-walled-off test failed too, as an expected side effect of a corruption that never
+  returns the sentinel), then the real BFS was restored (`git diff` on `pathfind.py` empty,
+  full suite green again). `pathfind.py` landed at 86 code lines, well under the 150-line
+  gate. Full repo gates green: `ruff check .` 0 violations, line-limit clean, 214 tests
+  passed, coverage 97.14% (`pathfind.py` itself 100%). Graphify graph rebuilt (2244
+  nodes/3179 edges/177 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
+  TODO.md` row 03-03 ticked. No deviations to the module itself; one test-design adaptation
+  (the walk-proof test needed an on-path barrier to actually fail under the corruption check,
+  matching the plan's literal wording) documented in the SUMMARY, not a change to scope or
+  `must_haves`.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 3 of 11 executed)
+  Phase 3 plan 4 of 11 executed)
 
 ## Performance Metrics
 
@@ -97,6 +106,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P00 | 19min | 3 tasks | 23 files |
 | Phase 03 P01 | 6min | 2 tasks | 2 files |
 | Phase 03 P02 | 12min | 3 tasks | 5 files |
+| Phase 03 P03 | 18min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -164,6 +174,7 @@ Recent decisions affecting current work:
 - [Phase 03-00]: artifacts_dir empty-defaults under LOCALAPPDATA (D-22); reward_capture/reward_survival/reward_step/reward_barrier_gain and alpha_floor/alpha_decay_episodes/eval_seed_offset are engineering defaults not sourced from AI-SPEC
 - [Phase 03-01]: docs/PRD_rl_strategy.md v1.00 written before any src/pursuit/strategy/ code (DOC-02): reward function does NOT reuse game_params.json Table 17 scoring; STRAT-02's Manhattan fallback wording is implemented as barrier-aware BFS, documented as a deliberate deviation
 - [Phase 03-02]: BrainBase ABC + frozen Observation/Decision seam; Action IntEnum order frozen and pinned by test (STRAT-01); build_brain resolves via an explicit dict, never eval/exec/importlib (STRAT-03, D-07); AST-walk structural tests prove no pursuit.network or LLM/HTTP/subprocess/socket import is reachable from src/pursuit/strategy/ (STRAT-07), demonstrated to actually fail when triggered
+- [Phase 03-03]: bfs(state, start, goal, agent, params) is the single barrier-aware distance oracle for the phase (QUAL-02); adjacency comes entirely from board.get_legal_moves via a per-step probe state (dataclasses.replace), never reimplemented; UNREACHABLE=-1 sentinel (not math.inf) for a walled-off goal, never raises; neighbours sorted ascending (row, col) at every expansion for deterministic tie-breaking; no walk() helper added since gameplay calls bfs() fresh every turn and a multi-step walk is a test-time concern only
 
 ### Pending Todos
 
@@ -185,23 +196,30 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-31T19:45:21+03:00
-Stopped at: Completed 03-02-PLAN.md (`src/pursuit/strategy/{__init__,base,registry}.py` +
-  `constants.py`'s `Action`/`MoveSource` -- the `BrainBase` seam and the config-driven
-  brain registry, STRAT-03/07). SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-02-SUMMARY.md, including the
-  `build_brain(role, params)` constructor-convention decision and the `cell_for`/
-  `action_for`-reuses-`Direction`-deltas decision.
+Last session: 2026-07-31T20:03:18+03:00
+Stopped at: Completed 03-03-PLAN.md (`src/pursuit/strategy/pathfind.py` +
+  `tests/unit/strategy/test_pathfind.py` -- the barrier-aware BFS distance oracle,
+  STRAT-04/D-09/QUAL-02). SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-03-SUMMARY.md, including the
+  UNREACHABLE-sentinel-is-a-plain-int decision, the probe-state (dataclasses.replace)
+  adjacency-reuse decision, and the no-walk()-helper decision.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00, 03-01, 03-02 ticked; rows 03-03..03-10, 03-96,
-  03-99 remain.
-Resume file: None — 03-02 is fully committed (3 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-03 (BFS pathfinding +
-  distance oracle over the barrier-aware grid, STRAT-04). Per-day sequence from Phase 3 on:
+  docs/phases/phase-3/TODO.md rows 03-00, 03-01, 03-02, 03-03 ticked; rows 03-04..03-10,
+  03-96, 03-99 remain.
+Resume file: None — 03-03 is fully committed (2 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-04 (Bayes motion prior +
+  barrier-aware-BFS fallback + `HeuristicBrain`, STRAT-02), which consumes 03-03's `bfs()`
+  directly. Per-day sequence from Phase 3 on:
   /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
   /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
   refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2188 nodes /
-  3069 edges / 178 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2244 nodes /
+  3179 edges / 177 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  Note on tooling: `gsd-tools.cjs state advance-plan` corrupted this file's hand-authored
+  wrapped prose (truncated `stopped_at`, orphaned continuation lines, stale "next plan"
+  pointer) when run against this project's long-paragraph STATE.md style -- the automated
+  edit was reverted via `git checkout` and this update was hand-authored instead, matching
+  the established per-plan narrative format. Future plan closures in this project should do
+  the same rather than trust `state advance-plan`/`update-progress` on this file.
