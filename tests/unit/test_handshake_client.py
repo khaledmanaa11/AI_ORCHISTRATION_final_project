@@ -10,6 +10,9 @@ the in-memory Client(server) transport (RESEARCH Pattern 5), never a socket.
 import asyncio
 
 from fastmcp import Client, FastMCP
+
+from pursuit.network.config_hash import config_digest
+from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.handshake import (
     HANDSHAKE_TOOL,
     HandshakeOutcome,
@@ -17,9 +20,6 @@ from pursuit.network.handshake import (
     perform_handshake,
     respond_to_handshake,
 )
-
-from pursuit.network.config_hash import config_digest
-from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.peer_runtime import build_server
 from pursuit.network.state_machine import State, TurnStateMachine
 from tests.unit.test_handshake import FakeReporter

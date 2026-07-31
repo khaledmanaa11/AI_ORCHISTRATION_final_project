@@ -23,7 +23,7 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
 ignore = ["E501"]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src", "training"]
 omit = ["*/main.py", "*/gui/*", "tests/*"]
 
 [tool.coverage.report]
@@ -36,6 +36,7 @@ asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.10.9",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",

@@ -5,9 +5,9 @@ from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
-from pursuit.shared.network_config import NetworkParams, load_network_config
 
 from pursuit.constants import NetworkConfigKey
+from pursuit.shared.network_config import NetworkParams, load_network_config
 
 _CONFIG_DIR = Path(__file__).parent.parent.parent / "config"
 POLICE_NETWORK = _CONFIG_DIR / "police" / "network.json"

@@ -9,6 +9,7 @@ same in-memory Client(mcp) transport, no socket in either file.
 import asyncio
 
 from fastmcp import Client, FastMCP
+
 from pursuit.network.tools import register_tools
 
 _TOOL_NAMES = {"handshake", "receive_move", "receive_barrier", "game_over"}

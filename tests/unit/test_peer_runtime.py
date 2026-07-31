@@ -13,8 +13,8 @@ import asyncio
 import pathlib
 
 from fastmcp import Client
-from pursuit.network.peer_runtime import PeerRuntime, build_server
 
+from pursuit.network.peer_runtime import PeerRuntime, build_server
 from pursuit.shared.network_config import load_network_config
 
 _THIEF_CONFIG = (

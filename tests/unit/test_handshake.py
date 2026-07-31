@@ -11,15 +11,15 @@ packages spell the class ``McpError`` (mixed case).
 
 from mcp import McpError
 from mcp.types import ErrorData
+
+from pursuit.network.config_hash import config_digest
+from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.handshake import (
     HANDSHAKE_TURN,
     HandshakeKey,
     HandshakeOutcome,
     perform_handshake,
 )
-
-from pursuit.network.config_hash import config_digest
-from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State, TransitionSeverity, TurnStateMachine
 
 _FAKE_RPC_ERROR_CODE = -1  # test scaffolding only; any JSON-RPC error code works

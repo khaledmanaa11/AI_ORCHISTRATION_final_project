@@ -15,7 +15,7 @@ status=0
 if [ "$#" -gt 0 ]; then
   files="$*"
 else
-  files=$(git ls-files 'src/**/*.py' 'tests/**/*.py' 2>/dev/null || true)
+  files=$(git ls-files 'src/**/*.py' 'tests/**/*.py' 'training/**/*.py' 2>/dev/null || true)
   [ -z "$files" ] && files=$(git ls-files '*.py' 2>/dev/null || true)
 fi
 

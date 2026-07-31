@@ -10,9 +10,9 @@ import asyncio
 import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
-from pursuit.network.tools import register_tools
 
 from pursuit.network.envelope import MessageType
+from pursuit.network.tools import register_tools
 
 
 def _server_with_queue() -> tuple[FastMCP, asyncio.Queue]:

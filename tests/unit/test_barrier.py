@@ -1,7 +1,6 @@
 """Full BASE-02 test suite — barrier placement and quota enforcement."""
 
 from pursuit.shared.barrier import place_barrier
-
 from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
 

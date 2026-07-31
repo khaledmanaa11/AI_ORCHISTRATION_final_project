@@ -20,6 +20,7 @@ import asyncio
 import pytest
 from mcp import McpError
 from mcp.types import ErrorData
+
 from pursuit.network.deadline import DeadlineExpired, call_with_retry, wait_for_opponent
 
 _TEST_DEADLINE_SECONDS = 0.01  # test scaffolding only; NOT a PARAMETERS.md value

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from pursuit.network.config_hash import canonical_json, config_digest, digests_match
 
 

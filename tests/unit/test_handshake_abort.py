@@ -9,15 +9,15 @@ tests/unit/test_handshake.py and are imported here, not duplicated
 
 import pytest
 from fastmcp.exceptions import ToolError
+
+from pursuit.network.config_hash import config_digest
+from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.handshake import (
     HandshakeKey,
     HandshakeOutcome,
     perform_handshake,
     respond_to_handshake,
 )
-
-from pursuit.network.config_hash import config_digest
-from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State, TransitionSeverity, TurnStateMachine
 from tests.unit.test_handshake import FakeReporter, fake_caller, peer_reply, raising_caller
 

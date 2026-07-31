@@ -4,6 +4,7 @@ import dataclasses
 import json
 
 import pytest
+
 from pursuit.network.envelope import Envelope, MessageType
 
 

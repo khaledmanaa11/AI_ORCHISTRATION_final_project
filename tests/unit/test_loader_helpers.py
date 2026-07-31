@@ -6,6 +6,7 @@ consumer. require_str is new — it has no Phase-1 original.
 """
 
 import pytest
+
 from pursuit.shared.loader_helpers import require_int, require_key, require_str
 
 
