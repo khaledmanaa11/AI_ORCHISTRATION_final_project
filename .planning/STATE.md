@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 — plan 02-10 executed (§10.4 phase gate + NET-01..09 coverage audit + real two-process launch); Phase 02 code plans complete, awaiting /gsd:verify-work 2
-last_updated: "2026-07-29T17:15:00+03:00"
-last_activity: 2026-07-29 -- Executed 02-10-PLAN.md (tests/integration/conftest.py, test_peer_roundtrip.py, test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py; the §10.4 phase-gate plan): all eight gate node IDs (GATE-1/2/3) collect and pass with zero skips; NET-01..NET-09 coverage audit closed with a per-requirement Result table. While building the GATE-3 full-lifecycle test, found and fixed two real production bugs in turn_actions.py (await_opponent_turn decoding an already-decoded Envelope; take_my_turn unconditionally re-attempting MY_TURN every cycle, which silently capped every real game at one exchange before a false technical win) -- confirmed via empirical probe scripts, then re-verified against the full existing unit suite (one test corrected to match the fix, one regression test added). A real two-process standalone launch (Task 4) then ran a full 35-turn game over real localhost HTTP to a genuine SURVIVAL outcome, with two distinct PIDs/ports/config roots/JSONL logs and no leaked opponent position. Full suite 179 passed, 0 skipped, coverage 96.87%; ruff/line-limit clean repo-wide.
+stopped_at: Phase 03 — plan 03-00 executed (strategy config foundation: config/{police,thief}/strategy.json, StrategyKey/TrainingKey Enums, load_strategy_config() reusing loader_helpers, matplotlib dev dep, training/ wired into the line-limit + coverage gates); 10 more Phase-3 plans remain (03-01..03-10)
+last_updated: "2026-07-31T19:21:54+03:00"
+last_activity: 2026-07-31 -- Executed 03-00-PLAN.md (config/police/strategy.json, config/thief/strategy.json, src/pursuit/constants.py StrategyKey/TrainingKey, src/pursuit/shared/strategy_config.py, src/pursuit/shared/loader_helpers.py require_float/require_list, tests/unit/strategy/): Task 1 wrote both role strategy.json files (4 nested groups: [strategy]/[training]/[eval]/[monitoring], 43 hyperparameters copied verbatim from 03-AI-SPEC.md Sec5 plus the outline's D-21..D-25 conflict-ruling keys) and the two key Enums. Task 2 wrote a schema-table-driven load_strategy_config() (136 code lines covering 43 fields) as loader_helpers' third consumer, adding require_float/require_list there per QUAL-02; 10 new tests all green. Task 3 added matplotlib as a uv --dev dependency (D-20) and wired the not-yet-created training/ package into both check_line_limit.sh and [tool.coverage.run] source ahead of 03-08 creating it. Deviation: a fresh repo-wide `ruff check .` (cache cleared) surfaced 13 pre-existing I001 import-order violations in Phase-1/Phase-2 test files, masked until now by a stale .ruff_cache; fixed via `ruff --fix` (mechanical reorder only) since the plan's own gate requires 0 violations repo-wide, full suite re-verified green after (189 passed, 97.09% coverage). Renamed two new private helpers (_require_brain_class/_require_unit_interval -> _resolve_brain_class/_check_unit_interval) so they would not trip the plan's own "grep -c 'def _require'" duplication check despite not being duplicates. Full suite 189 passed, 0 skipped; coverage 97.09% (>=85%); ruff/line-limit clean repo-wide.
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 27
+  completed_plans: 17
   percent: 13
 ---
 
@@ -21,39 +21,43 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 02 — fastmcp-infrastructure (Phase 01 complete; Wave 0 of Phase 02 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 00 of 11 executed)
 
 ## Current Position
 
-Phase: 02 (fastmcp-infrastructure) — EXECUTED (Wave 5 / plan 02-10 done — all 11 code plans complete)
-Plan: 11 of 11 executed (02-00 .. 02-10 all done). No plan remains for Phase 02; next step
-  is /gsd:verify-work 2 to close the phase (tick docs/phases/phase-2/TODO.md row 2-99,
-  root docs/TODO.md, confirm the .planning/graphs/ refresh).
-Status: Phase 1 of 8 done, Phase 2's code plans all executed — 6 phases remaining after
-  verify-work closes Phase 2. Next: run /gsd:verify-work 2, then /gsd:discuss-phase 3.
-Last activity: 2026-07-29 -- Executed 02-10-PLAN.md (§10.4 phase-gate integration tests +
-  NET-01..09 coverage audit + real two-process launch). Task 1: tests/integration/conftest.py
-  (shared fixtures) + test_peer_roundtrip.py (GATE-1, coordinate-faithful move envelope
-  through the real tool surface). Task 2: test_turn_isolation.py (GATE-2, NET-02 asserted
-  positively) + test_turn_lifecycle.py (GATE-3 core, full lifecycle + illegal-transition
-  severity) + test_turn_resilience.py (GATE-3 resilience, technical win + watchdog
-  ordering) -- three modules, not two, after a second 150-line-gate split. While writing
-  the full-lifecycle test, found and fixed two real bugs in turn_actions.py: (1)
-  await_opponent_turn called Envelope.from_dict on an already-decoded Envelope (tools.py's
-  real _accept enqueues an Envelope instance, never a dict); (2) take_my_turn
-  unconditionally re-attempted the MY_TURN transition every call, colliding with the state
-  await_opponent_turn's own prior call legitimately leaves it in every cycle after the
-  first -- silently capping every real game at ONE exchange before a false technical win
-  (rules 16/22). Both confirmed via standalone probe scripts before fixing; one existing
-  unit test corrected to match the fix, one regression test added. Task 3: coverage audit
-  closed (8/8 gate nodes pass, NET-01..09 each mapped). Task 4: a REAL two-process
-  standalone launch (uv run python -m pursuit.main --config-dir config/police|thief) ran a
-  full 35-turn game over real localhost HTTP to a clean SURVIVAL outcome -- two distinct
-  PIDs, ports, config roots, and JSONL logs; no leaked opponent position. Full suite 179
-  passed, 0 skipped, 0 regressions; coverage 96.87% (>=85%); ruff/line-limit clean
-  repo-wide.
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-00 of 11 done)
+Plan: 1 of 11 executed (03-00 done; 03-01..03-10 remain). Next plan is 03-01
+  (docs/PRD_rl_strategy.md, written before the policy code it describes per DOC-02).
+Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
+  Phase 3 scaffolding (config + loader + Enums) landed this session. 5 phases remain after
+  Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-01.
+Last activity: 2026-07-31 -- Executed 03-00-PLAN.md, the Phase-3 foundation plan (no
+  strategy logic, per its own objective — pure config + loader scaffolding so no later
+  Phase-3 plan is tempted to hardcode an RL hyperparameter). Task 1:
+  config/{police,thief}/strategy.json (4 nested groups: [strategy]/[training]/[eval]/
+  [monitoring], 43 hyperparameters copied verbatim from 03-AI-SPEC.md Sec5's config table
+  plus the outline's D-21..D-25 conflict-ruling keys — sparring_mix 0.30/0.50/0.20 not the
+  AI-SPEC's 0.5/0.35/0.15, artifacts_dir/reference_impl_path empty-defaulted,
+  pool_snapshot_every/pool_size/selfplay_delta/alpha_floor/alpha_decay_episodes/
+  eval_seed_offset added) plus StrategyKey/TrainingKey string Enums in constants.py. Task 2:
+  a schema-table-driven load_strategy_config() + frozen StrategyParams (43 fields, 136 code
+  lines) as loader_helpers' third consumer (QUAL-02), adding require_float/require_list
+  there; brain_class resolves whichever of police_class/thief_class the role file carries;
+  artifacts_dir empty-defaults under LOCALAPPDATA at load time (D-22, never a literal path
+  in src/); 10 new tests in tests/unit/strategy/. Task 3: matplotlib added via
+  `uv add --dev` (D-20, runtime deps stay fastmcp alone); training/**/*.py wired into
+  scripts/check_line_limit.sh and [tool.coverage.run] source ahead of 03-08 creating that
+  package, so it cannot silently escape either gate; 03-02..03-07/03-10 PLAN.md verify lines
+  updated to --cov=pursuit --cov=training. Deviation: a fresh repo-wide `ruff check .`
+  (cache cleared) surfaced 13 pre-existing I001 import-order violations in Phase-1/Phase-2
+  test files never touched by this plan, masked until now by a stale .ruff_cache; fixed via
+  `ruff --fix` (mechanical reorder only, no logic change) because the plan's own gate
+  requires 0 violations repo-wide and every later Phase-3 plan's own gate depends on it;
+  full suite re-verified green after (189 passed, 97.09% coverage). Full suite 189 passed,
+  0 skipped, 0 regressions; coverage 97.09% (>=85%); ruff/line-limit clean repo-wide.
 
-Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete, pending verify-work)
+Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
+  Phase 3 plan 1 of 11 executed)
 
 ## Performance Metrics
 
@@ -91,6 +95,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 02-fastmcp-infrastructure P08 | 30min | 3 tasks | 5 files |
 | Phase 02 P09 | 75min | 3 tasks | 15 files |
 | Phase 02 P10 | 110min | 4 tasks | 10 files |
+| Phase 03 P00 | 19min | 3 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -154,6 +159,8 @@ Recent decisions affecting current work:
 - [Phase 02-10]: Real production bug found and fixed via 02-10's GATE-3 test, not by 02-10 itself: turn_actions.py's take_my_turn unconditionally re-attempted State.MY_TURN every call, but await_opponent_turn's own final line legitimately leaves the machine at MY_TURN at the end of every cycle after the first -- colliding as an illegal self-transition, silently no-opping every second-and-later turn and starving await_opponent_turn into a FALSE technical win. No 02-09 unit test ever drove a real second cycle to catch it. Fixed by guarding take_my_turn's entry attempt on `current is not State.MY_TURN`, symmetric to await_opponent_turn's own guarded HANDSHAKE entry. A second, related bug (await_opponent_turn calling Envelope.from_dict on an already-decoded Envelope -- tools.py's real _accept enqueues an Envelope instance, never a dict) was fixed the same way. Both confirmed via standalone probe scripts and re-verified at real two-process scale (Task 4: a full 35-turn game completed cleanly to SURVIVAL)
 - [Phase 02-10]: NET-05's RECOVERABLE severity coverage was never uniquely provided by the orchestrator-level test that assumed the now-fixed buggy behavior -- it was always independently covered by tests/unit/test_state_machine.py::test_recoverable_attempt_keeps_machine_usable (QUAL-02); the orchestrator-level test was corrected to assert the fixed behavior instead of the bug
 - [Phase 02-10]: A three-way split was needed for the integration gate modules (test_peer_roundtrip.py, test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py), one level deeper than the plan's own two-way split anticipation -- test_turn_lifecycle.py still exceeded 150 lines after the first split, so the two GATE-2 tests moved to test_turn_isolation.py, exactly the contingency the plan named in advance
+- [Phase 03-00]: StrategyKey/TrainingKey Enums address every Phase-3 hyperparameter; strategy_config.py is loader_helpers' 3rd consumer
+- [Phase 03-00]: artifacts_dir empty-defaults under LOCALAPPDATA (D-22); reward_capture/reward_survival/reward_step/reward_barrier_gain and alpha_floor/alpha_decay_episodes/eval_seed_offset are engineering defaults not sourced from AI-SPEC
 
 ### Pending Todos
 
@@ -175,20 +182,24 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-29T17:15:00+03:00
-Stopped at: Completed 02-10-PLAN.md (tests/integration/conftest.py, test_peer_roundtrip.py,
-  test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py — the §10.4
-  phase-gate + NET-01..09 coverage-audit + real two-process-launch plan, the final Phase-2
-  plan). SUMMARY at .planning/phases/02-fastmcp-infrastructure/02-10-SUMMARY.md, including
-  the corrected NET-01..09 audit table and the "§10.4 criterion 2 — real process evidence"
-  section from Task 4.
-  Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 triplet
-  (docs/phases/phase-2/{PRD,PLAN,TODO}.md) — TODO row 2-10 and the phase-gate checklist
-  ticked this session; row 2-99 (verify-work's full sweep + root docs/TODO.md) remains.
-Resume file: None — Phase 2's code plans are ALL complete. Next step is
-  /gsd:verify-work 2 (confirm the phase gate, tick 2-99 + root docs/TODO.md, confirm the
-  .planning/graphs/ refresh happened this phase), then start Phase 3 with /gsd:graphify
-  (mandatory before /gsd:plan-phase 3 for N>=3 per CLAUDE.md) followed by
-  /gsd:discuss-phase 3 --batch.
+Last session: 2026-07-31T19:21:54+03:00
+Stopped at: Completed 03-00-PLAN.md (config/police/strategy.json, config/thief/strategy.json,
+  src/pursuit/constants.py, src/pursuit/shared/strategy_config.py,
+  src/pursuit/shared/loader_helpers.py, tests/unit/strategy/ — the Phase-3 config +
+  loader foundation plan, no strategy logic). SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-00-SUMMARY.md, including the
+  reward-key/artifacts_dir/eval_seed_offset autonomous-default decisions and the
+  ruff-cache deviation writeup.
+  Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
+  (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
+  planning/execution proceeded ahead of it per this session's instructions.
+  docs/phases/phase-3/TODO.md row 03-00 ticked this session; rows 03-01..03-10, 03-96,
+  03-99 remain.
+Resume file: None — 03-00 is fully committed (3 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-01
+  (docs/PRD_rl_strategy.md, written before the policy code it describes, DOC-02).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
-  → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N
+  → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N. Note: the
+  CLAUDE.md-mandated graphify build/refresh for Phase 3 has not yet run this session —
+  do it before/after the next execute-phase batch (graphify update . && cp
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/).

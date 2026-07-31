@@ -8,7 +8,7 @@
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 03-00 Phase-3 scaffold + config sections + test stubs | P0 | ☐ | Khaled | `uv add --dev matplotlib`; `[strategy]` + `[training]` sections in `config/{police,thief}/`; `StrategyKey`/`TrainingKey` enums; hyperparameters loaded through the existing `loader_helpers` (QUAL-02/11/13); test stubs collect and exit 0 |
+| 03-00 Phase-3 scaffold + config sections + test stubs | P0 | ☑ | Khaled | `uv add --dev matplotlib`; `[strategy]` + `[training]` sections in `config/{police,thief}/`; `StrategyKey`/`TrainingKey` enums; hyperparameters loaded through the existing `loader_helpers` (QUAL-02/11/13); test stubs collect and exit 0 |
 | 03-01 `docs/PRD_rl_strategy.md` | P0 | ☐ | Khaled | v1.00; state encoding, reward function, update rule, fallback trigger and sparring pool all specified; every number carries a Source column marking it PARAMETERS.md vs engineering default. Written **before** the policy code it describes (DOC-02, SEGAL §2.5 step 5) |
 | 03-02 `BrainBase` + contracts + config pluggability | P0 | ☐ | Khaled | ABC with `_pick_move`/`_decide_move`; frozen `Observation`/`Decision`; brain resolved from config `[strategy]` `police_class`/`thief_class` with zero networking imports; unknown class name fails loud (STRAT-03) |
 | 03-03 BFS pathfinding + distance oracle | P0 | ☐ | Khaled | BFS over the barrier-aware grid; returns optimal distance **and** next step; extracted once and consumed by both the fallback and the barrier sub-policy (QUAL-02); barrier-pocket case proven not to dead-end (STRAT-04) |
