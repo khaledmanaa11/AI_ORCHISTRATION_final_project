@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-00 executed (strategy config foundation: config/{police,thief}/strategy.json, StrategyKey/TrainingKey Enums, load_strategy_config() reusing loader_helpers, matplotlib dev dep, training/ wired into the line-limit + coverage gates); 10 more Phase-3 plans remain (03-01..03-10)
-last_updated: "2026-07-31T19:21:54+03:00"
-last_activity: 2026-07-31 -- Executed 03-00-PLAN.md (config/police/strategy.json, config/thief/strategy.json, src/pursuit/constants.py StrategyKey/TrainingKey, src/pursuit/shared/strategy_config.py, src/pursuit/shared/loader_helpers.py require_float/require_list, tests/unit/strategy/): Task 1 wrote both role strategy.json files (4 nested groups: [strategy]/[training]/[eval]/[monitoring], 43 hyperparameters copied verbatim from 03-AI-SPEC.md Sec5 plus the outline's D-21..D-25 conflict-ruling keys) and the two key Enums. Task 2 wrote a schema-table-driven load_strategy_config() (136 code lines covering 43 fields) as loader_helpers' third consumer, adding require_float/require_list there per QUAL-02; 10 new tests all green. Task 3 added matplotlib as a uv --dev dependency (D-20) and wired the not-yet-created training/ package into both check_line_limit.sh and [tool.coverage.run] source ahead of 03-08 creating it. Deviation: a fresh repo-wide `ruff check .` (cache cleared) surfaced 13 pre-existing I001 import-order violations in Phase-1/Phase-2 test files, masked until now by a stale .ruff_cache; fixed via `ruff --fix` (mechanical reorder only) since the plan's own gate requires 0 violations repo-wide, full suite re-verified green after (189 passed, 97.09% coverage). Renamed two new private helpers (_require_brain_class/_require_unit_interval -> _resolve_brain_class/_check_unit_interval) so they would not trip the plan's own "grep -c 'def _require'" duplication check despite not being duplicates. Full suite 189 passed, 0 skipped; coverage 97.09% (>=85%); ruff/line-limit clean repo-wide.
+stopped_at: Phase 03 — plan 03-01 executed (docs/PRD_rl_strategy.md v1.00, the Q-learning per-mechanism PRD, written before any src/pursuit/strategy/ code, DOC-02); 9 more Phase-3 plans remain (03-02..03-10)
+last_updated: "2026-07-31T19:33:18+03:00"
+last_activity: 2026-07-31 -- Executed 03-01-PLAN.md (docs/PRD_rl_strategy.md, documentation-only, no source/config touched): Task 1 wrote Sec1-6 (mechanism scope + STRAT-01..07/DOC-02 requirements table; state-key composition own/target/blocked-mask/barriers-used/turn-bucket with a worked example and state-space arithmetic 49x49x16x15x3=1,728,720; 5-action space with the barrier decision deliberately excluded, D-12; reward table distinguished from game_params.json Table 17 scoring; Q-update + epsilon/alpha decay equations named only as config keys; fallback trigger key-absent-OR-visits-below-min_visits with the Bayes prior and the STRAT-02-says-Manhattan-but-implementation-is-barrier-aware-BFS deviation recorded). Task 2 appended Sec7-10 (offline training regime stepping pursuit.sdk.engine directly never the network layer, D-17; sparring pool composition/sampling and the two distinct checkpoint cadences; QLearningBrain-vs-HeuristicBrain win-rate success bar citing AI-SPEC Sec5 E5; the Sec9 two-table parameter split -- PARAMETERS.md game values never altered vs D-18 engineering defaults, every one of 03-00's config/{police,thief}/strategy.json keys cited verbatim; Sec10 believed-target input contract D-11, STRAT-07/rule 25, role isolation D-03, truthful barrier declarations). Committed as two separate task commits (b4e9700, f601e7f) to match Task 1's own verify step requiring no section beyond Sec6 before that commit. docs/phases/phase-3/TODO.md row 03-01 and the phase-gate DOC-02 line both ticked. No deviations; full digit sweep of the finished document confirmed no unsourced number.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 17
+  completed_plans: 18
   percent: 13
 ---
 
@@ -21,43 +21,46 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 00 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 01 of 11 executed)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-00 of 11 done)
-Plan: 1 of 11 executed (03-00 done; 03-01..03-10 remain). Next plan is 03-01
-  (docs/PRD_rl_strategy.md, written before the policy code it describes per DOC-02).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-01 of 11 done)
+Plan: 2 of 11 executed (03-00, 03-01 done; 03-02..03-10 remain). Next plan is 03-02
+  (`BrainBase` + `Observation`/`Decision` contracts + config-driven brain registry, STRAT-03/07).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
-  Phase 3 scaffolding (config + loader + Enums) landed this session. 5 phases remain after
-  Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-01.
-Last activity: 2026-07-31 -- Executed 03-00-PLAN.md, the Phase-3 foundation plan (no
-  strategy logic, per its own objective — pure config + loader scaffolding so no later
-  Phase-3 plan is tempted to hardcode an RL hyperparameter). Task 1:
-  config/{police,thief}/strategy.json (4 nested groups: [strategy]/[training]/[eval]/
-  [monitoring], 43 hyperparameters copied verbatim from 03-AI-SPEC.md Sec5's config table
-  plus the outline's D-21..D-25 conflict-ruling keys — sparring_mix 0.30/0.50/0.20 not the
-  AI-SPEC's 0.5/0.35/0.15, artifacts_dir/reference_impl_path empty-defaulted,
-  pool_snapshot_every/pool_size/selfplay_delta/alpha_floor/alpha_decay_episodes/
-  eval_seed_offset added) plus StrategyKey/TrainingKey string Enums in constants.py. Task 2:
-  a schema-table-driven load_strategy_config() + frozen StrategyParams (43 fields, 136 code
-  lines) as loader_helpers' third consumer (QUAL-02), adding require_float/require_list
-  there; brain_class resolves whichever of police_class/thief_class the role file carries;
-  artifacts_dir empty-defaults under LOCALAPPDATA at load time (D-22, never a literal path
-  in src/); 10 new tests in tests/unit/strategy/. Task 3: matplotlib added via
-  `uv add --dev` (D-20, runtime deps stay fastmcp alone); training/**/*.py wired into
-  scripts/check_line_limit.sh and [tool.coverage.run] source ahead of 03-08 creating that
-  package, so it cannot silently escape either gate; 03-02..03-07/03-10 PLAN.md verify lines
-  updated to --cov=pursuit --cov=training. Deviation: a fresh repo-wide `ruff check .`
-  (cache cleared) surfaced 13 pre-existing I001 import-order violations in Phase-1/Phase-2
-  test files never touched by this plan, masked until now by a stale .ruff_cache; fixed via
-  `ruff --fix` (mechanical reorder only, no logic change) because the plan's own gate
-  requires 0 violations repo-wide and every later Phase-3 plan's own gate depends on it;
-  full suite re-verified green after (189 passed, 97.09% coverage). Full suite 189 passed,
-  0 skipped, 0 regressions; coverage 97.09% (>=85%); ruff/line-limit clean repo-wide.
+  Phase 3 scaffolding (config + loader + Enums, 03-00) and the RL strategy per-mechanism PRD
+  (03-01, DOC-02) both landed this session. 5 phases remain after Phase 3 closes. Next:
+  /gsd:execute-phase 3 to continue with 03-02.
+Last activity: 2026-07-31 -- Executed 03-01-PLAN.md, the documentation-only Phase-3 PRD plan
+  (no source/config touched, per its own objective — the PRD had to exist and be approved
+  before any policy code, SEGAL §2.5 step 5). Task 1: `docs/PRD_rl_strategy.md` Sec1-6 —
+  mechanism scope + STRAT-01..07/DOC-02 requirements table; the exact state-key composition
+  (own cell, believed target cell, agent-relative blocked-direction bitmask, barriers-used
+  count, bucketed turn phase) with a worked example (`2,3|5,5|9|6|1`) and the state-space
+  arithmetic (49×49×16×15×3 = 1,728,720 theoretical keys vs the 250,000 `max_table_keys`
+  health ceiling); the 5-action space with the barrier decision deliberately excluded (D-12);
+  the reward table, explicitly distinguished from `game_params.json` Table 17's league
+  scoring; the Q-update and epsilon/alpha decay equations, every hyperparameter named only as
+  a config key; the fallback trigger (key-absent OR visits below `min_visits`) with the Bayes
+  motion-model prior and the recorded STRAT-02-says-Manhattan-but-implementation-is-
+  barrier-aware-BFS deviation (D-08/D-09). Task 2: Sec7-10 — the offline training regime
+  stepping `pursuit.sdk.engine` directly, never the network layer (D-17); the sparring pool
+  composition/sampling rule and the two distinct checkpoint cadences (crash-recovery vs
+  pool-snapshot); the `QLearningBrain`-vs-`HeuristicBrain` win-rate success bar citing
+  AI-SPEC §5 E5 rather than restating it; Sec9's two-table parameter split (PARAMETERS.md
+  game values, never altered here, vs the D-18 engineering-defaults table covering every one
+  of 03-00's `config/{police,thief}/strategy.json` keys, cross-checked verbatim); Sec10's
+  believed-target input contract (D-11), STRAT-07/rule 25, role isolation (D-03), and
+  truthful/quota-respecting barrier declarations. Committed as two separate commits
+  (`b4e9700`, `f601e7f`) rather than one, so Task 1's own verify step ("no section beyond
+  Sec6 yet") was satisfied by a real intermediate commit, not just by writing order.
+  `docs/phases/phase-3/TODO.md` row 03-01 and the phase-gate DOC-02 line both ticked. No
+  deviations; a full digit sweep of the finished 327-line document confirmed every numeric
+  literal traces to a Sec9 table row or is a section/rule/table citation.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 1 of 11 executed)
+  Phase 3 plan 2 of 11 executed)
 
 ## Performance Metrics
 
@@ -96,6 +99,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 02 P09 | 75min | 3 tasks | 15 files |
 | Phase 02 P10 | 110min | 4 tasks | 10 files |
 | Phase 03 P00 | 19min | 3 tasks | 23 files |
+| Phase 03 P01 | 6min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -161,6 +165,7 @@ Recent decisions affecting current work:
 - [Phase 02-10]: A three-way split was needed for the integration gate modules (test_peer_roundtrip.py, test_turn_isolation.py, test_turn_lifecycle.py, test_turn_resilience.py), one level deeper than the plan's own two-way split anticipation -- test_turn_lifecycle.py still exceeded 150 lines after the first split, so the two GATE-2 tests moved to test_turn_isolation.py, exactly the contingency the plan named in advance
 - [Phase 03-00]: StrategyKey/TrainingKey Enums address every Phase-3 hyperparameter; strategy_config.py is loader_helpers' 3rd consumer
 - [Phase 03-00]: artifacts_dir empty-defaults under LOCALAPPDATA (D-22); reward_capture/reward_survival/reward_step/reward_barrier_gain and alpha_floor/alpha_decay_episodes/eval_seed_offset are engineering defaults not sourced from AI-SPEC
+- [Phase 03-01]: docs/PRD_rl_strategy.md v1.00 written before any src/pursuit/strategy/ code (DOC-02): reward function does NOT reuse game_params.json Table 17 scoring; STRAT-02's Manhattan fallback wording is implemented as barrier-aware BFS, documented as a deliberate deviation
 
 ### Pending Todos
 
@@ -182,24 +187,21 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-31T19:21:54+03:00
-Stopped at: Completed 03-00-PLAN.md (config/police/strategy.json, config/thief/strategy.json,
-  src/pursuit/constants.py, src/pursuit/shared/strategy_config.py,
-  src/pursuit/shared/loader_helpers.py, tests/unit/strategy/ — the Phase-3 config +
-  loader foundation plan, no strategy logic). SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-00-SUMMARY.md, including the
-  reward-key/artifacts_dir/eval_seed_offset autonomous-default decisions and the
-  ruff-cache deviation writeup.
+Last session: 2026-07-31T19:33:18+03:00
+Stopped at: Completed 03-01-PLAN.md (docs/PRD_rl_strategy.md — the Phase-3 per-mechanism PRD
+  for the Q-learning policy, documentation-only, no source/config touched). SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-01-SUMMARY.md, including the
+  reward-vs-scoring-table and STRAT-02-Manhattan-vs-BFS documentation-accuracy decisions.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md row 03-00 ticked this session; rows 03-01..03-10, 03-96,
-  03-99 remain.
-Resume file: None — 03-00 is fully committed (3 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-01
-  (docs/PRD_rl_strategy.md, written before the policy code it describes, DOC-02).
+  docs/phases/phase-3/TODO.md rows 03-00, 03-01 ticked; rows 03-02..03-10, 03-96, 03-99
+  remain.
+Resume file: None — 03-01 is fully committed (2 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-02 (`BrainBase` +
+  `Observation`/`Decision` contracts + config-driven brain registry, STRAT-03/07).
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N. Note: the
-  CLAUDE.md-mandated graphify build/refresh for Phase 3 has not yet run this session —
+  CLAUDE.md-mandated graphify build/refresh for Phase 3 has still not run this session —
   do it before/after the next execute-phase batch (graphify update . && cp
   graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/).
