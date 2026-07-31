@@ -167,8 +167,8 @@ standing rule in [CLAUDE.md](../CLAUDE.md). A phase is not verified until its ro
 | Phase | PRD.md | PLAN.md | TODO.md | All TODOs ☑ |
 |-------|--------|---------|---------|-------------|
 | 1 Base Logic | ◐ | ◐ | ◐ | ☐ |
-| 2 FastMCP Infrastructure | ☐ | ☐ | ☐ | ☐ |
-| 3 Blind Strategy (RL) | ☐ | ☐ | ☐ | ☐ |
+| 2 FastMCP Infrastructure | ☑ | ☑ | ☑ | ☐ |
+| 3 Blind Strategy (RL) | ☑ | ☑ | ☑ | ☐ |
 | 4 Language & Scent | ☐ | ☐ | ☐ | ☐ |
 | 5 Cloud Tunneling | ☐ | ☐ | ☐ | ☐ |
 | 6 Security & Crypto | ☐ | ☐ | ☐ | ☐ |
