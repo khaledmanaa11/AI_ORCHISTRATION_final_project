@@ -185,3 +185,143 @@ mode 3, STRATEGY.md's "known risk"). BFS on the barrier-aware grid is the genera
 degrades gracefully to the same value Manhattan would give whenever no barrier blocks the direct
 path, and only diverges — correctly — once one does. The fallback picks the legal move that
 strictly reduces this BFS distance to the believed target.
+
+## 7. Training regime (D-13, D-15, D-17)
+
+**Offline only; no training during a league match.** Episodes step `pursuit.sdk.engine` directly
+and **never** the FastMCP network layer (D-17). Reasons: (1) a `training.episodes = 300000`
+overnight run requires in-process speed — routing every step through two live async peer
+processes would add IPC/deadline/watchdog overhead built for a different problem (Phase 2's
+resilience machinery, irrelevant to a solitary training loop) and make the run orders of
+magnitude slower; (2) the network layer's turn-passing model assumes two independent processes
+with no shared state, which is the opposite of what a fast training loop needs.
+
+**Sparring pool composition (D-13).** Each episode samples one opponent from three sources,
+weighted by `training.sparring_mix = [0.30, 0.50, 0.20]` (heuristic / past-self / reference impl,
+in that order — the RESEARCH-ruled weighting, see 03-PLAN-OUTLINE.md's conflict-resolution table;
+`HeuristicBrain` is *also* the eval opponent, so weighting it much higher would train on the test
+set). The sampled opponent is frozen and read-only for the whole episode — sampling happens once
+per episode, never mid-episode, so the Q-target's stationarity assumption holds and no live table
+object is ever shared between the learner and its opponent (project rule 2). Past-self opponents
+are drawn δ-uniformly (`training.selfplay_delta = 0.5`) from a ring buffer of the newest
+`training.pool_size = 10` checkpoints snapshotted every `training.pool_snapshot_every = 10000`
+episodes, plus one pinned early anchor so the pool always retains a weak opponent. The reference
+implementation is optional and import-guarded (`training.reference_impl_path`, empty default,
+D-21); when absent, its pool weight is dropped and the remaining two are renormalized rather than
+the run failing. Mechanics of the pool's snapshot/retention machinery are 03-RESEARCH.md §2's to
+detail; this PRD fixes only the composition and sampling-cadence contract 03-08 must implement
+against.
+
+**Checkpoint cadence and resumability.** Two distinct cadences, not one key doing double duty:
+crash-recovery checkpoints every `training.checkpoint_every = 5000` episodes, separate from the
+`pool_snapshot_every = 10000`-episode cadence that admits a new past-self snapshot into the
+sparring pool. A checkpoint persists the **whole run state** — episode index, current `ε`/`α`,
+RNG state, seed, config hash, CSV row count, and the Q-tables — not the table alone, so a resumed
+run reproduces the same curve rather than silently restarting exploration or reward accounting
+(D-24). Checkpoint writes must be crash-safe (atomic write + prior-generation retention); the
+exact Windows-safe write mechanics are an implementation concern of 03-08, informed by
+03-RESEARCH.md §3, and are not re-derived here.
+
+**Seed logging.** `training.seed = 1337` is recorded in every checkpoint/manifest and every CSV
+header, so a curve can be reproduced from its own artifacts alone (D-15).
+
+## 8. Evaluation (D-14, D-16)
+
+**Success bar.** `QLearningBrain` must beat `HeuristicBrain` head-to-head, per role, over the
+fixed eval scenario set (`eval.eval_scenarios = 20` scenarios × `eval.repeats_per_scenario = 10`
+seeds = `eval.eval_games = 200` games per arm per role), at a win rate meeting both
+`eval.win_rate_margin = 0.10` above the measured baseline rate and the absolute floor
+`eval.min_win_rate_absolute = 0.55` (D-14). The full statistical rubric — paired McNemar exact
+test at `eval.significance_alpha = 0.05`, why the margin is not a flat 50%, and why both roles
+must pass independently — is locked in
+[03-AI-SPEC.md](../.planning/phases/03-blind-strategy-module-rl-policy/03-AI-SPEC.md) §5,
+dimension E5; this PRD does not restate it.
+
+**Learning-curve instrumentation from episode 1 of run 1 (D-16, rule 42).** A CSV row is appended
+every `training.curve_log_every = 500` episodes, carrying `(episode, epsilon, mean_reward,
+winrate_vs_baseline, fallback_rate)`. Retrofitting curves after the fact would mean re-running an
+overnight training pass, so the harness must emit these from the very first training episode of
+the very first run, never added later. **README PNG obligation:** rule 42 requires the README to
+carry a learning-curve section for an RL-based strategy; the CSV is rendered into PNGs by a
+`matplotlib`-based script (`training/plot_curves.py`, dev-only dependency, D-20) and embedded in
+the submission README (Phase 8, but the artifact pipeline exists from Phase 3).
+
+## 9. Parameter table
+
+Every number this mechanism uses appears in one of the two tables below. A number that is not in
+either table does not belong in this mechanism.
+
+### 9.1 Traced to PARAMETERS.md — game values, never invented, never altered here
+
+| Parameter | Value | Source | Status |
+|---|---|---|---|
+| Board size | 7×7 | PARAMETERS.md Table 13 row 1 | minimum |
+| Movement range (basis for the 5-action space, §3) | 4 orthogonal + stay | PARAMETERS.md Table 15 row 1 | **fixed** |
+| Barrier quota | 14 | PARAMETERS.md Table 15 row 2 | minimum |
+| Move ceiling (`move_ceiling`, used in the turn-bucket arithmetic, §2) | 35 | PARAMETERS.md Table 15 row 3 | minimum |
+| Survival threshold | 35 | PARAMETERS.md Table 15 row 4 | minimum |
+| Capture score, cop / thief | 20 / 5 | PARAMETERS.md Table 17 rows 1–2 | **fixed** — league scoring only, not the reward signal (§4) |
+| Survival score, cop / thief | 5 / 10 | PARAMETERS.md Table 17 rows 3–4 | **fixed** — league scoring only |
+| Tie score | 2 | PARAMETERS.md Table 17 row 5 | **fixed** — league scoring only |
+
+These values may never be altered by this mechanism: **fixed** rows disqualify the team on any
+deviation, and **minimum** rows may only ever be raised by mutual agreement, never lowered. They
+arrive here via `game_params.json` (loaded through the existing Phase-1/2 config path), not via
+`strategy.json`.
+
+### 9.2 Engineering defaults — NOT PARAMETERS.md values (D-18)
+
+**Every value below is our own choice, config-tunable, and never sourced from PARAMETERS.md.**
+They are internal RL hyperparameters, not game parameters.
+
+| Default | Value | Config key | Note |
+|---|---|---|---|
+| Fallback visit threshold | 20 | `strategy.min_visits` | STRAT-02 trigger, §6 |
+| Turn-bucket boundaries | `[0.34, 0.69]` | `strategy.turn_bucket_fractions` | fractions of `move_ceiling`, §2 |
+| Eval/match exploration | 0.0 | `strategy.epsilon_eval` | greedy, §5/§8 |
+| Decision latency budget | 50 ms | `strategy.max_decision_ms` | inside the Phase-2 turn deadline |
+| Oscillation breaker window / limit | 6 / 3 | `strategy.oscillation_window` / `strategy.oscillation_limit` | online guardrail, not this PRD's focus |
+| Learning rate / discount | 0.15 / 0.95 | `training.alpha` / `training.gamma` | §5 |
+| ε start / floor / decay length | 1.0 / 0.05 / 150000 | `training.epsilon_start` / `epsilon_floor` / `epsilon_decay_episodes` | §5 |
+| α floor / decay length | 0.02 / 150000 | `training.alpha_floor` / `training.alpha_decay_episodes` | mirrors the ε decay length, D-25 |
+| Episode count | 300000 | `training.episodes` | overnight run, §7 |
+| Checkpoint interval | 5000 | `training.checkpoint_every` | crash recovery, §7 |
+| Curve log interval | 500 | `training.curve_log_every` | rule 42, §8 |
+| Sparring mix | `[0.30, 0.50, 0.20]` | `training.sparring_mix` | heuristic/past-self/reference, §7 |
+| Pool snapshot interval / size | 10000 / 10 | `training.pool_snapshot_every` / `training.pool_size` | past-self pool, §7 |
+| Past-self sampling shape | 0.5 | `training.selfplay_delta` | δ-uniform, §7 |
+| Training seed | 1337 | `training.seed` | §7/§8 |
+| Reward terms | 1.0 / 1.0 / -0.01 / 0.05 | `training.reward_capture` / `reward_survival` / `reward_step` / `reward_barrier_gain` | §4 |
+| Eval set size | 20 × 10 = 200 | `eval.eval_scenarios` / `eval.repeats_per_scenario` / `eval.eval_games` | §8 |
+| Eval win-rate bar | 0.10 / 0.55 / 0.05 | `eval.win_rate_margin` / `eval.min_win_rate_absolute` / `eval.significance_alpha` | §8, AI-SPEC §5 E5 |
+| State-space health ceiling | 250000 | `eval.max_table_keys` | §2 |
+
+The first table (§9.1) may never be altered by this mechanism except by raising a **minimum** row
+upward through mutual agreement with the opponent team; the second (§9.2) is entirely ours to
+tune, and every future change to a value in it belongs in `config/{police,thief}/strategy.json`,
+never as a literal in `src/`.
+
+## 10. Boundaries and honesty
+
+- **Input contract: a believed target cell (D-11).** `_pick_move` and the fallback both consume
+  a `target_cell` that Phase 3 populates with the *known* target (the Stage-3 gate condition) and
+  Phase 4 will populate with the belief map's argmax cell instead. The state-key format, the
+  Q-table, and every trained checkpoint are unaffected by this swap — **no retraining is required
+  when Phase 4's belief map arrives.**
+- **The algorithm chooses the move; the language model never does (rule 25 / STRAT-07).** Every
+  move is traceable to `_pick_move` (Q-table lookup or fallback); no LLM, script, or human input
+  sits anywhere on that path in this phase, and Phase 4's LLM is confined to hint decoding and
+  bluff text around this boundary, never inside it.
+- **Cop and thief hold separate Q-tables in separate processes (D-03, project rule 2).** Each
+  role's `QLearningBrain` loads its own `qtable_<role>.json` at construction and holds it only in
+  that process; there is no shared live table object, module-level cache, or shared game-state
+  object between the two roles at any point — sharing one would be an information-leakage
+  disqualification, not a design smell.
+- **Barrier declarations are truthful and within quota (rules 16, 22).** The cop's barrier
+  sub-policy (§3, STRAT-05) never declares a placement it did not make, and never exceeds
+  `barrier_quota` (§9.1); the thief's `_decide_move` never places a barrier at all.
+
+---
+
+*Every number in this document appears in §9.1 (a PARAMETERS.md game value) or §9.2 (a labelled
+engineering default) or is a section/table number. None is invented.*
