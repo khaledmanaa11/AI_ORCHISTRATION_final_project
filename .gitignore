@@ -87,6 +87,27 @@ police_thief_p2p.pdf
 software_submission_guidelines-V3.pdf
 
 # ---------------------------------------------------------------------------
+# Knowledge graph (graphify)
+# graph.json and graph.html are ~2 MB each and are regenerable at zero API cost
+# with `graphify update .`. Committing them would multiply the size of .git on
+# every refresh and produce diffs no human can read. Only GRAPH_REPORT.md
+# (~68 KB markdown) is committed, so a fresh clone — and the grader — still gets
+# the navigable map. See CLAUDE.md "Knowledge graph (graphify)".
+# ---------------------------------------------------------------------------
+graphify-out/
+.planning/graphs/graph.json
+.planning/graphs/graph.html
+
+# ---------------------------------------------------------------------------
+# Agent harness config
+# .claude/settings.json IS committed — it carries the SessionStart graph hook
+# that every agent depends on. Everything else under .claude/ is per-machine.
+# ---------------------------------------------------------------------------
+.claude/*
+!.claude/settings.json
+.codex/
+
+# ---------------------------------------------------------------------------
 # OS / editor
 # ---------------------------------------------------------------------------
 .DS_Store

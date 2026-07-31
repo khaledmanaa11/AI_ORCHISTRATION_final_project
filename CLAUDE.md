@@ -157,12 +157,33 @@ checked triplet for **every** phase.
 
 `graphify.enabled=true`. The graph lives in `.planning/graphs/` and is a **manual
 navigation aid** (GSD agents do not auto-source context from it — see [[per-phase-doc-triplet]]).
+A SessionStart hook (`scripts/graph_status.sh`, wired in `.claude/settings.json`) prints the
+graph's freshness at the start of every session, so no agent has to go looking for it.
+
+### Use the `graphify` CLI directly — not `/gsd:graphify`
+
+**`/gsd:graphify` only half-works here.** The installed `gsd-tools.cjs` has no `graphify`
+subcommand, so that skill's `status`, `query`, `diff`, and snapshot steps all die with
+`Unknown command: graphify`. Only its build step works, and only by calling the standalone
+CLI underneath. Skip it and call the CLI yourself:
+
+| Task | Command |
+|---|---|
+| Build / refresh | `graphify update . && cp graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/` |
+| Explain one node | `graphify explain "ModuleOrFunctionName"` |
+| Path between two nodes | `graphify path "A" "B"` |
+| Browse | `.planning/graphs/GRAPH_REPORT.md` (committed) or `graph.html` (local only) |
+
+`graph.json` is ~2 MB — **query it, never read it whole**. Only `GRAPH_REPORT.md` is
+committed; `graph.json`, `graph.html`, and `graphify-out/` are gitignored build artifacts,
+regenerable at zero API cost. A refresh needs no API key (AST extraction only); setting
+`GEMINI_API_KEY`/`GOOGLE_API_KEY` additionally enables semantic edges.
+
 Lifecycle, starting at Phase 3 (the first phase with substantial `src/`):
 
-- **`/gsd:plan-phase N` (N ≥ 3)** — **before planning, the agent must tell the user to run
-  `/gsd:graphify`** to build (N = 3) or refresh (N > 3) the graph. A plan-phase agent cannot
-  spawn another skill autonomously, so it surfaces this as an explicit instruction and pauses
-  for it if the graph is stale/missing.
+- **`/gsd:plan-phase N` (N ≥ 3)** — before planning, if the session banner reports the graph
+  `STALE` or `NONE`, run the build command above. The agent can do this itself with Bash; it
+  does not need to hand the step back to the user.
 - **`/gsd:execute-phase N` (N ≥ 3)** — after new code lands, **refresh the graph** so it
   reflects the phase's implementation.
 - **`/gsd:verify-work N` (N ≥ 3)** — confirm `.planning/graphs/` was refreshed this phase.
