@@ -28,6 +28,23 @@ def test_set_get_round_trip() -> None:
     assert table.get(_KEY_A, 0) == 0.0  # untouched action still defaults
 
 
+def test_copy_is_independent_of_the_original() -> None:
+    """03-08's sparring pool snapshots a live table via copy() -- mutating
+    either the original or the snapshot afterward must never affect the other."""
+    table = QTable()
+    table.set(_KEY_A, 0, 1.0)
+    table.bump_visit(_KEY_A)
+    clone = table.copy()
+
+    table.set(_KEY_A, 0, 99.0)
+    table.bump_visit(_KEY_A)
+    clone.set(_KEY_B, 1, 5.0)
+
+    assert clone.get(_KEY_A, 0) == 1.0
+    assert clone.visits(_KEY_A) == 1
+    assert table.get(_KEY_B, 1) == 0.0
+
+
 def test_bump_visit_increments() -> None:
     table = QTable()
     table.bump_visit(_KEY_A)

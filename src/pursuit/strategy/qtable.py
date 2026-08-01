@@ -55,6 +55,16 @@ class QTable:
         """Unseen key has 0 visits -- the STRAT-02 fallback trigger reads this (D-08)."""
         return self._visits.get(key, 0)
 
+    def copy(self) -> QTable:
+        """Shallow-independent snapshot: mutating the copy never touches
+        self, and vice versa. 03-08's sparring pool uses this to admit a
+        past-self checkpoint into its ring buffer without reaching into
+        another module's private attributes (QUAL-02)."""
+        clone = QTable()
+        clone._values = {key: dict(actions) for key, actions in self._values.items()}
+        clone._visits = dict(self._visits)
+        return clone
+
     def best_action(self, key: str) -> int:
         """Argmax action for `key`; ties break to the smallest action index,
         deterministically, so a replayed game reproduces the same move."""

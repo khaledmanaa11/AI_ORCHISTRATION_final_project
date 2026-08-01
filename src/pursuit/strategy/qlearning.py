@@ -41,6 +41,7 @@ class QLearningBrain(BrainBase):
         params: StrategyParams,
         game_params: GameParams,
         rng: random.Random | None = None,
+        table: QTable | None = None,
     ) -> None:
         self._role = role
         self._params = params
@@ -48,11 +49,18 @@ class QLearningBrain(BrainBase):
         self._rng = rng if rng is not None else random.Random()
         # Loaded ONCE here (E11) -- a missing/corrupt table fails loud via
         # QTable.load, never silently plays a trained agent as random.
-        self._table = QTable.load(params.qtable_path)
-        # Mutable per-instance knob: 03-08's training loop reassigns this
-        # every episode from the decaying schedule; match/eval play never
-        # touches it, so it stays at config's epsilon_eval (0.0, greedy).
+        # 03-08's sparring pool instead injects an in-memory, read-only
+        # snapshot (training.sparring.ReadOnlyQTable) for a frozen past-self
+        # opponent, skipping disk I/O entirely -- `table` is duck-typed
+        # (get/set/visits/best_action/bump_visit), never required to be a
+        # real QTable instance.
+        self._table = table if table is not None else QTable.load(params.qtable_path)
+        # Mutable per-instance knobs: 03-08's training loop reassigns both
+        # every episode from their decaying schedules (D-25); match/eval
+        # play never touches them, so they stay at config's epsilon_eval
+        # (0.0, greedy) / params.alpha.
         self.epsilon = params.epsilon_eval
+        self.alpha = params.alpha
 
     def _pick_move(self, obs: Observation, state: GameState) -> Decision:
         key = encode_state(obs, self._params, self._game_params)
@@ -91,5 +99,5 @@ class QLearningBrain(BrainBase):
         old = self._table.get(prev_key, action)
         best_next = max(self._table.get(next_key, a) for a in range(_ACTION_COUNT))
         target = reward + self._params.gamma * best_next
-        self._table.set(prev_key, action, old + self._params.alpha * (target - old))
+        self._table.set(prev_key, action, old + self.alpha * (target - old))
         self._table.bump_visit(prev_key)
