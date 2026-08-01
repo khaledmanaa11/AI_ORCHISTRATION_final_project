@@ -64,7 +64,12 @@ cell_for(action, own_cell) -> tuple[int, int]
 action_for(own_cell, dest) -> Action
 
 # strategy/registry.py
-build_brain(role, params) -> BrainBase        # role: "cop" | "thief"; unknown class name raises
+build_brain(role, params, game_params) -> BrainBase
+                                              # role: "cop" | "thief"; unknown class name raises.
+                                              # game_params added in 03-04 (deviation): every real
+                                              # brain's fallback/BFS needs board_size, and
+                                              # _pick_move/_decide_move deliberately carry no
+                                              # GameParams (03-02), so it is injected once here.
 
 # strategy/pathfind.py
 bfs(state, start, goal, agent, params) -> tuple[int, tuple[int, int] | None]
