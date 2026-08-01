@@ -75,6 +75,20 @@ def config_hash(params: StrategyParams) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def combined_config_hash(cop_params: StrategyParams, thief_params: StrategyParams) -> str:
+    """SHA-256 over BOTH roles' params (QUAL-02 reuse of the same
+    canonicalisation, not a second hashing scheme) -- one run trains both
+    tables under two, potentially different, per-role StrategyParams
+    objects, so the run-level checkpoint/curve header needs one hash that
+    covers both, not just the learner's own."""
+    canonical = json.dumps(
+        {"cop": asdict(cop_params), "thief": asdict(thief_params)},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def epsilon_at(role_episode: int, params: StrategyParams) -> float:
     """Linear decay epsilon_start -> epsilon_floor over epsilon_decay_episodes."""
     span = min(role_episode, params.epsilon_decay_episodes)
