@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-08 executed (offline training harness: run_episode + run_training, resumable/reproducible sparring-pool training with checkpoint + curve logging, STRAT-06); 2 more Phase-3 plans remain (03-09..03-10)
-last_updated: "2026-08-01T17:45:00+03:00"
-last_activity: 2026-08-01 -- Executed 03-08-PLAN.md's remaining Task 4 (Tasks 1-3 -- checkpoint.py/runstate.py/sparring.py/sparring_reference.py -- were already committed from a prior, interrupted session: 8891f64/7482bea/3eed329). training/curves.py (CSV learning-curve writer, D-16) and training/harness.py's run_episode (the per-episode game loop over sdk.engine) were already implemented uncommitted at session start; verified correct and committed alongside the new outer driver. Built training/loop.py + loop_setup.py + progress.py + run_config.py: run_training(TrainingRunConfig) -> RunResult -- resumes from run_state.json (restores both Q-tables, the shared RNG's exact getstate(), each role's own episode counter, truncates curve rows past the checkpoint episode, D-24), samples one frozen opponent per episode from training.sparring's pool, alternates which role learns by global-episode parity (D-25), reassigns epsilon/alpha from runstate.epsilon_at/alpha_at every episode, admits pool snapshots and checkpoints on shared (both-roles) cadences, appends a curve row per role on that role's own cadence with winrate_vs_baseline scoped to heuristic-opponent episodes specifically, and handles Windows long-run realities (try/finally + atexit final checkpoint on KeyboardInterrupt since there is no SIGTERM, SetThreadExecutionState behind a sys.platform=="win32" guard). One shared random.Random(seed) instance drives opponent sampling AND both brains' own exploration -- matches docs/PRD_rl_strategy.md Sec5's D-19 wording verbatim, not an invented convenience. Deviations: (Rule 2 - missing coverage) added a direct test for harness.py's previously-uncovered _role_won(role, None) branch, closing it to 100%. (Rule 3 - blocking, repeat of the 03-05/06/07 pattern) run_training's setup/orchestration split into loop.py/loop_setup.py/progress.py/run_config.py at the 150-line gate -- the inherited harness.py docstring already anticipated training/loop.py from the interrupted prior session, so no correction was needed there. Full repo gates green: ruff 0, line-limit clean (largest new file 132 code lines), 346 tests passed / 1 skipped, coverage 97.04% overall (every new training/ module 100% except the pre-existing, D-21-exempt sparring_reference.py at 50%). Graphify graph rebuilt (2897 nodes/5089 edges/189 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-08 updated.
+stopped_at: Phase 03 — plan 03-09 executed (learning-curve reader-side E6 convergence checks + matplotlib plotting CLI + rule-42 README section, STRAT-06); 1 more Phase-3 plan remains (03-10)
+last_updated: "2026-08-01T20:44:00+03:00"
+last_activity: 2026-08-01 -- Executed 03-09-PLAN.md in full (2 tasks, both committed individually). Task 1 added training/curve_analysis.py -- decile_gain/final_slope/check_convergence reading training/curves.py's CSV schema (that writer verified untouched via git diff across both commits, QUAL-02); thresholds come from StrategyParams (win_rate_margin/convergence_window/convergence_tolerance), zero literals; verdicts are per-role (D-25), proven via three synthetic curves (rising-then-flat converges, flat-noise fails only the decile check, still-climbing fails only the slope check) numerically pre-verified before writing the implementation. Task 2 added training/plot_curves.py -- the repo's only matplotlib importer (D-20, confirmed via a repo-wide grep, not just src/): per-role win-rate-vs-baseline PNGs with epsilon on a secondary axis, plus a shared mean-reward PNG with a separately labelled line per role (never averaged). Created README.md (did not exist anywhere in the repo before this plan -- confirmed via git log) with the rule-42 learning-curves section: states the configured win_rate_margin/min_win_rate_absolute/eval_games/convergence_window/convergence_tolerance/episodes/seed from config/police/strategy.json, with every figure and measured win-rate explicitly marked "pending (03-10)" since no training run has executed yet -- zero fabricated numbers. Deviations (both Rule 3 - blocking): (1) the plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed with ModuleNotFoundError because direct-path script execution puts training/ itself on sys.path[0], not the repo root -- fixed with a guarded sys.path bootstrap (gated on __package__ in (None, "")) and regression-tested via a subprocess test; (2) proactively split the E6 analysis functions into training/curve_analysis.py (matplotlib-free) rather than one plot_curves.py file, the exact contingency the plan named for the 150-line gate (QUAL-08) -- plot_curves.py re-exports the analysis names so training.plot_curves still satisfies the plan's literal spec. Full repo gates green: ruff 0, line-limit clean, 355 tests passed / 1 skipped, coverage 96.94% overall (curve_analysis.py 94%, plot_curves.py 97%). Graphify graph rebuilt (2996 nodes/5239 edges/194 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-09 updated.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
   percent: 13
 ---
 
@@ -25,62 +25,62 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-08 of 11 done)
-Plan: 9 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07, 03-08 done;
-  03-09..03-10 remain). Next plan is 03-09 (learning curves + plotting + README section).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-09 of 11 done)
+Plan: 10 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07, 03-08, 03-09
+  done; 03-10 remains). Next plan is 03-10 (§10.4 gate tests + coverage audit + the real
+  overnight training run).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
   Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), the
   barrier-aware BFS distance oracle (03-03), the Bayes prior + BFS fallback +
   `HeuristicBrain` baseline (03-04), the canonical state-key encoding + JSON `QTable`
   (03-05), `QLearningBrain` (03-06), the cop barrier sub-policy `choose_barrier` wired into
-  both brains (03-07), and the offline training harness -- durable checkpointing, the
-  sparring pool, the optional reference adapter, and the resumable `run_training` episode
-  driver (03-08) -- all landed. `training/` can now produce a trained Q-table end to end;
-  only plotting/reporting (03-09) and the phase-gate audit (03-10) remain to close Phase 3.
-  5 phases remain after Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-09.
-Last activity: 2026-08-01 -- Executed 03-08-PLAN.md's remaining Task 4 (offline training
-  entry point, STRAT-06). Tasks 1-3 (`training/checkpoint.py`+`runstate.py`,
-  `training/sparring.py`, `training/sparring_reference.py`, and their tests) were already
-  implemented and committed from a prior, interrupted session (`8891f64`/`7482bea`/`3eed329`).
-  `training/curves.py` (the D-16 CSV learning-curve writer) and `training/harness.py`'s
-  `run_episode` (the per-episode game loop over `sdk.engine`) were also already implemented,
-  uncommitted, at this session's start; both verified correct and committed alongside the new
-  work. Built `training/loop.py` + `loop_setup.py` + `progress.py` + `run_config.py`:
-  `run_training(TrainingRunConfig) -> RunResult` -- resumes from `run_state.json` (restores
-  both Q-tables, the shared RNG's exact `getstate()`, each role's own episode counter, and
-  calls `curves.truncate_after` on the checkpoint episode, D-24), samples one frozen opponent
-  per episode from `training.sparring`'s pool, alternates which role learns by
-  global-episode parity (D-25), reassigns `epsilon`/`alpha` from `runstate.epsilon_at`/
-  `alpha_at` every episode (continuous across a resume, never reset), admits pool snapshots
-  and checkpoints both tables + the run manifest on shared (both-roles) cadences validated
-  equal between `cop.json`/`thief.json`, and appends one curve row per role on that role's
-  own `curve_log_every` cadence with `winrate_vs_baseline` scoped specifically to
-  `heuristic`-opponent episodes. Windows long-run handling per RESEARCH Sec3: a `try/finally`
-  final checkpoint plus an `atexit` backstop (unregistered on clean exit) on
-  `KeyboardInterrupt` -- Windows delivers no SIGTERM -- and `SetThreadExecutionState` behind
-  a `sys.platform == "win32"` guard to block sleep. A single shared `random.Random(seed)`
-  instance drives opponent sampling AND both brains' own epsilon-greedy exploration draws --
-  matching `docs/PRD_rl_strategy.md` Sec5's D-19 wording verbatim ("epsilon-greedy action
-  selection and opponent sampling use a seeded `random.Random(training.seed)` instance"),
-  discovered and confirmed while implementing rather than invented. Verified end to end with
-  ad-hoc scripts before formalizing as tests: exact curve/table reproducibility across two
-  independent fresh runs with the same seed; resume continuity of `epsilon`/`alpha` across a
-  checkpoint boundary; truncation of a manually-planted stray curve row on resume; and a real
-  `KeyboardInterrupt` mid-run leaving a valid, loadable checkpoint. Deviations: (Rule 2 -
-  missing coverage) added a direct test for `harness.py`'s previously-uncovered
-  `_role_won(role, None)` defensive branch, closing it to 100%. (Rule 3 - blocking, repeat of
-  the 03-05/06/07 pattern) `run_training`'s setup/orchestration split into
-  `loop.py`/`loop_setup.py`/`progress.py`/`run_config.py` at the 150-line gate -- the
-  inherited `harness.py` docstring already anticipated `training/loop.py` from the
-  interrupted prior session, so no correction was needed there. Full repo gates green: `ruff
-  check .` 0 violations, line-limit clean (largest new file 132 code lines), 346 tests
-  passed / 1 skipped, coverage 97.04% overall (every new `training/` module 100% except the
-  pre-existing, D-21-exempt `sparring_reference.py` at 50%). Graphify graph rebuilt (2897
-  nodes/5089 edges/189 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
-  TODO.md` row 03-08 updated.
+  both brains (03-07), the offline training harness (03-08), and the E6 convergence checks +
+  matplotlib plotting CLI + rule-42 README section (03-09) -- all landed. `training/` can now
+  produce a trained Q-table AND turn its curve CSV into rendered PNGs and a pass/fail
+  convergence verdict; only the phase-gate audit and the actual overnight run (03-10) remain
+  to close Phase 3. 5 phases remain after Phase 3 closes. Next: /gsd:execute-phase 3 to
+  continue with 03-10.
+Last activity: 2026-08-01 -- Executed 03-09-PLAN.md in full (learning curves + plotting +
+  README section, STRAT-06). Task 1 added `training/curve_analysis.py` --
+  `decile_gain`/`final_slope`/`check_convergence` reading `training/curves.py`'s CSV schema
+  without touching that writer (verified via `git diff` showing zero change across both
+  commits, QUAL-02); thresholds sourced from `StrategyParams`
+  (`win_rate_margin`/`convergence_window`/`convergence_tolerance`), zero literals; verdicts
+  computed per role (D-25), proven via three synthetic curves (rising-then-flat converges,
+  flat-noise fails only the decile-gain check, still-climbing fails only the slope check --
+  each numerically pre-verified before the implementation was written). Task 2 added
+  `training/plot_curves.py` -- confirmed the repo's only matplotlib importer via a
+  repo-wide grep (not just `src/`): per-role win-rate-vs-baseline PNGs with the epsilon
+  schedule on a secondary axis, plus one shared mean-reward PNG carrying a separately
+  labelled line per role, never averaged (D-25). Created `README.md`, which did not exist
+  anywhere in the repo before this plan (confirmed via `git log --all -- README.md`
+  returning nothing) -- borrowed `.planning/PROJECT.md`'s framing for the top matter, then
+  added the mandatory rule-42 learning-curves section stating the configured
+  `win_rate_margin` (0.10) / `min_win_rate_absolute` (0.55) / `eval_games` (200 = 20
+  scenarios x 10 seeds) / `convergence_window`+`convergence_tolerance` (20000/0.02) /
+  `episodes` (300000) / `seed` (1337) from `config/police/strategy.json`, with every figure
+  and every measured win-rate explicitly marked "pending (03-10)" -- zero fabricated
+  numbers, per the plan's own hard requirement. Deviations (both Rule 3 - blocking): (1) the
+  plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed
+  with `ModuleNotFoundError: No module named 'training'` -- direct-path script execution
+  puts `training/` itself on `sys.path[0]`, not the repo root, so the module's
+  `from training.curve_analysis import ...` absolute import could not resolve (`-m
+  training.plot_curves` and pytest's own imports were unaffected). Fixed with a guarded
+  `sys.path.insert(...)` gated on `__package__ in (None, "")`, regression-tested via a
+  subprocess-based pytest test so the literal CLI form stays covered. (2) Proactively split
+  the E6 analysis functions into `training/curve_analysis.py` (matplotlib-free) rather than
+  packing them into `plot_curves.py` -- the exact contingency the plan's own text named for
+  the 150-line gate (QUAL-08); `plot_curves.py` re-exports the analysis names so
+  `training.plot_curves` still satisfies the plan's literal function-location spec, and the
+  E6 tests stayed in `tests/unit/training/test_curves.py` per the plan's explicit
+  instruction while the new rendering-only tests got their own `test_plot_curves.py`. Full
+  repo gates green: `ruff check .` 0 violations, line-limit clean, 355 tests passed / 1
+  skipped, coverage 96.94% overall (`curve_analysis.py` 94%, `plot_curves.py` 97%). Graphify
+  graph rebuilt (2996 nodes/5239 edges/194 communities) and `GRAPH_REPORT.md` refreshed.
+  `docs/phases/phase-3/TODO.md` row 03-09 updated.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 9 of 11 executed)
+  Phase 3 plan 10 of 11 executed)
 
 ## Performance Metrics
 
@@ -127,6 +127,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P06 | ~20min | 2 tasks | 5 files |
 | Phase 03 P07 | ~70min | 2 tasks | 19 files |
 | Phase 03 P08 | ~50min (this session; Tasks 1-3 committed in a prior, interrupted session) | 1 task (Task 4) | 11 files |
+| Phase 03 P09 | ~20min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -208,6 +209,10 @@ Recent decisions affecting current work:
 - [Phase 03-08]: A single shared random.Random(seed) instance drives opponent sampling AND both QLearningBrains' own epsilon-greedy exploration -- not a per-brain sub-seed -- matching docs/PRD_rl_strategy.md Sec5's D-19 wording verbatim ("epsilon-greedy action selection and opponent sampling use a seeded random.Random(training.seed) instance"); this is what makes RunState.rng_state's one getstate() reproduce the whole run, and is a training-pipeline determinism choice unrelated to project rule 2 (which governs the two DEPLOYED match-time processes, not this offline single-process harness)
 - [Phase 03-08]: Training checkpoints Q-tables under StrategyParams.artifacts_dir using the qtable_path's basename, never at the repo-relative qtable_path itself -- that path is reserved for the FINAL BLESSED table a later plan copies in at run end (RESEARCH Sec3), and rewriting a multi-MB table there every checkpoint_every episodes would churn OneDrive on every interval (D-22); checkpoint_every/pool_snapshot_every read as global (both-roles) cadences, curve_log_every reads per-role, matching each cadence's own purpose (crash recovery/anti-collapse vs. per-role learning curves, D-25); winrate_vs_baseline is scoped to opponent_kind=="heuristic" episodes specifically so the column means what its name says
 - [Phase 03-08]: Deviation (Rule 3 - blocking, repeat of 03-05/06/07) -- run_training's setup/orchestration split into training/loop.py (episode-loop orchestration) + loop_setup.py (once-per-run resume/checkpoint/pool-build/Windows-guard helpers) + progress.py (pure mutable bookkeeping) + run_config.py (shared TrainingRunConfig/RunResult, breaking a would-be import cycle) at the 150-line gate. Deviation (Rule 2 - missing coverage) -- added a direct test for harness.py's previously-uncovered _role_won(role, None) branch, closing it to 100%
+- [Phase 03-09]: final_slope(rows, role, window) returns a total win-rate drift over the trailing window (least-squares regression rate x window span), not a raw per-episode rate -- makes it directly comparable to convergence_tolerance (a win-rate delta, 0.02), since a 0.02-per-episode bound would be nonsensical over a 20000-episode window; numerically verified against three synthetic curves before implementation
+- [Phase 03-09]: training/curve_analysis.py split out of plot_curves.py at the 150-line gate (QUAL-08), the exact contingency the plan's own text named; plot_curves.py re-exports the analysis names so `training.plot_curves` still satisfies the plan's literal decile_gain/final_slope/check_convergence spec, and stays the repo's only matplotlib importer (D-20, verified repo-wide, not just src/)
+- [Phase 03-09]: Deviation (Rule 3 - blocking) -- the plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed (direct-path execution puts training/ on sys.path[0], not the repo root); fixed with a guarded sys.path bootstrap gated on `__package__ in (None, "")`, regression-tested via a subprocess pytest test
+- [Phase 03-09]: README.md did not exist anywhere in the repo before this plan (confirmed via git log); created it now with a project overview borrowing .planning/PROJECT.md's framing, plus the mandatory rule-42 learning-curves section; every figure and measured win-rate is explicitly marked "pending (03-10)" since no training run has executed yet -- zero fabricated numbers, only configured bars (win_rate_margin/eval_games/seed/etc.) read from config/police/strategy.json
 
 ### Pending Todos
 
@@ -229,40 +234,36 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-01T17:45:00+03:00
-Stopped at: Completed 03-08-PLAN.md (`training/harness.py` + `training/curves.py` +
-  `training/loop.py`/`loop_setup.py`/`progress.py`/`run_config.py` + their tests -- the
-  offline training harness's remaining Task 4: `run_episode` drives one game over
-  `sdk.engine`; `run_training(TrainingRunConfig)` is the resumable outer driver -- resume
-  from `run_state.json` with exact RNG/epsilon/alpha/curve continuity, per-episode frozen
-  opponent sampling, role alternation, cadenced pool-snapshot/checkpoint/curve-log, Windows
-  `KeyboardInterrupt`-safe final checkpointing, STRAT-06/D-16/D-19/D-22/D-24/D-25). This
-  plan was PARTWAY DONE entering this session -- Tasks 1-3 (`checkpoint.py`/`runstate.py`/
-  `sparring.py`/`sparring_reference.py`) were already committed from a prior, interrupted
-  session (`8891f64`/`7482bea`/`3eed329`); `curves.py` and `harness.py`'s `run_episode` were
-  already written but uncommitted at this session's start and were verified correct, not
-  rewritten. SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-08-SUMMARY.md, including the
-  bundled-TrainingRunConfig decision, the single-shared-RNG-instance decision (grounded in
-  PRD Sec5's D-19, not invented), the artifacts_dir-vs-repo-qtable_path separation, the
-  global-vs-per-role cadence split, and the four-way 150-line-gate file split
-  (loop.py/loop_setup.py/progress.py/run_config.py).
+Last session: 2026-08-01T20:44:00+03:00
+Stopped at: Completed 03-09-PLAN.md (`training/curve_analysis.py` + `training/plot_curves.py`
+  + `README.md` + their tests -- the E6 convergence checks, the matplotlib plotting CLI, and
+  the rule-42 README learning-curves section, STRAT-06). Task 1: `decile_gain`/
+  `final_slope`/`check_convergence` in the new `training/curve_analysis.py`, reading
+  `training/curves.py`'s CSV without touching that writer (QUAL-02), verdicts per role
+  (D-25), thresholds sourced from `StrategyParams`. Task 2: `training/plot_curves.py`
+  renders per-role win-rate PNGs (epsilon on a secondary axis) plus a shared mean-reward
+  PNG, and is the repo's only matplotlib importer (D-20); `README.md` created (did not
+  exist before) with the rule-42 section carrying configured-not-measured numbers and
+  "pending (03-10)" placeholders for every figure and measured win-rate. SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-09-SUMMARY.md, including the
+  final_slope-as-total-drift decision, the curve_analysis.py/plot_curves.py 150-line-gate
+  split, the sys.path-bootstrap fix for direct-path CLI execution, and the README-did-not-
+  exist finding.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00..03-08 ticked; rows 03-09..03-10, 03-96, 03-99
-  remain.
-Resume file: None — 03-08 is fully committed (1 task commit for the remaining Task 4 +
-  this docs/SUMMARY/STATE commit; Tasks 1-3 were already committed in the prior session).
-  Next step is /gsd:execute-phase 3 to continue with 03-09 (learning curves + plotting +
-  README section, rule 42) — `training/plot_curves.py` reads `training/curves.py`'s CSV
-  (the `role` column keeps cop/thief separable) and is the only matplotlib importer in the
-  repo (D-20, P3-12). Per-day sequence from Phase 3 on:
+  docs/phases/phase-3/TODO.md rows 03-00..03-09 ticked; rows 03-10, 03-96, 03-99 remain.
+Resume file: None — 03-09 is fully committed (2 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-10 (§10.4 gate tests +
+  coverage audit + the actual overnight training run, the final Phase-3 plan) — once that
+  run completes, `training/plot_curves.py` and `training/curve_analysis.check_convergence`
+  are ready to fill README.md's "pending (03-10)" placeholders with the real PNGs and
+  measured win-rate/convergence numbers. Per-day sequence from Phase 3 on:
   /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
   /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
   refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2897 nodes /
-  5089 edges / 189 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2996 nodes /
+  5239 edges / 194 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
