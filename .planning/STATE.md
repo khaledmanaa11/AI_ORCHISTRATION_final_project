@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-09 executed (learning-curve reader-side E6 convergence checks + matplotlib plotting CLI + rule-42 README section, STRAT-06); 1 more Phase-3 plan remains (03-10)
-last_updated: "2026-08-01T20:44:00+03:00"
-last_activity: 2026-08-01 -- Executed 03-09-PLAN.md in full (2 tasks, both committed individually). Task 1 added training/curve_analysis.py -- decile_gain/final_slope/check_convergence reading training/curves.py's CSV schema (that writer verified untouched via git diff across both commits, QUAL-02); thresholds come from StrategyParams (win_rate_margin/convergence_window/convergence_tolerance), zero literals; verdicts are per-role (D-25), proven via three synthetic curves (rising-then-flat converges, flat-noise fails only the decile check, still-climbing fails only the slope check) numerically pre-verified before writing the implementation. Task 2 added training/plot_curves.py -- the repo's only matplotlib importer (D-20, confirmed via a repo-wide grep, not just src/): per-role win-rate-vs-baseline PNGs with epsilon on a secondary axis, plus a shared mean-reward PNG with a separately labelled line per role (never averaged). Created README.md (did not exist anywhere in the repo before this plan -- confirmed via git log) with the rule-42 learning-curves section: states the configured win_rate_margin/min_win_rate_absolute/eval_games/convergence_window/convergence_tolerance/episodes/seed from config/police/strategy.json, with every figure and measured win-rate explicitly marked "pending (03-10)" since no training run has executed yet -- zero fabricated numbers. Deviations (both Rule 3 - blocking): (1) the plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed with ModuleNotFoundError because direct-path script execution puts training/ itself on sys.path[0], not the repo root -- fixed with a guarded sys.path bootstrap (gated on __package__ in (None, "")) and regression-tested via a subprocess test; (2) proactively split the E6 analysis functions into training/curve_analysis.py (matplotlib-free) rather than one plot_curves.py file, the exact contingency the plan named for the 150-line gate (QUAL-08) -- plot_curves.py re-exports the analysis names so training.plot_curves still satisfies the plan's literal spec. Full repo gates green: ruff 0, line-limit clean, 355 tests passed / 1 skipped, coverage 96.94% overall (curve_analysis.py 94%, plot_curves.py 97%). Graphify graph rebuilt (2996 nodes/5239 edges/194 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-09 updated.
+stopped_at: Phase 03 — plan 03-10 Tasks 1-3 executed (§10.4 GATE-1/2/3 integration tests, GATE-4 evaluation CLI + committed eval scenario set, STRAT-01..07 coverage audit); Task 4 is a blocking human-action checkpoint (the overnight training run) and was deliberately NOT attempted by the automated executor
+last_updated: "2026-08-01T22:10:00+03:00"
+last_activity: 2026-08-01 -- Executed 03-10-PLAN.md Tasks 1-3 (3 tasks, each committed individually); Task 4 is `checkpoint:human-action gate="blocking"` and was correctly left untouched -- no training run, no artifacts/qtable_{police,thief}.json, no README numbers filled, no 03-10-SUMMARY.md (the plan is not complete until Task 4 lands). Task 1 added tests/integration/{test_shortest_path,test_policy_fallback,test_strategy_pluggable}.py (GATE-1/2/3) plus scripts/check_no_llm_in_strategy.{py,sh} promoting 03-02's structural import check into a standalone CI-runnable gate (manually verified to exit 1 when a forbidden import is temporarily introduced, then reverted); a shared strategy_params() helper was added to tests/integration/conftest.py (QUAL-02). Task 2 added training/evaluate.py (three arms: heuristic-vs-heuristic baseline, Q-cop vs heuristic-thief, Q-thief vs heuristic-cop; --smoke/--full/--assert-gate modes) plus its supporting training/eval_{scenarios,arms,stats,report}.py modules (McNemar exact test + two-proportion z, pure stdlib) and artifacts/eval_scenarios.json (20 hand-authored scenarios across normal/corner-edge/barrier-pocket/near-capture/turn-limit-stall groups, seeds = training_seed + eval_seed_offset + index, held-out disjointness asserted in code via assert_seeds_held_out); tests/integration/test_beats_baseline.py correctly SKIPS with a stated reason (no trained table exists yet) rather than passing vacuously. Task 3 produced the STRAT-01..07 + QUAL/DOC coverage audit in docs/phases/phase-3/TODO.md (every requirement mapped to a named passing test; STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden), reconciled the phase-gate checklist (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line explicitly left unticked "blocked on Task 4"), and added the 3 Windows operator-step rows from 03-RESEARCH.md Sec3 as new unticked rows; 03-99 deliberately untouched. Full repo gates green: ruff 0, line-limit clean, 425 passed / 2 skipped (GATE-4 smoke test waiting on Task 4's table; the pre-existing reference-clone test from 03-08), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201 communities) and GRAPH_REPORT.md refreshed.
 progress:
   total_phases: 8
   completed_phases: 1
@@ -21,66 +21,62 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 08 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 10 Tasks 1-3 of 4 executed, blocked on the human-operator training run)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-09 of 11 done)
-Plan: 10 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07, 03-08, 03-09
-  done; 03-10 remains). Next plan is 03-10 (§10.4 gate tests + coverage audit + the real
-  overnight training run).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING, BLOCKED (plan 03-10 Tasks 1-3 of 4 done; Task 4 is a blocking human-action checkpoint)
+Plan: 03-00..03-09 fully done; 03-10 Tasks 1-3 (GATE-1/2/3 tests, GATE-4 evaluation CLI +
+  eval scenario set, STRAT coverage audit) done and committed. Task 4 (the real overnight
+  training run, GATE-4 measurement, table promotion) is `checkpoint:human-action
+  gate="blocking"` and requires the human operator on their own Windows machine -- it was
+  correctly NOT attempted by the automated executor.
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
-  Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), the
-  barrier-aware BFS distance oracle (03-03), the Bayes prior + BFS fallback +
-  `HeuristicBrain` baseline (03-04), the canonical state-key encoding + JSON `QTable`
-  (03-05), `QLearningBrain` (03-06), the cop barrier sub-policy `choose_barrier` wired into
-  both brains (03-07), the offline training harness (03-08), and the E6 convergence checks +
-  matplotlib plotting CLI + rule-42 README section (03-09) -- all landed. `training/` can now
-  produce a trained Q-table AND turn its curve CSV into rendered PNGs and a pass/fail
-  convergence verdict; only the phase-gate audit and the actual overnight run (03-10) remain
-  to close Phase 3. 5 phases remain after Phase 3 closes. Next: /gsd:execute-phase 3 to
-  continue with 03-10.
-Last activity: 2026-08-01 -- Executed 03-09-PLAN.md in full (learning curves + plotting +
-  README section, STRAT-06). Task 1 added `training/curve_analysis.py` --
-  `decile_gain`/`final_slope`/`check_convergence` reading `training/curves.py`'s CSV schema
-  without touching that writer (verified via `git diff` showing zero change across both
-  commits, QUAL-02); thresholds sourced from `StrategyParams`
-  (`win_rate_margin`/`convergence_window`/`convergence_tolerance`), zero literals; verdicts
-  computed per role (D-25), proven via three synthetic curves (rising-then-flat converges,
-  flat-noise fails only the decile-gain check, still-climbing fails only the slope check --
-  each numerically pre-verified before the implementation was written). Task 2 added
-  `training/plot_curves.py` -- confirmed the repo's only matplotlib importer via a
-  repo-wide grep (not just `src/`): per-role win-rate-vs-baseline PNGs with the epsilon
-  schedule on a secondary axis, plus one shared mean-reward PNG carrying a separately
-  labelled line per role, never averaged (D-25). Created `README.md`, which did not exist
-  anywhere in the repo before this plan (confirmed via `git log --all -- README.md`
-  returning nothing) -- borrowed `.planning/PROJECT.md`'s framing for the top matter, then
-  added the mandatory rule-42 learning-curves section stating the configured
-  `win_rate_margin` (0.10) / `min_win_rate_absolute` (0.55) / `eval_games` (200 = 20
-  scenarios x 10 seeds) / `convergence_window`+`convergence_tolerance` (20000/0.02) /
-  `episodes` (300000) / `seed` (1337) from `config/police/strategy.json`, with every figure
-  and every measured win-rate explicitly marked "pending (03-10)" -- zero fabricated
-  numbers, per the plan's own hard requirement. Deviations (both Rule 3 - blocking): (1) the
-  plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed
-  with `ModuleNotFoundError: No module named 'training'` -- direct-path script execution
-  puts `training/` itself on `sys.path[0]`, not the repo root, so the module's
-  `from training.curve_analysis import ...` absolute import could not resolve (`-m
-  training.plot_curves` and pytest's own imports were unaffected). Fixed with a guarded
-  `sys.path.insert(...)` gated on `__package__ in (None, "")`, regression-tested via a
-  subprocess-based pytest test so the literal CLI form stays covered. (2) Proactively split
-  the E6 analysis functions into `training/curve_analysis.py` (matplotlib-free) rather than
-  packing them into `plot_curves.py` -- the exact contingency the plan's own text named for
-  the 150-line gate (QUAL-08); `plot_curves.py` re-exports the analysis names so
-  `training.plot_curves` still satisfies the plan's literal function-location spec, and the
-  E6 tests stayed in `tests/unit/training/test_curves.py` per the plan's explicit
-  instruction while the new rendering-only tests got their own `test_plot_curves.py`. Full
-  repo gates green: `ruff check .` 0 violations, line-limit clean, 355 tests passed / 1
-  skipped, coverage 96.94% overall (`curve_analysis.py` 94%, `plot_curves.py` 97%). Graphify
-  graph rebuilt (2996 nodes/5239 edges/194 communities) and `GRAPH_REPORT.md` refreshed.
-  `docs/phases/phase-3/TODO.md` row 03-09 updated.
+  all of Phase 3's automatable work is now complete: config scaffold (03-00), per-mechanism
+  PRD (03-01), strategy seam (03-02), the barrier-aware BFS distance oracle (03-03), the
+  Bayes prior + BFS fallback + `HeuristicBrain` baseline (03-04), the canonical state-key
+  encoding + JSON `QTable` (03-05), `QLearningBrain` (03-06), the cop barrier sub-policy
+  `choose_barrier` wired into both brains (03-07), the offline training harness (03-08), the
+  E6 convergence checks + matplotlib plotting CLI + rule-42 README section (03-09), and the
+  §10.4 GATE-1/2/3 integration tests + GATE-4 evaluation CLI/eval-scenario-set + STRAT
+  coverage audit (03-10 Tasks 1-3) -- all landed. The only remaining Phase-3 work is 03-10
+  Task 4: a human operator must run the overnight training job on their own machine, inspect
+  the curves, measure GATE-4, and (if it passes) promote the tables and fill README's
+  placeholder numbers. Nothing further in Phase 3 can be automated. 5 phases remain after
+  Phase 3 closes. Next: the operator runs Task 4 (see docs/phases/phase-3/TODO.md's new
+  operator-step rows and 03-10-PLAN.md's Task 4 for the exact commands), then
+  /gsd:execute-phase 3 (or a direct SUMMARY-writing pass) closes out 03-10.
+Last activity: 2026-08-01 -- Executed 03-10-PLAN.md Tasks 1-3 (§10.4 milestone gate,
+  STRAT-06). Task 1: `tests/integration/{test_shortest_path,test_policy_fallback,
+  test_strategy_pluggable}.py` (GATE-1/2/3) plus `scripts/check_no_llm_in_strategy.{py,sh}`
+  promoting 03-02's structural import check into a standalone CI-runnable gate (verified to
+  exit 1 when a forbidden import is temporarily introduced, then reverted); a shared
+  `strategy_params()` helper added to `tests/integration/conftest.py` (QUAL-02). Task 2:
+  `training/evaluate.py` (three arms: heuristic-vs-heuristic baseline, Q-cop vs
+  heuristic-thief, Q-thief vs heuristic-cop; `--smoke`/`--full`/`--assert-gate`) plus
+  `training/eval_{scenarios,arms,stats,report}.py` (McNemar exact test + two-proportion z,
+  pure stdlib) and `artifacts/eval_scenarios.json` (20 hand-authored scenarios: 6 normal, 3
+  corner/edge, 4 barrier-pocket, 3 near-capture, 2 turn-limit-stalling, 2 shortest-path-walk;
+  seeds = `training_seed + eval_seed_offset + index`, disjointness from training seeds
+  asserted in code via `assert_seeds_held_out`, not just documented, D-23);
+  `tests/integration/test_beats_baseline.py` correctly SKIPS (no trained table exists yet)
+  rather than passing vacuously. Task 3: STRAT-01..07 + QUAL/DOC coverage audit written into
+  `docs/phases/phase-3/TODO.md` (every requirement mapped to a named passing test;
+  STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden);
+  phase-gate checklist reconciled (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line
+  explicitly left unticked "blocked on Task 4"); 3 new unticked operator-step rows added from
+  `03-RESEARCH.md` Sec3 (redirect output to a file, confirm artifacts_dir outside OneDrive,
+  exclude it from Defender, confirm sleep disabled); 03-99 deliberately untouched -- that is
+  `/gsd:verify-work 3`'s job. **Task 4 deliberately not attempted**: no training run, no
+  `artifacts/qtable_{police,thief}.json`, no README numbers filled, no
+  `03-10-SUMMARY.md` -- the plan is genuinely incomplete until a human runs it. Full repo
+  gates green: `ruff check .` 0 violations, line-limit clean, 425 passed / 2 skipped (the
+  GATE-4 smoke test waiting on Task 4's table, and the pre-existing 03-08 reference-clone
+  test), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201
+  communities) and `GRAPH_REPORT.md` refreshed.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 10 of 11 executed)
+  Phase 3: 10 of 11 plans fully done, 11th at 3 of 4 tasks, blocked on operator action)
 
 ## Performance Metrics
 
@@ -128,6 +124,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P07 | ~70min | 2 tasks | 19 files |
 | Phase 03 P08 | ~50min (this session; Tasks 1-3 committed in a prior, interrupted session) | 1 task (Task 4) | 11 files |
 | Phase 03 P09 | ~20min | 2 tasks | 6 files |
+| Phase 03 P10 | ~40min (Tasks 1-3 only; Task 4 pending operator) | 3 of 4 tasks | ~20 files |
 
 ## Accumulated Context
 
@@ -213,6 +210,9 @@ Recent decisions affecting current work:
 - [Phase 03-09]: training/curve_analysis.py split out of plot_curves.py at the 150-line gate (QUAL-08), the exact contingency the plan's own text named; plot_curves.py re-exports the analysis names so `training.plot_curves` still satisfies the plan's literal decile_gain/final_slope/check_convergence spec, and stays the repo's only matplotlib importer (D-20, verified repo-wide, not just src/)
 - [Phase 03-09]: Deviation (Rule 3 - blocking) -- the plan's literal `uv run python training/plot_curves.py <csv> <outdir>` invocation failed (direct-path execution puts training/ on sys.path[0], not the repo root); fixed with a guarded sys.path bootstrap gated on `__package__ in (None, "")`, regression-tested via a subprocess pytest test
 - [Phase 03-09]: README.md did not exist anywhere in the repo before this plan (confirmed via git log); created it now with a project overview borrowing .planning/PROJECT.md's framing, plus the mandatory rule-42 learning-curves section; every figure and measured win-rate is explicitly marked "pending (03-10)" since no training run has executed yet -- zero fabricated numbers, only configured bars (win_rate_margin/eval_games/seed/etc.) read from config/police/strategy.json
+- [Phase 03-10]: Held-out eval seeds (D-23) are asserted disjoint from training seeds by an executable check (assert_seeds_held_out), not a comment -- this is the one assumption that, if silently wrong, makes the whole GATE-4 number meaningless (the heuristic is both sparring partner and eval opponent, so training-set contamination would let a table "beat" the baseline on positions it already trained against); the win-rate margin is compared against the measured heuristic-vs-heuristic baseline per role, never an assumed 50%, since the game is not role-symmetric
+- [Phase 03-10]: test_beats_baseline.py's GATE-4 test SKIPS (not passes, not xfails) with a stated reason while no trained table exists -- a green GATE-4 that never loaded a table would be the single worst outcome for the phase's central claim; the skip is intentionally left for Task 4 (the human operator's training run) to close, never faked or bypassed by the automated executor
+- [Phase 03-10]: 03-10 Task 4 (`checkpoint:human-action gate="blocking"`) was executed only through Tasks 1-3 in this automated run; Task 4 itself -- the overnight training run, GATE-4 measurement, and table promotion -- was deliberately left untouched per the phase's own design (it needs a human watching a real Windows machine for console QuickEdit suspension, OneDrive/Defender interference, and sleep). No qtable file, no README number, and no 03-10-SUMMARY.md exist yet as a direct, verified consequence
 
 ### Pending Todos
 
@@ -234,36 +234,41 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-01T20:44:00+03:00
-Stopped at: Completed 03-09-PLAN.md (`training/curve_analysis.py` + `training/plot_curves.py`
-  + `README.md` + their tests -- the E6 convergence checks, the matplotlib plotting CLI, and
-  the rule-42 README learning-curves section, STRAT-06). Task 1: `decile_gain`/
-  `final_slope`/`check_convergence` in the new `training/curve_analysis.py`, reading
-  `training/curves.py`'s CSV without touching that writer (QUAL-02), verdicts per role
-  (D-25), thresholds sourced from `StrategyParams`. Task 2: `training/plot_curves.py`
-  renders per-role win-rate PNGs (epsilon on a secondary axis) plus a shared mean-reward
-  PNG, and is the repo's only matplotlib importer (D-20); `README.md` created (did not
-  exist before) with the rule-42 section carrying configured-not-measured numbers and
-  "pending (03-10)" placeholders for every figure and measured win-rate. SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-09-SUMMARY.md, including the
-  final_slope-as-total-drift decision, the curve_analysis.py/plot_curves.py 150-line-gate
-  split, the sys.path-bootstrap fix for direct-path CLI execution, and the README-did-not-
-  exist finding.
+Last session: 2026-08-01T22:10:00+03:00
+Stopped at: Completed 03-10-PLAN.md Tasks 1-3 (`tests/integration/{test_shortest_path,
+  test_policy_fallback,test_strategy_pluggable,test_beats_baseline}.py`,
+  `scripts/check_no_llm_in_strategy.{py,sh}`, `training/evaluate.py` +
+  `training/eval_{scenarios,arms,stats,report}.py`, `artifacts/eval_scenarios.json`, and the
+  STRAT-01..07 coverage audit in `docs/phases/phase-3/TODO.md` -- the §10.4 GATE-1/2/3
+  integration tests, the GATE-4 evaluation CLI and committed eval scenario set, and the
+  phase-wide requirements-coverage audit, STRAT-01..07). **Task 4 (blocking human-action
+  checkpoint) intentionally NOT executed** — it is the overnight training run, and this
+  automated session correctly stopped rather than attempting it. No SUMMARY.md exists for
+  03-10 because the plan is genuinely incomplete.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00..03-09 ticked; rows 03-10, 03-96, 03-99 remain.
-Resume file: None — 03-09 is fully committed (2 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-10 (§10.4 gate tests +
-  coverage audit + the actual overnight training run, the final Phase-3 plan) — once that
-  run completes, `training/plot_curves.py` and `training/curve_analysis.check_convergence`
-  are ready to fill README.md's "pending (03-10)" placeholders with the real PNGs and
-  measured win-rate/convergence numbers. Per-day sequence from Phase 3 on:
-  /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
-  /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
-  refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2996 nodes /
-  5239 edges / 194 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  docs/phases/phase-3/TODO.md rows 03-00..03-09 ticked, 03-10 row marked in-progress with
+  Task 4 called out as the remaining blocker, plus 3 new unticked operator-step rows from
+  03-RESEARCH.md Sec3; 03-96, 03-99 remain untouched (03-99 is /gsd:verify-work 3's job).
+Resume file: None — Tasks 1-3 are fully committed (3 task commits: 1dea409, 8c8471f,
+  b15d033) but 03-10 as a PLAN is not done. **Next step is the human operator running 03-10
+  Task 4** (see docs/phases/phase-3/TODO.md's new operator-step rows, or
+  03-10-PLAN.md's Task 4 block, for the exact commands and Windows setup: redirect output to
+  a file since console QuickEdit suspends the process on click, confirm
+  training.artifacts_dir resolves outside OneDrive, exclude that directory from Defender
+  real-time scanning, confirm sleep is disabled, then `uv run python -m training.harness
+  2>&1 | tee run.log`, inspect curves via `training/plot_curves.py`, measure the gate via
+  `uv run python training/evaluate.py --full --assert-gate`, and only on a pass promote the
+  tables + fill README's placeholder numbers). Once that lands, either re-run
+  /gsd:execute-phase 3 to have it write 03-10-SUMMARY.md and close the phase, or write the
+  SUMMARY directly — either closes out Phase 3's final plan.
+  Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
+  → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N. Note: the
+  CLAUDE.md-mandated graphify refresh for this plan's new code already ran this session
+  (graphify update . && cp graphify-out/{graph.json,graph.html,GRAPH_REPORT.md}
+  .planning/graphs/) -- 3190 nodes / 5849 edges / 201 communities, GRAPH_REPORT.md committed
+  alongside the Task-3 docs commit.
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
