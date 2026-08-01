@@ -12,8 +12,9 @@
 
 | Module / file (≤150 lines each) | Responsibility |
 |---|---|
-| `config/{police,thief}/strategy.json` | `[strategy]` + `[training]` sections: brain class, α, γ, ε schedule, `min_visits`, turn buckets, episode counts, eval bar. The per-role file that legitimately differs per side |
+| `config/{police,thief}/strategy.json` | `[strategy]` + `[training]` sections: brain class, α, γ, ε schedule, `min_visits`, turn buckets, `barrier_min_gain` (03-07), episode counts, eval bar. The per-role file that legitimately differs per side |
 | `src/pursuit/shared/strategy_config.py` | `StrategyParams` + `load_strategy_config()`; reuses `loader_helpers._require_key`/`_require_int` (QUAL-02), fail-loud, env-overridable |
+| `src/pursuit/config_keys.py` | `ConfigKey`/`NetworkConfigKey`/`StrategyKey`/`TrainingKey` — split out of `constants.py` at 03-07 once that module hit the 150-code-line ceiling; `constants.py` keeps only game-domain enums |
 | `src/pursuit/strategy/base.py` | `BrainBase` ABC (`_pick_move`, `_decide_move`) + frozen `Observation` / `Decision` dataclasses — the whole seam the network layer sees (STRAT-03) |
 | `src/pursuit/strategy/registry.py` | Resolves `police_class` / `thief_class` strings to brain classes; unknown name fails loud. The only place a brain is constructed |
 | `src/pursuit/strategy/pathfind.py` | BFS over the barrier-aware grid → `(distance, next_step)`. The single distance oracle (QUAL-02) — consumed by the fallback *and* the barrier sub-policy (STRAT-04) |
@@ -83,6 +84,13 @@ argmax_cell(prior) -> tuple[int, int]
 # strategy/encoding.py
 encode_state(obs, params) -> str              # canonical string — JSON keys must be strings
 turn_bucket(turn_index, params) -> int        # early | mid | late, boundaries from config
+
+# strategy/barriers.py
+choose_barrier(state, game_params, believed_thief_cell, min_gain) -> tuple[int, int] | None
+                                              # cop-only second stage after _pick_move (D-12);
+                                              # `state` must already reflect the cop's post-move
+                                              # cell; `min_gain` is StrategyParams.barrier_min_gain
+                                              # (engineering default, D-18) -- not a GameParams field
 
 # strategy/qtable.py
 class QTable:

@@ -51,7 +51,10 @@ def test_every_decision_carries_heuristic_source(default_params: GameParams) -> 
     state = engine.make_state(default_params)
     decision = brain._decide_move(_obs_from_state(state, "cop"), state)
     assert decision.source is MoveSource.HEURISTIC
-    assert decision.barrier is None  # 03-07 not landed yet
+    # 03-07: the fresh initial state is a wide-open board with no chokepoint,
+    # so choose_barrier legitimately returns None here too -- see
+    # test_barriers.py for the wired, non-None case.
+    assert decision.barrier is None
 
 
 def test_two_instances_are_independent(default_params: GameParams) -> None:

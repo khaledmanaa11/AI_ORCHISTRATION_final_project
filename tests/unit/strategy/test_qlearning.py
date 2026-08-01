@@ -37,12 +37,13 @@ def test_builds_via_build_brain_from_config_for_both_roles(
     assert isinstance(thief, QLearningBrain)
 
 
-def test_decide_move_attaches_no_barrier_yet(
+def test_decide_move_on_open_board_proposes_no_barrier(
     tmp_path: Path, default_params: GameParams
 ) -> None:
-    """03-07 marker: the cop's barrier sub-policy is not wired yet, so
-    _decide_move's barrier is always None, matching HeuristicBrain's own
-    placeholder (D-12)."""
+    """03-07: the cop's barrier sub-policy is wired, but this scenario is a
+    wide-open board with no chokepoint, so choose_barrier legitimately
+    returns None here too -- see test_barriers.py for the wired, non-None
+    case and for the thief-always-None guarantee under both brains."""
     params = params_for("cop", tmp_path / "qtable.json")
     QTable().save(params.qtable_path)
     brain = QLearningBrain(role="cop", params=params, game_params=default_params)
