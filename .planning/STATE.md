@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-06 executed (QLearningBrain -- e-greedy selection, min_visits fallback trigger, Q-update rule, STRAT-01/02/07); 4 more Phase-3 plans remain (03-07..03-10)
-last_updated: "2026-08-01T15:20:00+03:00"
-last_activity: 2026-08-01 -- Executed 03-06-PLAN.md (src/pursuit/strategy/qlearning.py + registry.py update + tests/unit/strategy/{_qlearning_fixtures,test_qlearning,test_qlearning_learning}.py). Task 1: QLearningBrain(BrainBase) loads its per-role Q-table exactly once at construction (E11, zero decision-path I/O, proven by poisoning builtins.open post-construction); _pick_move routes to fallback.pick() (source=FALLBACK) whenever table.visits(key) < params.min_visits -- the real STRAT-02 trigger, not key presence (D-08) -- otherwise either explores a uniformly random LEGAL action via an injected seeded random.Random (D-19, PRD Sec5's literal wording) or takes table.best_action(key), both tagged source=QTABLE; update(prev_key, action, reward, next_key) applies Q += alpha*(r + gamma*max_next - Q) exactly and bumps the visit count. registry.py registers QLEARNING_BRAIN_NAME, which already matches config/{police,thief}/strategy.json's police_class/thief_class strings from 03-00 -- both roles now reachable through the unmodified default config path. Task 2: the min_visits boundary swept 0..min_visits+2 (23 parametrized cases against the real config value 20); a falsification check (weakening the trigger to a constant, equivalent to key-presence) was run and confirmed to fail 23 tests, then reverted (git diff clean) per the plan's own verify instruction; exploration proven reproducible under a fixed seed and divergent under a different one; epsilon_eval=0.0 proven never to explore across 200 decisions; two role instances proven to hold disjoint QTable objects (D-03); AST structural test reused from 03-04's HeuristicBrain precedent. Deviations (Rule 3 - blocking, repeat of the 03-05 pattern): test_qlearning.py hit 174 code lines against the 150-line gate, split into test_qlearning.py + test_qlearning_learning.py + a new non-collected _qlearning_fixtures.py helper module (mirrors tests/unit/_fakes_agent.py) so neither test file duplicates fixture construction (QUAL-02). Deviation (Rule 2 - missing coverage): added a _decide_move barrier=None provenance test, closing qlearning.py to 100% coverage. Full repo gates green: ruff 0, line-limit clean, 296 tests passed, coverage 97.69% (qlearning.py 100%). Graphify graph rebuilt (2551 nodes/4087 edges/187 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-06 updated.
+stopped_at: Phase 03 — plan 03-07 executed (cop barrier sub-policy choose_barrier, wired into both brains, declared==applied proven, STRAT-05); 3 more Phase-3 plans remain (03-08..03-10)
+last_updated: "2026-08-01T15:18:44+03:00"
+last_activity: 2026-08-01 -- Executed 03-07-PLAN.md (src/pursuit/strategy/barriers.py + wiring into heuristic.py/qlearning.py + tests/unit/strategy/{test_barriers,test_barriers_integration}.py). Task 1: choose_barrier(state, game_params, believed_thief_cell, min_gain) -- the cop's second decision stage after _pick_move (D-12), keeping the Q action space at 5; legality is never re-derived (calls place_barrier itself and checks identity on rejection, QUAL-02); every score comes from bfs() alone (D-09), scoring candidates by how much they lengthen the believed thief cell's BFS route to a fixed anchor (the board corner diagonally farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan's own wording left the exact metric open, chosen because bfs() is provably symmetric between cop/thief in this codebase so a direct cop-thief-distance metric cannot discriminate a cop-favoring placement. The anchor cell itself is excluded from candidates, closing a trivial "wall off my own scoring reference point" exploit found via manual verification before any test was written. Task 2: both HeuristicBrain._decide_move and QLearningBrain._decide_move (replacing their `# 03-07` markers) build a post-move probe state before calling the one shared choose_barrier, matching sdk.engine.apply_cop_action's real move-then-barrier order exactly -- this is what makes declared==applied a structural guarantee, proven by a full HeuristicBrain-vs-HeuristicBrain game and repeated for QLearningBrain's own separately-implemented _decide_move; thief's barrier proven unconditionally None under both brains. Deviations: (Rule 2/3 - blocking) the plan's "configured improvement threshold" did not exist -- added strategy.barrier_min_gain (engineering default, D-18, value 1) to StrategyParams/both strategy.json files, which required first splitting src/pursuit/constants.py (already at the exact 150-code-line ceiling) into constants.py (game-domain enums only) + new src/pursuit/config_keys.py (ConfigKey/NetworkConfigKey/StrategyKey/TrainingKey), with 5 import sites updated mechanically. (Rule 3 - blocking, repeat of 03-05/03-06 pattern) test_barriers.py split into test_barriers.py (pure choose_barrier unit tests) + test_barriers_integration.py (full-game brain-level honesty tests) at the 150-line gate. (Rule 1 - stale comments) corrected two now-inaccurate "03-07 not landed yet" comments left by 03-04/03-06 in test_heuristic.py/test_qlearning.py -- assertions still held, only the explanatory prose was wrong. Full repo gates green: ruff 0, line-limit clean, 305 tests passed, coverage 97.78% (barriers.py/heuristic.py/qlearning.py each 100%). Graphify graph rebuilt (2624 nodes/4264 edges/187 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-07 updated.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 23
+  completed_plans: 24
   percent: 13
 ---
 
@@ -21,55 +21,63 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 06 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 07 of 11 executed)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-06 of 11 done)
-Plan: 7 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06 done; 03-07..03-10 remain).
-  Next plan is 03-07 (cop barrier sub-policy, STRAT-05).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-07 of 11 done)
+Plan: 8 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07 done; 03-08..03-10 remain).
+  Next plan is 03-08 (offline training harness + sparring pool, STRAT-06).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
   Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), the
   barrier-aware BFS distance oracle (03-03), the Bayes prior + BFS fallback +
   `HeuristicBrain` baseline (03-04), the canonical state-key encoding + JSON `QTable`
-  (03-05), and `QLearningBrain` -- e-greedy selection, the `min_visits` fallback trigger, and
-  the Q-update rule (03-06) all landed. Both playable brains are now reachable through the
-  unmodified default config path. 5 phases remain after Phase 3 closes.
-  Next: /gsd:execute-phase 3 to continue with 03-07.
-Last activity: 2026-08-01 -- Executed 03-06-PLAN.md (`src/pursuit/strategy/qlearning.py` +
-  `registry.py` update + their tests). Task 1: `QLearningBrain(BrainBase)` loads its per-role
-  `QTable` exactly once at construction (E11, zero decision-path I/O, proven by poisoning
-  `builtins.open` post-construction); `_pick_move` routes to `fallback.pick()`
-  (`source=FALLBACK`) whenever `table.visits(key) < params.min_visits` -- the real STRAT-02
-  trigger, not key presence (D-08) -- otherwise either explores a uniformly random **legal**
-  action via an injected seeded `random.Random` (D-19, matching PRD Sec5's literal wording) or
-  takes `table.best_action(key)`, both tagged `source=QTABLE`; `update(prev_key, action,
-  reward, next_key)` applies `Q += alpha * (r + gamma * max_a' Q[s',a'] - Q)` exactly and
-  bumps the visit count, callable directly by 03-08's training harness. `registry.py` now
-  registers `QLEARNING_BRAIN_NAME`, which already matched `config/{police,thief}/
-  strategy.json`'s `police_class`/`thief_class` strings from 03-00 -- both roles are reachable
-  through the unmodified default config path with zero further code changes. Task 2: the
-  `min_visits` boundary swept 0..min_visits+2 (23 parametrized cases against the real config
-  value 20); a falsification check (temporarily weakening the trigger to a constant,
-  equivalent to key-presence) was run and confirmed to fail 23 of those tests, then reverted
-  (`git diff` clean) per the plan's own verify instruction -- proving the suite actually
-  discriminates the correct trigger. Exploration proven reproducible under a fixed seed and
-  divergent under a different one; `epsilon_eval = 0.0` from the real config proven never to
-  explore across 200 decisions; two role instances proven to hold disjoint `QTable` objects,
-  mutating one never touching the other (D-03); an AST structural test reused 03-04's
-  `HeuristicBrain` "no class-level mutable state" technique verbatim. Deviations (Rule 3 -
-  blocking, repeat of the 03-05 pattern): `test_qlearning.py` hit 174 code lines against the
-  150-line gate, split into `test_qlearning.py` + `test_qlearning_learning.py` + a new
-  non-collected `_qlearning_fixtures.py` helper module (mirrors `tests/unit/_fakes_agent.py`)
-  so neither test file duplicates fixture-construction code (QUAL-02). Deviation (Rule 2 -
-  missing coverage): added a `_decide_move` `barrier=None` provenance test mirroring
-  `HeuristicBrain`'s own, closing `qlearning.py` to 100% coverage. Full repo gates green:
-  `ruff check .` 0 violations, line-limit clean, 296 tests passed, coverage 97.69%
-  (`qlearning.py` itself 100%). Graphify graph rebuilt (2551 nodes/4087 edges/187 communities)
-  and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/TODO.md` row 03-06 updated.
+  (03-05), `QLearningBrain` (03-06), and the cop barrier sub-policy `choose_barrier` wired
+  into both brains with declared==applied honesty proven against the real engine (03-07) all
+  landed. Both playable brains are now fully feature-complete for Phase 3's blind-play
+  contract (movement + truthful barrier placement). 5 phases remain after Phase 3 closes.
+  Next: /gsd:execute-phase 3 to continue with 03-08.
+Last activity: 2026-08-01 -- Executed 03-07-PLAN.md (`src/pursuit/strategy/barriers.py` +
+  wiring into `heuristic.py`/`qlearning.py` + their tests). Task 1: `choose_barrier(state,
+  game_params, believed_thief_cell, min_gain) -> Coord | None` -- the cop's second decision
+  stage after `_pick_move` (D-12), keeping the Q action space at exactly 5; legality is never
+  re-derived (calls `place_barrier` itself and checks identity on rejection, QUAL-02); every
+  score comes from `bfs()` alone (D-09), scoring candidates by how much they lengthen (or
+  sever) the believed thief cell's BFS route to a fixed anchor (the board corner diagonally
+  farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan's
+  own wording left the exact metric open, chosen because `bfs()` is provably symmetric
+  between cop and thief in this codebase (adjacency depends only on `state.barriers`), so a
+  direct cop-thief-distance metric cannot discriminate a cop-favoring placement from a
+  self-defeating one. The anchor cell itself is excluded from candidates -- closes a trivial
+  "wall off my own scoring reference point regardless of the thief's position" exploit found
+  via manual `uv run python -c` verification before any test was written. Task 2: both
+  `HeuristicBrain._decide_move` and `QLearningBrain._decide_move` (replacing their `# 03-07`
+  markers) build a post-move probe state (`dataclasses.replace(state, cop=movement.move)`)
+  before calling the one shared `choose_barrier`, matching `sdk.engine.apply_cop_action`'s
+  real move-then-barrier order exactly -- this is what makes declared==applied a structural
+  guarantee, proven by a full `HeuristicBrain`-vs-`HeuristicBrain` game through `sdk.engine`
+  and repeated end-to-end for `QLearningBrain`'s own, separately-implemented `_decide_move`;
+  the thief's `Decision.barrier` proven unconditionally `None` under both brains, not
+  "usually None". Deviations: (Rule 2/3 - blocking) the plan's "configured improvement
+  threshold" did not exist in config -- added `strategy.barrier_min_gain` (engineering
+  default, D-18, value `1`) to `StrategyParams`/both `config/{police,thief}/strategy.json`,
+  which required first splitting `src/pursuit/constants.py` (already at the exact
+  150-code-line ceiling) into `constants.py` (game-domain enums only) + a new
+  `src/pursuit/config_keys.py` (`ConfigKey`/`NetworkConfigKey`/`StrategyKey`/`TrainingKey`),
+  with 5 import sites updated mechanically and zero assertions changed. (Rule 3 - blocking,
+  repeat of the 03-05/03-06 pattern) `test_barriers.py` split into `test_barriers.py` (pure
+  `choose_barrier` unit tests) + `test_barriers_integration.py` (full-game brain-level
+  honesty tests) at the 150-line gate. (Rule 1 - stale comments) corrected two now-inaccurate
+  "03-07 not landed yet" comments/test names left by 03-04/03-06 in `test_heuristic.py`/
+  `test_qlearning.py` -- both assertions still held (open-board, no-chokepoint scenarios),
+  only the explanatory prose was wrong after this plan landed. Full repo gates green: `ruff
+  check .` 0 violations, line-limit clean, 305 tests passed, coverage 97.78%
+  (`barriers.py`/`heuristic.py`/`qlearning.py` each 100%). Graphify graph rebuilt (2624
+  nodes/4264 edges/187 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
+  TODO.md` row 03-07 updated.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 7 of 11 executed)
+  Phase 3 plan 8 of 11 executed)
 
 ## Performance Metrics
 
@@ -114,6 +122,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P04 | ~35min | 3 tasks | 11 files |
 | Phase 03 P05 | ~25min | 2 tasks | 6 files |
 | Phase 03 P06 | ~20min | 2 tasks | 5 files |
+| Phase 03 P07 | ~70min | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -188,6 +197,9 @@ Recent decisions affecting current work:
 - [Phase 03-05]: Deviation (Rule 3 - blocking) -- tests/unit/strategy/test_qtable.py split into test_qtable.py (API + fail-loud load) and test_qtable_durability.py (crash/retry mechanics) after hitting 152 code lines against the 150-line gate; no test weakened or removed
 - [Phase 03-06]: QLearningBrain(role, params, game_params, rng=None) matches the fixed build_brain calling convention; rng is optional/keyword-only (unseeded random.Random() default) so the registry path still constructs a working brain, while 03-08 injects a seeded one by constructing directly; epsilon is a mutable instance attribute initialized from params.epsilon_eval, reassigned per-episode by 03-08's own decay schedule rather than re-read from config per decision; exploration is legal-move-filtered per PRD Sec5's literal wording, the greedy/argmax branch is deliberately NOT filtered (matches the PRD; any legal-move guardrail is AI-SPEC Sec6's distinct, not-yet-owned "Legal-move filter" online guardrail); both explore and exploit inside the visited region tag source=QTABLE, per the plan's own literal task text
 - [Phase 03-06]: Deviation (Rule 3 - blocking, repeat of 03-05's pattern) -- test_qlearning.py split into test_qlearning.py + test_qlearning_learning.py + non-collected _qlearning_fixtures.py helper (mirrors tests/unit/_fakes_agent.py) after hitting 174 code lines; Deviation (Rule 2 - missing coverage) -- added a _decide_move barrier=None test mirroring HeuristicBrain's, closing qlearning.py to 100% coverage
+- [Phase 03-07]: choose_barrier(state, game_params, believed_thief_cell, min_gain) scores candidates by BFS-distance increase to a fixed anchor (the board corner diagonally farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan left the exact metric open; bfs() is provably symmetric between cop/thief in this codebase, so a direct cop-thief-distance metric could not discriminate a cop-favoring placement, and the anchor cell itself is excluded from candidates to close a trivial self-referential exploit found before any test was written
+- [Phase 03-07]: min_gain is a 4th explicit parameter (not folded into game_params) because barrier_quota (PARAMETERS.md, D-05) and barrier_min_gain (engineering default, D-18) live in two different config objects (GameParams vs StrategyParams) by this codebase's established architecture; both _decide_move implementations build a post-move probe state before calling choose_barrier, matching sdk.engine.apply_cop_action's real move-then-barrier order so declared==applied holds by construction
+- [Phase 03-07]: Deviation (Rule 2/3 - blocking) -- strategy.barrier_min_gain (value 1) added to StrategyParams/both strategy.json files; required first splitting src/pursuit/constants.py (at the exact 150-code-line ceiling) into constants.py (game-domain enums) + new src/pursuit/config_keys.py (ConfigKey/NetworkConfigKey/StrategyKey/TrainingKey), 5 import sites updated mechanically. Deviation (Rule 3 - blocking, repeat of 03-05/03-06) -- test_barriers.py split into test_barriers.py + test_barriers_integration.py at the 150-line gate
 
 ### Pending Todos
 
@@ -209,34 +221,33 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-01T15:20:00+03:00
-Stopped at: Completed 03-06-PLAN.md (`src/pursuit/strategy/qlearning.py` + `registry.py`
-  update + their tests -- `QLearningBrain`: e-greedy selection over legal actions, the
-  `min_visits` fallback trigger boundary tested 0..min_visits+2, truthful `Decision.source`
-  provenance, and the PRD Sec5 Q-update rule, STRAT-01/02/07/D-03/D-08/D-19). SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-06-SUMMARY.md, including the
-  optional-keyword-only-rng-defaulting-to-unseeded-Random decision, the
-  epsilon-as-mutable-instance-attribute decision, the
-  exploration-legal-filtered-but-greedy-branch-not decision (matches PRD Sec5's literal
-  asymmetry; a legal-move guardrail on the greedy branch is AI-SPEC Sec6's distinct,
-  not-yet-owned concern), and the test_qlearning.py 150-line-gate split (Rule 3) into
-  test_qlearning.py + test_qlearning_learning.py + a new non-collected _qlearning_fixtures.py
-  helper module.
+Last session: 2026-08-01T15:18:44+03:00
+Stopped at: Completed 03-07-PLAN.md (`src/pursuit/strategy/barriers.py` + wiring into
+  `heuristic.py`/`qlearning.py` + their tests -- `choose_barrier`: the cop's second decision
+  stage after `_pick_move`, BFS-scored against a fixed board-corner anchor, quota-aware,
+  engine-legality-delegated; declared==applied proven against `sdk.engine` over full games;
+  thief's barrier proven unconditionally None under both brains, STRAT-05/D-03/D-09/D-12/
+  AI-SPEC-E9). SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-07-SUMMARY.md, including the
+  anchor-as-scoring-reference-point decision (and the anchor-cell-exclusion fix for the
+  self-referential exploit it created), the min_gain-as-4th-parameter decision, the
+  post-move-probe-state-before-choose_barrier decision, and the two file-split deviations
+  (constants.py -> +config_keys.py at the 150-line ceiling; test_barriers.py ->
+  +test_barriers_integration.py at the same gate).
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00..03-06 ticked; rows 03-07..03-10, 03-96, 03-99
+  docs/phases/phase-3/TODO.md rows 03-00..03-07 ticked; rows 03-08..03-10, 03-96, 03-99
   remain.
-Resume file: None — 03-06 is fully committed (2 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-07 (cop barrier sub-policy,
-  STRAT-05), which attaches at the `# 03-07` marker already present in both
-  `QLearningBrain._decide_move` and `HeuristicBrain._decide_move`. Per-day sequence from
-  Phase 3 on:
+Resume file: None — 03-07 is fully committed (2 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-08 (offline training
+  harness + sparring pool, STRAT-06) — `training/harness.py` steps `sdk.engine` directly,
+  never the network layer (P3-2). Per-day sequence from Phase 3 on:
   /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
   /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
   refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2551 nodes /
-  4087 edges / 187 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2624 nodes /
+  4264 edges / 187 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
