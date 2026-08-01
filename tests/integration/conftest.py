@@ -9,6 +9,7 @@ NetworkParams -- nothing here is a numeric literal beyond list/tuple indices.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import pathlib
 
@@ -17,10 +18,16 @@ from fastmcp import Client
 
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.shared.network_config import NetworkParams, load_network_config
+from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 
 _THIEF_NETWORK_CONFIG = (
     pathlib.Path(__file__).parent.parent.parent / "config" / "thief" / "network.json"
 )
+_CONFIG_ROOT = pathlib.Path(__file__).parent.parent.parent / "config"
+_STRATEGY_CONFIG_PATHS = {
+    "cop": _CONFIG_ROOT / "police" / "strategy.json",
+    "thief": _CONFIG_ROOT / "thief" / "strategy.json",
+}
 
 
 @pytest.fixture
@@ -117,3 +124,29 @@ def stepping_clock(start: float = 0.0) -> _SteppingClock:
     defaults to `0.0`, the natural monotonic-clock origin, not a game value.
     """
     return _SteppingClock(start)
+
+
+def strategy_params(
+    role: str,
+    *,
+    brain_class: str | None = None,
+    qtable_path: pathlib.Path | str | None = None,
+) -> StrategyParams:
+    """Real per-role `strategy.json` (Phase-3 §10.4 gate tests, QUAL-02) --
+    the one construction path `test_shortest_path.py`, `test_policy_fallback.py`,
+    `test_strategy_pluggable.py` and `test_beats_baseline.py` all share instead
+    of each re-implementing `load_strategy_config` + `dataclasses.replace`.
+
+    `brain_class` overrides which brain GATE-3 swaps in (the *only* config
+    field that test exercises); `qtable_path` repoints a `QLearningBrain` at a
+    tmp-path table -- the real `artifacts/qtable_<role>.json` does not exist
+    until this plan's Task 4 trains one (03-06's own `_qlearning_fixtures.py`
+    precedent).
+    """
+    params = load_strategy_config(_STRATEGY_CONFIG_PATHS[role])
+    overrides = {}
+    if brain_class is not None:
+        overrides["brain_class"] = brain_class
+    if qtable_path is not None:
+        overrides["qtable_path"] = str(qtable_path)
+    return dataclasses.replace(params, **overrides) if overrides else params
