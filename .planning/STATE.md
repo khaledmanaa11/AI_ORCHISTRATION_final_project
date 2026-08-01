@@ -257,12 +257,25 @@ Resume file: None — Tasks 1-3 are fully committed (3 task commits: 1dea409, 8c
   03-10-PLAN.md's Task 4 block, for the exact commands and Windows setup: redirect output to
   a file since console QuickEdit suspends the process on click, confirm
   training.artifacts_dir resolves outside OneDrive, exclude that directory from Defender
-  real-time scanning, confirm sleep is disabled, then `uv run python -m training.harness
+  real-time scanning, confirm sleep is disabled, then `uv run python -m training.loop
   2>&1 | tee run.log`, inspect curves via `training/plot_curves.py`, measure the gate via
   `uv run python training/evaluate.py --full --assert-gate`, and only on a pass promote the
   tables + fill README's placeholder numbers). Once that lands, either re-run
   /gsd:execute-phase 3 to have it write 03-10-SUMMARY.md and close the phase, or write the
   SUMMARY directly — either closes out Phase 3's final plan.
+  **Post-session fix (commit 89ddcbb)**: the operator tried
+  `uv run python -m training.harness` per 03-10-PLAN.md's literal Task 4 text and it exited
+  immediately doing nothing -- 03-08 built `run_training()` (in `training/loop.py`, not
+  `harness.py`) but never wired a runnable entry point to it anywhere in `training/`.
+  Added `main()`/`_load_run_config()` to `training/loop.py` (not `harness.py`, to avoid a
+  circular import since `loop.py` already imports from `harness.py`); the real command is
+  `uv run python -m training.loop`. Verified with a 6-episode run in an isolated temp dir
+  before adding `tests/unit/training/test_loop.py::test_load_run_config_reads_the_real_
+  committed_config_files` and `::test_main_runs_training_via_load_run_config_and_prints_
+  the_final_episode` (the latter mocks only `run_training` itself, so `_load_run_config`'s
+  real config-file resolution stays covered). `docs/phases/phase-3/TODO.md`'s op-1 row
+  corrected to match. Full gates re-verified green after the fix: ruff 0, line-limit clean,
+  427 passed / 2 skipped, coverage 96.43%.
   Per-day sequence from Phase 3 on: /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4]
   → /gsd:plan-phase N --chunked → /gsd:execute-phase N → /gsd:verify-work N. Note: the
   CLAUDE.md-mandated graphify refresh for this plan's new code already ran this session
