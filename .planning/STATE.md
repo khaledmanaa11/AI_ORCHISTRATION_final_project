@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-04 executed (Bayes motion prior + BFS fallback + HeuristicBrain, STRAT-02/D-09/D-10/D-11/D-03); 6 more Phase-3 plans remain (03-05..03-10)
-last_updated: "2026-08-01T14:16:00+03:00"
-last_activity: 2026-08-01 -- Executed 03-04-PLAN.md (src/pursuit/strategy/{prior,fallback,heuristic}.py + tests/unit/strategy/{test_prior,test_fallback,test_heuristic}.py). Task 1: prior.py's uniform()/spread()/argmax_cell() -- spread() is the Bayes PREDICTION step only (no evidence term, explicit Phase-4 seam in the docstring), redistributing each cell's mass over the opponent's legal moves via board.get_legal_moves (QUAL-02); sum-to-1.0 invariant asserted inside the function on both entry and exit, not spot-checked only in tests; argmax_cell ties break to the smallest (row, col) cell deterministically. Task 2: fallback.py's pick(obs, state, agent, params, prior=None) -> Decision -- cop minimizes BFS distance to the believed target, thief maximizes it tie-breaking toward more onward legal moves, distance only ever from pathfind.bfs() (D-09, verified against 03-03's own barrier-pocket wall layout for both roles), unreachable target always resolves to a legal move without raising. Task 3: heuristic.py's HeuristicBrain(BrainBase) -- _pick_move delegates entirely to fallback.pick() (one heuristic implementation, QUAL-02), source always MoveSource.HEURISTIC, _decide_move returns barrier=None with a `# 03-07` marker, instance attributes only (D-03, verified by an AST structural test), plays a complete cop-vs-thief game through sdk.engine to a terminal outcome within move_ceiling turns (test-proven). Deviation (Rule 2/3, documented in the SUMMARY): registry.build_brain() now REQUIRES a game_params: GameParams argument threaded to every brain constructor, since BrainBase._pick_move (03-02) deliberately carries no GameParams but a real brain's fallback/BFS needs board_size -- test_registry.py's _StubBrain and its 3 call sites updated mechanically to match, no assertion changed. Full repo gates green: ruff 0, line-limit clean, 235 tests passed, coverage 97.31% (fallback.py/heuristic.py/registry.py each 100%, prior.py 98%). Graphify graph rebuilt (2349 nodes/3543 edges/181 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/PLAN.md's build_brain interface line and docs/phases/phase-3/TODO.md row 03-04 updated.
+stopped_at: Phase 03 — plan 03-05 executed (state encoding + JSON Q-table persistence, STRAT-01/D-02/D-05/D-08/D-24); 5 more Phase-3 plans remain (03-06..03-10)
+last_updated: "2026-08-01T14:35:00+03:00"
+last_activity: 2026-08-01 -- Executed 03-05-PLAN.md (src/pursuit/strategy/{encoding,qtable}.py + src/pursuit/shared/durable_write.py + tests/unit/strategy/{test_encoding,test_qtable,test_qtable_durability}.py). Task 1: encoding.py's encode_state/decode_state implement docs/PRD_rl_strategy.md Sec2 verbatim -- the PRD's own worked example ((2,3)/(5,5)/mask=9/barriers=6/turn=14) round-trips to exactly "2,3|5,5|9|6|1"; turn_bucket derives both boundaries from turn_bucket_fractions * move_ceiling, no turn-index literal anywhere (D-18); blocked_mask is agent-relative, bit order frozen to Action's own order (NORTH=bit0..WEST=bit3), derived from board.get_legal_moves not a local barrier check (QUAL-02); two tests prove D-05 directly -- a distant barrier leaves the key unchanged, an adjacent one changes it. Task 2: qtable.py's QTable (get/set/bump_visit/visits/best_action/save/load) keeps values and visit counts together per key in a version-stamped JSON schema, never pickle (D-02); best_action ties break to the smallest action index deterministically; load() is fail-loud on every malformed shape (non-object JSON, missing version/table, an entry missing visits, a bad action index, an unparseable key) -- never a partially populated table. durable_write.py (src/pursuit/shared/, so training/checkpoint.py at 03-08 can reuse it without src/ importing training/) implements the Windows-safe write sequence: temp-file-in-same-dir + flush + fsync, rotate target to .prev, os.replace retried with backoff on PermissionError (WinError 32); load_json_with_fallback falls back to .prev on both a missing target (crash between rotate and replace) and a corrupt one, with a logged warning (D-24). Deviation (Rule 3 - blocking): tests/unit/strategy/test_qtable.py hit 152 code lines against the 150-line gate, split into test_qtable.py (API + fail-loud load) and test_qtable_durability.py (crash/retry mechanics) -- no test weakened or removed. Full repo gates green: ruff 0, line-limit clean, 262 tests passed, coverage 97.62% (encoding.py and qtable.py and durable_write.py each 100%). Graphify graph rebuilt (2471 nodes/3802 edges/189 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-05 updated.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 21
+  completed_plans: 22
   percent: 13
 ---
 
@@ -21,54 +21,54 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 04 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 05 of 11 executed)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-04 of 11 done)
-Plan: 5 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04 done; 03-05..03-10 remain). Next
-  plan is 03-05 (state encoding + Q-table JSON persistence, STRAT-01).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-05 of 11 done)
+Plan: 6 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05 done; 03-06..03-10 remain).
+  Next plan is 03-06 (`QLearningBrain` -- ε-greedy + fallback trigger, STRAT-01).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
   Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), the
-  barrier-aware BFS distance oracle (03-03), and the Bayes prior + BFS fallback +
-  `HeuristicBrain` baseline (03-04) all landed. 5 phases remain after Phase 3 closes.
-  Next: /gsd:execute-phase 3 to continue with 03-05.
-Last activity: 2026-08-01 -- Executed 03-04-PLAN.md (`src/pursuit/strategy/{prior,fallback,
-  heuristic}.py` + their tests). Task 1: `prior.py`'s `uniform()`/`spread()`/`argmax_cell()` --
-  `spread()` is the Bayes PREDICTION step only (no evidence term, an explicit Phase-4 seam
-  stated in the module docstring), redistributing each cell's mass over the opponent's legal
-  moves via `board.get_legal_moves` (QUAL-02); the sum-to-1.0 invariant is asserted inside the
-  function itself on both entry and exit, not spot-checked only in tests (D-10); `argmax_cell`
-  ties break to the smallest `(row, col)` cell, deterministically. Task 2: `fallback.py`'s
-  `pick(obs, state, agent, params, prior=None) -> Decision` -- the cop minimizes BFS distance
-  to the believed target, the thief maximizes it and ties break toward more onward legal moves
-  (walking into a pocket to gain one square of distance is how an evader loses); distance is
-  only ever computed via `pathfind.bfs()` (D-09), verified against 03-03's own barrier-pocket
-  wall layout for both roles; an unreachable target always resolves to a legal move without
-  raising (worst-ranked for the cop, best-ranked for the thief). Task 3: `heuristic.py`'s
-  `HeuristicBrain(BrainBase)` -- `_pick_move` delegates entirely to `fallback.pick()` (exactly
-  one heuristic implementation in the codebase, QUAL-02), `source` is always
-  `MoveSource.HEURISTIC`, `_decide_move` returns `barrier=None` carrying a `# 03-07` marker
-  comment, instance attributes only with no class-level or module-level mutable state (D-03,
-  project rule 2, proven by an AST structural test rather than a runtime mutation probe that
-  could not actually detect a shared class attribute); a full cop-vs-thief `HeuristicBrain`
-  game through `sdk.engine` reaches a terminal outcome within `move_ceiling` turns
-  (test-proven, not asserted by inspection). Deviation (Rule 2/3, fully documented in the
-  SUMMARY): `registry.build_brain()` now REQUIRES a `game_params: GameParams` argument
-  threaded to every brain constructor, because `BrainBase._pick_move`/`_decide_move` (03-02)
-  deliberately carry no `GameParams` but a real brain's fallback/BFS machinery needs
-  `board_size` for legal-move generation -- injected once at construction (mirroring
-  `orchestrator.py`'s already-frozen `ChooseMove` type, which already carries `GameParams` per
-  call) rather than widening the tested 03-02 ABC signature; `test_registry.py`'s `_StubBrain`
-  and its 3 `build_brain` call sites were updated mechanically to match, with no assertion
-  changed. Full repo gates green: `ruff check .` 0 violations, line-limit clean, 235 tests
-  passed, coverage 97.31% (`fallback.py`/`heuristic.py`/`registry.py` each 100%, `prior.py`
-  98%). Graphify graph rebuilt (2349 nodes/3543 edges/181 communities) and `GRAPH_REPORT.md`
-  refreshed. `docs/phases/phase-3/PLAN.md`'s `build_brain` interface line and
-  `docs/phases/phase-3/TODO.md` row 03-04 updated.
+  barrier-aware BFS distance oracle (03-03), the Bayes prior + BFS fallback +
+  `HeuristicBrain` baseline (03-04), and the canonical state-key encoding + JSON `QTable`
+  (03-05) all landed. 5 phases remain after Phase 3 closes.
+  Next: /gsd:execute-phase 3 to continue with 03-06.
+Last activity: 2026-08-01 -- Executed 03-05-PLAN.md (`src/pursuit/strategy/{encoding,qtable}.py`
+  + `src/pursuit/shared/durable_write.py` + their tests). Task 1: `encoding.py`'s
+  `encode_state`/`decode_state` implement `docs/PRD_rl_strategy.md` Sec2 verbatim -- the PRD's
+  own worked example (`own=(2,3)`, `target=(5,5)`, `blocked_mask=9`, `barriers_used=6`,
+  `turn=14`) encodes to exactly `"2,3|5,5|9|6|1"`, test-proven; `turn_bucket` derives both
+  boundaries from `turn_bucket_fractions * move_ceiling`, no turn-index literal anywhere
+  (D-18); `blocked_mask` is agent-relative, derived from `board.get_legal_moves` on a probed
+  state rather than a local barrier check (QUAL-02), bit order frozen to `Action`'s own order
+  (NORTH=bit0..WEST=bit3), pinned via board-corner cases including the PRD's own `{N,W} -> 9`
+  example with no barriers needed; two dedicated tests prove D-05 directly -- a barrier FAR
+  from own_cell leaves the key unchanged, one ADJACENT to it changes `blocked_mask` and
+  therefore the key. Task 2: `qtable.py`'s `QTable` (`get`/`set`/`bump_visit`/`visits`/
+  `best_action`/`save`/`load`) keeps values and visit counts together per key in a
+  version-stamped JSON schema, never pickle (D-02); `best_action` ties break to the smallest
+  action index deterministically; `load()` is fail-loud on every malformed shape (non-object
+  JSON, missing `version`/`table`, an entry missing `visits`, a non-integer or out-of-range
+  action index, or a key `encoding.decode_state` cannot parse) -- never a partially populated
+  table. `durable_write.py` (`src/pursuit/shared/`, so `training/checkpoint.py` at 03-08 can
+  reuse it without `src/` ever importing `training/`, QUAL-02) implements the Windows-safe
+  write sequence: temp-file-in-same-dir + `flush()` + `os.fsync(fd)`, rotate the existing
+  target to `.prev`, `os.replace` retried with linear backoff on `PermissionError` (WinError
+  32); `load_json_with_fallback` falls back to `.prev` on BOTH a missing target (a crash
+  landing between the rotate and the final replace leaves target briefly absent) and a corrupt
+  one, with a logged warning either way (D-24). Deviation (Rule 3 - blocking, fully documented
+  in the SUMMARY): `tests/unit/strategy/test_qtable.py` hit 152 code lines against the hard
+  150-line gate after the full crash/retry test battery was written -- split into
+  `test_qtable.py` (API + fail-loud load, 15 tests) and `test_qtable_durability.py` (crash/
+  retry mechanics, 4 tests), no test weakened, removed, or compressed. Full repo gates green:
+  `ruff check .` 0 violations, line-limit clean, 262 tests passed, coverage 97.62%
+  (`encoding.py`/`qtable.py`/`durable_write.py` each 100%). Graphify graph rebuilt (2471
+  nodes/3802 edges/189 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
+  TODO.md` row 03-05 updated.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 5 of 11 executed)
+  Phase 3 plan 6 of 11 executed)
 
 ## Performance Metrics
 
@@ -111,6 +111,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P02 | 12min | 3 tasks | 5 files |
 | Phase 03 P03 | 18min | 2 tasks | 4 files |
 | Phase 03 P04 | ~35min | 3 tasks | 11 files |
+| Phase 03 P05 | ~25min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,8 @@ Recent decisions affecting current work:
 - [Phase 03-03]: bfs(state, start, goal, agent, params) is the single barrier-aware distance oracle for the phase (QUAL-02); adjacency comes entirely from board.get_legal_moves via a per-step probe state (dataclasses.replace), never reimplemented; UNREACHABLE=-1 sentinel (not math.inf) for a walled-off goal, never raises; neighbours sorted ascending (row, col) at every expansion for deterministic tie-breaking; no walk() helper added since gameplay calls bfs() fresh every turn and a multi-step walk is a test-time concern only
 - [Phase 03-04]: prior.spread() is the Bayes PREDICTION step only (no evidence term, Phase-4 seam); mass invariant asserted inside the function on both entry and exit, not spot-checked in tests; fallback.pick() ranks candidates via bfs() distance only (cop minimizes, thief maximizes tie-breaking toward more onward legal moves), unreachable target never raises; HeuristicBrain is fully playable for both roles, instance state only (D-03), and is the single heuristic implementation fallback.py owns (QUAL-02)
 - [Phase 03-04]: Deviation -- registry.build_brain(role, params, game_params) now REQUIRES GameParams threaded to every brain constructor (BrainBase._pick_move/_decide_move deliberately carry none, per 03-02); this is now the fixed calling convention 03-06's QLearningBrain must also match
+- [Phase 03-05]: encode_state/turn_bucket take (obs, params: StrategyParams, game_params: GameParams) as two explicit typed parameters, matching 03-04's build_brain(role, params, game_params) convention; blocked_mask bit order frozen to Action's own IntEnum order (NORTH=bit0..WEST=bit3, STAY excluded); QTable JSON schema nests values+visits inside one per-key object so they can never desynchronize; durable_write.py's retries/backoff stay required keyword-only args with no defaults, QTable.save() supplies its own module-level structural constants (_SAVE_RETRIES=3/_SAVE_BACKOFF_SECONDS=0.1s)
+- [Phase 03-05]: Deviation (Rule 3 - blocking) -- tests/unit/strategy/test_qtable.py split into test_qtable.py (API + fail-loud load) and test_qtable_durability.py (crash/retry mechanics) after hitting 152 code lines against the 150-line gate; no test weakened or removed
 
 ### Pending Todos
 
@@ -202,28 +205,30 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-01T14:16:00+03:00
-Stopped at: Completed 03-04-PLAN.md (`src/pursuit/strategy/{prior,fallback,heuristic}.py` +
-  their tests -- the Bayes motion prior, the BFS fallback policy, and the fully playable
-  `HeuristicBrain` baseline, STRAT-02/D-09/D-10/D-11/D-03). SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-04-SUMMARY.md, including the
-  build_brain(role, params, game_params) deviation (Rule 2/3), the HeuristicBrain-registers-
-  in-registry.py decision, the Coord-imported-from-pathfind decision, the _MASS_TOLERANCE
-  structural-constant decision, and the entry+exit normalization-assert decision.
+Last session: 2026-08-01T14:35:00+03:00
+Stopped at: Completed 03-05-PLAN.md (`src/pursuit/strategy/{encoding,qtable}.py` +
+  `src/pursuit/shared/durable_write.py` + their tests -- the canonical state-key encoding and
+  the JSON `QTable` with visit counts and a Windows-safe crash-recoverable save/load cycle,
+  STRAT-01/D-02/D-05/D-08/D-24). SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-05-SUMMARY.md, including the
+  encode_state/turn_bucket-take-two-typed-params decision, the blocked_mask-standalone-not-
+  called-by-encode_state decision, the nested-per-key JSON schema decision, the
+  QTable-owns-its-own-retry-constants decision, and the test_qtable.py 150-line-gate split
+  (Rule 3) into test_qtable.py + test_qtable_durability.py.
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00..03-04 ticked; rows 03-05..03-10, 03-96, 03-99
+  docs/phases/phase-3/TODO.md rows 03-00..03-05 ticked; rows 03-06..03-10, 03-96, 03-99
   remain.
-Resume file: None — 03-04 is fully committed (3 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-05 (state encoding +
-  Q-table JSON persistence, STRAT-01), which 03-06's `QLearningBrain` depends on next.
-  Per-day sequence from Phase 3 on:
+Resume file: None — 03-05 is fully committed (2 task commits + this docs/SUMMARY/STATE
+  commit). Next step is /gsd:execute-phase 3 to continue with 03-06 (`QLearningBrain` --
+  ε-greedy + fallback trigger, STRAT-01), which consumes this plan's `encoding.py`/`qtable.py`
+  directly. Per-day sequence from Phase 3 on:
   /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
   /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
   refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2349 nodes /
-  3543 edges / 181 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2471 nodes /
+  3802 edges / 189 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
