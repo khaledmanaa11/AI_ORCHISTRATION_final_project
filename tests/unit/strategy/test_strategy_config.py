@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from pursuit.constants import StrategyKey, TrainingKey
+from pursuit.config_keys import StrategyKey, TrainingKey
 from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 
 _CONFIG_DIR = Path(__file__).parent.parent.parent.parent / "config"

@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from pursuit.constants import ConfigKey
+from pursuit.config_keys import ConfigKey
 from pursuit.shared.loader_helpers import require_int, require_key
 
 GAME_PARAMS_SOURCE = "game_params.json"

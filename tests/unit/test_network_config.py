@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from pursuit.constants import NetworkConfigKey
+from pursuit.config_keys import NetworkConfigKey
 from pursuit.shared.network_config import NetworkParams, load_network_config
 
 _CONFIG_DIR = Path(__file__).parent.parent.parent / "config"

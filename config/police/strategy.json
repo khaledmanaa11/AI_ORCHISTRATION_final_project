@@ -8,7 +8,8 @@
     "epsilon_eval": 0.0,
     "max_decision_ms": 50,
     "oscillation_window": 6,
-    "oscillation_limit": 3
+    "oscillation_limit": 3,
+    "barrier_min_gain": 1
   },
   "training": {
     "alpha": 0.15,

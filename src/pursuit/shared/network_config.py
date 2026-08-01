@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from pursuit.constants import NetworkConfigKey
+from pursuit.config_keys import NetworkConfigKey
 from pursuit.shared.loader_helpers import require_int, require_str
 
 NETWORK_CONFIG_SOURCE = "network.json"

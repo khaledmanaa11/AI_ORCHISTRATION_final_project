@@ -13,7 +13,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from pursuit.constants import StrategyKey, TrainingKey
+from pursuit.config_keys import StrategyKey, TrainingKey
 from pursuit.shared.loader_helpers import (
     require_float,
     require_int,
@@ -37,6 +37,7 @@ class StrategyParams:
     max_decision_ms: int
     oscillation_window: int
     oscillation_limit: int
+    barrier_min_gain: int
     alpha: float
     gamma: float
     epsilon_start: float
@@ -117,6 +118,7 @@ def load_strategy_config(path: "Path | str") -> StrategyParams:
         ("max_decision_ms", strategy, StrategyKey.MAX_DECISION_MS, require_int, False),
         ("oscillation_window", strategy, StrategyKey.OSCILLATION_WINDOW, require_int, False),
         ("oscillation_limit", strategy, StrategyKey.OSCILLATION_LIMIT, require_int, False),
+        ("barrier_min_gain", strategy, StrategyKey.BARRIER_MIN_GAIN, require_int, False),
         ("alpha", training, TrainingKey.ALPHA, require_float, False),
         ("gamma", training, TrainingKey.GAMMA, require_float, True),
         ("epsilon_start", training, TrainingKey.EPSILON_START, require_float, True),
