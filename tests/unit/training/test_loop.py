@@ -136,3 +136,29 @@ def test_require_shared_run_fields_rejects_a_seed_mismatch() -> None:
     thief = dataclasses.replace(load_strategy_config(_CONFIG_DIR / "thief" / "strategy.json"), seed=cop.seed + 1)
     with pytest.raises(ValueError, match="seed"):
         require_shared_run_fields(cop, thief)
+
+
+def test_load_run_config_reads_the_real_committed_config_files() -> None:
+    """`uv run python -m training.loop` (03-10-PLAN.md Task 4's operator entry
+    point) has no CLI args -- it must resolve config/{police,thief}/*.json
+    from the repo layout, not a hardcoded/relative-to-cwd guess."""
+    config = loop_mod._load_run_config()
+    assert config.game_params == _game_params()
+    assert config.cop_params.episodes == config.thief_params.episodes > 0
+
+
+def test_main_runs_training_via_load_run_config_and_prints_the_final_episode(
+    tmp_path: pathlib.Path, capsys: pytest.CaptureFixture
+) -> None:
+    """`main()` must call the real `_load_run_config` (proving the module-level
+    wiring works end to end), so only `run_training` itself is mocked here --
+    a real 300000-episode run has no place in the unit test suite."""
+    fake_result = mock.Mock(run_state=mock.Mock(episode=42, cop_episodes=21, thief_episodes=21))
+    with mock.patch.object(loop_mod, "run_training", return_value=fake_result) as run_mock:
+        exit_code = loop_mod.main()
+
+    assert exit_code == 0
+    run_mock.assert_called_once()
+    called_config = run_mock.call_args[0][0]
+    assert isinstance(called_config, TrainingRunConfig)
+    assert "episode 42" in capsys.readouterr().out

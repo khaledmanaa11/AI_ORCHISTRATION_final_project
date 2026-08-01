@@ -19,8 +19,13 @@ DEPLOYED agent processes, not this offline, single-process harness.
 from __future__ import annotations
 
 import atexit
+import logging
 import random
+import sys
+from pathlib import Path
 
+from pursuit.shared.config import load_game_params
+from pursuit.shared.strategy_config import load_strategy_config
 from pursuit.strategy.qlearning import QLearningBrain
 from training import artifacts, curves, runstate, sparring
 from training.harness import EpisodeConfig, Player, run_episode
@@ -37,6 +42,8 @@ from training.progress import RoleAccumulator, RunProgress
 from training.run_config import RunResult, TrainingRunConfig
 
 __all__ = ["TrainingRunConfig", "RunResult", "run_training"]
+
+_CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 
 
 def run_training(config: TrainingRunConfig) -> RunResult:
@@ -121,3 +128,31 @@ def _maybe_log_curve(
     curves.append(cw, row)
     progress.csv_rows += 1
     acc.reset()
+
+
+def _load_run_config() -> TrainingRunConfig:
+    """`config/{police,thief}/game_params.json` are identical byte-for-byte
+    (D-06); either side's copy is the shared GameParams for the run."""
+    return TrainingRunConfig(
+        game_params=load_game_params(_CONFIG_DIR / "police" / "game_params.json"),
+        cop_params=load_strategy_config(_CONFIG_DIR / "police" / "strategy.json"),
+        thief_params=load_strategy_config(_CONFIG_DIR / "thief" / "strategy.json"),
+    )
+
+
+def main() -> int:
+    """`uv run python -m training.loop` -- the operator's overnight-run entry
+    point (03-10-PLAN.md Task 4). Resumable: re-running after an interruption
+    continues from the last checkpoint (D-24)."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+    result = run_training(_load_run_config())
+    print(
+        f"run_training finished at episode {result.run_state.episode} "
+        f"(cop_episodes={result.run_state.cop_episodes}, "
+        f"thief_episodes={result.run_state.thief_episodes})"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
