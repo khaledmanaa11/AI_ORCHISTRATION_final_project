@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — plan 03-07 executed (cop barrier sub-policy choose_barrier, wired into both brains, declared==applied proven, STRAT-05); 3 more Phase-3 plans remain (03-08..03-10)
-last_updated: "2026-08-01T15:18:44+03:00"
-last_activity: 2026-08-01 -- Executed 03-07-PLAN.md (src/pursuit/strategy/barriers.py + wiring into heuristic.py/qlearning.py + tests/unit/strategy/{test_barriers,test_barriers_integration}.py). Task 1: choose_barrier(state, game_params, believed_thief_cell, min_gain) -- the cop's second decision stage after _pick_move (D-12), keeping the Q action space at 5; legality is never re-derived (calls place_barrier itself and checks identity on rejection, QUAL-02); every score comes from bfs() alone (D-09), scoring candidates by how much they lengthen the believed thief cell's BFS route to a fixed anchor (the board corner diagonally farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan's own wording left the exact metric open, chosen because bfs() is provably symmetric between cop/thief in this codebase so a direct cop-thief-distance metric cannot discriminate a cop-favoring placement. The anchor cell itself is excluded from candidates, closing a trivial "wall off my own scoring reference point" exploit found via manual verification before any test was written. Task 2: both HeuristicBrain._decide_move and QLearningBrain._decide_move (replacing their `# 03-07` markers) build a post-move probe state before calling the one shared choose_barrier, matching sdk.engine.apply_cop_action's real move-then-barrier order exactly -- this is what makes declared==applied a structural guarantee, proven by a full HeuristicBrain-vs-HeuristicBrain game and repeated for QLearningBrain's own separately-implemented _decide_move; thief's barrier proven unconditionally None under both brains. Deviations: (Rule 2/3 - blocking) the plan's "configured improvement threshold" did not exist -- added strategy.barrier_min_gain (engineering default, D-18, value 1) to StrategyParams/both strategy.json files, which required first splitting src/pursuit/constants.py (already at the exact 150-code-line ceiling) into constants.py (game-domain enums only) + new src/pursuit/config_keys.py (ConfigKey/NetworkConfigKey/StrategyKey/TrainingKey), with 5 import sites updated mechanically. (Rule 3 - blocking, repeat of 03-05/03-06 pattern) test_barriers.py split into test_barriers.py (pure choose_barrier unit tests) + test_barriers_integration.py (full-game brain-level honesty tests) at the 150-line gate. (Rule 1 - stale comments) corrected two now-inaccurate "03-07 not landed yet" comments left by 03-04/03-06 in test_heuristic.py/test_qlearning.py -- assertions still held, only the explanatory prose was wrong. Full repo gates green: ruff 0, line-limit clean, 305 tests passed, coverage 97.78% (barriers.py/heuristic.py/qlearning.py each 100%). Graphify graph rebuilt (2624 nodes/4264 edges/187 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-07 updated.
+stopped_at: Phase 03 — plan 03-08 executed (offline training harness: run_episode + run_training, resumable/reproducible sparring-pool training with checkpoint + curve logging, STRAT-06); 2 more Phase-3 plans remain (03-09..03-10)
+last_updated: "2026-08-01T17:45:00+03:00"
+last_activity: 2026-08-01 -- Executed 03-08-PLAN.md's remaining Task 4 (Tasks 1-3 -- checkpoint.py/runstate.py/sparring.py/sparring_reference.py -- were already committed from a prior, interrupted session: 8891f64/7482bea/3eed329). training/curves.py (CSV learning-curve writer, D-16) and training/harness.py's run_episode (the per-episode game loop over sdk.engine) were already implemented uncommitted at session start; verified correct and committed alongside the new outer driver. Built training/loop.py + loop_setup.py + progress.py + run_config.py: run_training(TrainingRunConfig) -> RunResult -- resumes from run_state.json (restores both Q-tables, the shared RNG's exact getstate(), each role's own episode counter, truncates curve rows past the checkpoint episode, D-24), samples one frozen opponent per episode from training.sparring's pool, alternates which role learns by global-episode parity (D-25), reassigns epsilon/alpha from runstate.epsilon_at/alpha_at every episode, admits pool snapshots and checkpoints on shared (both-roles) cadences, appends a curve row per role on that role's own cadence with winrate_vs_baseline scoped to heuristic-opponent episodes specifically, and handles Windows long-run realities (try/finally + atexit final checkpoint on KeyboardInterrupt since there is no SIGTERM, SetThreadExecutionState behind a sys.platform=="win32" guard). One shared random.Random(seed) instance drives opponent sampling AND both brains' own exploration -- matches docs/PRD_rl_strategy.md Sec5's D-19 wording verbatim, not an invented convenience. Deviations: (Rule 2 - missing coverage) added a direct test for harness.py's previously-uncovered _role_won(role, None) branch, closing it to 100%. (Rule 3 - blocking, repeat of the 03-05/06/07 pattern) run_training's setup/orchestration split into loop.py/loop_setup.py/progress.py/run_config.py at the 150-line gate -- the inherited harness.py docstring already anticipated training/loop.py from the interrupted prior session, so no correction was needed there. Full repo gates green: ruff 0, line-limit clean (largest new file 132 code lines), 346 tests passed / 1 skipped, coverage 97.04% overall (every new training/ module 100% except the pre-existing, D-21-exempt sparring_reference.py at 50%). Graphify graph rebuilt (2897 nodes/5089 edges/189 communities) and GRAPH_REPORT.md refreshed. docs/phases/phase-3/TODO.md row 03-08 updated.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 25
   percent: 13
 ---
 
@@ -21,63 +21,66 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 07 of 11 executed)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 08 of 11 executed)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-07 of 11 done)
-Plan: 8 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07 done; 03-08..03-10 remain).
-  Next plan is 03-08 (offline training harness + sparring pool, STRAT-06).
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-08 of 11 done)
+Plan: 9 of 11 executed (03-00, 03-01, 03-02, 03-03, 03-04, 03-05, 03-06, 03-07, 03-08 done;
+  03-09..03-10 remain). Next plan is 03-09 (learning curves + plotting + README section).
 Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
   Phase 3's config scaffold (03-00), per-mechanism PRD (03-01), strategy seam (03-02), the
   barrier-aware BFS distance oracle (03-03), the Bayes prior + BFS fallback +
   `HeuristicBrain` baseline (03-04), the canonical state-key encoding + JSON `QTable`
-  (03-05), `QLearningBrain` (03-06), and the cop barrier sub-policy `choose_barrier` wired
-  into both brains with declared==applied honesty proven against the real engine (03-07) all
-  landed. Both playable brains are now fully feature-complete for Phase 3's blind-play
-  contract (movement + truthful barrier placement). 5 phases remain after Phase 3 closes.
-  Next: /gsd:execute-phase 3 to continue with 03-08.
-Last activity: 2026-08-01 -- Executed 03-07-PLAN.md (`src/pursuit/strategy/barriers.py` +
-  wiring into `heuristic.py`/`qlearning.py` + their tests). Task 1: `choose_barrier(state,
-  game_params, believed_thief_cell, min_gain) -> Coord | None` -- the cop's second decision
-  stage after `_pick_move` (D-12), keeping the Q action space at exactly 5; legality is never
-  re-derived (calls `place_barrier` itself and checks identity on rejection, QUAL-02); every
-  score comes from `bfs()` alone (D-09), scoring candidates by how much they lengthen (or
-  sever) the believed thief cell's BFS route to a fixed anchor (the board corner diagonally
-  farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan's
-  own wording left the exact metric open, chosen because `bfs()` is provably symmetric
-  between cop and thief in this codebase (adjacency depends only on `state.barriers`), so a
-  direct cop-thief-distance metric cannot discriminate a cop-favoring placement from a
-  self-defeating one. The anchor cell itself is excluded from candidates -- closes a trivial
-  "wall off my own scoring reference point regardless of the thief's position" exploit found
-  via manual `uv run python -c` verification before any test was written. Task 2: both
-  `HeuristicBrain._decide_move` and `QLearningBrain._decide_move` (replacing their `# 03-07`
-  markers) build a post-move probe state (`dataclasses.replace(state, cop=movement.move)`)
-  before calling the one shared `choose_barrier`, matching `sdk.engine.apply_cop_action`'s
-  real move-then-barrier order exactly -- this is what makes declared==applied a structural
-  guarantee, proven by a full `HeuristicBrain`-vs-`HeuristicBrain` game through `sdk.engine`
-  and repeated end-to-end for `QLearningBrain`'s own, separately-implemented `_decide_move`;
-  the thief's `Decision.barrier` proven unconditionally `None` under both brains, not
-  "usually None". Deviations: (Rule 2/3 - blocking) the plan's "configured improvement
-  threshold" did not exist in config -- added `strategy.barrier_min_gain` (engineering
-  default, D-18, value `1`) to `StrategyParams`/both `config/{police,thief}/strategy.json`,
-  which required first splitting `src/pursuit/constants.py` (already at the exact
-  150-code-line ceiling) into `constants.py` (game-domain enums only) + a new
-  `src/pursuit/config_keys.py` (`ConfigKey`/`NetworkConfigKey`/`StrategyKey`/`TrainingKey`),
-  with 5 import sites updated mechanically and zero assertions changed. (Rule 3 - blocking,
-  repeat of the 03-05/03-06 pattern) `test_barriers.py` split into `test_barriers.py` (pure
-  `choose_barrier` unit tests) + `test_barriers_integration.py` (full-game brain-level
-  honesty tests) at the 150-line gate. (Rule 1 - stale comments) corrected two now-inaccurate
-  "03-07 not landed yet" comments/test names left by 03-04/03-06 in `test_heuristic.py`/
-  `test_qlearning.py` -- both assertions still held (open-board, no-chokepoint scenarios),
-  only the explanatory prose was wrong after this plan landed. Full repo gates green: `ruff
-  check .` 0 violations, line-limit clean, 305 tests passed, coverage 97.78%
-  (`barriers.py`/`heuristic.py`/`qlearning.py` each 100%). Graphify graph rebuilt (2624
-  nodes/4264 edges/187 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
-  TODO.md` row 03-07 updated.
+  (03-05), `QLearningBrain` (03-06), the cop barrier sub-policy `choose_barrier` wired into
+  both brains (03-07), and the offline training harness -- durable checkpointing, the
+  sparring pool, the optional reference adapter, and the resumable `run_training` episode
+  driver (03-08) -- all landed. `training/` can now produce a trained Q-table end to end;
+  only plotting/reporting (03-09) and the phase-gate audit (03-10) remain to close Phase 3.
+  5 phases remain after Phase 3 closes. Next: /gsd:execute-phase 3 to continue with 03-09.
+Last activity: 2026-08-01 -- Executed 03-08-PLAN.md's remaining Task 4 (offline training
+  entry point, STRAT-06). Tasks 1-3 (`training/checkpoint.py`+`runstate.py`,
+  `training/sparring.py`, `training/sparring_reference.py`, and their tests) were already
+  implemented and committed from a prior, interrupted session (`8891f64`/`7482bea`/`3eed329`).
+  `training/curves.py` (the D-16 CSV learning-curve writer) and `training/harness.py`'s
+  `run_episode` (the per-episode game loop over `sdk.engine`) were also already implemented,
+  uncommitted, at this session's start; both verified correct and committed alongside the new
+  work. Built `training/loop.py` + `loop_setup.py` + `progress.py` + `run_config.py`:
+  `run_training(TrainingRunConfig) -> RunResult` -- resumes from `run_state.json` (restores
+  both Q-tables, the shared RNG's exact `getstate()`, each role's own episode counter, and
+  calls `curves.truncate_after` on the checkpoint episode, D-24), samples one frozen opponent
+  per episode from `training.sparring`'s pool, alternates which role learns by
+  global-episode parity (D-25), reassigns `epsilon`/`alpha` from `runstate.epsilon_at`/
+  `alpha_at` every episode (continuous across a resume, never reset), admits pool snapshots
+  and checkpoints both tables + the run manifest on shared (both-roles) cadences validated
+  equal between `cop.json`/`thief.json`, and appends one curve row per role on that role's
+  own `curve_log_every` cadence with `winrate_vs_baseline` scoped specifically to
+  `heuristic`-opponent episodes. Windows long-run handling per RESEARCH Sec3: a `try/finally`
+  final checkpoint plus an `atexit` backstop (unregistered on clean exit) on
+  `KeyboardInterrupt` -- Windows delivers no SIGTERM -- and `SetThreadExecutionState` behind
+  a `sys.platform == "win32"` guard to block sleep. A single shared `random.Random(seed)`
+  instance drives opponent sampling AND both brains' own epsilon-greedy exploration draws --
+  matching `docs/PRD_rl_strategy.md` Sec5's D-19 wording verbatim ("epsilon-greedy action
+  selection and opponent sampling use a seeded `random.Random(training.seed)` instance"),
+  discovered and confirmed while implementing rather than invented. Verified end to end with
+  ad-hoc scripts before formalizing as tests: exact curve/table reproducibility across two
+  independent fresh runs with the same seed; resume continuity of `epsilon`/`alpha` across a
+  checkpoint boundary; truncation of a manually-planted stray curve row on resume; and a real
+  `KeyboardInterrupt` mid-run leaving a valid, loadable checkpoint. Deviations: (Rule 2 -
+  missing coverage) added a direct test for `harness.py`'s previously-uncovered
+  `_role_won(role, None)` defensive branch, closing it to 100%. (Rule 3 - blocking, repeat of
+  the 03-05/06/07 pattern) `run_training`'s setup/orchestration split into
+  `loop.py`/`loop_setup.py`/`progress.py`/`run_config.py` at the 150-line gate -- the
+  inherited `harness.py` docstring already anticipated `training/loop.py` from the
+  interrupted prior session, so no correction was needed there. Full repo gates green: `ruff
+  check .` 0 violations, line-limit clean (largest new file 132 code lines), 346 tests
+  passed / 1 skipped, coverage 97.04% overall (every new `training/` module 100% except the
+  pre-existing, D-21-exempt `sparring_reference.py` at 50%). Graphify graph rebuilt (2897
+  nodes/5089 edges/189 communities) and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/
+  TODO.md` row 03-08 updated.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3 plan 8 of 11 executed)
+  Phase 3 plan 9 of 11 executed)
 
 ## Performance Metrics
 
@@ -123,6 +126,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P05 | ~25min | 2 tasks | 6 files |
 | Phase 03 P06 | ~20min | 2 tasks | 5 files |
 | Phase 03 P07 | ~70min | 2 tasks | 19 files |
+| Phase 03 P08 | ~50min (this session; Tasks 1-3 committed in a prior, interrupted session) | 1 task (Task 4) | 11 files |
 
 ## Accumulated Context
 
@@ -200,6 +204,10 @@ Recent decisions affecting current work:
 - [Phase 03-07]: choose_barrier(state, game_params, believed_thief_cell, min_gain) scores candidates by BFS-distance increase to a fixed anchor (the board corner diagonally farthest from the cop's own cell) -- an autonomous scoring-metric decision since the plan left the exact metric open; bfs() is provably symmetric between cop/thief in this codebase, so a direct cop-thief-distance metric could not discriminate a cop-favoring placement, and the anchor cell itself is excluded from candidates to close a trivial self-referential exploit found before any test was written
 - [Phase 03-07]: min_gain is a 4th explicit parameter (not folded into game_params) because barrier_quota (PARAMETERS.md, D-05) and barrier_min_gain (engineering default, D-18) live in two different config objects (GameParams vs StrategyParams) by this codebase's established architecture; both _decide_move implementations build a post-move probe state before calling choose_barrier, matching sdk.engine.apply_cop_action's real move-then-barrier order so declared==applied holds by construction
 - [Phase 03-07]: Deviation (Rule 2/3 - blocking) -- strategy.barrier_min_gain (value 1) added to StrategyParams/both strategy.json files; required first splitting src/pursuit/constants.py (at the exact 150-code-line ceiling) into constants.py (game-domain enums) + new src/pursuit/config_keys.py (ConfigKey/NetworkConfigKey/StrategyKey/TrainingKey), 5 import sites updated mechanically. Deviation (Rule 3 - blocking, repeat of 03-05/03-06) -- test_barriers.py split into test_barriers.py + test_barriers_integration.py at the 150-line gate
+- [Phase 03-08]: run_training(config: TrainingRunConfig) bundles game_params+cop_params+thief_params into one object rather than the plan's literal single-StrategyParams run_training(params) sketch -- one run trains BOTH roles' tables together under two configs that legitimately differ in brain_class/qtable_path/reward_*, matching the EpisodeConfig precedent (game_params+learner_params) already established by this plan's own inherited harness.py; run-level scalars (seed/episodes/checkpoint_every/pool_snapshot_every/artifacts_dir) are validated equal between cop.json/thief.json up front (require_shared_run_fields), raising loud on drift rather than silently picking one side
+- [Phase 03-08]: A single shared random.Random(seed) instance drives opponent sampling AND both QLearningBrains' own epsilon-greedy exploration -- not a per-brain sub-seed -- matching docs/PRD_rl_strategy.md Sec5's D-19 wording verbatim ("epsilon-greedy action selection and opponent sampling use a seeded random.Random(training.seed) instance"); this is what makes RunState.rng_state's one getstate() reproduce the whole run, and is a training-pipeline determinism choice unrelated to project rule 2 (which governs the two DEPLOYED match-time processes, not this offline single-process harness)
+- [Phase 03-08]: Training checkpoints Q-tables under StrategyParams.artifacts_dir using the qtable_path's basename, never at the repo-relative qtable_path itself -- that path is reserved for the FINAL BLESSED table a later plan copies in at run end (RESEARCH Sec3), and rewriting a multi-MB table there every checkpoint_every episodes would churn OneDrive on every interval (D-22); checkpoint_every/pool_snapshot_every read as global (both-roles) cadences, curve_log_every reads per-role, matching each cadence's own purpose (crash recovery/anti-collapse vs. per-role learning curves, D-25); winrate_vs_baseline is scoped to opponent_kind=="heuristic" episodes specifically so the column means what its name says
+- [Phase 03-08]: Deviation (Rule 3 - blocking, repeat of 03-05/06/07) -- run_training's setup/orchestration split into training/loop.py (episode-loop orchestration) + loop_setup.py (once-per-run resume/checkpoint/pool-build/Windows-guard helpers) + progress.py (pure mutable bookkeeping) + run_config.py (shared TrainingRunConfig/RunResult, breaking a would-be import cycle) at the 150-line gate. Deviation (Rule 2 - missing coverage) -- added a direct test for harness.py's previously-uncovered _role_won(role, None) branch, closing it to 100%
 
 ### Pending Todos
 
@@ -221,33 +229,40 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-01T15:18:44+03:00
-Stopped at: Completed 03-07-PLAN.md (`src/pursuit/strategy/barriers.py` + wiring into
-  `heuristic.py`/`qlearning.py` + their tests -- `choose_barrier`: the cop's second decision
-  stage after `_pick_move`, BFS-scored against a fixed board-corner anchor, quota-aware,
-  engine-legality-delegated; declared==applied proven against `sdk.engine` over full games;
-  thief's barrier proven unconditionally None under both brains, STRAT-05/D-03/D-09/D-12/
-  AI-SPEC-E9). SUMMARY at
-  .planning/phases/03-blind-strategy-module-rl-policy/03-07-SUMMARY.md, including the
-  anchor-as-scoring-reference-point decision (and the anchor-cell-exclusion fix for the
-  self-referential exploit it created), the min_gain-as-4th-parameter decision, the
-  post-move-probe-state-before-choose_barrier decision, and the two file-split deviations
-  (constants.py -> +config_keys.py at the 150-line ceiling; test_barriers.py ->
-  +test_barriers_integration.py at the same gate).
+Last session: 2026-08-01T17:45:00+03:00
+Stopped at: Completed 03-08-PLAN.md (`training/harness.py` + `training/curves.py` +
+  `training/loop.py`/`loop_setup.py`/`progress.py`/`run_config.py` + their tests -- the
+  offline training harness's remaining Task 4: `run_episode` drives one game over
+  `sdk.engine`; `run_training(TrainingRunConfig)` is the resumable outer driver -- resume
+  from `run_state.json` with exact RNG/epsilon/alpha/curve continuity, per-episode frozen
+  opponent sampling, role alternation, cadenced pool-snapshot/checkpoint/curve-log, Windows
+  `KeyboardInterrupt`-safe final checkpointing, STRAT-06/D-16/D-19/D-22/D-24/D-25). This
+  plan was PARTWAY DONE entering this session -- Tasks 1-3 (`checkpoint.py`/`runstate.py`/
+  `sparring.py`/`sparring_reference.py`) were already committed from a prior, interrupted
+  session (`8891f64`/`7482bea`/`3eed329`); `curves.py` and `harness.py`'s `run_episode` were
+  already written but uncommitted at this session's start and were verified correct, not
+  rewritten. SUMMARY at
+  .planning/phases/03-blind-strategy-module-rl-policy/03-08-SUMMARY.md, including the
+  bundled-TrainingRunConfig decision, the single-shared-RNG-instance decision (grounded in
+  PRD Sec5's D-19, not invented), the artifacts_dir-vs-repo-qtable_path separation, the
+  global-vs-per-role cadence split, and the four-way 150-line-gate file split
+  (loop.py/loop_setup.py/progress.py/run_config.py).
   Carried forward: Phase-01 code review CR-01 still deferred; Phase-2 verify-work
   (docs/phases/phase-2/TODO.md row 2-99 + root docs/TODO.md) still pending — Phase 3
   planning/execution proceeded ahead of it per this session's instructions.
-  docs/phases/phase-3/TODO.md rows 03-00..03-07 ticked; rows 03-08..03-10, 03-96, 03-99
+  docs/phases/phase-3/TODO.md rows 03-00..03-08 ticked; rows 03-09..03-10, 03-96, 03-99
   remain.
-Resume file: None — 03-07 is fully committed (2 task commits + this docs/SUMMARY/STATE
-  commit). Next step is /gsd:execute-phase 3 to continue with 03-08 (offline training
-  harness + sparring pool, STRAT-06) — `training/harness.py` steps `sdk.engine` directly,
-  never the network layer (P3-2). Per-day sequence from Phase 3 on:
+Resume file: None — 03-08 is fully committed (1 task commit for the remaining Task 4 +
+  this docs/SUMMARY/STATE commit; Tasks 1-3 were already committed in the prior session).
+  Next step is /gsd:execute-phase 3 to continue with 03-09 (learning curves + plotting +
+  README section, rule 42) — `training/plot_curves.py` reads `training/curves.py`'s CSV
+  (the `role` column keeps cop/thief separable) and is the only matplotlib importer in the
+  repo (D-20, P3-12). Per-day sequence from Phase 3 on:
   /gsd:graphify → [/gsd:ai-integration-phase N for 3 & 4] → /gsd:plan-phase N --chunked →
   /gsd:execute-phase N → /gsd:verify-work N. Note: the CLAUDE.md-mandated graphify
   refresh for this plan's new code already ran this session (graphify update . && cp
-  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2624 nodes /
-  4264 edges / 187 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
+  graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/) -- 2897 nodes /
+  5089 edges / 189 communities, GRAPH_REPORT.md committed alongside this plan's docs commit.
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
