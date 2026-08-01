@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from pursuit.constants import MoveSource
+from pursuit.shared.config import GameParams
 from pursuit.strategy import registry
 from pursuit.strategy.base import BrainBase, Decision
 
@@ -17,9 +18,10 @@ class _StubBrain(BrainBase):
     """Locally-defined stub proving the construction mechanism -- 03-04/03-06
     register the real HeuristicBrain/QLearningBrain classes, not this one."""
 
-    def __init__(self, *, role: str, params) -> None:
+    def __init__(self, *, role: str, params, game_params) -> None:
         self.role = role
         self.params = params
+        self.game_params = game_params
 
     def _pick_move(self, obs, state):
         return Decision(move=obs.own_cell, source=MoveSource.HEURISTIC)
@@ -37,23 +39,24 @@ def _fake_params(brain_class: str) -> SimpleNamespace:
     return SimpleNamespace(brain_class=brain_class)
 
 
-def test_build_brain_resolves_registered_name() -> None:
-    brain = registry.build_brain("cop", _fake_params(_STUB_NAME))
+def test_build_brain_resolves_registered_name(default_params: GameParams) -> None:
+    brain = registry.build_brain("cop", _fake_params(_STUB_NAME), default_params)
     assert isinstance(brain, _StubBrain)
     assert brain.role == "cop"
+    assert brain.game_params is default_params
 
 
-def test_build_brain_unknown_name_raises_and_lists_known() -> None:
+def test_build_brain_unknown_name_raises_and_lists_known(default_params: GameParams) -> None:
     with pytest.raises(ValueError) as excinfo:
-        registry.build_brain("thief", _fake_params("nonexistent:Nope"))
+        registry.build_brain("thief", _fake_params("nonexistent:Nope"), default_params)
     message = str(excinfo.value)
     assert "nonexistent:Nope" in message
     assert _STUB_NAME in message
 
 
-def test_build_brain_never_falls_back_to_a_default() -> None:
+def test_build_brain_never_falls_back_to_a_default(default_params: GameParams) -> None:
     with pytest.raises(ValueError):
-        registry.build_brain("cop", _fake_params(""))
+        registry.build_brain("cop", _fake_params(""), default_params)
 
 
 def test_registry_module_calls_no_eval_or_exec() -> None:
