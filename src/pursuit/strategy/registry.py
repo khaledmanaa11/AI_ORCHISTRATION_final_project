@@ -3,8 +3,8 @@
 Resolution goes through the explicit dict below -- never eval, exec, or an
 unguarded importlib call on a config string. A config file that could name
 an arbitrary importable would be an arbitrary-code-execution path, and this
-project ships config alongside the agent. Concrete brains register here in
-03-04 (HeuristicBrain) and 03-06 (QLearningBrain, D-07).
+project ships config alongside the agent. Concrete brains register here: HeuristicBrain (03-04), QLearningBrain (03-06,
+D-07).
 
 `build_brain` also threads a `GameParams` through to every brain's
 constructor (03-04 deviation, Rule 2/3): `BrainBase._pick_move(obs, state)`
@@ -21,11 +21,12 @@ from pursuit.shared.config import GameParams
 from pursuit.shared.strategy_config import StrategyParams
 from pursuit.strategy.base import BrainBase
 from pursuit.strategy.heuristic import HEURISTIC_BRAIN_NAME, HeuristicBrain
+from pursuit.strategy.qlearning import QLEARNING_BRAIN_NAME, QLearningBrain
 
-# Explicit name -> class registry. HeuristicBrain registers here (03-04);
-# QLearningBrain registers here in 03-06.
+# Explicit name -> class registry.
 _BRAIN_REGISTRY: dict[str, type[BrainBase]] = {
     HEURISTIC_BRAIN_NAME: HeuristicBrain,
+    QLEARNING_BRAIN_NAME: QLearningBrain,
 }
 
 
