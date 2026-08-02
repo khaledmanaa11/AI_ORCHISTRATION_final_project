@@ -1,7 +1,9 @@
-"""Orchestrates the three GATE-4 arms over the scenario+seed grid and turns
-raw game outcomes into per-role `GateVerdict`s (D-25: never a shared
-pass/fail flag between roles -- `verdicts` is keyed by role and each entry
-stands alone).
+"""Orchestrates the three GATE-4 arms over the D-23 scenario+seed grid and
+turns raw game outcomes into per-role `GateVerdict`s.
+
+AI-SPEC Sec5 E5 significance is scenario-level evidence, not deterministic
+replay count. D-25 still requires independent role verdicts: `verdicts` is
+keyed by role and each entry stands alone.
 """
 
 from __future__ import annotations
@@ -11,6 +13,11 @@ from pathlib import Path
 
 from pursuit.constants import Outcome
 from pursuit.shared.config import GameParams, load_game_params
+from training.eval_aggregate import (
+    discordant_scenarios,
+    replays_are_degenerate,
+    scenario_win_fractions,
+)
 from training.eval_arms import (
     ARM_BASELINE,
     ARM_COP_LEARNER,
@@ -40,6 +47,7 @@ class EvaluationReport:
     verdicts: dict[str, GateVerdict]
     errors: dict[str, str]
     baseline_win_rates: dict[str, float]
+    replays_degenerate: bool
 
 
 def run_arm(
@@ -59,29 +67,22 @@ def _role_won(result: GameResult, role: str) -> bool:
     return result.outcome is target
 
 
-def _discordant_counts(
-    learner_results: list[GameResult], baseline_results: list[GameResult], role: str
-) -> tuple[int, int]:
-    """(learner_only_wins, baseline_only_wins) over PAIRED (scenario, seed) trials."""
-    learner_by_key = {(r.scenario_id, r.seed): _role_won(r, role) for r in learner_results}
-    baseline_by_key = {(r.scenario_id, r.seed): _role_won(r, role) for r in baseline_results}
-    learner_only = baseline_only = 0
-    for key, learner_won in learner_by_key.items():
-        baseline_won = baseline_by_key[key]
-        if learner_won and not baseline_won:
-            learner_only += 1
-        elif baseline_won and not learner_won:
-            baseline_only += 1
-    return learner_only, baseline_only
+def _effective_wins(win_fractions: dict[str, float]) -> int:
+    return int(round(sum(win_fractions.values())))
 
 
 def _gate_for_role(role: str, learner_results, baseline_results, params) -> GateVerdict:
-    learner_only, baseline_only = _discordant_counts(learner_results, baseline_results, role)
+    learner_fracs = scenario_win_fractions(learner_results, role)
+    baseline_fracs = scenario_win_fractions(baseline_results, role)
+    learner_only, baseline_only = discordant_scenarios(learner_fracs, baseline_fracs)
     return evaluate_gate(
         role=role,
         learner_wins=sum(_role_won(r, role) for r in learner_results),
         baseline_wins=sum(_role_won(r, role) for r in baseline_results),
         n_games=len(learner_results),
+        n_effective=len(learner_fracs),
+        learner_effective_wins=_effective_wins(learner_fracs),
+        baseline_effective_wins=_effective_wins(baseline_fracs),
         learner_only_wins=learner_only,
         baseline_only_wins=baseline_only,
         win_rate_margin=params.win_rate_margin,
@@ -119,6 +120,7 @@ def run_evaluation(*, full: bool, scenarios_path: Path | str = DEFAULT_SCENARIOS
     }
     verdicts: dict[str, GateVerdict] = {}
     errors: dict[str, str] = {}
+    degenerate_arms = [replays_are_degenerate(baseline)]
     for role, arm, params in (("cop", ARM_COP_LEARNER, cop_params), ("thief", ARM_THIEF_LEARNER, thief_params)):
         try:
             learner = run_arm(
@@ -127,9 +129,10 @@ def run_evaluation(*, full: bool, scenarios_path: Path | str = DEFAULT_SCENARIOS
         except MissingQTableError as exc:
             errors[role] = str(exc)
             continue
+        degenerate_arms.append(replays_are_degenerate(learner))
         verdicts[role] = _gate_for_role(role, learner, baseline, params)
 
     return EvaluationReport(
         repeats=repeats, n_scenarios=len(scenarios), verdicts=verdicts, errors=errors,
-        baseline_win_rates=baseline_win_rates,
+        baseline_win_rates=baseline_win_rates, replays_degenerate=all(degenerate_arms),
     )

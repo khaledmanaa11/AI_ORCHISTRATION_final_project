@@ -55,6 +55,7 @@ class GateVerdict:
 
     role: str
     n_games: int
+    n_effective: int
     learner_win_rate: float
     baseline_win_rate: float
     margin: float
@@ -73,6 +74,9 @@ def evaluate_gate(
     learner_wins: int,
     baseline_wins: int,
     n_games: int,
+    n_effective: int,
+    learner_effective_wins: int,
+    baseline_effective_wins: int,
     learner_only_wins: int,
     baseline_only_wins: int,
     win_rate_margin: float,
@@ -82,17 +86,30 @@ def evaluate_gate(
     """E5's full bar: margin over the MEASURED baseline, an absolute floor
     (guards a trivially weak baseline), and paired-test significance -- all
     three must hold (STRAT-01, D-23)."""
+    _assert_counts_in_range(
+        learner_wins=learner_wins,
+        baseline_wins=baseline_wins,
+        n_games=n_games,
+        learner_effective_wins=learner_effective_wins,
+        baseline_effective_wins=baseline_effective_wins,
+        learner_only_wins=learner_only_wins,
+        baseline_only_wins=baseline_only_wins,
+        n_effective=n_effective,
+    )
     learner_rate = learner_wins / n_games
     baseline_rate = baseline_wins / n_games
     margin = learner_rate - baseline_rate
     mcnemar_p = mcnemar_exact_pvalue(learner_only_wins, baseline_only_wins)
-    z = two_proportion_z(learner_wins, n_games, baseline_wins, n_games)
+    z = two_proportion_z(
+        learner_effective_wins, n_effective, baseline_effective_wins, n_effective
+    )
     meets_margin = margin >= win_rate_margin
     meets_floor = learner_rate >= min_win_rate_absolute
     significant = mcnemar_p < significance_alpha
     return GateVerdict(
         role=role,
         n_games=n_games,
+        n_effective=n_effective,
         learner_win_rate=learner_rate,
         baseline_win_rate=baseline_rate,
         margin=margin,
@@ -104,3 +121,33 @@ def evaluate_gate(
         is_significant=significant,
         passed=meets_margin and meets_floor and significant,
     )
+
+
+def _assert_counts_in_range(
+    *,
+    learner_wins: int,
+    baseline_wins: int,
+    n_games: int,
+    learner_effective_wins: int,
+    baseline_effective_wins: int,
+    learner_only_wins: int,
+    baseline_only_wins: int,
+    n_effective: int,
+) -> None:
+    if n_games <= 0:
+        raise ValueError("n_games must be positive")
+    if n_effective <= 0:
+        raise ValueError("n_effective must be positive")
+    _assert_wins_in_range("learner_wins", learner_wins, n_games)
+    _assert_wins_in_range("baseline_wins", baseline_wins, n_games)
+    _assert_wins_in_range("learner_effective_wins", learner_effective_wins, n_effective)
+    _assert_wins_in_range("baseline_effective_wins", baseline_effective_wins, n_effective)
+    if learner_only_wins < 0 or baseline_only_wins < 0:
+        raise ValueError("discordant scenario counts must be non-negative")
+    if learner_only_wins + baseline_only_wins > n_effective:
+        raise ValueError("discordant scenario counts cannot exceed n_effective")
+
+
+def _assert_wins_in_range(label: str, wins: int, n_trials: int) -> None:
+    if wins < 0 or wins > n_trials:
+        raise ValueError(f"{label} must be between 0 and its trial count")

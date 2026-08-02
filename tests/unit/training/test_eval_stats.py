@@ -75,6 +75,7 @@ def _gate(**overrides) -> GateVerdict:
         "learner_wins": 130,
         "baseline_wins": 100,
         "n_games": 200,
+        "n_effective": 200,
         "learner_only_wins": 40,
         "baseline_only_wins": 10,
         "win_rate_margin": 0.10,
@@ -82,11 +83,20 @@ def _gate(**overrides) -> GateVerdict:
         "significance_alpha": 0.05,
     }
     fields.update(overrides)
+    fields.setdefault(
+        "learner_effective_wins",
+        int(round(fields["learner_wins"] * fields["n_effective"] / fields["n_games"])),
+    )
+    fields.setdefault(
+        "baseline_effective_wins",
+        int(round(fields["baseline_wins"] * fields["n_effective"] / fields["n_games"])),
+    )
     return evaluate_gate(**fields)
 
 
 def test_evaluate_gate_passes_when_all_three_conditions_hold() -> None:
     verdict = _gate()
+    assert verdict.n_effective == 200
     assert verdict.learner_win_rate == pytest.approx(0.65)
     assert verdict.baseline_win_rate == pytest.approx(0.50)
     assert verdict.margin == pytest.approx(0.15)
@@ -121,6 +131,26 @@ def test_evaluate_gate_fails_when_not_significant() -> None:
     assert verdict.meets_margin is True
     assert verdict.is_significant is False
     assert verdict.passed is False
+
+
+def test_evaluate_gate_uses_effective_sample_for_significance_math() -> None:
+    verdict = _gate(n_effective=20, learner_only_wins=3, baseline_only_wins=0)
+    assert verdict.n_games == 200
+    assert verdict.n_effective == 20
+    assert verdict.learner_win_rate == pytest.approx(0.65)
+    assert verdict.mcnemar_p == pytest.approx(0.25)
+    assert verdict.z_score == pytest.approx(two_proportion_z(13, 20, 10, 20))
+
+
+def test_evaluate_gate_rejects_discordant_counts_above_effective_n() -> None:
+    with pytest.raises(ValueError, match="n_effective"):
+        _gate(
+            n_effective=2,
+            learner_effective_wins=1,
+            baseline_effective_wins=1,
+            learner_only_wins=2,
+            baseline_only_wins=1,
+        )
 
 
 def test_evaluate_gate_never_shares_state_across_roles() -> None:

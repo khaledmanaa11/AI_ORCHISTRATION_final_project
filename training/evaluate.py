@@ -33,11 +33,13 @@ from training.eval_scenarios import DEFAULT_SCENARIOS_PATH
 def _print_report(report: EvaluationReport) -> None:
     total_games = report.n_scenarios * report.repeats
     print(f"Evaluated {report.n_scenarios} scenarios x {report.repeats} repeats = {total_games} games per arm.")
+    if report.replays_degenerate:
+        print("WARNING: repeats are deterministic replays; statistics are reported at the scenario level.")
     for role in sorted(report.verdicts):
         v = report.verdicts[role]
         status = "PASS" if v.passed else "FAIL"
         print(
-            f"[{status}] role={role} n={v.n_games} "
+            f"[{status}] role={role} n={v.n_games} n_effective={v.n_effective} "
             f"learner_win_rate={v.learner_win_rate:.3f} baseline_win_rate={v.baseline_win_rate:.3f} "
             f"margin={v.margin:+.3f} mcnemar_p={v.mcnemar_p:.4f} z={v.z_score:.2f} "
             f"(margin_ok={v.meets_margin} floor_ok={v.meets_absolute_floor} significant={v.is_significant})"
