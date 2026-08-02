@@ -117,3 +117,5 @@ desktop.ini
 .vscode/
 *.swp
 *~
+
+.pytest-tmp/
