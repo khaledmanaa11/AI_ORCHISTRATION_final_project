@@ -76,38 +76,71 @@ one verdict — averaging would hide one role converging while the other stays r
 | `episodes` | 300000 | Overnight training run length |
 | `seed` | 1337 | Logged with every run for reproducibility (training and eval both) |
 
+### Run 1 — 300,000 episodes (measured, 2026-08-02)
+
+The first full training run completed uninterrupted: **300,000 episodes** (150,000 cop /
+150,000 thief), `seed=1337`, config hash `5fa4d554…`, 600 curve rows logged from episode 1.
+The figures and every number below are that run's real output.
+
+**GATE-4 is not met, for either role.** The bar was not lowered to accommodate the result;
+the measured numbers are recorded here as they came out, and tuning is tracked as follow-up
+work in [docs/phases/phase-3/TODO.md](docs/phases/phase-3/TODO.md).
+
 ### Cop
 
 **Win rate vs baseline (ε schedule, secondary axis):**
-`artifacts/curves/winrate_cop.png` — *pending: the overnight training run (phase-3 plan
-03-10) has not executed yet. This plan (03-09) ships the instrumentation and rendering code;
-03-10 runs training and fills in this figure and the measured numbers below.*
+![cop win rate vs baseline](artifacts/curves/winrate_cop.png)
 
 **Mean reward:** see the shared [mean-reward figure](#mean-reward-both-roles) below.
 
-**Measured win rate vs `HeuristicBrain`:** *pending (03-10)* — must be ≥ baseline +
-`win_rate_margin` (0.10) and ≥ `min_win_rate_absolute` (0.55) over `eval_games` (200) games.
+**Measured win rate vs `HeuristicBrain`:** **0.250** against a measured baseline of **0.100**
+on the 20 held-out eval scenarios — margin **+0.150**, which clears `win_rate_margin` (0.10)
+but misses the `min_win_rate_absolute` floor (0.55). **GATE-4: FAIL** (floor).
 
-**E6 convergence verdict:** *pending (03-10)* — `training.curve_analysis.check_convergence`
-computed against the real run's `curves.csv`.
+**E6 convergence verdict:** **not converged.** `decile_gain = +0.848` (passes; the policy
+learned a great deal) but `final_slope = +0.094` over the trailing 20,000-episode window —
+the cop was **still climbing when the ε schedule bottomed out**, so the run was stopped
+early rather than at convergence.
 
 ### Thief
 
 **Win rate vs baseline (ε schedule, secondary axis):**
-`artifacts/curves/winrate_thief.png` — *pending (03-10), same reason as the cop figure above.*
+![thief win rate vs baseline](artifacts/curves/winrate_thief.png)
 
 **Mean reward:** see the shared [mean-reward figure](#mean-reward-both-roles) below.
 
-**Measured win rate vs `HeuristicBrain`:** *pending (03-10)* — same bar as the cop: ≥ baseline
-+ `win_rate_margin` (0.10) and ≥ `min_win_rate_absolute` (0.55) over `eval_games` (200) games.
+**Measured win rate vs `HeuristicBrain`:** **0.800** against a measured baseline of **0.900**
+— margin **−0.100**. The learned thief is *worse* than the heuristic it replaces.
+**GATE-4: FAIL** (margin).
 
-**E6 convergence verdict:** *pending (03-10)*.
+**E6 convergence verdict:** **not converged.** `decile_gain = −0.068` (negative — the final
+decile is worse than the first), `final_slope = −0.010`. The curve rises to ≈0.13 around
+episode 100,000 and then declines steadily to ≈0. Over the same span the thief's
+`fallback_rate` fell from 0.76 to 0.009: it stopped consulting the BFS fallback and started
+trusting Q-values that had not learned a better policy than the fallback it displaced.
 
 ### Mean reward (both roles)
 
-`artifacts/curves/mean_reward.png` — *pending (03-10)*. One figure, one separately-labelled
-line per role (never averaged together, D-25).
+![mean reward per role](artifacts/curves/mean_reward.png)
 
-No number above this line has been measured — every win-rate and convergence value in this
-section is a **configured bar**, not a result, until phase-3 plan 03-10's overnight run
-completes and this section is updated with the real figures and numbers.
+One figure, one separately-labelled line per role (never averaged together, D-25). Cop mean
+reward rises −0.105 → +1.008; thief mean reward falls +0.283 → −0.040.
+
+### A note on effective sample size
+
+`eval_games` is configured at 200 per arm (20 scenarios × 10 repeats), but both brains are
+deterministic at evaluation (`epsilon_eval = 0.0`), so all 10 repeats of a scenario replay
+**identically** — verified, 0 of 20 scenarios produced a differing outcome across repeats.
+The honest effective sample is therefore **n = 20 paired scenarios**, not 200 games, and the
+statistics above are reported on that basis:
+
+| Role | Discordant pairs (learner-only / baseline-only) | McNemar exact *p* (n=20) |
+|---|---|---|
+| Cop | 3 / 0 | 0.250 — **not significant** at α = 0.05 |
+| Thief | 0 / 2 | 0.500 — not significant |
+
+`training/evaluate.py` currently reports `mcnemar_p ≈ 0.0000` for both roles because it
+counts all 200 replays as independent trials. That is pseudo-replication and it inflates
+significance; the table above is the corrected figure. Fixing the CLI to either vary the
+replays or report n = 20 is tracked as follow-up — note it makes the gate **stricter**, not
+weaker, and neither role passes under either accounting.
