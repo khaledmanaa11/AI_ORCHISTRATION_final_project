@@ -107,6 +107,17 @@ Row→plan mapping is in §6.
 Every file below is **≤150 code lines** (blanks/comments excluded), enforced by the pre-commit
 hook and CI. **Split files; never compress code to fit.** Test files obey the limit too.
 
+> **⚠ Corrections found while writing the wave-1 plans — the plans are right, this section was
+> wrong.** (1) The line counts quoted throughout §5 are **raw** lines; the gate counts **code**
+> lines (blanks and `#` comments excluded), so the real headroom differs. Measured with the hook's
+> own counter: `fallback.py` is **83** code lines, `harness.py` **132**, `strategy_config.py`
+> **138**. (2) Consequently **03-13's "no split needed" is wrong** — 138 code lines + 15 new fields
+> − 1 removed ≈ **164**, over the gate; plan 03-13 carries an explicit split contract moving
+> `StrategyParams` to `src/pursuit/shared/strategy_schema.py`. (3) **R2 is symmetric** — see the
+> R2 row in `03-CONTEXT.md` `<superseded>`; a cop learner is blind to SURVIVAL exactly as the thief
+> is blind to CAPTURE. This widens 03-23's pre-flight check 1, which already reads "for both
+> outcomes for both roles".
+>
 > **Line counts and the Table 17 sourcing were re-measured against the repo on 2026-08-03**, not
 > taken on trust: `encoding.py` 123 ✓, `barriers.py` 124 ✓, `fallback.py` 99 ✓, `harness.py` 158 ✓,
 > `sparring.py` 142 ✓, `loop.py` 158 ✓, phase triplet 113/152/93 ✓. Two paths were wrong in the
