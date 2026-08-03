@@ -1,16 +1,16 @@
-# Graph Report - final_project  (2026-08-01)
+# Graph Report - final_project  (2026-08-02)
 
 ## Corpus Check
-- 256 files · ~301,667 words
+- 263 files · ~344,168 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3190 nodes · 5849 edges · 201 communities (168 shown, 33 thin omitted)
-- Extraction: 71% EXTRACTED · 29% INFERRED · 0% AMBIGUOUS · INFERRED: 1711 edges (avg confidence: 0.56)
+- 3351 nodes · 6080 edges · 204 communities (174 shown, 30 thin omitted)
+- Extraction: 72% EXTRACTED · 28% INFERRED · 0% AMBIGUOUS · INFERRED: 1730 edges (avg confidence: 0.56)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1dea4094`
+- Built from commit: `9006c7bd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -168,6 +168,9 @@
 - [[_COMMUNITY_Community 163|Community 163]]
 - [[_COMMUNITY_Community 164|Community 164]]
 - [[_COMMUNITY_Community 165|Community 165]]
+- [[_COMMUNITY_Community 166|Community 166]]
+- [[_COMMUNITY_Community 167|Community 167]]
+- [[_COMMUNITY_Community 168|Community 168]]
 - [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
 - [[_COMMUNITY_Community 178|Community 178]]
@@ -200,16 +203,16 @@
 - [[_COMMUNITY_Community 226|Community 226]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `GameParams` - 183 edges
-2. `Communities (194 total, 30 thin omitted)` - 147 edges
+1. `GameParams` - 184 edges
+2. `Communities (201 total, 33 thin omitted)` - 151 edges
 3. `GameState` - 140 edges
 4. `StrategyParams` - 107 edges
 5. `Observation` - 100 edges
 6. `QTable` - 89 edges
 7. `BrainBase` - 73 edges
 8. `MoveSource` - 66 edges
-9. `HeuristicBrain` - 63 edges
-10. `QLearningBrain` - 63 edges
+9. `Outcome` - 64 edges
+10. `HeuristicBrain` - 63 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `StrategyParams` --uses--> `StrategyParams`  [INFERRED]
@@ -229,10 +232,10 @@
 - 1-file cycle: `tests/unit/test_tools.py -> tests/unit/test_tools.py`
 - 1-file cycle: `tests/unit/test_tools_dispatch.py -> tests/unit/test_tools_dispatch.py`
 
-## Communities (201 total, 33 thin omitted)
+## Communities (204 total, 30 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (31): McpError, D-15 abort suite: mismatch aborts before move 1, symmetric responder abort, malf, A reply that is not a valid envelope is a protocol violation, NOT connectivity., RESEARCH Pitfall 4 — only McpError means "unreachable"., THE core D-15 / NET-09 / rule-11 assertion., Truthful-evidence assertion (RULES.md; design note 6)., Design note 4 — the responder must not raise, and must still hand back its diges, NET-03 — the responder escalates its OWN machine; it does not wait to be told. (+23 more)
 
 ### Community 1 - "Community 1"
@@ -241,7 +244,7 @@ Nodes (47): CallOutcome, Exception, _bounded(), call_with_retry(), DeadlineExpir
 
 ### Community 2 - "Community 2"
 Cohesion: 0.01
-Nodes (147): Communities (194 total, 30 thin omitted), Community 0 - "Community 0", Community 101 - "Community 101", Community 105 - "Community 105", Community 106 - "Community 106", Community 107 - "Community 107", Community 108 - "Community 108", Community 109 - "Community 109" (+139 more)
+Nodes (151): Communities (201 total, 33 thin omitted), Community 0 - "Community 0", Community 101 - "Community 101", Community 105 - "Community 105", Community 106 - "Community 106", Community 107 - "Community 107", Community 108 - "Community 108", Community 109 - "Community 109" (+143 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -249,15 +252,15 @@ Nodes (33): 1. System Classification, 1b. Domain Context, 2. Framework Decision,
 
 ### Community 4 - "Community 4"
 Cohesion: 0.07
-Nodes (58): ChooseMove, AgentConfig, build_context(), default_context(), load_agent_config(), Per-agent startup/wiring/shutdown (NET-01, NET-02, NET-04, NET-09, D-01).  `run_, Build the REAL collaborators. THE ORDER IS LOAD-BEARING (design     note 12): th, Background this agent's FastMCP server on THIS process's event loop     (Pitfall (+50 more)
+Nodes (61): ChooseMove, AgentConfig, build_context(), default_context(), load_agent_config(), Per-agent startup/wiring/shutdown (NET-01, NET-02, NET-04, NET-09, D-01).  `run_, Build the REAL collaborators. THE ORDER IS LOAD-BEARING (design     note 12): th, Background this agent's FastMCP server on THIS process's event loop     (Pitfall (+53 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.05
 Nodes (43): Alternatives Considered, Anti-Patterns to Avoid, Architecture Patterns, Claude's Discretion, Code Examples, Common Pitfalls, Core, Deferred Ideas (OUT OF SCOPE) (+35 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.08
-Nodes (46): ABC, Action, MoveSource, Decision.source provenance (AI-SPEC Sec5 E2/E3); never defaults to QTABLE., SimpleNamespace, GameState, Decision, GameParams (+38 more)
+Cohesion: 0.09
+Nodes (44): ABC, Action, MoveSource, Decision.source provenance (AI-SPEC Sec5 E2/E3); never defaults to QTABLE., SimpleNamespace, GameState, Decision, GameParams (+36 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.05
@@ -268,20 +271,20 @@ Cohesion: 0.12
 Nodes (18): Event, _fake_serve(), Runtime tests: factory isolation, no module-level server, start/stop lifecycle v, Lifecycle without a socket, via the injected `serve` seam., ERROR CASE — stopping a runtime that never started must not raise., Runs forever until cancelled; binds nothing (socket-free lifecycle test)., build_server wires register_tools onto a freshly constructed FastMCP., NET-02 — the disqualification test: nothing crosses between two agents. (+10 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.11
-Nodes (31): GateVerdict, evaluate_gate(), mcnemar_exact_pvalue(), normal_sf(), GATE-4 statistical honesty (AI-SPEC Sec5 "Statistical honesty of the E5 bar"): M, Two-sided exact McNemar p-value over the discordant pairs.      `learner_only_wi, Conservative unpaired cross-check; 0.0 when either sample is empty or     the po, One-sided upper-tail survival function of the standard normal. (+23 more)
+Cohesion: 0.10
+Nodes (35): GateVerdict, _assert_counts_in_range(), _assert_wins_in_range(), evaluate_gate(), mcnemar_exact_pvalue(), normal_sf(), GATE-4 statistical honesty (AI-SPEC Sec5 "Statistical honesty of the E5 bar"): M, Two-sided exact McNemar p-value over the discordant pairs.      `learner_only_wi (+27 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.07
 Nodes (30): Maps Outcome enum values to (cop_score, thief_score) tuples.  All score values a, Return (cop_score, thief_score) for a completed game outcome.      All score val, score_outcome(), GameParams, Outcome, Tests for capture detection and outcome scoring (BASE-03..07)., SURVIVAL outcome scores come from params.score_survival_* (BASE-07, D-14)., TIE outcome returns (score_tie, score_tie) from params (D-14). (+22 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.06
-Nodes (65): BaseException, Enum, MessageType, load_role(), make_freeze_handler(), make_handshake_responder(), make_transition_reporter(), Small wiring closures + config-dir readers -- split out of agent_lifecycle.py at (+57 more)
+Cohesion: 0.08
+Nodes (44): BaseException, Enum, MessageType, load_role(), make_freeze_handler(), make_handshake_responder(), make_transition_reporter(), Small wiring closures + config-dir readers -- split out of agent_lifecycle.py at (+36 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.13
-Nodes (24): load_strategy_config(), Load and validate every Phase-3 hyperparameter; fails loud with the key name., Tests for the strategy config loader (QUAL-02, QUAL-11, D-18, D-21, D-22)., D-21: reference_impl_path is an opt-in empty default, never invented., Write a mutated copy of the police strategy.json to tmp_path., A good file loads and returns the expected values (no literal repeated here)., Loaded fields carry the correct Python types., StrategyParams is immutable — assignment raises FrozenInstanceError. (+16 more)
+Nodes (26): load_strategy_config(), Load and validate every Phase-3 hyperparameter; fails loud with the key name., Tests for the strategy config loader (QUAL-02, QUAL-11, D-18, D-21, D-22)., D-22: an empty artifacts_dir resolves under LOCALAPPDATA, never a literal path., D-21: reference_impl_path is an opt-in empty default, never invented., Write a mutated copy of the police strategy.json to tmp_path., A good file loads and returns the expected values (no literal repeated here)., Loaded fields carry the correct Python types. (+18 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.07
@@ -325,15 +328,15 @@ Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected
 
 ### Community 23 - "Community 23"
 Cohesion: 0.13
-Nodes (28): _accumulate(), _observation(), Episode loop: steps pursuit.sdk.engine directly, never pursuit.network (D-17) --, PRD Sec4. `choose_barrier` never proposes a candidate below     `barrier_min_gai, Drive one full game, cop-then-thief per turn (D-12's own order).      `rng` is a, _reward(), _role_won(), run_episode() (+20 more)
+Nodes (34): GameParams, _accumulate(), EpisodeConfig, _observation(), Player, Episode loop: steps pursuit.sdk.engine directly, never pursuit.network (D-17) --, PRD Sec4. `choose_barrier` never proposes a candidate below     `barrier_min_gai, A role-bound brain -- either the episode's learner or its opponent. (+26 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.25
 Nodes (7): 1. The sparring opponent's interface — `rmisegal/Game-P2P-Cop-Chase`, 2. Past-self checkpointing and pool sampling, 3. Resumable, reproducible overnight runs on Windows/OneDrive, Confidence, Four adapter translations the plan must budget for (each verified from source), Phase 3: Blind Strategy Module (RL policy) — Research, `uv add` is impossible; the license forbids vendoring
 
 ### Community 25 - "Community 25"
-Cohesion: 0.08
-Nodes (57): BrainBase, Immutable container for every Phase-3 hyperparameter (QUAL-11)., StrategyParams, BrainBase, GameParams, StrategyParams, HeuristicBrain, Bayes+BFS fallback only -- playable for either role from turn 1, no training req (+49 more)
+Cohesion: 0.07
+Nodes (55): BrainBase, Immutable container for every Phase-3 hyperparameter (QUAL-11)., StrategyParams, BrainBase, GameParams, StrategyParams, HeuristicBrain, Bayes+BFS fallback only -- playable for either role from turn 1, no training req (+47 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.22
@@ -344,8 +347,8 @@ Cohesion: 0.25
 Nodes (7): Components & files, Interfaces & contracts, Known limitation, Per-mechanism PRDs written this phase, Phase 3 PLAN — Blind Strategy Module (RL policy), Phase ADRs, Test plan (TDD)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.09
-Nodes (31): apply_cop_action(), apply_thief_move(), check_capture(), legal_moves(), make_state(), SDK facade for the Phase 1 pursuit game engine (QUAL-01).  This module is the so, Create canonical initial GameState from config start positions., Return legal moves for agent. Delegates to get_legal_moves. (+23 more)
+Cohesion: 0.11
+Nodes (27): apply_cop_action(), apply_thief_move(), check_capture(), legal_moves(), make_state(), SDK facade for the Phase 1 pursuit game engine (QUAL-01).  This module is the so, Create canonical initial GameState from config start positions., Return legal moves for agent. Delegates to get_legal_moves. (+19 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.10
@@ -356,8 +359,8 @@ Cohesion: 0.10
 Nodes (19): Accomplishments, Auto-fixed Issues, Conditional Split, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Final ALLOWED_TRANSITIONS Table (for 02-08/02-09) (+11 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.06
-Nodes (58): Real per-role `strategy.json` (Phase-3 §10.4 gate tests, QUAL-02) --     the one, strategy_params(), GATE-2 / E3 + E4 -- Q-policy with fallback (STRAT-01/02, PRD §10.4 b).  E3: a st, Swept across every point 0..min_visits+3 (min_visits=20 in the real     config):, Same wall shape as `test_pathfind.py`'s own pocket fixture (QUAL-02):     gaps o, _seeded_table(), test_barrier_pocket_fallback_never_prefers_manhattan_over_bfs(), test_min_visits_boundary_routes_decision_source() (+50 more)
+Cohesion: 0.09
+Nodes (43): Real per-role `strategy.json` (Phase-3 §10.4 gate tests, QUAL-02) --     the one, strategy_params(), GATE-2 / E3 + E4 -- Q-policy with fallback (STRAT-01/02, PRD §10.4 b).  E3: a st, Swept across every point 0..min_visits+3 (min_visits=20 in the real     config):, Same wall shape as `test_pathfind.py`'s own pocket fixture (QUAL-02):     gaps o, _seeded_table(), test_barrier_pocket_fallback_never_prefers_manhattan_over_bfs(), test_min_visits_boundary_routes_decision_source() (+35 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.12
@@ -384,12 +387,12 @@ Cohesion: 0.11
 Nodes (17): §10.4 criterion 2 — real process evidence (Task 4), Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered (+9 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.20
-Nodes (15): _fake_params(), _imported_module_names(), Tests for build_brain's fail-loud config resolution (STRAT-03, D-07)., STRAT-03: strategy must be usable and testable with no networking., STRAT-07: rule 25 -- the decision path must never reach an LLM., Structural, not string-matched: walks Call nodes for the two names., _register_stub(), _strategy_module_paths() (+7 more)
+Cohesion: 0.31
+Nodes (9): _fake_params(), Tests for build_brain's fail-loud config resolution (STRAT-03, D-07)., Structural, not string-matched: walks Call nodes for the two names., _register_stub(), test_build_brain_never_falls_back_to_a_default(), test_build_brain_resolves_registered_name(), test_build_brain_unknown_name_raises_and_lists_known(), test_registry_module_calls_no_eval_or_exec() (+1 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.12
-Nodes (30): blocked_mask(), decode_state(), encode_state(), _parse_coord(), Canonical Q-table state-key encoding (STRAT-01, D-04, D-05, D-06).  Implements d, Agent-relative bitmask of the 4 orthogonal directions blocked from `cell`., Return the canonical string key for `obs` (PRD Sec2 worked example, verbatim)., Reverse `encode_state`; raises ValueError on any unparseable key.      Reconstru (+22 more)
+Cohesion: 0.08
+Nodes (59): blocked_mask(), decode_state(), encode_state(), _parse_coord(), Canonical Q-table state-key encoding (STRAT-01, D-04, D-05, D-06).  Implements d, Agent-relative bitmask of the 4 orthogonal directions blocked from `cell`., Return the canonical string key for `obs` (PRD Sec2 worked example, verbatim)., Reverse `encode_state`; raises ValueError on any unparseable key.      Reconstru (+51 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.13
@@ -398,6 +401,10 @@ Nodes (14): Accomplishments, Decisions Made, Dependency graph, Deviations from P
 ### Community 41 - "Community 41"
 Cohesion: 0.14
 Nodes (10): FakeReporter, Records every illegal-transition report (NET-05), never touches disk., Wiring tests: NET-02 isolation, engine_agent/load_role, reporter durability, the, THE NET-02 STATIC GATE: no module-level container or constructed     instance in, A runtime whose shutdown cancels a real, injected asyncio.Task -- no     socket,, THE NET-02 GATE -- the single most important test in this plan., _TaskRuntime, test_modules_declare_no_module_level_mutable_state() (+2 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.33
+Nodes (5): GATE-4 measured result — run 1, 300,000 episodes (2026-08-02), Phase 3 TODO — Blind Strategy Module (RL policy), Phase gate (§10.4), QUAL-08/09/10/11/13 + DOC-02 gate commands, STRAT-01…STRAT-07 coverage audit (03-10 Task 3)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.12
@@ -509,7 +516,7 @@ Nodes (11): Anti-Patterns Found, Gaps Summary, Goal Achievement, Human Verificat
 
 ### Community 73 - "Community 73"
 Cohesion: 0.23
-Nodes (11): §10.4 gate criterion 1 (GATE-1): "A geometric message sent by agent A over local, The wire shares no `type` key (the tool name already carries the     kind, D-06), Compose a type=move Envelope and deliver it to `target`'s real     `receive_move, GATE-1, NET-03, NET-08, D-05, D-06, D-07., GATE-1, NET-08, D-06 -- every board position is fixture-derived.      `0` and `1, _send_move(), test_coordinates_survive_round_trip(), test_move_envelope_decoded_by_peer() (+3 more)
+Nodes (11): client_for(), An in-memory fastmcp Client aimed at `runtime`'s FastMCP server     instance (RE, §10.4 gate criterion 1 (GATE-1): "A geometric message sent by agent A over local, The wire shares no `type` key (the tool name already carries the     kind, D-06), Compose a type=move Envelope and deliver it to `target`'s real     `receive_move, GATE-1, NET-03, NET-08, D-05, D-06, D-07., GATE-1, NET-08, D-06 -- every board position is fixture-derived.      `0` and `1, _send_move() (+3 more)
 
 ### Community 74 - "Community 74"
 Cohesion: 0.17
@@ -517,14 +524,14 @@ Nodes (11): Active, Constraints, Context, Core Value, Evolution, Key Decisions, 
 
 ### Community 76 - "Community 76"
 Cohesion: 0.06
-Nodes (36): agent_log_paths(), client_for(), peer_pair(), police_params(), Integration-only shared fixtures (QUAL-02): built exactly once here, reused by e, A hand-advanced stand-in for 02-04's `Watchdog(clock=...)` seam., Move the fake clock forward by exactly `offset` -- always a         NetworkParam, An injected clock double for 02-04's `Watchdog.check_once()` seam.      Returns (+28 more)
+Nodes (38): agent_log_paths(), peer_pair(), police_params(), Integration-only shared fixtures (QUAL-02): built exactly once here, reused by e, A hand-advanced stand-in for 02-04's `Watchdog(clock=...)` seam., Move the fake clock forward by exactly `offset` -- always a         NetworkParam, An injected clock double for 02-04's `Watchdog.check_once()` seam.      Returns, NetworkParams for the police side -- the root `network_params` fixture     alrea (+30 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.05
-Nodes (57): load_game_params(), Load and validate game parameters from a game_params.json file.      Parameters, default_params(), network_params(), police_network_config(), Shared pytest fixtures for all test waves., Load and return the canonical game parameters from config/police/game_params.jso, Path to config/police/network.json (Waves 1-5 read or copy it). (+49 more)
+Cohesion: 0.15
+Nodes (19): load_game_params(), Load and validate game parameters from a game_params.json file.      Parameters, GameParams, Path, Tests for BASE-08 — config load and error path tests., Config loads board_size from game_params.json (no hardcoded value)., Config loads barrier_quota from game_params.json., Config loads the full scoring sub-dict from game_params.json. (+11 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (5): FakeClient, FakeRuntime, Shared network-layer test doubles + the AgentContext assembly helper (QUAL-02 ap, Stands in for 02-06's fastmcp.Client -- an async context manager,     never a so, Stands in for 02-06's PeerRuntime. Owns a real asyncio.Queue -- nothing     else
 
 ### Community 79 - "Community 79"
@@ -564,8 +571,8 @@ Cohesion: 0.18
 Nodes (10): Academic README (SUB-03), Claude's Discretion, Deferred Ideas, Implementation Decisions, League operations (SUB-07, SUB-08), Phase 8: Submission and League Operations - Context, Phase Boundary, Repo split (SUB-01, SUB-02) (+2 more)
 
 ### Community 88 - "Community 88"
-Cohesion: 0.08
-Nodes (57): get_legal_moves(), Pure board functions: legal-move generation and state transition (D-08, D-13)., Return all legal destination cells for *agent* in the current state.      Parame, Coord, GameState, Coord, GameState, _distance_from() (+49 more)
+Cohesion: 0.05
+Nodes (80): Direction, Orthogonal movement directions plus stay-in-place.      Each value is a (row_del, apply_move(), get_legal_moves(), Pure board functions: legal-move generation and state transition (D-08, D-13)., Return all legal destination cells for *agent* in the current state.      Parame, Return a new GameState with *agent* repositioned to *dest*.      The original st, Coord (+72 more)
 
 ### Community 89 - "Community 89"
 Cohesion: 0.25
@@ -584,12 +591,12 @@ Cohesion: 0.29
 Nodes (6): IntEnum, _default_exit(), Freeze-detecting daemon thread — the other half of D-14 (NET-07).  A background, Process exit code used by the default hard-exit action.      A conventional non-, Terminate the process immediately.      Deliberately os._exit() rather than the, WatchdogExit
 
 ### Community 93 - "Community 93"
-Cohesion: 0.12
-Nodes (26): Action, action_for(), Canonical 5-action space (STRAT-01); order is FROZEN -- never renumber., Return the Action from own_cell to dest; raises ValueError if not adjacent., Decision, GameState, Observation, Uniformly random LEGAL action (PRD Sec5) -- still source=QTABLE:         this is (+18 more)
+Cohesion: 0.11
+Nodes (28): Action, action_for(), cell_for(), Canonical 5-action space (STRAT-01); order is FROZEN -- never renumber., Return the cell reached by taking action from own_cell., Return the Action from own_cell to dest; raises ValueError if not adjacent., Decision, GameState (+20 more)
 
 ### Community 94 - "Community 94"
-Cohesion: 0.05
-Nodes (55): _no_op_reporter(), §10.4 gate criterion 2: "Cop and thief run as two separate processes ... with no, A reporter that never touches disk -- used only where THIS test's own     subjec, GATE-2, NET-01, NET-02, D-01, D-16 -- asserted POSITIVELY: mutate one     side,, GATE-2, NET-01, D-01, D-02 -- one code path, two config roots.      `--check-con, test_entry_point_is_config_dir_parameterised(), test_two_runtimes_share_no_runtime_state(), append_event() (+47 more)
+Cohesion: 0.08
+Nodes (37): GATE-2, NET-01, NET-02, D-01, D-16 -- asserted POSITIVELY: mutate one     side,, test_two_runtimes_share_no_runtime_state(), append_event(), build_event(), console_line(), EventField, EventType, Durable JSONL event log — the NET-05 sink and NET-07 crash-recovery record.  D-1 (+29 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.20
@@ -604,8 +611,8 @@ Cohesion: 0.20
 Nodes (9): 1. Context & Problem, 2. Target Audience & "Market", 3. Goals, KPIs & Acceptance Criteria, 4. Functional Requirements, 5. Non-Functional Requirements, 6. User Stories & Use-Cases, 7. Assumptions, Dependencies, Out-of-Scope, 8. Timeline & Milestones (+1 more)
 
 ### Community 99 - "Community 99"
-Cohesion: 0.15
-Nodes (25): RunState, build_pool(), build_run_state(), load_or_init(), GameParams, Random, RunProgress, SparringPool (+17 more)
+Cohesion: 0.17
+Nodes (19): RunState, build_pool(), build_run_state(), load_or_init(), GameParams, Random, RunProgress, SparringPool (+11 more)
 
 ### Community 101 - "Community 101"
 Cohesion: 0.26
@@ -648,12 +655,12 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made Autonomously, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.18
-Nodes (22): GameParams, Path, TrainingRunConfig, TrainingRunConfig, Resume-or-start, run to `episodes`, always leave a final checkpoint., run_training(), Sleep kills an overnight run (RESEARCH Sec3); no-op off Windows., One run/one RNG/one cadence set. `cop.json`/`thief.json` may     legitimately di (+14 more)
+Cohesion: 0.13
+Nodes (27): CaptureFixture, GameParams, Path, TrainingRunConfig, Resume-or-start, run to `episodes`, always leave a final checkpoint., run_training(), Sleep kills an overnight run (RESEARCH Sec3); no-op off Windows., One run/one RNG/one cadence set. `cop.json`/`thief.json` may     legitimately di (+19 more)
 
 ### Community 118 - "Community 118"
-Cohesion: 0.18
-Nodes (26): EvaluationReport, FileNotFoundError, GameResult, Outcome, All four game outcomes (D-14).      Phase 1 only produces CAPTURE and SURVIVAL., GameResult, MissingQTableError, Raised when a learner arm's configured qtable_path does not exist yet     (Task (+18 more)
+Cohesion: 0.10
+Nodes (30): EvaluationReport, FileNotFoundError, The evaluation machinery -- scenario loading, the baseline arm,     disjointness, GATE-4 itself, smoke subset: passes only once a real table is loaded     for BOT, test_beats_baseline_smoke_subset(), test_smoke_evaluation_machinery_runs_and_reports_baseline_numbers(), MissingQTableError, Raised when a learner arm's configured qtable_path does not exist yet     (Task (+22 more)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.25
@@ -664,12 +671,12 @@ Cohesion: 0.25
 Nodes (7): Components & files, Interfaces & contracts, Known limitation, Per-mechanism PRDs written this phase, Phase 2 PLAN — FastMCP Infrastructure, Phase ADRs, Test plan (TDD)
 
 ### Community 121 - "Community 121"
-Cohesion: 0.26
-Nodes (16): RoleAccumulator, RunResult, EpisodeConfig, Player, A role-bound brain -- either the episode's learner or its opponent., `learner_params` supplies both the reward_* terms (PRD Sec4) and the     turn_bu, _build_brains(), _maybe_log_curve() (+8 more)
+Cohesion: 0.14
+Nodes (23): EpisodeResult, RoleAccumulator, RunResult, EpisodeResult, _build_brains(), _load_run_config(), main(), _maybe_log_curve() (+15 more)
 
 ### Community 122 - "Community 122"
-Cohesion: 0.16
-Nodes (25): D-23, executable: a property of the committed scenario file and     config alone, test_eval_scenario_seeds_are_held_out_from_training(), Path, assert_seeds_held_out(), _from_entry(), load_scenarios(), Path, StrategyParams (+17 more)
+Cohesion: 0.14
+Nodes (27): GATE-4 (STRAT-01/06, PRD §10.4 criterion d) -- the shipped `QLearningBrain` beat, D-23, executable: a property of the committed scenario file and     config alone, test_eval_scenario_grid_matches_configured_game_count(), test_eval_scenario_seeds_are_held_out_from_training(), Path, assert_seeds_held_out(), _from_entry(), load_scenarios() (+19 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.25
@@ -677,7 +684,7 @@ Nodes (7): Acceptance criteria (= §10.4 milestone gate), Dependencies, Goal, In
 
 ### Community 124 - "Community 124"
 Cohesion: 0.17
-Nodes (25): GameParams, Path, build_arm_brains(), _heuristic(), _observation(), play_game(), GameParams, _qlearning() (+17 more)
+Nodes (25): GameParams, build_arm_brains(), _heuristic(), _observation(), play_game(), GameParams, Path, _qlearning() (+17 more)
 
 ### Community 125 - "Community 125"
 Cohesion: 0.12
@@ -686,6 +693,10 @@ Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph
 ### Community 126 - "Community 126"
 Cohesion: 0.29
 Nodes (6): Decisions Coverage Trace, OUTLINE COMPLETE, Phase 1 — Base Logic: Plan Manifest, Plan Manifest, Requirement Coverage Audit, Wave Structure
+
+### Community 127 - "Community 127"
+Cohesion: 0.10
+Nodes (26): engine_agent(), Bridge role.json's {"police","thief"} to the SDK's {"cop","thief"}     (D-01) --, classify_severity(), Per-agent turn state machine (NET-04/NET-05, D-09/D-10/D-12).  State is one of s, Outcome of a single transition() call., True when the caller may keep playing (state is not terminal)., Classify an illegal (current, target) attempt by table lookup.      RECOVERABLE, Attempt to move from `current` to `target`.      Legal transitions apply silentl (+18 more)
 
 ### Community 128 - "Community 128"
 Cohesion: 0.29
@@ -714,6 +725,10 @@ Nodes (6): Components & files, Interfaces & contracts, Per-mechanism PRDs writte
 ### Community 134 - "Community 134"
 Cohesion: 0.14
 Nodes (23): canonical_json(), config_digest(), digests_match(), NET-09 / D-08 / D-15 canonical-JSON config digest.  The SHA-256 of the shared ga, Return the project-wide canonical JSON form (SEC-03).      Keys are sorted recur, Return the SHA-256 hex digest of canonical_json(json.loads(path)).      FileNotF, Constant-time comparison of two digests.      The digests are public so constant, THE NET-09 WIRING GATE -- proves 02-08's responder is bound behind the     REAL (+15 more)
+
+### Community 135 - "Community 135"
+Cohesion: 0.05
+Nodes (43): 0.1 The two roles are formally different objectives, 0. The problem this document answers, 1. Comparison table (per-role), 2. Tabular value methods, 3. Minimax / alpha-beta / iterative deepening, 4. MCTS / UCT, 5. Markov-game RL — Minimax-Q, Nash-Q, Friend-or-Foe-Q, 6. Function approximation and features — the highest-value section (+35 more)
 
 ### Community 136 - "Community 136"
 Cohesion: 0.33
@@ -744,16 +759,16 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 145 - "Community 145"
-Cohesion: 0.29
-Nodes (17): make_obs(), make_state(), params_for(), Shared construction helpers for the QLearningBrain test suite (03-06).  Not a te, Real per-role strategy.json with qtable_path repointed at a tmp file --     the, A table with exactly `visits` recorded against `key`, and a clear     argmax at, seeded_table(), Tests for QLearningBrain's config wiring, the min_visits fallback trigger, and d (+9 more)
+Cohesion: 0.05
+Nodes (41): A.1 The textbook requirement: "exploring starts", A.2 Standard terminology for "trained on one start, evaluated on others", A.3 Practical recipes for randomising starts in a self-play grid game, A.4 Per-role note, (a) Confirming the γ = 1.0 spread — **your arithmetic is correct**, A. Start-state distribution, B.1 Potential-based reward shaping — the guarantee, verbatim, B.2 Terminal-state handling in Q-learning — the exact target (+33 more)
 
 ### Community 146 - "Community 146"
 Cohesion: 0.30
 Nodes (11): _heuristic_params(), _obs_from_state(), Tests for HeuristicBrain -- the fully playable STRAT-02 baseline (GATE-4)., Real per-role strategy.json with brain_class swapped to HeuristicBrain     -- 03, D-03/project rule 2: nothing on HeuristicBrain's class body could let     one in, test_builds_via_build_brain_from_config_for_both_roles(), test_every_decision_carries_heuristic_source(), test_no_class_level_mutable_state() (+3 more)
 
 ### Community 147 - "Community 147"
-Cohesion: 0.11
-Nodes (29): load_network_config(), Load and validate network parameters from a network.json file.      Parameters, MonkeyPatch, Path, Tests for the network config loader (NET-01, NET-02, QUAL-02, QUAL-11)., D-16: PURSUIT_PORT overrides the file value., D-16: PURSUIT_HOST and PURSUIT_OPPONENT_URL override the file values., A non-integer PURSUIT_PORT fails loud rather than silently falling back. (+21 more)
+Cohesion: 0.09
+Nodes (34): _env_int(), _env_str(), load_network_config(), Fail-loud config loader for network.json (D-04, NET-01, NET-02).  load_network_c, Return the environment override for var_name, or current if unset/empty., Return the environment override for var_name parsed as int, or current.      Rai, Load and validate network parameters from a network.json file.      Parameters, MonkeyPatch (+26 more)
 
 ### Community 148 - "Community 148"
 Cohesion: 0.12
@@ -768,48 +783,60 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 152 - "Community 152"
-Cohesion: 0.12
-Nodes (17): ConfigKey, NetworkConfigKey, Config key string constants for game_params.json / network.json / strategy.json., String keys matching the exact field names in game_params.json (D-05).      Use, String keys matching the exact field names in network.json (D-04).      Structur, Keys for the `[strategy]` group of strategy.json (D-18, QUAL-11).      This grou, Keys for the `[training]`/`[eval]`/`[monitoring]` groups of strategy.json., StrategyKey (+9 more)
+Cohesion: 0.15
+Nodes (14): ConfigKey, NetworkConfigKey, Config key string constants for game_params.json / network.json / strategy.json., String keys matching the exact field names in game_params.json (D-05).      Use, String keys matching the exact field names in network.json (D-04).      Structur, Keys for the `[strategy]` group of strategy.json (D-18, QUAL-11).      This grou, Keys for the `[training]`/`[eval]`/`[monitoring]` groups of strategy.json., StrategyKey (+6 more)
 
 ### Community 154 - "Community 154"
-Cohesion: 0.11
-Nodes (15): Integration gate tests for Phase 1 — §10.4 milestone criteria.  Three tests that, GATE-1: A legal cop-then-thief turn runs without error; game continues., GATE-2: Barrier placement at quota is rejected; barriers_placed unchanged., GATE-3: All three capture types yield Outcome.CAPTURE via engine.check_capture., test_all_capture_types(), test_barrier_quota_gate(), test_legal_turn_sequence(), cell_for() (+7 more)
+Cohesion: 0.25
+Nodes (7): Integration gate tests for Phase 1 — §10.4 milestone criteria.  Three tests that, GATE-1: A legal cop-then-thief turn runs without error; game continues., GATE-2: Barrier placement at quota is rejected; barriers_placed unchanged., GATE-3: All three capture types yield Outcome.CAPTURE via engine.check_capture., test_all_capture_types(), test_barrier_quota_gate(), test_legal_turn_sequence()
 
 ### Community 155 - "Community 155"
-Cohesion: 0.36
-Nodes (12): _exploring_brain(), Tests for QLearningBrain's exploration seeding, greedy eval mode, the Q-update r, D-03/project rule 2: only __init__-assigned instance attributes exist,     so on, test_exploration_is_seeded_reproducible_and_diverges_on_seed(), test_greedy_at_eval_never_explores(), test_no_class_level_mutable_state(), test_no_io_on_decision_path(), test_two_role_instances_share_no_table() (+4 more)
+Cohesion: 0.10
+Nodes (33): CellState, Structural constants and enumerations for the pursuit engine.  No numeric game v, Possible contents of a board cell., Fail-loud config loader for game_params.json (D-05).  load_game_params() is the, HeuristicBrain: the fully playable non-learned baseline (STRAT-02, GATE-4).  `_p, GameResult, Outcome, GameResult (+25 more)
 
 ### Community 156 - "Community 156"
-Cohesion: 0.20
-Nodes (9): Cop, Development, Documentation, Evaluation bar (configured, `config/police/strategy.json` / `config/thief/strategy.json`), Learning Curves (Phase 3, rule 42), Mean reward (both roles), P2P Cops-and-Robbers — Cop & Thief Agents, Status (+1 more)
+Cohesion: 0.17
+Nodes (11): A note on effective sample size, Cop, Development, Documentation, Evaluation bar (configured, `config/police/strategy.json` / `config/thief/strategy.json`), Learning Curves (Phase 3, rule 42), Mean reward (both roles), P2P Cops-and-Robbers — Cop & Thief Agents (+3 more)
 
 ### Community 157 - "Community 157"
 Cohesion: 0.44
 Nodes (8): Path, Tests for training/plot_curves.py's PNG rendering + CLI (D-16, D-20, D-25, rule, Proves the plan's literal `uv run python training/plot_curves.py <csv>     <outd, test_cli_runs_by_direct_path_uv_style(), test_main_writes_pngs_and_prints_their_paths(), test_render_all_produces_a_winrate_png_per_role_plus_one_reward_png(), test_render_all_skips_a_role_with_no_rows(), _write_fixture_csv()
 
 ### Community 158 - "Community 158"
-Cohesion: 0.28
-Nodes (5): EpisodeResult, EpisodeResult, Mutable run-loop bookkeeping for training/loop.py -- split out at the 150-code-l, Aggregates episodes since this role's last curve row (D-25).      `winrate_vs_ba, RoleAccumulator
+Cohesion: 0.20
+Nodes (13): _FakeClock, Tests for the watchdog daemon thread (D-14, D-18, NET-07).  Every test injects a, A mutable, hand-advanced stand-in for time.monotonic., A callable that records every invocation; usable as on_freeze or exit_action., _Recorder, test_exit_still_fires_when_on_freeze_raises(), test_incident_record_is_on_disk_before_exit(), test_touch_resets_the_clock() (+5 more)
 
 ### Community 159 - "Community 159"
-Cohesion: 0.25
-Nodes (6): GATE-4 (STRAT-01/06, PRD §10.4 criterion d) -- the shipped `QLearningBrain` beat, The evaluation machinery -- scenario loading, the baseline arm,     disjointness, GATE-4 itself, smoke subset: passes only once a real table is loaded     for BOT, test_beats_baseline_smoke_subset(), test_eval_scenario_grid_matches_configured_game_count(), test_smoke_evaluation_machinery_runs_and_reports_baseline_numbers()
+Cohesion: 0.23
+Nodes (17): _game_params(), _opponent_params(), _pool(), Tests for training/sparring.py (Task 2) and training/sparring_reference.py (Task, Exercises ReadOnlyQTable.visits/best_action (the pass-through path     QLearning, _tagged_table(), test_absent_reference_renormalizes_instead_of_dropping_mass(), test_anchor_stays_eligible_after_ring_rotates_past_it() (+9 more)
 
 ### Community 160 - "Community 160"
 Cohesion: 0.43
 Nodes (7): find_violations(), imported_module_names(), main(), Path, Standalone CI-runnable promotion of 03-02's structural STRAT-07 import gate.  Wa, Return one message per forbidden/networking import found; `[]` if clean.      `r, strategy_module_paths()
 
 ### Community 161 - "Community 161"
-Cohesion: 0.25
-Nodes (3): Tests for training/evaluate.py's CLI (D-16-style direct-path bootstrap, matching, Proves the plan's literal `uv run python training/evaluate.py --smoke`     form, test_cli_runs_by_direct_path_uv_style()
+Cohesion: 0.26
+Nodes (14): _load_check_module(), _network_diff_snapshot(), _observation(), _params_for_class(), _play_full_game(), GATE-3 / E10 + E2 -- pluggable, separate, algorithm-decided (STRAT-03/07, PRD §1, The CI-facing script and this GATE-3 test call the identical function     (QUAL-, Proves the check can actually fail (per 03-02's own precedent) --     against a (+6 more)
 
 ### Community 162 - "Community 162"
-Cohesion: 0.33
-Nodes (5): _env_int(), _env_str(), Fail-loud config loader for network.json (D-04, NET-01, NET-02).  load_network_c, Return the environment override for var_name, or current if unset/empty., Return the environment override for var_name parsed as int, or current.      Rai
+Cohesion: 0.14
+Nodes (13): 2a. The capture transition is dropped entirely, 2b. γ = 0.95 cancels the survival bonus against the step cost, 2c. This predicts the observed collapse, quantitatively, Ablation — ran, and it is INCONCLUSIVE. Do not cite it as support., Finding 1 — the cop learned fine. It was tested somewhere it had never been., Finding 2 — the thief was never told it had been caught, Finding 3 — the ε and α schedules leave no consolidation phase, Finding 4 — two further structural issues found while measuring (+5 more)
 
 ### Community 163 - "Community 163"
-Cohesion: 0.47
-Nodes (5): _available_weights(), Sparring pool: weighted opponent sampling, once per episode (RESEARCH Sec2).  Sa, Weighted choice across {heuristic, past_self, reference} (D-21, D-23)., sample_opponent(), _sample_past_self()
+Cohesion: 0.30
+Nodes (11): _heuristic_params(), _obs_from(), _play_and_check_honesty(), Integration tests wiring `choose_barrier` into both brains' cop-side `_decide_mo, STRAT-05: the thief's Decision.barrier is unconditionally None under     QLearni, Drive one full game; assert declared == applied on every cop barrier     (E9, ru, Same honesty/quota guarantees under QLearningBrain's own `_decide_move`     -- a, test_full_game_declared_equals_applied_heuristic_both_roles() (+3 more)
+
+### Community 166 - "Community 166"
+Cohesion: 0.22
+Nodes (8): 03-10 Summary — §10.4 gate tests, evaluation CLI, and the run-1 GATE-4 measurement, E6 convergence — neither role converged, GATE-4, measured on the 20 held-out eval scenarios, Phase status, Task 4 — the run and the result, Two findings worth carrying forward, What landed, What was deliberately not done
+
+### Community 167 - "Community 167"
+Cohesion: 0.25
+Nodes (7): default_params(), network_params(), police_network_config(), Shared pytest fixtures for all test waves., Load and return the canonical game parameters from config/police/game_params.jso, Path to config/police/network.json (Waves 1-5 read or copy it)., Load config/police/network.json through the Phase-2 loader.      The import is d
+
+### Community 168 - "Community 168"
+Cohesion: 0.40
+Nodes (6): _imported_module_names(), STRAT-03: strategy must be usable and testable with no networking., STRAT-07: rule 25 -- the decision path must never reach an LLM., _strategy_module_paths(), test_strategy_package_has_no_llm_or_subprocess_path(), test_strategy_package_imports_no_networking()
 
 ### Community 176 - "Community 176"
 Cohesion: 0.50
@@ -829,24 +856,24 @@ Nodes (3): _command(), main(), Convenience launcher for local iteration. Each ag
 
 ### Community 203 - "Community 203"
 Cohesion: 0.09
-Nodes (19): make_client_caller(), Adapt 02-06's fastmcp.Client into a HandshakeCaller (see handshake.py). Drops th, build_server(), Factory-built FastMCP server + fastmcp.Client in one process (NET-03).  Each age, Construct this agent's server and attach the D-05 tool surface.      Takes no ho, The factory-built server (for in-memory `Client(runtime.server)`)., The per-process inbound queue, consumed by 02-07/02-09., Read-only accessor for the configuration this runtime was built from. (+11 more)
+Nodes (18): make_client_caller(), Adapt 02-06's fastmcp.Client into a HandshakeCaller (see handshake.py). Drops th, build_server(), Factory-built FastMCP server + fastmcp.Client in one process (NET-03).  Each age, Construct this agent's server and attach the D-05 tool surface.      Takes no ho, The factory-built server (for in-memory `Client(runtime.server)`)., The per-process inbound queue, consumed by 02-07/02-09., Read-only accessor for the configuration this runtime was built from. (+10 more)
 
 ## Knowledge Gaps
-- **1053 isolated node(s):** `check_line_limit.sh script`, `check_no_llm_in_strategy.sh script`, `graph_status.sh script`, `ArgumentParser`, `Path` (+1048 more)
+- **1142 isolated node(s):** `check_line_limit.sh script`, `check_no_llm_in_strategy.sh script`, `graph_status.sh script`, `ArgumentParser`, `Path` (+1137 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **30 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GameParams` connect `Community 35` to `Community 4`, `Community 6`, `Community 135`, `Community 10`, `Community 14`, `Community 143`, `Community 145`, `Community 146`, `Community 152`, `Community 25`, `Community 155`, `Community 28`, `Community 158`, `Community 31`, `Community 164`, `Community 38`, `Community 39`, `Community 77`, `Community 88`, `Community 93`, `Community 99`, `Community 117`, `Community 118`, `Community 121`, `Community 124`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `StrategyParams` connect `Community 25` to `Community 4`, `Community 132`, `Community 6`, `Community 135`, `Community 139`, `Community 12`, `Community 140`, `Community 146`, `Community 152`, `Community 158`, `Community 31`, `Community 35`, `Community 39`, `Community 55`, `Community 76`, `Community 89`, `Community 93`, `Community 99`, `Community 118`, `Community 121`, `Community 122`, `Community 124`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
-- **Why does `QTable` connect `Community 25` to `Community 129`, `Community 35`, `Community 99`, `Community 6`, `Community 7`, `Community 135`, `Community 139`, `Community 145`, `Community 149`, `Community 118`, `Community 121`, `Community 155`, `Community 124`, `Community 93`, `Community 31`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Are the 180 inferred relationships involving `GameParams` (e.g. with `ChooseMove` and `GameResult`) actually correct?**
-  _`GameParams` has 180 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `GameParams` connect `Community 35` to `Community 4`, `Community 6`, `Community 10`, `Community 14`, `Community 143`, `Community 146`, `Community 23`, `Community 152`, `Community 25`, `Community 155`, `Community 28`, `Community 31`, `Community 161`, `Community 163`, `Community 164`, `Community 38`, `Community 39`, `Community 77`, `Community 88`, `Community 93`, `Community 99`, `Community 117`, `Community 118`, `Community 121`, `Community 124`?**
+  _High betweenness centrality (0.086) - this node is a cross-community bridge._
+- **Why does `StrategyParams` connect `Community 25` to `Community 4`, `Community 132`, `Community 6`, `Community 139`, `Community 12`, `Community 140`, `Community 146`, `Community 23`, `Community 152`, `Community 155`, `Community 161`, `Community 35`, `Community 163`, `Community 39`, `Community 55`, `Community 76`, `Community 89`, `Community 93`, `Community 99`, `Community 118`, `Community 121`, `Community 122`, `Community 124`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **Why does `Outcome` connect `Community 4` to `Community 121`, `Community 6`, `Community 10`, `Community 11`, `Community 124`, `Community 118`, `Community 23`, `Community 25`, `Community 155`, `Community 28`, `Community 94`, `Community 127`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Are the 181 inferred relationships involving `GameParams` (e.g. with `CaptureFixture` and `ChooseMove`) actually correct?**
+  _`GameParams` has 181 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 138 inferred relationships involving `GameState` (e.g. with `Action` and `AgentContext`) actually correct?**
   _`GameState` has 138 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 104 inferred relationships involving `StrategyParams` (e.g. with `_SteppingClock` and `RunState`) actually correct?**
