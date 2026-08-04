@@ -4,12 +4,20 @@
     "police_class": "pursuit.strategy.qlearning:QLearningBrain",
     "qtable_path": "artifacts/qtable_police.json",
     "min_visits": 20,
-    "turn_bucket_fractions": [0.34, 0.69],
     "epsilon_eval": 0.0,
     "max_decision_ms": 50,
     "oscillation_window": 6,
     "oscillation_limit": 3,
-    "barrier_min_gain": 1
+    "barrier_min_gain": 1,
+    "search_depth_cap": 5,
+    "feature_scale_divisor": 1.0,
+    "weights_path": "artifacts/weights_police.json",
+    "learner_rule": "q_learning",
+    "barrier_candidate_min_degree": 3,
+    "barrier_weight_cycle_rank": 4.0,
+    "barrier_weight_component_size": 3.0,
+    "barrier_weight_territory": 2.0,
+    "barrier_weight_distance": 1.0
   },
   "training": {
     "alpha": 0.15,
@@ -26,6 +34,8 @@
     "pool_snapshot_every": 10000,
     "pool_size": 10,
     "selfplay_delta": 0.5,
+    "pfsp_exponent": 1.0,
+    "weak_opponent_floor": 2,
     "seed": 1337,
     "artifacts_dir": "",
     "reference_impl_path": "",
@@ -46,7 +56,11 @@
     "convergence_tolerance": 0.02,
     "max_table_keys": 250000,
     "fallback_rate_gate": 0.40,
-    "eval_seed_offset": 10000000
+    "eval_seed_offset": 10000000,
+    "min_distinct_starts": 200,
+    "terminal_spread_min": 0.1,
+    "terminal_spread_ratio_max": 3.0,
+    "floor_episode_fraction_max": 0.15
   },
   "monitoring": {
     "fallback_rate_alert": 0.35,
