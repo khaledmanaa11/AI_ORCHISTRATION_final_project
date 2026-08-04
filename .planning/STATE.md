@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 — RUN-2 IS FULLY PLANNED. 15 plans (03-11..03-25) across 7 waves are written, validated and committed; no run-2 code exists yet. NEXT COMMAND — `/gsd:execute-phase 3`. Waves 1-6 are autonomous; wave 7 (plan 03-25) is a HUMAN OPERATOR CHECKPOINT (`autonomous: false`) — the overnight run and the GATE-4 measurement. Do NOT run verify-work 3; the gate stays unmet until 03-25 measures it. Three standing constraints for the executor: 03-23's pre-flight gate must exit 0 before any training job starts; the 0.55 bar is NOT lowered (D-28); and if 03-21 cannot satisfy both the delta-ratio check and Jones' target band with a single common scale divisor, it STOPS AND ASKS rather than inventing a number.
-last_updated: "2026-08-03T16:20:00+03:00"
-last_activity: 2026-08-03 -- PLANNED RUN 2. Fifteen plans, 03-11..03-25, ~3,255 lines across 7 waves, all frontmatter- and structure-validated (0 errors, 0 warnings). No code changed. (A) 03-CONTEXT.md gained a <superseded> section: the run-1 half is kept as the record of why 03-00..03-10 look the way they do, and the new section overrides it from 03-11 on, each entry carrying the measurement that overturned it. Overturned: D-04, D-06, D-09, D-12, D-13, single-gamma. New user-confirmed decisions D-26 (alpha-beta REPLACES the Q-policy as the mover, RL demoted to ~60 eval weights), D-27 (the STRAT-01/06 deviation defence is a deliverable), D-28 (0.55 bar NOT lowered), D-29 (everything lands, then exactly one run), D-30 (pre-flight assertions hard-gate every run), D-31 (thief safety rule). (B) WAVES: w1 03-11 graph primitives / 03-12 thief safety / 03-13 turns_remaining + config surface / 03-14 terminal signal; w2 03-15 randomised starts / 03-16 features+linear eval; w3 03-17 barrier rewrite / 03-18 alpha-beta; w4 03-19 SearchBrain / 03-20 linear learner; w5 03-21 run-2 regime / 03-22 deviation defence; w6 03-23 pre-flight gate / 03-24 triplet refresh; w7 03-25 RUN 2 (operator, autonomous:false). (C) THREE CORRECTIONS MEASURED DURING PLANNING, not inherited: the 150-line gate counts CODE lines not raw (fallback.py 83 not 99, harness.py 132 not 158, strategy_config.py 138 not 169), which falsified the outline's "03-13 needs no split"; R2 IS SYMMETRIC and the post-mortem documented only half of it -- engine.py emits CAPTURE on the cop's turn and SURVIVAL on the thief's, so a COP learner is blind to survival exactly as the thief is blind to capture, and both halves are now fixed and tested in 03-14; and terminal rewards are the PARAMETERS.md Table 17 FIXED 20/5/5/10 already in GameParams, so the thief's capture penalty is the relative +5-vs-+10 gap and the post-mortem's illustrative -1.0 appears in no plan (rule 1 stays clean). (D) 03-13 additionally claims qtable.py to make "write no migration" safe rather than lucky: _validate_top_level checks that `version` exists but never what it equals, and a run-1 key parses cleanly under the new format, so a stale table would load silently against a wrong time field. (E) PROCESS NOTE for future sessions: the gsd-planner subagents cost 130-165k tokens each, three stalled mid-stream on the known Windows stdio hang (one recovered via SendMessage with its context intact -- much cheaper than a cold restart), and one died on the monthly spend limit. Plans 03-17..03-25 were written INLINE by the orchestrator instead, at a small fraction of the cost and with no loss of validation. Prefer inline authoring once the outline exists. PRIOR SESSION 2026-08-02 (EVENING) -- Post-mortem + literature review, no production code changed. (1) DIAGNOSIS, all measured, written to docs/phases/phase-3/RUN-1-POSTMORTEM.md (250 lines): an independent re-implementation of the eval arms reproduces the official GATE-4 numbers EXACTLY (cop 5/20=0.250, thief 16/20=0.800), so every split below is arithmetically forced. COP -- not undertrained: final-decile training win rate 0.854, last 10 curve rows 0.900, peak 0.9435. It failed because all 300,000 episodes started from the identical state (engine.make_state; its key 0,0|3,3|9|0|0 has exactly 150,000 visits) while the 20 eval scenarios use 17 distinct start pairs; only 5/20 eval start states cleared min_visits; split is 3/5=0.600 on trained starts vs 2/15=0.133 on unseen. THIEF -- reward is degenerate: harness.py::_turn only calls _update_learner when the moving role IS the learner, and capture is produced on the COP's turn, so the thief NEVER receives a capture update. Proven by instrumentation (300/300 captured episodes -> exactly one update worth -0.01). Plus gamma=0.95 over a 35-turn horizon leaves a usable value range of 0.047 vs the cop's 0.626 (13x weaker); among thief keys past the min_visits gate the median best-vs-second Q margin is 0.00033 and 17.6% are exact ties. Also found: no terminal-state marking anywhere (terminal keys collide with live keys); sparring_mix renormalised to 0.375/0.625 because reference_impl_path is empty; the barrier LAYOUT is invisible to the policy (key carries 4 local bits + a count) so the cop's ceiling is bounded by the hand-written choose_barrier. (2) ABLATION -- 4 arms x 10,000 episodes ran to completion and is INCONCLUSIVE; recorded as such, not spun. Every pairwise comparison insignificant (Fisher exact: cop A-vs-C p=0.407, thief A-vs-D p=0.451). n=20 is the real sample size (deterministic replays) and the budget was 3.3% of run 1's. (3) LITERATURE REVIEW -- three agents, 2,577 lines / 147 sourced links in docs/research/{ALG-COMPARISON,PURSUIT-AND-EVASION-STRATEGY,TRAINING-METHODOLOGY}.md. Key results: the cop number of an m x n grid is 2 (Neufeld & Nowakowski, Discrete Math 186:253-268, 1998; capture time Mehrabian, Discrete Math 311:102-105, 2011 -- NOTE an earlier attribution in this session to arXiv:1708.08255 was WRONG and is corrected here), so one cop can never catch a perfect evader by chasing; barriers are its only substitute for the missing second cop. UNIFYING RESULT: barriers keep the board triangle-free, so cop-win <=> the thief's free component is a FOREST -- cop destroys cycles, thief preserves one, and DISTANCE IS THE WRONG QUANTITY FOR BOTH SIDES (which is what both current brains optimise). Decycling number of the 7x7 grid is 13 vs quota 14, but 13 placements + ~32 chase rounds = 45 > the 35-turn limit, so the cop must decycle only the thief's COMPONENT. Our barrier rule (max BFS distance to a fixed corner anchor) has no literature support at all; sourced replacement is edge/existing-barrier-adjacent placement (Guibas et al. 1999) preferring degree-4 cells. Our self-play failure has a name: coevolutionary disengagement (Cartlidge & Bullock, Evolutionary Computation 12(2):193-222, 2004, VERIFIED independently); remedy "reduce virulence" raises quality on BOTH sides. gamma must differ by role (cop 0.99, thief 1.0). turn_bucket(3) is a modelling error per two independent citations (Puterman 1994 ch.4; Pardo et al. ICML 2018). Alpha-beta not MCTS (Ramanujan et al. ICAPS 2010 -- MCTS misses shallow traps; barrier sealing is one). (4) MEASURED FREE WIN: a thief that never steps into N[cop] scores 296/300=0.987 over random starts vs the current BFS thief's 283/300=0.943, no training required -- BUT the "provably unbeatable" claim did NOT fully reproduce (lost 3/20 with new barriers disabled, and that control was itself flawed since the scenarios carry pre-placed barriers). (5) VERIFICATION OF AGENT OUTPUT: the algorithms researcher's headline benchmark (11-12 plies in 50ms) did NOT reproduce against the real engine -- measured depth 8 with Manhattan, depth 5 with a useful eval, and cop/thief identical once barrier branching is excluded. Both correction passes were cut off by API session limits and are unfinished; treat those two reports' depth figures and the Bansal delta-uniform numbers as UNVERIFIED. PRIOR SESSION (same day, morning): Task 4 (the blocking human-action checkpoint) RAN. The operator's 300,000-episode training run (150k cop / 150k thief, seed 1337, config hash 5fa4d554..) completed uninterrupted; tables landed in %LOCALAPPDATA%\pursuit\training\ (police 39,483 keys / 3,525,039 visits; thief 29,703 keys / 1,355,252 visits). GATE-4 was measured with `training/evaluate.py --full --assert-gate` (exit 1) and FAILED for both roles on the 20 held-out scenarios: cop learner 0.250 vs measured baseline 0.100 (margin +0.150 clears win_rate_margin but misses the 0.55 min_win_rate_absolute floor); thief learner 0.800 vs baseline 0.900 (margin -0.100 -- the learned thief is WORSE than the heuristic it replaces). E6 convergence failed for both: cop decile_gain +0.848 but final_slope +0.094 (still climbing when epsilon hit its floor -- run stopped early, not converged); thief decile_gain -0.068 (final decile worse than first; curve peaks ~0.13 near episode 100k then declines to ~0, mean reward +0.283 -> -0.040). Two findings recorded rather than worked around: (a) the thief's fallback_rate collapsed 0.76 -> 0.009, i.e. once visit counts crossed min_visits=20 it abandoned the BFS fallback for Q-values that never became better than it, compounded by sparring_mix past_self=0.50 feeding it an ever-stronger cop and an almost all-loss signal (hypothesis, consistent with the curves, not isolated experimentally); (b) training/evaluate.py PSEUDO-REPLICATES -- all 10 repeats per scenario replay identically because both brains are deterministic at epsilon_eval=0.0 (verified: 0 of 20 scenarios varied across repeats), so eval_games=200 has effective n=20 and the CLI's reported mcnemar_p~0.0000 / z=3.95 are inflated; honest recomputation at n=20 gives cop p=0.250 and thief p=0.500, NEITHER significant at alpha=0.05. Per 03-10-PLAN Task 4 no bar was lowered, no table was promoted into artifacts/ (so test_beats_baseline_smoke_subset still skips -- now for want of a BLESSED table rather than any table), and no unmeasured number was written: the README rule-42 section now embeds the three real figures (winrate_cop/winrate_thief/mean_reward.png) plus curves.csv and carries the failing numbers including the corrected n=20 statistics. Three follow-up rows added to docs/phases/phase-3/TODO.md (T4-followup-1 retrain the cop to convergence, T4-followup-2 diagnose the thief regression -- both config-only; T4-followup-3 fix the eval pseudo-replication, a correctness fix that makes the gate stricter). 03-10-SUMMARY.md written. Gates green: ruff 0, line-limit clean, 427 passed / 2 skipped, coverage 96.43%. PRIOR SESSION (2026-08-01) executed Tasks 1-3: Task 1 added tests/integration/{test_shortest_path,test_policy_fallback,test_strategy_pluggable}.py (GATE-1/2/3) plus scripts/check_no_llm_in_strategy.{py,sh} promoting 03-02's structural import check into a standalone CI-runnable gate (manually verified to exit 1 when a forbidden import is temporarily introduced, then reverted); a shared strategy_params() helper was added to tests/integration/conftest.py (QUAL-02). Task 2 added training/evaluate.py (three arms: heuristic-vs-heuristic baseline, Q-cop vs heuristic-thief, Q-thief vs heuristic-cop; --smoke/--full/--assert-gate modes) plus its supporting training/eval_{scenarios,arms,stats,report}.py modules (McNemar exact test + two-proportion z, pure stdlib) and artifacts/eval_scenarios.json (20 hand-authored scenarios across normal/corner-edge/barrier-pocket/near-capture/turn-limit-stall groups, seeds = training_seed + eval_seed_offset + index, held-out disjointness asserted in code via assert_seeds_held_out); tests/integration/test_beats_baseline.py correctly SKIPS with a stated reason (no trained table exists yet) rather than passing vacuously. Task 3 produced the STRAT-01..07 + QUAL/DOC coverage audit in docs/phases/phase-3/TODO.md (every requirement mapped to a named passing test; STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden), reconciled the phase-gate checklist (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line explicitly left unticked "blocked on Task 4"), and added the 3 Windows operator-step rows from 03-RESEARCH.md Sec3 as new unticked rows; 03-99 deliberately untouched. Full repo gates green: ruff 0, line-limit clean, 425 passed / 2 skipped (GATE-4 smoke test waiting on Task 4's table; the pre-existing reference-clone test from 03-08), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201 communities) and GRAPH_REPORT.md refreshed.
+stopped_at: Phase 03 — RUN-2 WAVE 1 STARTED. 03-11 (graph primitives) fully executed and committed; 03-12..03-25 (14 plans) remain, code not yet written. NEXT COMMAND — `/gsd:execute-phase 3` (resumes at 03-12). Waves 1-6 are autonomous; wave 7 (plan 03-25) is a HUMAN OPERATOR CHECKPOINT (`autonomous=false`) — the overnight run and the GATE-4 measurement. Do NOT run verify-work 3; the gate stays unmet until 03-25 measures it. Three standing constraints for the executor: 03-23's pre-flight gate must exit 0 before any training job starts; the 0.55 bar is NOT lowered (D-28); and if 03-21 cannot satisfy both the delta-ratio check and Jones' target band with a single common scale divisor, it STOPS AND ASKS rather than inventing a number.
+last_updated: "2026-08-04T12:31:00+03:00"
+last_activity: 2026-08-04 -- EXECUTED 03-11-PLAN.md (graph primitives, wave 1's first plan). All 3 tasks + 1 post-task coverage-gap fix, fully committed (12be2e4 components.py, 52c85f2 cycles.py, b4b06fa territory.py, af5f0de test coverage fix). New pure-library package `pursuit.strategy.graph` measures the run-2 objective directly (D-09 superseded): components.py (free_cells/neighbors/component_of/degree/edge_count/articulation_points -- iterative Hopcroft-Tarjan with an explicit stack, no recursion; adjacency pinned equal to board.get_legal_moves minus STAY by an exhaustive per-free-cell equivalence test, QUAL-02), cycles.py (cycle_rank=E-V+1, is_forest, reduction_value=degree-1, pinned to the cited 7x7 oracle V=49/E=84/rank=36), territory.py (voronoi_split -- two source frontiers advanced one BFS layer per round in the same loop so a tie is exactly "reached the same round"; equidistant/unreachable-from-both cells belong to neither side; territory_diff reuses components.edge_count, exactly antisymmetric under argument swap). __init__.py re-exports the full public surface so 03-16/03-17/03-18 import from pursuit.strategy.graph, never a submodule. Zero role knowledge in code (D-03, grep for cop|thief under the package hits docstrings only) and zero numeric literals beyond the cited E-V+1/d-1 identities and ordinary loop arithmetic (no tunable knob in this package, exactly as the plan specified -- nothing added to config). One deviation, Rule 2 (missing coverage): pytest --cov first showed components.py 99% / cycles.py 90% -- two documented-but-untested contract branches (articulation_points' DFS-root-is-itself-a-cut-vertex case, distinct from the non-root case the barrier-corridor test already covered; and cycle_rank(frozenset())==0's explicit "empty input is 0" contract) had no direct test; closed with 2 added tests, package coverage 98%->100%, committed separately (af5f0de) since it was found during final verification, after all three task commits. Full repo gates green: ruff 0, line-limit clean (new files 100/37/55/32 code lines, all under the plan's own stated budgets), 456 passed / 2 skipped (the pre-existing GATE-4 skip, untouched), coverage ~97% (>=85% floor). Graphify rebuilt (3457 nodes/6273 edges/234 communities), GRAPH_REPORT.md refreshed and committed with this session's docs (graph.json/graph.html stay gitignored build artifacts per CLAUDE.md). docs/phases/phase-3/TODO.md deliberately NOT touched this plan -- its 03-11..03-16 row numbering is stale (pre-dates the 15-plan wave breakdown from the 2026-08-03 planning session; its own "03-11" row actually describes what is now plan 03-12, the thief safety rule), and the wave plan below already assigns that reconciliation to 03-24 ("triplet refresh"), not to each of the 15 individual plans piecemeal -- touching it here would create the exact kind of edit conflict 03-24 exists to avoid. Next: 03-12 (thief safety rule -- never step into N[cop]), wave 1's second plan. PRIOR SESSION 2026-08-03 -- PLANNED RUN 2. Fifteen plans, 03-11..03-25, ~3,255 lines across 7 waves, all frontmatter- and structure-validated (0 errors, 0 warnings). No code changed. (A) 03-CONTEXT.md gained a <superseded> section: the run-1 half is kept as the record of why 03-00..03-10 look the way they do, and the new section overrides it from 03-11 on, each entry carrying the measurement that overturned it. Overturned: D-04, D-06, D-09, D-12, D-13, single-gamma. New user-confirmed decisions D-26 (alpha-beta REPLACES the Q-policy as the mover, RL demoted to ~60 eval weights), D-27 (the STRAT-01/06 deviation defence is a deliverable), D-28 (0.55 bar NOT lowered), D-29 (everything lands, then exactly one run), D-30 (pre-flight assertions hard-gate every run), D-31 (thief safety rule). (B) WAVES: w1 03-11 graph primitives / 03-12 thief safety / 03-13 turns_remaining + config surface / 03-14 terminal signal; w2 03-15 randomised starts / 03-16 features+linear eval; w3 03-17 barrier rewrite / 03-18 alpha-beta; w4 03-19 SearchBrain / 03-20 linear learner; w5 03-21 run-2 regime / 03-22 deviation defence; w6 03-23 pre-flight gate / 03-24 triplet refresh; w7 03-25 RUN 2 (operator, autonomous:false). (C) THREE CORRECTIONS MEASURED DURING PLANNING, not inherited: the 150-line gate counts CODE lines not raw (fallback.py 83 not 99, harness.py 132 not 158, strategy_config.py 138 not 169), which falsified the outline's "03-13 needs no split"; R2 IS SYMMETRIC and the post-mortem documented only half of it -- engine.py emits CAPTURE on the cop's turn and SURVIVAL on the thief's, so a COP learner is blind to survival exactly as the thief is blind to capture, and both halves are now fixed and tested in 03-14; and terminal rewards are the PARAMETERS.md Table 17 FIXED 20/5/5/10 already in GameParams, so the thief's capture penalty is the relative +5-vs-+10 gap and the post-mortem's illustrative -1.0 appears in no plan (rule 1 stays clean). (D) 03-13 additionally claims qtable.py to make "write no migration" safe rather than lucky: _validate_top_level checks that `version` exists but never what it equals, and a run-1 key parses cleanly under the new format, so a stale table would load silently against a wrong time field. (E) PROCESS NOTE for future sessions: the gsd-planner subagents cost 130-165k tokens each, three stalled mid-stream on the known Windows stdio hang (one recovered via SendMessage with its context intact -- much cheaper than a cold restart), and one died on the monthly spend limit. Plans 03-17..03-25 were written INLINE by the orchestrator instead, at a small fraction of the cost and with no loss of validation. Prefer inline authoring once the outline exists. PRIOR SESSION 2026-08-02 (EVENING) -- Post-mortem + literature review, no production code changed. (1) DIAGNOSIS, all measured, written to docs/phases/phase-3/RUN-1-POSTMORTEM.md (250 lines): an independent re-implementation of the eval arms reproduces the official GATE-4 numbers EXACTLY (cop 5/20=0.250, thief 16/20=0.800), so every split below is arithmetically forced. COP -- not undertrained: final-decile training win rate 0.854, last 10 curve rows 0.900, peak 0.9435. It failed because all 300,000 episodes started from the identical state (engine.make_state; its key 0,0|3,3|9|0|0 has exactly 150,000 visits) while the 20 eval scenarios use 17 distinct start pairs; only 5/20 eval start states cleared min_visits; split is 3/5=0.600 on trained starts vs 2/15=0.133 on unseen. THIEF -- reward is degenerate: harness.py::_turn only calls _update_learner when the moving role IS the learner, and capture is produced on the COP's turn, so the thief NEVER receives a capture update. Proven by instrumentation (300/300 captured episodes -> exactly one update worth -0.01). Plus gamma=0.95 over a 35-turn horizon leaves a usable value range of 0.047 vs the cop's 0.626 (13x weaker); among thief keys past the min_visits gate the median best-vs-second Q margin is 0.00033 and 17.6% are exact ties. Also found: no terminal-state marking anywhere (terminal keys collide with live keys); sparring_mix renormalised to 0.375/0.625 because reference_impl_path is empty; the barrier LAYOUT is invisible to the policy (key carries 4 local bits + a count) so the cop's ceiling is bounded by the hand-written choose_barrier. (2) ABLATION -- 4 arms x 10,000 episodes ran to completion and is INCONCLUSIVE; recorded as such, not spun. Every pairwise comparison insignificant (Fisher exact: cop A-vs-C p=0.407, thief A-vs-D p=0.451). n=20 is the real sample size (deterministic replays) and the budget was 3.3% of run 1's. (3) LITERATURE REVIEW -- three agents, 2,577 lines / 147 sourced links in docs/research/{ALG-COMPARISON,PURSUIT-AND-EVASION-STRATEGY,TRAINING-METHODOLOGY}.md. Key results: the cop number of an m x n grid is 2 (Neufeld & Nowakowski, Discrete Math 186:253-268, 1998; capture time Mehrabian, Discrete Math 311:102-105, 2011 -- NOTE an earlier attribution in this session to arXiv:1708.08255 was WRONG and is corrected here), so one cop can never catch a perfect evader by chasing; barriers are its only substitute for the missing second cop. UNIFYING RESULT: barriers keep the board triangle-free, so cop-win <=> the thief's free component is a FOREST -- cop destroys cycles, thief preserves one, and DISTANCE IS THE WRONG QUANTITY FOR BOTH SIDES (which is what both current brains optimise). Decycling number of the 7x7 grid is 13 vs quota 14, but 13 placements + ~32 chase rounds = 45 > the 35-turn limit, so the cop must decycle only the thief's COMPONENT. Our barrier rule (max BFS distance to a fixed corner anchor) has no literature support at all; sourced replacement is edge/existing-barrier-adjacent placement (Guibas et al. 1999) preferring degree-4 cells. Our self-play failure has a name: coevolutionary disengagement (Cartlidge & Bullock, Evolutionary Computation 12(2):193-222, 2004, VERIFIED independently); remedy "reduce virulence" raises quality on BOTH sides. gamma must differ by role (cop 0.99, thief 1.0). turn_bucket(3) is a modelling error per two independent citations (Puterman 1994 ch.4; Pardo et al. ICML 2018). Alpha-beta not MCTS (Ramanujan et al. ICAPS 2010 -- MCTS misses shallow traps; barrier sealing is one). (4) MEASURED FREE WIN: a thief that never steps into N[cop] scores 296/300=0.987 over random starts vs the current BFS thief's 283/300=0.943, no training required -- BUT the "provably unbeatable" claim did NOT fully reproduce (lost 3/20 with new barriers disabled, and that control was itself flawed since the scenarios carry pre-placed barriers). (5) VERIFICATION OF AGENT OUTPUT: the algorithms researcher's headline benchmark (11-12 plies in 50ms) did NOT reproduce against the real engine -- measured depth 8 with Manhattan, depth 5 with a useful eval, and cop/thief identical once barrier branching is excluded. Both correction passes were cut off by API session limits and are unfinished; treat those two reports' depth figures and the Bansal delta-uniform numbers as UNVERIFIED. PRIOR SESSION (same day, morning): Task 4 (the blocking human-action checkpoint) RAN. The operator's 300,000-episode training run (150k cop / 150k thief, seed 1337, config hash 5fa4d554..) completed uninterrupted; tables landed in %LOCALAPPDATA%\pursuit\training\ (police 39,483 keys / 3,525,039 visits; thief 29,703 keys / 1,355,252 visits). GATE-4 was measured with `training/evaluate.py --full --assert-gate` (exit 1) and FAILED for both roles on the 20 held-out scenarios: cop learner 0.250 vs measured baseline 0.100 (margin +0.150 clears win_rate_margin but misses the 0.55 min_win_rate_absolute floor); thief learner 0.800 vs baseline 0.900 (margin -0.100 -- the learned thief is WORSE than the heuristic it replaces). E6 convergence failed for both: cop decile_gain +0.848 but final_slope +0.094 (still climbing when epsilon hit its floor -- run stopped early, not converged); thief decile_gain -0.068 (final decile worse than first; curve peaks ~0.13 near episode 100k then declines to ~0, mean reward +0.283 -> -0.040). Two findings recorded rather than worked around: (a) the thief's fallback_rate collapsed 0.76 -> 0.009, i.e. once visit counts crossed min_visits=20 it abandoned the BFS fallback for Q-values that never became better than it, compounded by sparring_mix past_self=0.50 feeding it an ever-stronger cop and an almost all-loss signal (hypothesis, consistent with the curves, not isolated experimentally); (b) training/evaluate.py PSEUDO-REPLICATES -- all 10 repeats per scenario replay identically because both brains are deterministic at epsilon_eval=0.0 (verified: 0 of 20 scenarios varied across repeats), so eval_games=200 has effective n=20 and the CLI's reported mcnemar_p~0.0000 / z=3.95 are inflated; honest recomputation at n=20 gives cop p=0.250 and thief p=0.500, NEITHER significant at alpha=0.05. Per 03-10-PLAN Task 4 no bar was lowered, no table was promoted into artifacts/ (so test_beats_baseline_smoke_subset still skips -- now for want of a BLESSED table rather than any table), and no unmeasured number was written: the README rule-42 section now embeds the three real figures (winrate_cop/winrate_thief/mean_reward.png) plus curves.csv and carries the failing numbers including the corrected n=20 statistics. Three follow-up rows added to docs/phases/phase-3/TODO.md (T4-followup-1 retrain the cop to convergence, T4-followup-2 diagnose the thief regression -- both config-only; T4-followup-3 fix the eval pseudo-replication, a correctness fix that makes the gate stricter). 03-10-SUMMARY.md written. Gates green: ruff 0, line-limit clean, 427 passed / 2 skipped, coverage 96.43%. PRIOR SESSION (2026-08-01) executed Tasks 1-3: Task 1 added tests/integration/{test_shortest_path,test_policy_fallback,test_strategy_pluggable}.py (GATE-1/2/3) plus scripts/check_no_llm_in_strategy.{py,sh} promoting 03-02's structural import check into a standalone CI-runnable gate (manually verified to exit 1 when a forbidden import is temporarily introduced, then reverted); a shared strategy_params() helper was added to tests/integration/conftest.py (QUAL-02). Task 2 added training/evaluate.py (three arms: heuristic-vs-heuristic baseline, Q-cop vs heuristic-thief, Q-thief vs heuristic-cop; --smoke/--full/--assert-gate modes) plus its supporting training/eval_{scenarios,arms,stats,report}.py modules (McNemar exact test + two-proportion z, pure stdlib) and artifacts/eval_scenarios.json (20 hand-authored scenarios across normal/corner-edge/barrier-pocket/near-capture/turn-limit-stall groups, seeds = training_seed + eval_seed_offset + index, held-out disjointness asserted in code via assert_seeds_held_out); tests/integration/test_beats_baseline.py correctly SKIPS with a stated reason (no trained table exists yet) rather than passing vacuously. Task 3 produced the STRAT-01..07 + QUAL/DOC coverage audit in docs/phases/phase-3/TODO.md (every requirement mapped to a named passing test; STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden), reconciled the phase-gate checklist (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line explicitly left unticked "blocked on Task 4"), and added the 3 Windows operator-step rows from 03-RESEARCH.md Sec3 as new unticked rows; 03-99 deliberately untouched. Full repo gates green: ruff 0, line-limit clean, 425 passed / 2 skipped (GATE-4 smoke test waiting on Task 4's table; the pre-existing reference-clone test from 03-08), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201 communities) and GRAPH_REPORT.md refreshed.
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 42
-  completed_plans: 26
+  completed_plans: 27
   percent: 13
 ---
 
@@ -21,64 +21,47 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; Phase 03 plan 10 fully executed including the training run — GATE-4 measured and failed, awaiting a config-only retrain)
+**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; run 1's 03-00..03-10 stand as the record of why GATE-4 failed; run 2 is fully planned as 15 plans 03-11..03-25 and wave 1 is now executing — 03-11 done)
 
 ## Current Position
 
-Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING (plan 03-10 Tasks 1-4 all done; GATE-4 measured and FAILED — the phase gate is unmet on a real negative result, not on missing work)
-Plan: 03-00..03-09 fully done; 03-10 Tasks 1-3 (GATE-1/2/3 tests, GATE-4 evaluation CLI +
-  eval scenario set, STRAT coverage audit) done and committed. Task 4 (the real overnight
-  training run, GATE-4 measurement, table promotion) RAN on 2026-08-02: 300,000 episodes
-  completed, GATE-4 measured and FAILED for both roles (cop 0.250 vs 0.100 baseline — misses
-  the 0.55 floor; thief 0.800 vs 0.900 — worse than the heuristic). Neither role converged.
-  No bar lowered, no table promoted. Next: T4-followup-1/2 (config-only retrain) and
-  T4-followup-3 (fix the eval CLI's pseudo-replication) in docs/phases/phase-3/TODO.md.
-Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still pending),
-  all of Phase 3's automatable work is now complete: config scaffold (03-00), per-mechanism
-  PRD (03-01), strategy seam (03-02), the barrier-aware BFS distance oracle (03-03), the
-  Bayes prior + BFS fallback + `HeuristicBrain` baseline (03-04), the canonical state-key
-  encoding + JSON `QTable` (03-05), `QLearningBrain` (03-06), the cop barrier sub-policy
-  `choose_barrier` wired into both brains (03-07), the offline training harness (03-08), the
-  E6 convergence checks + matplotlib plotting CLI + rule-42 README section (03-09), and the
-  §10.4 GATE-1/2/3 integration tests + GATE-4 evaluation CLI/eval-scenario-set + STRAT
-  coverage audit (03-10 Tasks 1-3) -- all landed. The only remaining Phase-3 work is 03-10
-  Task 4: a human operator must run the overnight training job on their own machine, inspect
-  the curves, measure GATE-4, and (if it passes) promote the tables and fill README's
-  placeholder numbers. Nothing further in Phase 3 can be automated. 5 phases remain after
-  Phase 3 closes. Next: the operator runs Task 4 (see docs/phases/phase-3/TODO.md's new
-  operator-step rows and 03-10-PLAN.md's Task 4 for the exact commands), then
-  /gsd:execute-phase 3 (or a direct SUMMARY-writing pass) closes out 03-10.
-Last activity: 2026-08-01 -- Executed 03-10-PLAN.md Tasks 1-3 (§10.4 milestone gate,
-  STRAT-06). Task 1: `tests/integration/{test_shortest_path,test_policy_fallback,
-  test_strategy_pluggable}.py` (GATE-1/2/3) plus `scripts/check_no_llm_in_strategy.{py,sh}`
-  promoting 03-02's structural import check into a standalone CI-runnable gate (verified to
-  exit 1 when a forbidden import is temporarily introduced, then reverted); a shared
-  `strategy_params()` helper added to `tests/integration/conftest.py` (QUAL-02). Task 2:
-  `training/evaluate.py` (three arms: heuristic-vs-heuristic baseline, Q-cop vs
-  heuristic-thief, Q-thief vs heuristic-cop; `--smoke`/`--full`/`--assert-gate`) plus
-  `training/eval_{scenarios,arms,stats,report}.py` (McNemar exact test + two-proportion z,
-  pure stdlib) and `artifacts/eval_scenarios.json` (20 hand-authored scenarios: 6 normal, 3
-  corner/edge, 4 barrier-pocket, 3 near-capture, 2 turn-limit-stalling, 2 shortest-path-walk;
-  seeds = `training_seed + eval_seed_offset + index`, disjointness from training seeds
-  asserted in code via `assert_seeds_held_out`, not just documented, D-23);
-  `tests/integration/test_beats_baseline.py` correctly SKIPS (no trained table exists yet)
-  rather than passing vacuously. Task 3: STRAT-01..07 + QUAL/DOC coverage audit written into
-  `docs/phases/phase-3/TODO.md` (every requirement mapped to a named passing test;
-  STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden);
-  phase-gate checklist reconciled (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line
-  explicitly left unticked "blocked on Task 4"); 3 new unticked operator-step rows added from
-  `03-RESEARCH.md` Sec3 (redirect output to a file, confirm artifacts_dir outside OneDrive,
-  exclude it from Defender, confirm sleep disabled); 03-99 deliberately untouched -- that is
-  `/gsd:verify-work 3`'s job. **Task 4 deliberately not attempted**: no training run, no
-  `artifacts/qtable_{police,thief}.json`, no README numbers filled, no
-  `03-10-SUMMARY.md` -- the plan is genuinely incomplete until a human runs it. Full repo
-  gates green: `ruff check .` 0 violations, line-limit clean, 425 passed / 2 skipped (the
-  GATE-4 smoke test waiting on Task 4's table, and the pre-existing 03-08 reference-clone
-  test), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201
-  communities) and `GRAPH_REPORT.md` refreshed.
+Phase: 03 (blind-strategy-module-rl-policy) — EXECUTING RUN 2 (wave 1 of 7; 03-11 done, 03-12..03-25 remain)
+Plan: 03-00..03-10 (run 1) landed a full offline Q-learning pipeline that trained to
+  completion but FAILED GATE-4 for both roles on real, measured evidence (see
+  docs/phases/phase-3/RUN-1-POSTMORTEM.md) — no bar was lowered, no table was promoted.
+  That diagnosis plus a 3-agent literature review produced D-09-superseded (distance is
+  the wrong objective for both roles; cop-win iff the thief's free component is a
+  forest) and a validated 15-plan run-2 build order (03-11..03-25, 7 waves, RL demoted
+  from mover to a ~60-weight linear evaluator under alpha-beta search, D-26). Wave 1's
+  first plan, **03-11 (graph primitives), is now fully executed**: `pursuit.strategy.graph`
+  (components/cycles/territory — free_cells, neighbors, component_of, degree,
+  edge_count, articulation_points, cycle_rank, is_forest, reduction_value,
+  voronoi_split, territory_diff), 3 tasks + 1 coverage-gap fix, 4 commits
+  (12be2e4/52c85f2/b4b06fa/af5f0de), 100% package coverage. Next: 03-12 (thief safety
+  rule), 03-13 (turns_remaining + config surface), 03-14 (terminal signal) finish wave 1.
+Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still
+  pending). Phase 3 run 2 wave 1 is underway: 1 of 15 run-2 plans done. Waves 1-6 are
+  autonomous; wave 7 (03-25) is a human-operator checkpoint (the overnight training run
+  and the real GATE-4 remeasurement) — do not run verify-work 3 until it passes. Three
+  standing constraints carried into every remaining plan: 03-23's pre-flight gate must
+  exit 0 before any training job starts; the 0.55 GATE-4 bar is NOT lowered (D-28); and
+  03-21 stops and asks rather than inventing a number if its two target checks conflict.
+  5 phases remain after Phase 3 closes.
+Last activity: 2026-08-04 -- Executed 03-11-PLAN.md (graph primitives). Full account is
+  in the frontmatter `last_activity` field above; condensed here: 3 TDD tasks
+  (components.py -> cycles.py -> territory.py, each red before green), 1 post-task
+  deviation (Rule 2 — 2 tests added to close a coverage gap on the DFS-root cut-vertex
+  branch and the `cycle_rank(frozenset())==0` contract, 98%->100%), zero new decisions
+  (every contract was already settled by the 2026-08-03 planning session). Full repo
+  gates green: `ruff check .` 0 violations, line-limit clean, 456 passed / 2 skipped,
+  coverage ~97% (>=85% floor). Graphify rebuilt (3457 nodes/6273 edges/234 communities)
+  and `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/TODO.md` deliberately not
+  touched — its row numbering predates the 15-plan breakdown and reconciling it is
+  03-24's ("triplet refresh") explicit job, not each plan's.
 
 Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code complete pending verify-work;
-  Phase 3: 10 of 11 plans fully done, 11th at 3 of 4 tasks, blocked on operator action)
+  Phase 3 run 2: 1 of 15 plans (03-11) done, 14 remain across waves 1-7, wave 7 is a
+  human-operator checkpoint)
 
 ## Performance Metrics
 
@@ -127,6 +110,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P08 | ~50min (this session; Tasks 1-3 committed in a prior, interrupted session) | 1 task (Task 4) | 11 files |
 | Phase 03 P09 | ~20min | 2 tasks | 6 files |
 | Phase 03 P10 | ~40min (Tasks 1-3 only; Task 4 pending operator) | 3 of 4 tasks | ~20 files |
+| Phase 03 P11 (run-2 wave 1) | ~25min | 3 tasks + 1 coverage-gap fix | 8 files |
 
 ## Accumulated Context
 
@@ -223,6 +207,20 @@ Recent decisions affecting current work:
 - [Phase 03-10 post-mortem]: `min_win_rate_absolute = 0.55` is **ours (D-14, `docs/PRD_rl_strategy.md` §8), not a Segal fixed value** — it appears nowhere in `docs/PARAMETERS.md`. Re-arguable on evidence; must not be moved merely because a run failed
 - [Phase 03-10 post-mortem]: Subagent output is **not** taken at face value — the algorithms researcher's headline depth benchmark failed independent replication against the real engine, and an earlier cop-number attribution in this session was wrong and is corrected in `last_activity`
 
+- [Phase 03-11]: No new decisions -- every contract (adjacency-equivalence proof, the
+  never-raise convention for out-of-set cells, `cycle_rank`'s connected-only
+  precondition, `voronoi_split`'s neither-side tie rule) was already fully specified by
+  the plan and the cited research doc. One implementation note worth recording:
+  `voronoi_split` advances both source frontiers one BFS layer per round inside a
+  single loop rather than running two independently-timed BFS passes and comparing
+  distances afterward, so "reached on the same round" is the literal definition of a tie
+- [Phase 03-11]: STATE.md's own YAML frontmatter does not parse (`yaml.safe_load`
+  raises `ScannerError`, confirmed pre-existing on `HEAD` before this session touched
+  the file) -- long unquoted plain scalars containing natural-language colons break
+  YAML's plain-scalar grammar. ~85 occurrences repo-wide; full fix is out of scope for
+  a single plan (would mean reformatting the whole historical narrative). Logged in
+  Deferred Items, not fixed, per the deviation rules' scope boundary
+
 ### Pending Todos
 
 - 03-11..03-16 in `docs/phases/phase-3/TODO.md` (thief safety rule, pre-flight assertions,
@@ -245,17 +243,28 @@ Items acknowledged and carried forward from previous milestone close:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Tooling correctness (pre-existing, out of scope for 03-11) | This file's YAML frontmatter does not actually parse (`yaml.safe_load` on `.planning/STATE.md`'s frontmatter raises `ScannerError: mapping values are not allowed here`) — the narrative fields (`stopped_at`, `last_activity`) are long unquoted plain scalars containing many `word: word` sequences, and a bare `: ` inside a plain YAML scalar always terminates it. Confirmed pre-existing: `git show HEAD:.planning/STATE.md` (the commit before this session touched the file) already fails the same way. ~85 colon-space occurrences repo-wide in this file make a full fix (block-scalar or quoted-string conversion of every long field) out of scope for a single plan's execution — it would mean rewriting the whole historical narrative's formatting. Consistent with this file's own established note ("`gsd-tools.cjs state advance-plan`/`update-progress` are NOT used on this file — hand-authored"), no tooling in this project currently parses this frontmatter as YAML, so the impact today is cosmetic/latent, not functional. One trivial, in-place instance was fixed while editing this session's own `stopped_at` text (`` `autonomous: false` `` → `` `autonomous=false` ``); no other pre-existing instance was touched. | ☐ open, latent (not blocking) | 2026-08-04, discovered during 03-11's STATE.md update |
 
 ## Session Continuity — READ THIS FIRST
 
-**Next command: `/gsd:plan-phase 3 --chunked`**
-(non-chunked stalls on this Windows box). If the SessionStart banner reports the graph STALE,
-run `graphify update . && cp graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/`
-first, per CLAUDE.md. **Do not run `/gsd:verify-work 3`** — GATE-4 is genuinely unmet.
-**Do not run another training job** until 03-12 (pre-flight assertions) is in place.
+**Next command: `/gsd:execute-phase 3`** (resumes at 03-12 — 03-11 is done and committed).
+If the SessionStart banner reports the graph STALE, run
+`graphify update . && cp graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/`
+first, per CLAUDE.md (this session already did so after 03-11 landed: 3457 nodes/6273
+edges/234 communities). **Do not run `/gsd:verify-work 3`** — GATE-4 stays unmet until
+03-25 (the wave-7 human-operator checkpoint) remeasures it. **Do not run another training
+job** until 03-12 (thief safety) and 03-13's pre-flight assertions are in place — 03-12
+is next, not skippable.
 
-Inputs the planner must read before writing 03-11..03-16:
+Wave 1 status: 03-11 (graph primitives) done. 03-12 (thief safety rule), 03-13
+(turns_remaining + config surface), 03-14 (terminal signal) remain to finish wave 1.
+Each subsequent execute-phase invocation should just pick up the next undone plan file
+under `.planning/phases/03-blind-strategy-module-rl-policy/03-1[2-9]-PLAN.md` /
+`03-2[0-5]-PLAN.md` in order — no further reading of the planning inputs below is needed,
+they were only for authoring the 15 plans, which is already done.
+
+Inputs the planner read before writing 03-11..03-25 (kept for reference, not re-reading
+needed during execution):
 
 | Document | What it settles |
 |---|---|
@@ -264,10 +273,11 @@ Inputs the planner must read before writing 03-11..03-16:
 | `docs/research/TRAINING-METHODOLOGY.md` | Per-role γ, rewards, start states, self-play, pre-flight checks |
 | `docs/research/ALG-COMPARISON.md` | Algorithm per role, features, state representation |
 
-**Design decision this session changes:** RL is demoted from "the strategy" to "tuning ~60
-evaluation weights". Strength comes from alpha-beta search over a cycle-based evaluation.
-Steps 03-11/03-12 need no training at all and are measurable the same day. This does NOT
-re-derive the phase breakdown (CLAUDE.md) — it is still Phase 3, stage 3 of the book's seven.
+**Design decision that session changed:** RL is demoted from "the strategy" to "tuning ~60
+evaluation weights". Strength comes from alpha-beta search over a cycle-based evaluation
+(D-26) — 03-11's `pursuit.strategy.graph` package (this session) is the measurement layer
+that evaluation is built on. This does NOT re-derive the phase breakdown (CLAUDE.md) — it
+is still Phase 3, stage 3 of the book's seven.
 
 **Uncommitted at session end:** `training/eval_aggregate.py` + edits to
 `eval_stats.py`/`eval_report.py`/`evaluate.py` and two test files (the T4-followup-3
@@ -331,3 +341,27 @@ Resume file: None — Tasks 1-3 are fully committed (3 task commits: 1dea409, 8c
   Note on tooling: per 03-03's finding, `gsd-tools.cjs state advance-plan`/`update-progress`
   are NOT used on this file -- this update was hand-authored, matching the established
   per-plan narrative format.
+
+---
+
+Last session: 2026-08-04T12:31:00+03:00
+Stopped at: Completed 03-11-PLAN.md (graph primitives, run-2 wave 1's first plan) in
+  full. All 3 tasks executed TDD (tests written and confirmed red before each
+  implementation went green), each committed atomically: Task 1 `components.py`
+  (`12be2e4`), Task 2 `cycles.py` (`52c85f2`), Task 3 `territory.py` (`b4b06fa`). A
+  4th commit (`af5f0de`) closed a Rule-2 coverage gap found during final verification
+  (two documented contract branches -- the DFS-root cut-vertex case and
+  `cycle_rank(frozenset())==0` -- had no direct test; 2 tests added, package coverage
+  98%->100%). `03-11-SUMMARY.md` written. Full repo gates green: `ruff check .` 0
+  violations, line-limit clean (new files 100/37/55/32 code lines), 456 passed / 2
+  skipped (the pre-existing GATE-4 skip, untouched), coverage 97.05% (>=85% floor).
+  Graphify rebuilt and `GRAPH_REPORT.md` refreshed (3457 nodes/6273 edges/234
+  communities). `docs/phases/phase-3/TODO.md` deliberately not touched -- its
+  03-11..03-16 row numbering predates the 15-plan wave breakdown and reconciling it is
+  03-24's ("triplet refresh") explicit job.
+Resume file: None -- 03-11 is fully committed and closed. **Next step is
+  `/gsd:execute-phase 3`**, which resumes at **03-12** (thief safety rule — never step
+  into `N[cop]`; see `.planning/phases/03-blind-strategy-module-rl-policy/03-12-PLAN.md`).
+  Waves 1-6 remain autonomous; wave 7 (`03-25`) is the human-operator checkpoint (the
+  overnight training run and the real GATE-4 remeasurement) -- do not run
+  `/gsd:verify-work 3` before it passes.
