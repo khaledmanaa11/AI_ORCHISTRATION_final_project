@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from pursuit.shared import durable_write
-from pursuit.strategy.qtable import QTable
+from pursuit.strategy.qtable import SCHEMA_VERSION, QTable
 
 _KEY_A = "2,3|5,5|9|6|1"
 _KEY_B = "0,0|1,1|0|0|0"
@@ -25,7 +25,9 @@ def test_durable_write_raises_after_retries_exhausted(
 
     monkeypatch.setattr(durable_write.os, "replace", _always_denied)
     with pytest.raises(PermissionError):
-        durable_write.durable_write_json(path, {"version": 1, "table": {}}, retries=1, backoff=0.01)
+        durable_write.durable_write_json(
+            path, {"version": SCHEMA_VERSION, "table": {}}, retries=1, backoff=0.01
+        )
 
 
 def test_interrupted_write_before_rotate_leaves_target_loadable(

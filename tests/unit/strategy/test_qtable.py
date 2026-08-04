@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from pursuit.strategy.qtable import QTable
+from pursuit.strategy.qtable import SCHEMA_VERSION, QTable
 
 _KEY_A = "2,3|5,5|9|6|1"
 _KEY_B = "0,0|1,1|0|0|0"
@@ -98,7 +98,7 @@ def test_load_missing_version_raises(tmp_path: Path) -> None:
 
 def test_load_unknown_action_index_raises(tmp_path: Path) -> None:
     path = tmp_path / "qtable.json"
-    payload = {"version": 1, "table": {_KEY_A: {"values": {"9": 1.0}, "visits": 0}}}
+    payload = {"version": SCHEMA_VERSION, "table": {_KEY_A: {"values": {"9": 1.0}, "visits": 0}}}
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="action index"):
         QTable.load(path)
@@ -106,7 +106,7 @@ def test_load_unknown_action_index_raises(tmp_path: Path) -> None:
 
 def test_load_unparseable_key_raises(tmp_path: Path) -> None:
     path = tmp_path / "qtable.json"
-    payload = {"version": 1, "table": {"not-a-valid-key": {"values": {}, "visits": 0}}}
+    payload = {"version": SCHEMA_VERSION, "table": {"not-a-valid-key": {"values": {}, "visits": 0}}}
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError):
         QTable.load(path)
@@ -121,14 +121,25 @@ def test_load_non_object_top_level_raises(tmp_path: Path) -> None:
 
 def test_load_missing_table_raises(tmp_path: Path) -> None:
     path = tmp_path / "qtable.json"
-    path.write_text(json.dumps({"version": 1}), encoding="utf-8")
+    path.write_text(json.dumps({"version": SCHEMA_VERSION}), encoding="utf-8")
     with pytest.raises(ValueError, match="table"):
+        QTable.load(path)
+
+
+def test_load_stale_schema_version_raises(tmp_path: Path) -> None:
+    """A run-1-format table (SCHEMA_VERSION - 1) fails loud naming the stale
+    version -- this is what makes 03-13's "no migration" safe, not lucky."""
+    path = tmp_path / "qtable.json"
+    stale_version = SCHEMA_VERSION - 1
+    payload = {"version": stale_version, "table": {}}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match=str(stale_version)):
         QTable.load(path)
 
 
 def test_load_entry_missing_visits_raises(tmp_path: Path) -> None:
     path = tmp_path / "qtable.json"
-    payload = {"version": 1, "table": {_KEY_A: {"values": {}}}}
+    payload = {"version": SCHEMA_VERSION, "table": {_KEY_A: {"values": {}}}}
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="visits"):
         QTable.load(path)
@@ -136,7 +147,7 @@ def test_load_entry_missing_visits_raises(tmp_path: Path) -> None:
 
 def test_load_non_integer_action_index_raises(tmp_path: Path) -> None:
     path = tmp_path / "qtable.json"
-    payload = {"version": 1, "table": {_KEY_A: {"values": {"abc": 1.0}, "visits": 0}}}
+    payload = {"version": SCHEMA_VERSION, "table": {_KEY_A: {"values": {"abc": 1.0}, "visits": 0}}}
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="action index"):
         QTable.load(path)

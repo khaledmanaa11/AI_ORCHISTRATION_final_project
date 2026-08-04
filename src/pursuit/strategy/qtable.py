@@ -9,11 +9,19 @@ schema below, so a save/load cycle can never desynchronize them:
     {"version": 1, "table": {"<key>": {"values": {"<action>": <q>, ...},
                                         "visits": <int>}}}
 
-load() is fail-loud: malformed JSON, a missing schema version, an
+load() is fail-loud: malformed JSON, a missing or STALE schema version, an
 out-of-range action index, or a key `encoding.decode_state` cannot parse
 each raise with the offending detail -- an empty table loads cleanly and
 plays like a random agent, which is exactly the failure that would waste an
 overnight run, so this module never degrades silently to one.
+
+SCHEMA_VERSION bumped 1 -> 2 in plan 03-13: the state-key format changed
+(turns_remaining replaces turn_bucket, D-06 superseded) and a run-1 key
+parses cleanly under the new format too -- `0,0|3,3|9|0|1` is five integers
+either way -- so a stale artifact would otherwise load silently and play
+against a wrong time field. No table was ever promoted and none is
+committed, so this is a version bump with NO migration path, not a
+converter: an old-version payload is rejected outright, by design.
 """
 
 from __future__ import annotations
@@ -24,7 +32,7 @@ from pursuit.constants import Action
 from pursuit.shared.durable_write import durable_write_json, load_json_with_fallback
 from pursuit.strategy.encoding import decode_state
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 _ACTION_COUNT = len(Action)
 
 # Retry/backoff mechanics for save()'s durable write -- structural, not a
@@ -115,6 +123,12 @@ def _validate_top_level(raw: object, *, source: str) -> None:
         raise ValueError(f"{source}: qtable file must contain a JSON object")
     if "version" not in raw:
         raise ValueError(f"{source}: qtable file missing required 'version' field")
+    if raw["version"] != SCHEMA_VERSION:
+        raise ValueError(
+            f"{source}: qtable file has version {raw['version']!r}, "
+            f"expected {SCHEMA_VERSION} -- no migration exists, a stale table "
+            "must be retrained, never loaded"
+        )
     if "table" not in raw or not isinstance(raw["table"], dict):
         raise ValueError(f"{source}: qtable file missing required 'table' object")
 
