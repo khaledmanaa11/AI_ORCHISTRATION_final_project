@@ -65,6 +65,17 @@ def test_barrier_corridor_produces_cut_vertex_at_the_choke_cell(default_params):
     assert (mid, gap_col) in articulation_points(cells)
 
 
+def test_dfs_root_itself_is_reported_as_a_cut_vertex_when_it_has_two_children():
+    # A root with two direct leaf neighbours: the DFS root (the
+    # lexicographically smallest cell, (0, 0)) gets two independent
+    # children -- the root-specific `root_child_count >= 2` branch, distinct
+    # from the non-root case already covered by the barrier-corridor test
+    # above. Both leaves have degree 1, so they are never cut vertices
+    # themselves; only the root is.
+    cells = frozenset({(0, 0), (0, 1), (1, 0)})
+    assert articulation_points(cells) == frozenset({(0, 0)})
+
+
 def test_out_of_set_cell_returns_empty_component_and_zero_degree(default_params):
     cells = free_cells(_state(barriers=frozenset({(3, 3)})), default_params)
     assert component_of(cells, (3, 3)) == frozenset()

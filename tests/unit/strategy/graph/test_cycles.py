@@ -24,6 +24,11 @@ def test_empty_7x7_board_has_cycle_rank_36_and_is_not_a_forest(default_params):
     assert is_forest(cells) is False
 
 
+def test_empty_cell_set_has_cycle_rank_zero_and_is_a_forest():
+    assert cycle_rank(frozenset()) == 0
+    assert is_forest(frozenset()) is True
+
+
 def test_single_cell_and_straight_corridor_are_forests_with_rank_zero():
     assert cycle_rank(frozenset({(0, 0)})) == 0
     assert is_forest(frozenset({(0, 0)})) is True
