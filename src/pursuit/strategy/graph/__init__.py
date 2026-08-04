@@ -19,12 +19,16 @@ from pursuit.strategy.graph.components import (
     free_cells,
     neighbors,
 )
+from pursuit.strategy.graph.cycles import cycle_rank, is_forest, reduction_value
 
 __all__ = [
     "articulation_points",
     "component_of",
+    "cycle_rank",
     "degree",
     "edge_count",
     "free_cells",
+    "is_forest",
     "neighbors",
+    "reduction_value",
 ]
