@@ -18,6 +18,7 @@ from pursuit.shared.state import GameState
 from pursuit.strategy.base import Decision, Observation
 from pursuit.strategy.pathfind import UNREACHABLE, Coord, bfs
 from pursuit.strategy.prior import argmax_cell
+from pursuit.strategy.safety import safe_moves
 
 
 def pick(
@@ -81,13 +82,19 @@ def _pursue(state: GameState, agent: str, target: Coord, params: GameParams) -> 
 
 
 def _evade(state: GameState, agent: str, target: Coord, params: GameParams) -> Coord:
-    """The thief's step: maximize BFS distance from `target`, tie-breaking
-    toward the destination with more onward legal moves -- walking into a
-    pocket to gain one square of distance is how an evader loses. Being
-    unreachable from `target` ranks as the *best* outcome (the cop can never
-    arrive), never the worst.
+    """The thief's step: filter first, then rank the survivors.
+
+    Legal destinations pass through the D-31 safety filter
+    (`safety.safe_moves` -- never steps into the cop's closed neighbourhood
+    N[cop] while a cell outside it is offered; see `safety.py` for the
+    measured gain and its caveat) before ranking. Ranking is unchanged:
+    maximize BFS distance from `target`, tie-breaking toward the destination
+    with more onward legal moves -- walking into a pocket to gain one square
+    of distance is how an evader loses. Being unreachable from `target`
+    ranks as the *best* outcome (the cop can never arrive), never the worst.
     """
-    candidates = sorted(get_legal_moves(state, agent, params))
+    legal = sorted(get_legal_moves(state, agent, params))
+    candidates = safe_moves(legal, state, params)
     best_cell = candidates[0]
     best_key: tuple[bool, int, int] | None = None
     for dest in candidates:
