@@ -1,4 +1,4 @@
-"""Tests for encoding.py -- canonical state key, D-05/D-06/D-18 (STRAT-01)."""
+"""Tests for encoding.py -- canonical state key, D-05/D-06-superseded/D-18 (STRAT-01)."""
 
 from __future__ import annotations
 
@@ -11,13 +11,13 @@ from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
 from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 from pursuit.strategy.base import Observation
-from pursuit.strategy.encoding import blocked_mask, decode_state, encode_state, turn_bucket
+from pursuit.strategy.encoding import blocked_mask, decode_state, encode_state, turns_remaining
 
 _POLICE_STRATEGY = Path(__file__).parent.parent.parent.parent / "config" / "police" / "strategy.json"
 
 
 def _strategy_params() -> StrategyParams:
-    """Real config/police/strategy.json -- turn_bucket_fractions=[0.34, 0.69]."""
+    """Real config/police/strategy.json."""
     return load_strategy_config(_POLICE_STRATEGY)
 
 
@@ -32,11 +32,13 @@ def _obs(own, target, mask, barriers_used, turn_index) -> Observation:
     )
 
 
-def test_worked_example_key_matches_prd_verbatim(default_params: GameParams) -> None:
-    """docs/PRD_rl_strategy.md Sec2's own worked example -- (2,3)/(5,5)/9/6/turn14."""
+def test_worked_example_key_adapted_to_turns_remaining(default_params: GameParams) -> None:
+    """docs/PRD_rl_strategy.md Sec2's own worked example -- (2,3)/(5,5)/9/6/turn14 -- with
+    field 5 recomputed as turns_remaining (move_ceiling=35 - 14 = 21); PRD prose text itself
+    still shows the pre-D-06-superseded bucket value and is 03-22's to update, not this plan's."""
     obs = _obs(own=(2, 3), target=(5, 5), mask=9, barriers_used=6, turn_index=14)
     key = encode_state(obs, _strategy_params(), default_params)
-    assert key == "2,3|5,5|9|6|1"
+    assert key == "2,3|5,5|9|6|21"
 
 
 def test_round_trip_decode_reconstructs_every_keyed_field(default_params: GameParams) -> None:
@@ -49,7 +51,7 @@ def test_round_trip_decode_reconstructs_every_keyed_field(default_params: GamePa
         "target_cell": (6, 6),
         "blocked_mask": 5,
         "barriers_used": 3,
-        "turn_bucket": turn_bucket(30, params, default_params),
+        "turns_remaining": turns_remaining(30, default_params),
     }
 
 
@@ -102,14 +104,25 @@ def test_blocked_mask_bit_order_pinned_to_action_order(default_params: GameParam
     assert blocked_mask(state, (0, 0), "cop", default_params) == 9
 
 
-def test_turn_bucket_boundaries_pinned(default_params: GameParams) -> None:
-    """fractions=[0.34, 0.69] * move_ceiling=35 -> boundaries at 11.9 / 24.15."""
+def test_turns_remaining_at_an_interior_turn(default_params: GameParams) -> None:
+    """Field 5 equals move_ceiling - turn_index for any turn strictly before the ceiling."""
+    assert turns_remaining(10, default_params) == default_params.move_ceiling - 10
+    assert turns_remaining(0, default_params) == default_params.move_ceiling
+
+
+def test_turns_remaining_clamps_at_zero_at_and_past_ceiling(default_params: GameParams) -> None:
+    """A turn AT or PAST move_ceiling clamps to 0 -- never negative (03-16's f9 stays in [0,1])."""
+    assert turns_remaining(default_params.move_ceiling, default_params) == 0
+    assert turns_remaining(default_params.move_ceiling + 7, default_params) == 0
+
+
+def test_differing_turn_index_gives_different_key(default_params: GameParams) -> None:
+    """Two observations differing only in turn_index must encode to different keys -- this
+    is what makes the task Markov under its own deadline (D-06 superseded)."""
     params = _strategy_params()
-    assert params.turn_bucket_fractions == [0.34, 0.69]
-    assert turn_bucket(11, params, default_params) == 0
-    assert turn_bucket(12, params, default_params) == 1
-    assert turn_bucket(24, params, default_params) == 1
-    assert turn_bucket(25, params, default_params) == 2
+    obs_a = _obs(own=(1, 1), target=(4, 4), mask=0, barriers_used=0, turn_index=5)
+    obs_b = _obs(own=(1, 1), target=(4, 4), mask=0, barriers_used=0, turn_index=12)
+    assert encode_state(obs_a, params, default_params) != encode_state(obs_b, params, default_params)
 
 
 def test_decode_state_wrong_field_count_raises() -> None:
