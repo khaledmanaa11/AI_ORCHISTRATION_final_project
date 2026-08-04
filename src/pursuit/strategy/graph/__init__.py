@@ -7,8 +7,7 @@ shared runtime state (D-03): `03-16` (features), `03-17` (barrier objective)
 and `03-18` (alpha-beta search) are all built against this one API.
 
 Re-exports the public names of `components`, `cycles` and `territory` so
-consumers import from `pursuit.strategy.graph`, never a submodule. Filled in
-as each module lands (components: Task 1; cycles/territory: Tasks 2-3).
+consumers import from `pursuit.strategy.graph`, never a submodule.
 """
 
 from pursuit.strategy.graph.components import (
@@ -20,6 +19,7 @@ from pursuit.strategy.graph.components import (
     neighbors,
 )
 from pursuit.strategy.graph.cycles import cycle_rank, is_forest, reduction_value
+from pursuit.strategy.graph.territory import territory_diff, voronoi_split
 
 __all__ = [
     "articulation_points",
@@ -31,4 +31,6 @@ __all__ = [
     "is_forest",
     "neighbors",
     "reduction_value",
+    "territory_diff",
+    "voronoi_split",
 ]
