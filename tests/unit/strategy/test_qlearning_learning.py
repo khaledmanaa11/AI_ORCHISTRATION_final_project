@@ -88,6 +88,29 @@ def test_update_rule_matches_formula_and_bumps_visits(
     assert brain._table.visits(prev_key) == 1
 
 
+def test_terminal_update_bootstraps_from_reward_alone_and_ignores_next_key(
+    tmp_path: Path, default_params: GameParams
+) -> None:
+    """R4: with terminal=True the target collapses to `reward` alone --
+    seeding next_key's Q-values arbitrarily large must not change the
+    stored result (the leak this plan closes), and prev_key's visit count
+    still bumps exactly as the non-terminal case does."""
+    params = params_for("cop", tmp_path / "qtable.json")
+    prev_key = encode_state(make_obs(own=(1, 1)), params, default_params)
+    next_key = encode_state(make_obs(own=(2, 2)), params, default_params)
+    table = QTable()
+    table.set(prev_key, 1, 0.2)
+    table.set(next_key, 0, 999.0)  # seeded arbitrarily large -- must be ignored
+    table.save(params.qtable_path)
+    brain = QLearningBrain(role="cop", params=params, game_params=default_params)
+
+    brain.update(prev_key, 1, reward=1.0, next_key=next_key, terminal=True)
+
+    expected = 0.2 + params.alpha * (1.0 - 0.2)  # bootstrap term dropped entirely
+    assert brain._table.get(prev_key, 1) == pytest.approx(expected)
+    assert brain._table.visits(prev_key) == 1
+
+
 def test_no_io_on_decision_path(
     tmp_path: Path, default_params: GameParams, monkeypatch: pytest.MonkeyPatch
 ) -> None:

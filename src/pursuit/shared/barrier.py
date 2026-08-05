@@ -2,7 +2,7 @@
 
 place_barrier validates a proposed barrier cell and, if accepted, returns a new
 frozen GameState with that cell added to barriers and barriers_placed incremented.
-All four rejection cases return the original state object unchanged.
+All five rejection cases return the original state object unchanged.
 
 Ownership boundary with detect_capture (plan 01-03):
     Placing a barrier on the thief's current cell IS a valid placement here —
@@ -30,6 +30,11 @@ def _in_bounds(cell: Coord, board_size: int) -> bool:
     return row in range(board_size) and col in range(board_size)
 
 
+def _within_one_step(origin: Coord, cell: Coord) -> bool:
+    """Return True for the origin or an orthogonally adjacent cell."""
+    return abs(origin[0] - cell[0]) + abs(origin[1] - cell[1]) <= 1
+
+
 def place_barrier(state: GameState, cell: Coord, params: GameParams) -> GameState:
     """Attempt to place a barrier at *cell*; return new or original state.
 
@@ -38,9 +43,10 @@ def place_barrier(state: GameState, cell: Coord, params: GameParams) -> GameStat
 
     1. Out-of-bounds  → reject (no quota cost)
     2. Cop's own cell → reject (no quota cost)
-    3. Already barriered → reject (no quota cost)
-    4. Over quota    → reject
-    5. Otherwise     → accept; return new frozen GameState
+    3. Beyond one step → reject (no quota cost)
+    4. Already barriered → reject (no quota cost)
+    5. Over quota    → reject
+    6. Otherwise     → accept; return new frozen GameState
 
     Args:
         state:  Current game snapshot (frozen; never mutated).
@@ -49,7 +55,7 @@ def place_barrier(state: GameState, cell: Coord, params: GameParams) -> GameStat
 
     Returns:
         A new frozen GameState if the placement is accepted, or *state* unchanged
-        if the placement is rejected for any of the four reasons above.
+        if the placement is rejected for any of the five reasons above.
 
     Note:
         Placing on the thief's current cell is accepted (D-10); the capture
@@ -63,15 +69,19 @@ def place_barrier(state: GameState, cell: Coord, params: GameParams) -> GameStat
     if cell == state.cop:
         return state
 
-    # 3. Already-barriered cell — no quota cost on rejection.
+    # 3. Beyond one step from the cop — no quota cost on rejection.
+    if not _within_one_step(state.cop, cell):
+        return state
+
+    # 4. Already-barriered cell — no quota cost on rejection.
     if cell in state.barriers:
         return state
 
-    # 4. Quota exhausted — reject placement.
+    # 5. Quota exhausted — reject placement.
     if state.barriers_placed >= params.barrier_quota:
         return state
 
-    # 5. Accepted — produce a new immutable snapshot.
+    # 6. Accepted — produce a new immutable snapshot.
     new_barriers = state.barriers | frozenset({cell})
     added = len(new_barriers) - len(state.barriers)
     return dataclasses.replace(

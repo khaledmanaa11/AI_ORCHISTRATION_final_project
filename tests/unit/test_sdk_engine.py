@@ -6,6 +6,8 @@ the respective shared-module test files (test_board.py, test_barrier.py,
 test_capture.py).  No numeric game-parameter values are hardcoded here.
 """
 
+import pytest
+
 from pursuit.constants import Outcome
 from pursuit.sdk import engine
 from pursuit.shared.state import GameState
@@ -37,16 +39,40 @@ def test_apply_cop_action_move_only(default_params, start_state):
     assert outcome is None
 
 
-def test_apply_cop_action_barrier(default_params, start_state):
-    """apply_cop_action with move + barrier: barrier added, quota incremented."""
-    dest = (0, 1)
-    barrier = (1, 1)
+def test_apply_cop_action_barrier_no_move(default_params, start_state):
+    """Barrier with move_to=None: barrier placed, cop stays, quota incremented."""
+    barrier = (0, 1)
+    new_state, outcome = engine.apply_cop_action(start_state, None, barrier, default_params)
+    assert barrier in new_state.barriers
+    assert new_state.barriers_placed == start_state.barriers_placed + 1
+    assert new_state.cop == start_state.cop
+    assert outcome is None
+
+
+def test_apply_cop_action_barrier_move_to_own_cell(default_params, start_state):
+    """Barrier with move_to == state.cop behaves like move_to=None (D-12)."""
+    barrier = (0, 1)
     new_state, outcome = engine.apply_cop_action(
-        start_state, dest, barrier, default_params
+        start_state, start_state.cop, barrier, default_params
     )
     assert barrier in new_state.barriers
     assert new_state.barriers_placed == start_state.barriers_placed + 1
+    assert new_state.cop == start_state.cop
     assert outcome is None
+
+
+def test_apply_cop_action_move_and_barrier_raises(default_params, start_state):
+    """A real move plus a barrier in the same turn violates move-XOR-barrier (D-12)."""
+    with pytest.raises(ValueError, match="cannot move to"):
+        engine.apply_cop_action(start_state, (0, 1), (1, 0), default_params)
+
+
+def test_apply_cop_action_barrier_on_thief_is_capture(default_params):
+    """Cop adjacent to the thief places a barrier on the thief's cell -> CAPTURE (BASE-04)."""
+    state = GameState(cop=(3, 2), thief=(3, 3), barriers=frozenset(), barriers_placed=0, turn=0)
+    new_state, outcome = engine.apply_cop_action(state, None, state.thief, default_params)
+    assert state.thief in new_state.barriers
+    assert outcome is Outcome.CAPTURE
 
 
 def test_apply_thief_move_increments_turn(default_params, start_state):

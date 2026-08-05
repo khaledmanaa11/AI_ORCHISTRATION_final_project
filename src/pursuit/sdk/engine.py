@@ -5,7 +5,7 @@ It wraps shared/board, shared/barrier, shared/capture, and shared/outcome.
 No business logic lives here — this is wiring only.
 
 D-12 turn order:
-  1. Cop acts: apply_cop_action (move + optional barrier + capture check).
+  1. Cop acts: apply_cop_action (move XOR barrier + capture check).
   2. Thief moves: apply_thief_move (move + turn increment + survival check).
 """
 
@@ -44,15 +44,19 @@ def apply_cop_action(
     barrier_at: tuple[int, int] | None,
     params: GameParams,
 ) -> tuple[GameState, Outcome | None]:
-    """Apply cop's move and optional barrier, then detect capture. D-12 steps 1-2."""
+    """Apply the cop's move XOR barrier, then detect capture. D-12 steps 1-2."""
+    if barrier_at is not None:
+        if move_to is not None and move_to != state.cop:
+            raise ValueError(
+                f"cop action cannot move to {move_to} and place barrier at {barrier_at}"
+            )
+        after_barrier = place_barrier(state, barrier_at, params)
+        outcome = detect_capture(after_barrier, params)
+        return after_barrier, outcome
+
     after_move = apply_move(state, "cop", move_to) if move_to is not None else state
-    after_barrier = (
-        place_barrier(after_move, barrier_at, params)
-        if barrier_at is not None
-        else after_move
-    )
-    outcome = detect_capture(after_barrier, params)
-    return after_barrier, outcome
+    outcome = detect_capture(after_move, params)
+    return after_move, outcome
 
 
 def apply_thief_move(

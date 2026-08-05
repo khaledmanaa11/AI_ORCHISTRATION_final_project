@@ -12,7 +12,6 @@ one of these objects.
 
 from __future__ import annotations
 
-import dataclasses
 import random
 
 from pursuit.constants import Action, MoveSource, cell_for
@@ -21,7 +20,7 @@ from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
 from pursuit.shared.strategy_config import StrategyParams
 from pursuit.strategy import fallback
-from pursuit.strategy.barriers import choose_barrier
+from pursuit.strategy.barriers import cop_decision
 from pursuit.strategy.base import BrainBase, Decision, Observation
 from pursuit.strategy.encoding import encode_state
 from pursuit.strategy.qtable import QTable
@@ -81,23 +80,44 @@ class QLearningBrain(BrainBase):
         return Decision(move=move, source=MoveSource.QTABLE)
 
     def _decide_move(self, obs: Observation, state: GameState) -> Decision:
-        """Movement first, then the cop's barrier stage (D-12); the thief's
-        barrier is unconditionally None -- not "usually None" (STRAT-05)."""
+        """Move XOR barrier for the cop via the shared `cop_decision` (D-12);
+        the thief's barrier is unconditionally None -- not "usually None"
+        (STRAT-05)."""
         movement = self._pick_move(obs, state)
-        barrier = None
-        if self._role == "cop":
-            post_move = dataclasses.replace(state, cop=movement.move)
-            barrier = choose_barrier(
-                post_move, self._game_params, obs.target_cell, self._params.barrier_min_gain
-            )
-        return Decision(move=movement.move, source=movement.source, barrier=barrier)
+        if self._role != "cop":
+            return Decision(move=movement.move, source=movement.source)
+        return cop_decision(
+            movement,
+            state,
+            self._game_params,
+            obs.target_cell,
+            self._params.barrier_min_gain,
+        )
 
-    def update(self, prev_key: str, action: int, reward: float, next_key: str) -> None:
-        """One Q-learning step, PRD Sec5, verbatim; bumps prev_key's visit
-        count. A plain method so 03-08's harness drives it directly rather
-        than reaching into the table itself."""
+    def update(
+        self,
+        prev_key: str,
+        action: int,
+        reward: float,
+        next_key: str,
+        *,
+        terminal: bool = False,
+    ) -> None:
+        """One Q-learning step, PRD Sec5. Sec5's formula computes
+        `max_a' Q(s', a')` for the successor state `s'` -- at a terminal
+        transition there is no successor to bootstrap from, so the standard
+        convention (and this method's `terminal=True` case, R4) is that
+        term is 0 and the target collapses to `reward` alone; `next_key` is
+        then never read, so a terminal value can no longer leak into a live
+        state that happens to share an encoded key. `terminal` defaults to
+        False, so every existing caller is unaffected. Bumps prev_key's
+        visit count in both cases. A plain method so 03-08's harness drives
+        it directly rather than reaching into the table itself."""
         old = self._table.get(prev_key, action)
-        best_next = max(self._table.get(next_key, a) for a in range(_ACTION_COUNT))
-        target = reward + self._params.gamma * best_next
+        if terminal:
+            target = reward
+        else:
+            best_next = max(self._table.get(next_key, a) for a in range(_ACTION_COUNT))
+            target = reward + self._params.gamma * best_next
         self._table.set(prev_key, action, old + self.alpha * (target - old))
         self._table.bump_visit(prev_key)

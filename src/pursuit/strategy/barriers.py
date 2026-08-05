@@ -31,10 +31,36 @@ from __future__ import annotations
 
 import dataclasses
 
+from pursuit.constants import Direction
 from pursuit.shared.barrier import place_barrier
 from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
+from pursuit.strategy.base import Decision
 from pursuit.strategy.pathfind import UNREACHABLE, Coord, bfs
+
+
+def cop_decision(
+    movement: Decision,
+    state: GameState,
+    game_params: GameParams,
+    believed_thief_cell: Coord,
+    min_gain: int,
+) -> Decision:
+    """Resolve the cop's move-XOR-barrier turn (D-12), shared by every brain.
+
+    Placing forgoes movement, so `choose_barrier` is asked about the cop's
+    CURRENT cell -- never a post-move one -- and a proposed cell comes back
+    alongside `move=state.cop` (stay), so declared == applied (rules 16/22).
+
+    PLACEHOLDER POLICY -- deliberately not a settled design. Place whenever a
+    candidate clears `min_gain`, move otherwise. Under the one-step rule a
+    barrier costs the whole turn, so the real move-vs-place trade-off is an
+    open strategy question and is NOT decided here.
+    """
+    barrier = choose_barrier(state, game_params, believed_thief_cell, min_gain)
+    if barrier is None:
+        return Decision(move=movement.move, source=movement.source)
+    return Decision(move=state.cop, source=movement.source, barrier=barrier)
 
 
 def choose_barrier(
@@ -45,11 +71,10 @@ def choose_barrier(
 ) -> Coord | None:
     """Whether and where the cop should place a barrier this turn.
 
-    `state` must already reflect the cop's position at the moment the barrier
-    would be placed (i.e. the caller's chosen movement destination, matching
-    `sdk.engine.apply_cop_action`'s own move-then-barrier order) so every
-    legality check here is identical to the one the engine will run for real,
-    guaranteeing declared == applied (AI-SPEC E9, rules 16/22).
+    `state` must reflect the cop's current position before it acts. Under the
+    D-12 move-XOR-barrier rule, a returned cell means the caller must forgo
+    movement and pass this same state to the engine for placement, guaranteeing
+    declared == applied (AI-SPEC E9, rules 16/22).
 
     Returns `None` at quota, when no legal candidate exists, or when the best
     candidate's gain does not clear `min_gain` (`StrategyParams.barrier_min_gain`).
@@ -82,19 +107,16 @@ def choose_barrier(
 def _legal_candidates(
     state: GameState, believed_thief_cell: Coord, params: GameParams
 ) -> list[Coord]:
-    """Every cell `place_barrier` would actually accept, minus the believed thief
-    cell -- `place_barrier` accepts a placement on the thief's cell (D-10), but
-    this sub-policy never proposes one there regardless."""
-    board_size = params.board_size
+    """One-step cells `place_barrier` would accept, minus the believed thief cell."""
     candidates = []
-    for row in range(board_size):
-        for col in range(board_size):
-            cell = (row, col)
-            if cell == believed_thief_cell:
-                continue
-            if place_barrier(state, cell, params) is state:
-                continue
-            candidates.append(cell)
+    for direction in Direction:
+        row_delta, col_delta = direction.value
+        cell = (state.cop[0] + row_delta, state.cop[1] + col_delta)
+        if cell == believed_thief_cell:
+            continue
+        if place_barrier(state, cell, params) is state:
+            continue
+        candidates.append(cell)
     return candidates
 
 
