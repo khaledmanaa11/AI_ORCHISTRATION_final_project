@@ -1,4 +1,4 @@
-"""Tests for the NET-09 canonical-JSON config digest (D-08, D-15)."""
+"""Tests for the NET-09 canonical-JSON config digest (D-08, D-15, D-46)."""
 
 import hashlib
 import json
@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from pursuit.network.config_hash import canonical_json, config_digest, digests_match
+from pursuit.network.config_hash import (
+    canonical_json,
+    compare_named_digest,
+    config_digest,
+    digests_match,
+)
 
 
 def _write(tmp_path, name, text):
@@ -96,3 +101,35 @@ def test_digests_match():
     assert digests_match(d, flipped) is False
     with pytest.raises(TypeError):
         digests_match(d, None)
+
+
+def test_compare_named_digest_agrees():
+    """D-46 happy path: matching digests, detail names the check by `name`."""
+    d = config_digest(Path(__file__).parents[2] / "config" / "police" / "game_params.json")
+    ok, detail = compare_named_digest("config", d, d)
+    assert ok is True
+    assert detail == "config digests agree"
+
+
+def test_compare_named_digest_differs():
+    """A real value difference is reported as 'mismatch', both values named."""
+    ok, detail = compare_named_digest("scent", "aaaa", "bbbb")
+    assert ok is False
+    assert "scent digest mismatch" in detail
+    assert "local=aaaa" in detail and "remote=bbbb" in detail
+
+
+def test_compare_named_digest_remote_absent():
+    """D-46 / rule 23: a remote of None is a mismatch, worded as absence not difference --
+    an operator must be able to tell an older build from an incompatible one."""
+    ok, detail = compare_named_digest("scent", "aaaa", None)
+    assert ok is False
+    assert detail == "scent digest absent from peer payload"
+    assert "mismatch" not in detail
+
+
+def test_compare_named_digest_uses_constant_time_compare():
+    """Never a second, weaker '==' path (CLAUDE.md) -- non-str local/remote (both present,
+    neither None) must still raise via digests_match rather than silently comparing."""
+    with pytest.raises(TypeError):
+        compare_named_digest("config", "aaaa", 1234)
