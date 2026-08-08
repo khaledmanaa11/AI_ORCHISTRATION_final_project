@@ -220,3 +220,10 @@ SDK dependency (D-34); plan 04-06 introduces the actual provider and its API key
 ---
 *Phase: 04-language-and-scent*
 *Completed: 2026-08-08*
+
+## Self-Check: PASSED
+
+All 13 claimed files verified present on disk (`ls -la`): 5 source modules, 2 config files,
+6 test files, plus this SUMMARY.md itself. All 5 claimed commit hashes verified present in
+`git log --oneline --all` (`d5eed52`, `cc192a7`, `088e4da`, `214cb77`, `7a0c55a`). No missing
+items.
