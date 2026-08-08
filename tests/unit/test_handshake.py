@@ -1,4 +1,4 @@
-"""Agreement + connectivity suite for the D-08 handshake (NET-03, NET-09).
+"""Agreement + connectivity suite for the D-08 handshake (NET-03, NET-09, D-46).
 
 No live socket, no subprocess: every path here runs through a fake caller.
 The real in-memory FastMCP transport test and the 02-06 tool-name contract
@@ -7,6 +7,13 @@ gate; shared fakes below are imported from there). Failure paths raise
 ``McpError`` -- NOT ``MCPError`` as 02-RESEARCH.md's cited snippet spells it;
 see 02-07-SUMMARY.md's finding that the installed fastmcp 3.4.5 / mcp
 packages spell the class ``McpError`` (mixed case).
+
+D-46 / rule 23 (the scent digest riding this same handshake) is covered in
+tests/unit/test_handshake_scent.py -- split OUT at the 150-code-line gate the
+same way test_handshake_abort.py/test_handshake_client.py already were, and
+importing the shared fakes below rather than duplicating them (QUAL-02).
+`peer_reply` below grew an optional scent-digest parameter for that file to
+use; every call site in THIS file keeps passing just (digest, role).
 """
 
 from mcp import McpError
@@ -55,13 +62,15 @@ def raising_caller(exc: BaseException):
     return _call
 
 
-def peer_reply(digest: str, role: str) -> dict:
-    """Build the reply envelope dict a well-behaved peer returns."""
+def peer_reply(digest: str, role: str, *, peer_scent_digest: str | None = None) -> dict:
+    """Build the reply envelope dict a well-behaved peer returns. `peer_scent_digest`
+    defaults to None (no key sent) so existing config-only callers are unaffected -- a
+    real peer that HAS opted into the scent lock (D-46) passes one explicitly."""
+    payload = {HandshakeKey.DIGEST: digest}
+    if peer_scent_digest is not None:
+        payload[HandshakeKey.SCENT_DIGEST] = peer_scent_digest
     return Envelope(
-        type=MessageType.HANDSHAKE,
-        turn=HANDSHAKE_TURN,
-        sender=role,
-        payload={HandshakeKey.DIGEST: digest},
+        type=MessageType.HANDSHAKE, turn=HANDSHAKE_TURN, sender=role, payload=payload,
     ).to_dict()
 
 
