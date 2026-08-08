@@ -2,10 +2,19 @@
 
 Walks every module under `src/pursuit/strategy/` and fails if any of them
 imports a name that could reach an LLM, an HTTP client, `subprocess`, a raw
-`socket`, or `pursuit.network` (rule 25 / STRAT-07, STRAT-03). Deliberately a
-plain `ast` walk over source text: it never imports `pursuit` itself, so it
-has zero dependency on the package being installed and runs identically from
-a bare checkout in CI.
+`socket`, `pursuit.network`, or `pursuit.services` (rule 25 / STRAT-07,
+STRAT-03). Deliberately a plain `ast` walk over source text: it never
+imports `pursuit` itself, so it has zero dependency on the package being
+installed and runs identically from a bare checkout in CI.
+
+The `pursuit.services` case closes a hole this script had until plan 04-01:
+`src/pursuit/services/` was an empty placeholder, so nothing under it could
+be imported; Phase 4 fills it with `services/llm/`, and from that point a
+strategy module could `from pursuit.services.llm.decode import decode_hint`
+and reach a language model from inside the decision path with this script
+still printing OK. `pursuit.shared` stays unguarded on purpose -- it is the
+legal seam for cross-cutting types (e.g. `pursuit.shared.state.GameState`),
+and strategy modules already import it freely.
 
 `tests/integration/test_strategy_pluggable.py` (GATE-3) loads this exact
 module by file path and calls `find_violations()` directly -- the pytest
@@ -71,6 +80,10 @@ def find_violations(root: Path = STRATEGY_ROOT) -> list[str]:
             top = name.split(".")[0]
             if name == "pursuit.network" or name.startswith("pursuit.network."):
                 violations.append(f"{path}: imports {name!r} (STRAT-03 -- networking)")
+            elif name == "pursuit.services" or name.startswith("pursuit.services."):
+                violations.append(
+                    f"{path}: imports {name!r} (STRAT-07 -- reaches an LLM via services)"
+                )
             elif name in FORBIDDEN_IMPORTS or top in FORBIDDEN_IMPORTS:
                 violations.append(
                     f"{path}: imports {name!r} (STRAT-07 -- LLM/HTTP/subprocess/socket)"
