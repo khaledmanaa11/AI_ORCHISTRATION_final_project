@@ -159,3 +159,9 @@ None — every function shipped in this plan is fully wired (pure computation an
 ---
 *Phase: 04-language-and-scent*
 *Completed: 2026-08-08*
+
+## Self-Check: PASSED
+
+- All 10 created/modified files confirmed present on disk (config x2, source x4, tests x3, this SUMMARY).
+- All 5 referenced commit hashes (`5607663`, `3a7fc34`, `cb145c5`, `589772a`, `509f114`) confirmed present in `git log --oneline`.
+- Full repo suite re-run clean at SUMMARY time: 416 passed, 91.27% coverage (gate >=85%); `uv run ruff check .` and `bash scripts/check_line_limit.sh` both exit 0 repo-wide.
