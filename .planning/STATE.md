@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-10-PLAN.md Tasks 1-3 (`tests/integration/{test_shortest_path,
-last_updated: "2026-08-08T20:06:25.123Z"
-last_activity: 2026-08-08 -- Phase 04 execution started
+stopped_at: Completed 04-07 and 04-08 (phase 4 wave 3). Next -- wave 4 (04-09, 04-10).
+last_updated: "2026-08-08T23:40:00.000Z"
+last_activity: 2026-08-08 -- Phase 04 wave 3 executed (04-07 hint decoder, 04-08 deception planner)
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 56
-  completed_plans: 30
-  percent: 25
+  completed_plans: 32
+  percent: 29
 ---
 
 # Project State
@@ -26,7 +26,13 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 1 of 14
+Plan: 8 of 14 (waves 1–3 done: 04-01..04-08. Next: wave 4 = 04-09 belief fusion,
+  04-10 bluff generator. Authoritative resume point, incl. five wave-3 carry-overs:
+  .planning/phases/04-language-and-scent/RESUME.md)
+
+<!-- The narrative below this line is Phase 3 history, retained deliberately: it
+     records why the run-2 architecture exists. It is NOT the current position. -->
+
   completion but FAILED GATE-4 for both roles on real, measured evidence (see
   docs/phases/phase-3/RUN-1-POSTMORTEM.md) — no bar was lowered, no table was promoted.
   That diagnosis plus a 3-agent literature review produced D-09-superseded (distance is
