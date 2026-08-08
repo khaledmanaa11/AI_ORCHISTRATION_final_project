@@ -119,7 +119,7 @@ D-48 … D-53 are new, resolved from the book this session under the autonomy di
 | **D-48** | **The §5.3.2 / §6.4 contradiction is resolved in favour of a per-turn Reveal with a direction-token move**, position known one turn behind, belief map = one-turn-ahead predictive distribution, degrading to scent+hints-only in Regime B. Written up for the grader | §1 above; book preface p. v |
 | **D-49** | **Scent is derived locally and never transmitted.** No scent message is added to the protocol | §1 above; §4.5 p.31 (PDF 47) |
 | **D-50** | **The emission kernel is transcribed from Figure 4 (p.28 / PDF 44), not invented.** The 5×5 table is `0.04 / 0.14 / 0.20 / 0.42 / 0.62 / 0.90`, which reproduces `0.9·exp(−3d²/8)` (`d` = Euclidean distance from the emitting cell) to two decimals. **The kernel table, ρ, the window and a worked numeric example (`0.9 → 0.81`) all live inside the locked payload**, per §4.5's red box | §4.3 p.27 (PDF 43), Figure 4 |
-| **D-51** | **Hint reliability is a bounded adaptive coefficient, not a constant.** It starts at D-40's config prior and is **lowered when a decoded hint contradicts the scent field** — §4.4's worked example (p.30 / PDF 46): declared "I moved north", expected `(1−ρ)·0.9 ≈ 0.81` in the north, measured `0.00` ⇒ *"The cop concludes with high confidence that the thief is lying. It lowers the trust coefficient it assigns to that opponent's verbal declarations."* **This extends D-40, it does not overturn it** — the *prior* remains the fixed config weight | §4.4, §6.4 |
+| **D-51** | **Hint reliability becomes a bounded adaptive coefficient. This is a DISCLOSED REVISION of D-40's "fixed" framing, taken under the autonomy directive — not a pure extension.** D-40's *mechanical* content survives intact: the fixed config weight `w` still holds hints below scent, and it is still fixed. What changes is the thing D-40 *titled* "hint trust": the book's own trust/reliability coefficient, which §4.4 (p.30 / PDF 46) shows being **lowered when a hint contradicts the scent field** — declared "I moved north", expected `(1−ρ)·0.9 ≈ 0.81` there, measured `0.00` ⇒ *"The cop concludes with high confidence that the thief is lying. It lowers the trust coefficient it assigns to that opponent's verbal declarations."* A constant coefficient would leave the book's most concrete worked mechanism unimplemented. **Because a reader comparing `04-CONTEXT.md` to the shipped code would otherwise see a locked decision walked back silently, 04-13 states the revision in `PRD_belief_map.md` and `RULES-RESOLUTION-LANG.md` as a revision** | §4.4, §6.4; autonomy directive |
 | **D-52** | **Provider abstraction with four documented slots, two shipped.** §6.5.1 (p.50 / PDF 66) names `template` (default, zero tokens), `ollama`, `claude_api`, `claude_cli`, plus `every_n_steps` for cost control. We ship **`template`** (always-available fallback, D-33) and **`claude_api`** (our default, D-32); `ollama` and `claude_cli` are registry extension points, not code. `every_n_steps` defaults to **1** because the §10.4 gate requires a hint **every** turn | §6.5.1 |
 | **D-53** | **Outgoing move payload becomes a direction token; incoming accepts a direction token *or* Phase-2 coordinates.** Rule 27 is satisfied on our side with zero interop risk against a peer still speaking `{x,y}` | rule 27; KHALED_PERSONAL_PLAN.md:437 |
 
@@ -166,16 +166,19 @@ src/pursuit/strategy/          ← ALGORITHM. no LLM import, ever (CI-enforced)
   scent.py                     kernel + decay law            (04-01)
   scentfield.py                per-agent field, local derivation (04-01)
   belief.py                    grid, predict, normalise      (04-05)
+  belief_motion.py             legal-action motion model     (04-05)
   belief_scent.py              scent likelihood (D-42)       (04-05)
-  belief_hint.py               hint likelihood + reliability (04-09)
+  belief_hint.py               hint likelihood (D-40)        (04-09)
   reliability.py               adaptive coefficient (D-51)   (04-09)
+  scent_check.py               §4.4 contradiction test       (04-09)
   deception.py                 intent + payload (D-36/37/38) (04-08)
   beliefadapter.py             sample → obs/state (D-43)     (04-11)
 
 src/pursuit/services/llm/      ← LANGUAGE ONLY. never returns a move
   gatekeeper.py                token bucket, queue, budget   (04-03)
-  budget.py                    cumulative accounting (D-35)  (04-03)
-  provider.py                  registry + template provider  (04-06)
+  bucket.py / budget.py        Table 19 law, D-35 ladder     (04-03)
+  provider.py                  registry + protocol           (04-06)
+  template_provider.py         zero-token fallback (D-52)    (04-06)
   anthropic_provider.py        claude_api / Haiku 4.5        (04-06)
   decode.py                    hint → JSON inference (D-41)  (04-07)
   bluff.py                     payload → ≤15 words (D-45)    (04-10)
@@ -184,17 +187,34 @@ src/pursuit/services/llm/      ← LANGUAGE ONLY. never returns a move
 src/pursuit/network/           ← TRANSPORT
   envelope.py                  + MessageType.HINT            (04-04)
   tools.py                     + receive_hint                (04-04)
-  turn_actions.py              direction-token move + hint   (04-04, 04-12)
+  move_payload.py              direction-token codec (D-53)  (04-04)
+  turn_actions.py              direction move + hint         (04-04, 04-12)
   handshake_wire.py            + scent digest key            (04-02)
-
-config/{police,thief}/scent.json      locked model + kernel + example (04-01)
-config/{police,thief}/language.json   LLM, gatekeeper, deception, belief knobs (04-03/06)
 ```
 
-`scent.json` and `language.json` are **separate negotiated blocks**, deliberately *not* added to
-`game_params.json` — exactly the pattern `resolution.json` established, and for the same reason
-recorded in `RULES-RESOLUTION.md` §5: rule 11 requires `game_params.json` to be byte-identical
-with a book-faithful peer, and adding fields there would abort every game before move 1.
+### Four negotiated config blocks, one owner each
+
+| File + loader | Key enum | Created by | Extended by |
+|---|---|---|---|
+| `config/{role}/scent.json` · `shared/scent_config.py` | `ScentKey` | 04-01 | — |
+| `config/{role}/language.json` · `shared/language_config.py` | `LanguageKey` | 04-03 | 04-06 |
+| `config/{role}/belief.json` · `shared/belief_config.py` | `BeliefKey` | 04-05 | 04-09, 04-11 |
+| `config/{role}/deception.json` · `shared/deception_config.py` | `DeceptionKey` | 04-08 | 04-10 |
+
+Three consequences, all deliberate:
+
+1. **They are separate negotiated blocks, not fields in `game_params.json`** — exactly the pattern
+   `resolution.json` established, for the reason recorded in `RULES-RESOLUTION.md` §5: rule 11
+   requires `game_params.json` to be byte-identical with a book-faithful peer, so adding fields
+   there would abort every game before move 1.
+2. **The key enums live beside their loaders in `shared/`, not in `config_keys.py`.**
+   `config_keys.py` is already **90 of its 150 permitted lines**; four more enums would breach the
+   hard limit the pre-commit hook enforces. The standing rule is *split files, never compress code
+   to fit* — so each enum ships in the module that validates it. Note the deviation from the
+   existing convention in each loader's docstring.
+3. **Every plan owns exactly one config file exclusively, and each extender depends on its
+   creator.** That is what makes the wave labels below honest: no two plans in one wave touch the
+   same file.
 
 ---
 
@@ -214,24 +234,36 @@ with a book-faithful peer, and adding fields there would abort every game before
 | **04-10** | Bluff generator — word limit, retry, truncate, NYC cues, template bank | 4 | 04-06, 04-08 |
 | **04-11** | `BeliefAdapter` — sample from belief, believed-state substitution, seeded RNG | 5 | 04-09 |
 | **04-12** | Turn-pipeline integration in §6.2 Figure 7 order + integration tests | 6 | 04-02, 04-04, 04-10, 04-11 |
-| **04-13** | `PRD_scent_map` · `PRD_belief_map` · `PRD_deception` · `RULES-RESOLUTION-LANG` · phase triplet · graph refresh | 6 | 04-12 |
-| **04-14** | GATE-4 measurement and the phase verdict | 7 | 04-12, 04-13 |
+| **04-13** | `PRD_scent_map` · `PRD_belief_map` · `PRD_deception` · `RULES-RESOLUTION-LANG` · phase triplet · graph refresh | **7** | 04-12 |
+| **04-14** | GATE-4 measurement and the phase verdict | **8** | 04-12, 04-13 |
 
 ```
-w1: 04-01   04-03   04-04
-      |       |       |
-w2: 04-02  04-05    04-06
-             |    /    |
-w3:        04-08     04-07
-             |    \    |
-w4:        04-10 ←   04-09
-             |         |
-w5:          \      04-11
-               \      /
-w6:            04-12 → 04-13
-                    \   /
-w7:                 04-14
+w1: 04-01      04-03      04-04
+      |    \     |
+w2: 04-02   04-05        04-06        (04-06 ← 04-03)
+              |            |
+w3:        04-08         04-07
+              |            |
+w4:        04-10 ← ← ← ← 04-09        (04-10 ← 04-06+04-08; 04-09 ← 04-05+04-07)
+                           |
+w5:                     04-11
+                           |
+w6:                     04-12         (← 04-02, 04-04, 04-10, 04-11)
+                           |
+w7:                     04-13
+                           |
+w8:                     04-14
 ```
+
+**Two wave-graph rules this satisfies, both checked rather than assumed:**
+
+1. **A plan is never in the same wave as something it depends on.** 04-13 depends on 04-12 and is
+   therefore wave 7, not 6; 04-14 follows at wave 8. 04-13 needs all twelve prior `SUMMARY.md`
+   files *and* needs 04-04's placeholder hint already deleted by 04-12 — neither is guaranteed
+   inside a shared wave.
+2. **No two plans in one wave modify the same file.** The four-block config split above is what
+   buys this: each extender (04-06, 04-09, 04-10, 04-11) already depends on its block's creator,
+   so the writes are ordered by the graph rather than by luck.
 
 ## 6. Decision → plan coverage trace
 
@@ -247,13 +279,15 @@ decision-coverage gate greps `must_haves` only, never task bodies ([[decision-co
 | 04-05 | D-42, D-48 |
 | 04-06 | D-32, D-33, D-52 |
 | 04-07 | D-41, D-44 |
-| 04-08 | D-36, D-37, D-38 |
+| 04-08 | D-36, D-37, D-38 (+ D-43, D-51 by cross-reference) |
 | 04-09 | D-40, D-51 |
-| 04-10 | D-33, D-39, D-45 |
-| 04-11 | D-43 |
-| 04-12 | D-48, D-53 |
+| 04-10 | D-33, D-39, D-45 (+ D-36, D-44) |
+| 04-11 | D-43, D-48 |
+| 04-12 | D-48, D-53 (+ D-33) |
 | 04-13 | D-48, D-49 |
-| 04-14 | — (measurement only) |
+| 04-14 | measurement only (+ D-32, the live-API run) |
+
+Verified after writing: all 22 of D-32 … D-53 appear in at least one plan's `must_haves`.
 
 ## 7. Requirement coverage
 
