@@ -34,7 +34,7 @@ async def test_build_server_registers_the_tool_surface():
     mcp = build_server(queue, "pursuit-test-peer")
     async with Client(mcp) as client:
         names = {t.name for t in await client.list_tools()}
-    assert names == {"handshake", "receive_move", "receive_barrier", "game_over"}
+    assert names == {"handshake", "receive_move", "receive_barrier", "game_over", "receive_hint"}
 
 
 async def test_two_runtimes_share_no_runtime_state(network_params):
