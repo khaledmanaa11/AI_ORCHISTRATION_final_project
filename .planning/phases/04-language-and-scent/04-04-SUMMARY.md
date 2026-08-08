@@ -188,6 +188,16 @@ None beyond the deviations documented above (all resolved during execution).
 - `move_payload.decode`/`is_legal` are ready for the belief map (04-05) and deception policy (04-08) to build on: both are pure, side-effect-free, and importable without pulling in any network/LLM dependency (keeps `scripts/check_no_llm_in_strategy.py`'s rule-25 guard trivially satisfiable for anything that imports them).
 - No blockers. Full test suite: 436 passed, 0 failed, ruff clean, line-limit gate clean, coverage 91.82% (≥ 85% required).
 
+## Self-Check: PASSED
+
+- FOUND: src/pursuit/network/move_payload.py
+- FOUND: src/pursuit/network/hint_payload.py
+- FOUND: tests/unit/test_turn_buffer.py
+- FOUND commit: 107189e (Task 1)
+- FOUND commit: d49fe0c (Task 2)
+- FOUND commit: 9094d23 (Task 3)
+- FOUND commit: 8a62a07 (SUMMARY)
+
 ---
 *Phase: 04-language-and-scent*
 *Completed: 2026-08-08*
