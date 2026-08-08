@@ -19,18 +19,16 @@ import re
 from enum import Enum
 
 from pursuit.network.envelope import Envelope, MessageType
+from pursuit.shared.deception_types import Intent  # noqa: F401 -- re-export
 
 _DIGIT_PAIR = re.compile(r"\d+\s*,\s*\d+")
 _ROW_COLUMN = re.compile(r"\brow\s+\d+\s+col(?:umn)?\s+\d+\b", re.IGNORECASE)
 
-
-class Intent(str, Enum):
-    """LANG-03: the hint's pre-committed truthfulness flag. Never optional,
-    never inferred -- Phase 6 hashes State || Move || Intent || Nonce, so
-    this field exists now in the shape Phase 6 will seal."""
-
-    TRUTH = "truth"
-    LIE = "lie"
+# Intent is imported, not declared here. 04-08's planner DECIDES the flag and
+# lives under strategy/, which may not import pursuit.network at all
+# (STRAT-03, enforced by scripts/check_no_llm_in_strategy.py), so the type
+# moved to shared/deception_types.py and this module re-exports it -- every
+# existing `from pursuit.network.hint_payload import Intent` still resolves.
 
 
 class HintKey(str, Enum):

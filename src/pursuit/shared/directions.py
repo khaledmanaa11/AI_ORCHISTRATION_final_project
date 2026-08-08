@@ -21,10 +21,16 @@ being duplicated sideways. `network/move_payload.py` re-exports the name, so
 every existing `from pursuit.network.move_payload import DirectionWord`
 keeps working.
 
-This module deliberately holds the WORDS only, never the (row, col) vectors
-they resolve to: that resolution depends on the negotiated axis origin
-(PARAMETERS.md Table 13 row 3) and stays in `move_payload.py` with the
-`_axis_signs` logic that owns it.
+It also owns the negotiated axis ORIGIN (PARAMETERS.md Table 13 row 3), for
+the same reason: which corner is cell (0, 0) decides what the word "north"
+means, and `network/move_payload.py` (the wire), `strategy/regions.py` (the
+nine sectors) and `strategy/deception_*.py` (a claimed sector) must all
+resolve it the same way or they disagree about the board while every test
+passes. `axis_signs()` is the one place that mapping is written down.
+
+What stays OUT of this module is the full word -> (row, col) vector
+resolution: that also needs the five base vectors, and those belong beside
+the wire codec that validates a step against `sdk/actions.py`.
 """
 
 from enum import Enum
@@ -44,3 +50,31 @@ class DirectionWord(str, Enum):
 #: `enum` list and for any caller that needs the vocabulary without importing
 #: the enum type itself.
 DIRECTION_WORDS: tuple[str, ...] = tuple(word.value for word in DirectionWord)
+
+
+class Origin(str, Enum):
+    """Which corner is cell (0, 0) -- PARAMETERS.md Table 13 row 3.
+
+    `game_params.json` ships "top-left", which reproduces
+    `pursuit.constants.Direction`'s own convention exactly.
+    """
+
+    TOP_LEFT = "top-left"
+    BOTTOM_LEFT = "bottom-left"
+    TOP_RIGHT = "top-right"
+    BOTTOM_RIGHT = "bottom-right"
+
+
+DEFAULT_ORIGIN = Origin.TOP_LEFT.value
+
+
+def axis_signs(origin: str) -> tuple[int, int]:
+    """`(row_sign, col_sign)` for `origin`.
+
+    Negate the row axis for a bottom-* corner, the column axis for a *-right
+    corner. A sign of +1 means "increasing index runs south / east", which is
+    what "top-left" gives and what every board helper assumes by default.
+    """
+    row_sign = -1 if origin.startswith("bottom") else 1
+    col_sign = -1 if origin.endswith("right") else 1
+    return row_sign, col_sign

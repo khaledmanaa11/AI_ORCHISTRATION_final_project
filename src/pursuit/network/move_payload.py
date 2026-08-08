@@ -24,30 +24,24 @@ from enum import Enum
 
 from pursuit.sdk.actions import barrier_cells, cop_actions, thief_actions
 from pursuit.shared.config import GameParams
-from pursuit.shared.directions import DirectionWord
+from pursuit.shared.directions import (  # noqa: F401 -- Origin is a re-export
+    DEFAULT_ORIGIN,
+    DirectionWord,
+    Origin,
+    axis_signs,
+)
 from pursuit.shared.state import GameState
 
 Coord = tuple[int, int]
 
-# DirectionWord is imported, not declared here: the five-word vocabulary moved
-# to shared/directions.py in 04-07/04-08, because strategy/ may not import
-# pursuit.network (STRAT-03) and both the hint decoder and the deception
-# planner name the same headings. Importing it keeps the existing
-# `from pursuit.network.move_payload import DirectionWord` call sites valid.
-
-
-class Origin(str, Enum):
-    """Axis-origin corners named by PARAMETERS.md Table 13 row 3. Which
-    corner is cell (0,0) decides which delta the word "north" resolves to;
-    "top-left" is game_params.json's negotiated default (config/*/game_params.json)."""
-
-    TOP_LEFT = "top-left"
-    BOTTOM_LEFT = "bottom-left"
-    TOP_RIGHT = "top-right"
-    BOTTOM_RIGHT = "bottom-right"
-
-
-DEFAULT_ORIGIN = Origin.TOP_LEFT.value
+# DirectionWord / Origin / DEFAULT_ORIGIN / axis_signs are imported, not
+# declared here: the vocabulary and the negotiated axis convention moved to
+# shared/directions.py in 04-07/04-08, because strategy/ may not import
+# pursuit.network (STRAT-03) and the hint decoder, the nine board sectors and
+# the deception planner all have to resolve "north" the same way this wire
+# codec does. Importing them keeps every existing
+# `from pursuit.network.move_payload import DirectionWord, Origin` call site
+# valid; this module keeps the five base vectors and the legality check.
 
 
 class ActionKind(str, Enum):
@@ -74,19 +68,10 @@ _BASE_VECTOR: dict[DirectionWord, Coord] = {
 }
 
 
-def _axis_signs(origin: str) -> Coord:
-    """row_sign, col_sign for `origin`: negate the row axis for a bottom-*
-    corner, negate the column axis for a *-right corner. "top-left"
-    reproduces pursuit.constants.Direction's own convention exactly."""
-    row_sign = -1 if origin.startswith("bottom") else 1
-    col_sign = -1 if origin.endswith("right") else 1
-    return row_sign, col_sign
-
-
 def _vector_for(word: DirectionWord, origin: str) -> Coord:
     """(row_delta, col_delta) for `word`, DERIVED from the loaded `origin`
     -- never a hardcoded top-left assumption."""
-    row_sign, col_sign = _axis_signs(origin)
+    row_sign, col_sign = axis_signs(origin)
     dr, dc = _BASE_VECTOR[word]
     return dr * row_sign, dc * col_sign
 
