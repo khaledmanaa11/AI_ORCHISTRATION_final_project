@@ -1,0 +1,9 @@
+{
+  "version": "1.00",
+  "scent_likelihood": {
+    "weight": 4.0,
+    "epsilon": 0.05,
+    "age_cap": 5,
+    "freshness_decay": 0.75
+  }
+}
