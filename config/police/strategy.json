@@ -2,7 +2,7 @@
   "version": "1.00",
   "strategy": {
     "police_class": "value_search",
-    "weights_path": "",
+    "weights_path": "config/police/weights.json",
     "epsilon_eval": 0.0,
     "max_decision_ms": 50
   }

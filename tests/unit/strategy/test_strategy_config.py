@@ -16,6 +16,8 @@ import pytest
 
 from pursuit.config_keys import StrategyKey
 from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
+from pursuit.strategy.features import FEATURE_COUNT
+from pursuit.strategy.weights import PRIOR, load_weights
 
 _CONFIG_DIR = Path(__file__).parent.parent.parent.parent / "config"
 POLICE_STRATEGY = _CONFIG_DIR / "police" / "strategy.json"
@@ -104,8 +106,24 @@ def test_epsilon_eval_out_of_range_raises(tmp_path: Path) -> None:
         load_strategy_config(bad)
 
 
-def test_weights_path_defaults_empty() -> None:
-    """An empty weights_path is valid -- ValueSearchBrain falls back to the
-    hand-set prior (docs/PRD_matrix_mover.md Sec8) rather than failing."""
-    params: StrategyParams = load_strategy_config(POLICE_STRATEGY)
-    assert params.weights_path == ""
+def test_shipped_config_points_at_a_loadable_artefact() -> None:
+    """Both seats ship the trained vector, and it must actually load.
+
+    Strengthened from the earlier "weights_path is empty" assertion, which was
+    written before a trained artefact existed. An empty path is still legal --
+    ValueSearchBrain falls back to the hand-set prior -- but shipping a league
+    game on the prior while believing it trained is the exact failure that made
+    run 1's result unexplainable, so the shipped config is pinned here.
+    """
+    for path in (POLICE_STRATEGY, THIEF_STRATEGY):
+        params: StrategyParams = load_strategy_config(path)
+        assert params.weights_path, f"{path} ships no trained weights"
+        weights = load_weights(params.weights_path)
+        assert len(weights) == FEATURE_COUNT
+        assert weights != PRIOR, f"{path} is still on the hand-set prior"
+
+
+def test_empty_weights_path_is_still_legal(tmp_path) -> None:
+    """The prior remains shippable on its own -- book Sec6.3 makes RL optional."""
+    assert load_weights(None) is PRIOR
+    assert load_weights("") is PRIOR

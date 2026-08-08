@@ -1,0 +1,45 @@
+{
+  "feature_names": [
+    "bias",
+    "neg_distance",
+    "thief_unreachable",
+    "neg_thief_degree",
+    "territory_diff",
+    "neg_thief_region",
+    "neg_cycle_rank",
+    "thief_region_is_forest",
+    "chokepoint_density",
+    "thief_on_chokepoint",
+    "barriers_remaining",
+    "turns_remaining",
+    "parity",
+    "cop_degree",
+    "thief_in_kill_range"
+  ],
+  "metadata": {
+    "children": 8,
+    "games_per_candidate": 30,
+    "generations": 40,
+    "optimiser": "(1+lambda)-ES on league points",
+    "seed": 4242,
+    "sigma": 0.25
+  },
+  "version": "2.00",
+  "weights": [
+    1.2658461856119596,
+    2.523445668896819,
+    5.5299604025628915,
+    0.196026791161872,
+    2.6593322001283637,
+    0.3676342342113378,
+    1.6524246764062585,
+    -1.9182340316292916,
+    -0.6922026836045542,
+    0.4645301196917726,
+    0.5196426884894199,
+    4.912018795087774,
+    -0.844882102897399,
+    0.22536275259435348,
+    4.046561399315146
+  ]
+}

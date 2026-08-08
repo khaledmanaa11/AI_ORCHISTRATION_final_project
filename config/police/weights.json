@@ -1,0 +1,43 @@
+{
+  "feature_names": [
+    "bias",
+    "neg_distance",
+    "thief_unreachable",
+    "neg_thief_degree",
+    "territory_diff",
+    "neg_thief_region",
+    "neg_cycle_rank",
+    "thief_region_is_forest",
+    "chokepoint_density",
+    "thief_on_chokepoint",
+    "barriers_remaining",
+    "turns_remaining",
+    "parity",
+    "cop_degree",
+    "thief_in_kill_range"
+  ],
+  "metadata": {
+    "games_per_generation": 600,
+    "generations": 40,
+    "learning_rate": 0.1,
+    "seed": 1337
+  },
+  "version": "2.00",
+  "weights": [
+    0.6686141257400696,
+    0.9200459372015766,
+    2.43560558189063,
+    0.30114261186879765,
+    0.31610487190598396,
+    0.7226650471264674,
+    0.8153121529908629,
+    1.0558582635707037,
+    -0.4894790862173662,
+    -0.39303869599329144,
+    0.6439634822092742,
+    1.142500896404845,
+    0.02630553966387977,
+    0.29667519718436697,
+    1.835517519385971
+  ]
+}

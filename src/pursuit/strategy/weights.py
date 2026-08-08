@@ -65,7 +65,11 @@ def load_weights(path: Path | str | None) -> tuple:
     ValueError
         If the file holds the wrong number of weights.
     """
-    if path is None:
+    # An EMPTY path means "not configured", exactly as None does -- the config
+    # loader supplies "" for an unset key. Without this, Path("") resolves to the
+    # current directory, which exists, and the open() below raises PermissionError
+    # on a directory instead of falling back to the prior.
+    if not path:
         return PRIOR
     resolved = Path(path)
     if not resolved.exists():

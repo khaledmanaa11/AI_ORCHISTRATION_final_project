@@ -81,7 +81,42 @@ right shape and carries the true cell for now); pheromones and hint text (Phase 
 barrier placement over the wire (Phase 6 — the wire action is currently always a move);
 commit-reveal itself (Phase 6); the live GUI and replay viewer (Phase 7).
 
-## 6. Known limitations, stated rather than hidden
+## 6. Measured results
+
+Held-out, n=200 per matchup, 95% Wilson intervals, `run_eval.py`. The prior and the
+trained vector are measured in the same run, so "did training help" is a comparison and
+not a number remembered from an earlier session.
+
+**On the negotiated opening — the board a league game actually plays:**
+
+| matchup | seat | prior | shipped | delta |
+|---|---|---|---|---|
+| vs chaser cop (seals) | thief | 43.5% [36.8, 50.4] | **58.0%** [51.1, 64.6] | **+14.5% — significant** |
+| vs chaser cop (no seals) | thief | 14.5% [10.3, 20.0] | **32.5%** [26.4, 39.3] | **+18.0% — significant** |
+| vs greedy evader | cop | 100.0% [98.1, 100] | **100.0%** [98.1, 100] | at ceiling |
+
+On randomised starts every matchup also improved (+3.0 to +4.5%) but none separably at
+n=200 — reported rather than claimed.
+
+**Training curve** (`artifacts/run2/curve.json`, 40 generations × 600 games = 24,000 games,
+≈1 h): cop 52.3% → 73.7%, thief 28.0% → 36.3% against the pool, loss 1.63 → 0.72.
+
+**What training changed in the model.** Two features had their sign **flipped** from the
+hand-set prior: `chokepoint_density` (+0.40 → −0.49) and `thief_on_chokepoint` (+0.30 →
+−0.39). The prior assumed chokepoints in the thief's region help the cop; the data says the
+opposite. `turns_remaining` more than tripled (0.35 → 1.14) and `thief_in_kill_range` fell
+from the deliberately extreme 3.00 to 1.84 — matching the ablation which showed 3.00 made
+the thief so proximity-averse it cornered itself.
+
+**The rejected artefact.** A second optimiser — `(1+λ)`-ES on league points with common
+random numbers — was run to completion and **not shipped**. It became a specialist: 85.5%
+against a barrier-blind chaser (vs 32.5%) but only **20.0%** against a sealing one (vs
+58.0%), and it gave up cop points (93.5% vs 100%). Total points were near-identical; the
+distribution was not. A competent opponent will use its barrier quota — rule 46 makes it
+decisive — so the balanced vector is the correct ship. Both runs and both curves are kept
+in `artifacts/` for the report.
+
+## 7. Known limitations, stated rather than hidden
 
 1. **Depth 1.** The mover expands one joint ply. A multi-turn barrier seal is visible only
    as a gradient through the structure features, not as a plan. The one two-ply fact that

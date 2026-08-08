@@ -1,0 +1,362 @@
+[
+  {
+    "generation": 0,
+    "epsilon": 0.2,
+    "cop_capture_rate": 0.5233,
+    "thief_survival_rate": 0.28,
+    "loss": 1.63436,
+    "samples": 7989,
+    "distinct_starts": 424
+  },
+  {
+    "generation": 1,
+    "epsilon": 0.1954,
+    "cop_capture_rate": 0.5067,
+    "thief_survival_rate": 0.26,
+    "loss": 1.378824,
+    "samples": 8188,
+    "distinct_starts": 411
+  },
+  {
+    "generation": 2,
+    "epsilon": 0.1908,
+    "cop_capture_rate": 0.5667,
+    "thief_survival_rate": 0.1967,
+    "loss": 0.996523,
+    "samples": 7682,
+    "distinct_starts": 411
+  },
+  {
+    "generation": 3,
+    "epsilon": 0.1862,
+    "cop_capture_rate": 0.59,
+    "thief_survival_rate": 0.26,
+    "loss": 0.909476,
+    "samples": 8208,
+    "distinct_starts": 413
+  },
+  {
+    "generation": 4,
+    "epsilon": 0.1815,
+    "cop_capture_rate": 0.62,
+    "thief_survival_rate": 0.2567,
+    "loss": 0.851386,
+    "samples": 7730,
+    "distinct_starts": 429
+  },
+  {
+    "generation": 5,
+    "epsilon": 0.1769,
+    "cop_capture_rate": 0.63,
+    "thief_survival_rate": 0.2367,
+    "loss": 0.831424,
+    "samples": 8046,
+    "distinct_starts": 402
+  },
+  {
+    "generation": 6,
+    "epsilon": 0.1723,
+    "cop_capture_rate": 0.5967,
+    "thief_survival_rate": 0.2433,
+    "loss": 0.851266,
+    "samples": 7984,
+    "distinct_starts": 414
+  },
+  {
+    "generation": 7,
+    "epsilon": 0.1677,
+    "cop_capture_rate": 0.62,
+    "thief_survival_rate": 0.2633,
+    "loss": 0.791683,
+    "samples": 7665,
+    "distinct_starts": 430
+  },
+  {
+    "generation": 8,
+    "epsilon": 0.1631,
+    "cop_capture_rate": 0.6633,
+    "thief_survival_rate": 0.2067,
+    "loss": 0.749067,
+    "samples": 7774,
+    "distinct_starts": 411
+  },
+  {
+    "generation": 9,
+    "epsilon": 0.1585,
+    "cop_capture_rate": 0.64,
+    "thief_survival_rate": 0.2667,
+    "loss": 0.791202,
+    "samples": 7769,
+    "distinct_starts": 429
+  },
+  {
+    "generation": 10,
+    "epsilon": 0.1538,
+    "cop_capture_rate": 0.6067,
+    "thief_survival_rate": 0.3267,
+    "loss": 0.828042,
+    "samples": 7920,
+    "distinct_starts": 421
+  },
+  {
+    "generation": 11,
+    "epsilon": 0.1492,
+    "cop_capture_rate": 0.71,
+    "thief_survival_rate": 0.27,
+    "loss": 0.719147,
+    "samples": 7478,
+    "distinct_starts": 417
+  },
+  {
+    "generation": 12,
+    "epsilon": 0.1446,
+    "cop_capture_rate": 0.6133,
+    "thief_survival_rate": 0.2933,
+    "loss": 0.841175,
+    "samples": 7989,
+    "distinct_starts": 424
+  },
+  {
+    "generation": 13,
+    "epsilon": 0.14,
+    "cop_capture_rate": 0.66,
+    "thief_survival_rate": 0.3133,
+    "loss": 0.777241,
+    "samples": 7370,
+    "distinct_starts": 424
+  },
+  {
+    "generation": 14,
+    "epsilon": 0.1354,
+    "cop_capture_rate": 0.7,
+    "thief_survival_rate": 0.3133,
+    "loss": 0.817958,
+    "samples": 7725,
+    "distinct_starts": 408
+  },
+  {
+    "generation": 15,
+    "epsilon": 0.1308,
+    "cop_capture_rate": 0.6467,
+    "thief_survival_rate": 0.3333,
+    "loss": 0.804757,
+    "samples": 7338,
+    "distinct_starts": 429
+  },
+  {
+    "generation": 16,
+    "epsilon": 0.1262,
+    "cop_capture_rate": 0.6633,
+    "thief_survival_rate": 0.29,
+    "loss": 0.734063,
+    "samples": 7415,
+    "distinct_starts": 412
+  },
+  {
+    "generation": 17,
+    "epsilon": 0.1215,
+    "cop_capture_rate": 0.6533,
+    "thief_survival_rate": 0.3067,
+    "loss": 0.83595,
+    "samples": 7891,
+    "distinct_starts": 409
+  },
+  {
+    "generation": 18,
+    "epsilon": 0.1169,
+    "cop_capture_rate": 0.66,
+    "thief_survival_rate": 0.3467,
+    "loss": 0.707072,
+    "samples": 7360,
+    "distinct_starts": 432
+  },
+  {
+    "generation": 19,
+    "epsilon": 0.1123,
+    "cop_capture_rate": 0.6667,
+    "thief_survival_rate": 0.3167,
+    "loss": 0.776193,
+    "samples": 7590,
+    "distinct_starts": 435
+  },
+  {
+    "generation": 20,
+    "epsilon": 0.1077,
+    "cop_capture_rate": 0.5967,
+    "thief_survival_rate": 0.2733,
+    "loss": 0.786984,
+    "samples": 7748,
+    "distinct_starts": 421
+  },
+  {
+    "generation": 21,
+    "epsilon": 0.1031,
+    "cop_capture_rate": 0.6433,
+    "thief_survival_rate": 0.3467,
+    "loss": 0.764675,
+    "samples": 7886,
+    "distinct_starts": 419
+  },
+  {
+    "generation": 22,
+    "epsilon": 0.0985,
+    "cop_capture_rate": 0.64,
+    "thief_survival_rate": 0.33,
+    "loss": 0.749428,
+    "samples": 7677,
+    "distinct_starts": 428
+  },
+  {
+    "generation": 23,
+    "epsilon": 0.0938,
+    "cop_capture_rate": 0.6767,
+    "thief_survival_rate": 0.3067,
+    "loss": 0.764277,
+    "samples": 7600,
+    "distinct_starts": 422
+  },
+  {
+    "generation": 24,
+    "epsilon": 0.0892,
+    "cop_capture_rate": 0.6967,
+    "thief_survival_rate": 0.3267,
+    "loss": 0.664335,
+    "samples": 7585,
+    "distinct_starts": 419
+  },
+  {
+    "generation": 25,
+    "epsilon": 0.0846,
+    "cop_capture_rate": 0.6567,
+    "thief_survival_rate": 0.3633,
+    "loss": 0.8279,
+    "samples": 7634,
+    "distinct_starts": 426
+  },
+  {
+    "generation": 26,
+    "epsilon": 0.08,
+    "cop_capture_rate": 0.69,
+    "thief_survival_rate": 0.35,
+    "loss": 0.746675,
+    "samples": 7909,
+    "distinct_starts": 417
+  },
+  {
+    "generation": 27,
+    "epsilon": 0.0754,
+    "cop_capture_rate": 0.7033,
+    "thief_survival_rate": 0.3567,
+    "loss": 0.688984,
+    "samples": 7297,
+    "distinct_starts": 429
+  },
+  {
+    "generation": 28,
+    "epsilon": 0.0708,
+    "cop_capture_rate": 0.7233,
+    "thief_survival_rate": 0.3567,
+    "loss": 0.735881,
+    "samples": 7532,
+    "distinct_starts": 410
+  },
+  {
+    "generation": 29,
+    "epsilon": 0.0662,
+    "cop_capture_rate": 0.6967,
+    "thief_survival_rate": 0.3733,
+    "loss": 0.731386,
+    "samples": 7679,
+    "distinct_starts": 425
+  },
+  {
+    "generation": 30,
+    "epsilon": 0.0615,
+    "cop_capture_rate": 0.6967,
+    "thief_survival_rate": 0.3533,
+    "loss": 0.715268,
+    "samples": 7358,
+    "distinct_starts": 426
+  },
+  {
+    "generation": 31,
+    "epsilon": 0.0569,
+    "cop_capture_rate": 0.6767,
+    "thief_survival_rate": 0.3367,
+    "loss": 0.723803,
+    "samples": 7518,
+    "distinct_starts": 424
+  },
+  {
+    "generation": 32,
+    "epsilon": 0.0523,
+    "cop_capture_rate": 0.75,
+    "thief_survival_rate": 0.3733,
+    "loss": 0.773729,
+    "samples": 7878,
+    "distinct_starts": 421
+  },
+  {
+    "generation": 33,
+    "epsilon": 0.0477,
+    "cop_capture_rate": 0.7733,
+    "thief_survival_rate": 0.3167,
+    "loss": 0.667004,
+    "samples": 7471,
+    "distinct_starts": 412
+  },
+  {
+    "generation": 34,
+    "epsilon": 0.0431,
+    "cop_capture_rate": 0.7267,
+    "thief_survival_rate": 0.3433,
+    "loss": 0.608933,
+    "samples": 7206,
+    "distinct_starts": 438
+  },
+  {
+    "generation": 35,
+    "epsilon": 0.0385,
+    "cop_capture_rate": 0.72,
+    "thief_survival_rate": 0.36,
+    "loss": 0.682403,
+    "samples": 7214,
+    "distinct_starts": 429
+  },
+  {
+    "generation": 36,
+    "epsilon": 0.0338,
+    "cop_capture_rate": 0.7067,
+    "thief_survival_rate": 0.34,
+    "loss": 0.665226,
+    "samples": 7558,
+    "distinct_starts": 433
+  },
+  {
+    "generation": 37,
+    "epsilon": 0.0292,
+    "cop_capture_rate": 0.7067,
+    "thief_survival_rate": 0.3433,
+    "loss": 0.71722,
+    "samples": 7553,
+    "distinct_starts": 403
+  },
+  {
+    "generation": 38,
+    "epsilon": 0.0246,
+    "cop_capture_rate": 0.7233,
+    "thief_survival_rate": 0.3633,
+    "loss": 0.683685,
+    "samples": 7753,
+    "distinct_starts": 421
+  },
+  {
+    "generation": 39,
+    "epsilon": 0.02,
+    "cop_capture_rate": 0.7367,
+    "thief_survival_rate": 0.3633,
+    "loss": 0.724203,
+    "samples": 7740,
+    "distinct_starts": 420
+  }
+]

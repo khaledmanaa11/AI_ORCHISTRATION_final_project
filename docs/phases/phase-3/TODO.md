@@ -59,22 +59,22 @@ approach unsound rather than under-trained.
 - [x] **03-23f** `evolve.py` / `run_evolve.py` — `(1+λ)`-ES on league points, common random
       numbers.
 - [x] **03-23g** `arena.py` / `run_eval.py` — held-out evaluation, 95% Wilson intervals.
-- [ ] **03-23h** Run both optimisers to completion and record the curves.
-- [ ] **03-23i** Choose the shipped artefact by held-out comparison against the prior.
+- [x] **03-23h** Run both optimisers to completion and record the curves.
+- [x] **03-23i** Choose the shipped artefact by held-out comparison against the prior.
 
 ## Wave 5 — retire run 1
 
-- [ ] **03-24a** Delete the tabular Q-learning stack and every module that depends on it.
-- [ ] **03-24b** Relocate any test covering behaviour that survives.
-- [ ] **03-24c** Registry reduced to three brains; strategy config keys pruned to what is read.
+- [x] **03-24a** Delete the tabular Q-learning stack and every module that depends on it.
+- [x] **03-24b** Relocate any test covering behaviour that survives.
+- [x] **03-24c** Registry reduced to three brains; strategy config keys pruned to what is read.
 
 ## Wave 6 — close the phase
 
-- [ ] **03-25a** Full suite green, coverage ≥85%, ruff clean, line limit clean.
+- [x] **03-25a** Full suite green, coverage ≥85%, ruff clean, line limit clean.
 - [x] **03-25b** Per-mechanism PRD for the mover → [docs/PRD_matrix_mover.md](../../PRD_matrix_mover.md).
 - [x] **03-25c** Phase triplet refreshed (this file, PRD, PLAN).
-- [ ] **03-25d** Refresh the knowledge graph in `.planning/graphs/`.
-- [ ] **03-25e** Tick the matching rows in the root `docs/TODO.md`.
+- [x] **03-25d** Refresh the knowledge graph in `.planning/graphs/`.
+- [x] **03-25e** Tick the matching rows in the root `docs/TODO.md`.
 
 ## Withdrawn from run 1
 
