@@ -33,7 +33,7 @@ One weight vector, cop-perspective; the thief's value is its negation.
 |---|---|---|
 | Joint resolution | `resolve_turn(state, CopAction, thief_move, params, rules) -> (GameState, Outcome\|None)` | Frozen. Phase 6 adds commit-reveal *around* it, never inside. |
 | Action spaces | `cop_actions(state, params) -> [CopAction]`, `thief_actions(state, params) -> [Coord]` | Frozen. |
-| Brain seam | `BrainBase._decide_move(obs, state) -> Decision` | Unchanged from run 1 — Phase 4 swaps `Observation.target_cell` from the true cell to the belief argmax with no other change. |
+| Brain seam | `BrainBase._decide_move(obs, state) -> Decision` | Signature unchanged from run 1, but see the Phase 4 warning below — the mover does **not** read `obs`. |
 | Negotiated rules | `load_resolution_rules(path) -> ResolutionRules`, `as_declaration(rules) -> dict` | The declaration dict is what Phase 6 seals into the pre-game handshake. |
 | Learned artefact | `weights.json` — `{version, feature_names, weights, metadata}` | Feature names travel with the numbers so a stale vector fails loud. |
 

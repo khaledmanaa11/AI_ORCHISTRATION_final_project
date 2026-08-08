@@ -78,8 +78,8 @@ code because `get_legal_moves` appends STAY unconditionally.
 **In:** turn resolution, action spaces, the mover, the evaluation, training, evaluation
 harness, the negotiated rules block, retirement of the run-1 stack.
 
-**Out:** belief maps and blindness (Phase 4 — `Observation.target_cell` already has the
-right shape and carries the true cell for now); pheromones and hint text (Phase 4);
+**Out:** belief maps and blindness (Phase 4 — **but read §8 first**, the seam is not the
+drop-in this document originally claimed); pheromones and hint text (Phase 4);
 barrier placement over the wire (Phase 6 — the wire action is currently always a move);
 commit-reveal itself (Phase 6); the live GUI and replay viewer (Phase 7).
 
@@ -132,3 +132,32 @@ in `artifacts/` for the report.
    measured to drop thief survival against a barrier-blind chaser from **89% to 1%**. We
    therefore propose the barrier race and decline the swap — a measured decision, recorded
    in `resolution.py` and reversible if an opponent insists.
+
+## 8. Handoff to Phase 4 — read this before starting
+
+**One correction to an earlier claim in this document.** Sections 5 and PLAN §2 originally
+said Phase 4 would swap `Observation.target_cell` from the true cell to the belief argmax
+"with no other change". That was true of run 1's Q-learning brain. It is **not** true of the
+matrix-game mover.
+
+`ValueSearchBrain._decide_move(obs, state)` **never reads `obs`**. It builds the payoff
+matrix from `state`, and `GameState` carries the opponent's *true* cell. Nothing in
+`src/` or `training/` reads `obs.target_cell` at all — it is currently vestigial, as is
+`Observation.blocked_mask`, which `training/joint_game.py::observe` fills with 0 because the
+feature vector derives everything it needs from the board.
+
+So Phase 4's first task is a real design decision, not a field swap:
+
+| option | what it means | cost |
+|---|---|---|
+| **A — believed state** | Build a `GameState` with the opponent at the belief argmax and expand the matrix over that. One line in the brain plus a caller that supplies it. | cheap; throws away the belief's uncertainty |
+| **B — expectation over the belief** | Build the matrix entry as the belief-weighted expectation over candidate opponent cells. | correct under partial observability; multiplies the expansion by the number of candidate cells |
+
+Option B is the honest one for a Dec-POMDP and is what the book's framing (§1.3) implies.
+Option A is a valid first step that makes the pipeline blind immediately and can be upgraded
+in place, since both only change how `payoff_matrix` obtains the opponent's position.
+
+**Nothing else in Phases 1–3 blocks Phase 4.** The engine, the negotiated rules, the network
+joint-turn path, the training and evaluation harnesses, and the shipped weights are all
+independent of where the opponent's position comes from. The weights are a *positional*
+evaluation over the free-cell graph and stay valid under either option.
