@@ -45,7 +45,7 @@ def test_loads_all_fields() -> None:
     assert params.response_timeout_seconds == gk[LanguageKey.RESPONSE_TIMEOUT_SECONDS]
     assert params.watchdog_threshold_seconds == gk[LanguageKey.WATCHDOG_THRESHOLD_SECONDS]
     assert params.token_budget_per_series == bud[LanguageKey.TOKEN_BUDGET_PER_SERIES]
-    assert params.model == {}
+    assert params.model == raw[LanguageKey.GROUP_MODEL]
 
 
 def test_params_are_frozen() -> None:
