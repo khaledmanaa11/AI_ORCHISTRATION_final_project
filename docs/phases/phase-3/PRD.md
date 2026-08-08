@@ -6,6 +6,8 @@ other's process, with the move decided by an algorithm — never by a language m
 **Status:** run 2. Run 1 (tabular Q-learning) is withdrawn; see §2.
 **Binding rules contract:** [RULES-RESOLUTION.md](RULES-RESOLUTION.md)
 **Mechanism PRD:** [docs/PRD_matrix_mover.md](../../PRD_matrix_mover.md)
+**How it was actually built** — the failures, the measurements, the reversals, and what we
+got wrong: [ENGINEERING-LOG.md](ENGINEERING-LOG.md) · [RUN-1-POSTMORTEM.md](RUN-1-POSTMORTEM.md)
 
 ---
 
