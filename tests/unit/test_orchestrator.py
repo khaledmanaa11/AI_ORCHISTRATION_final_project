@@ -15,12 +15,13 @@ import json
 import re
 from pathlib import Path
 
-from pursuit.network import orchestrator
+from pursuit.constants import Outcome
+from pursuit.network import move_payload, orchestrator
 from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State
 from pursuit.sdk import engine
 from pursuit.sdk.actions import CopAction
-from tests.unit._fakes_agent import make_ctx
+from tests.unit._fakes_agent import FakeClient, make_ctx
 
 _ORCHESTRATOR_SRC = Path("src/pursuit/network/orchestrator.py").read_text(encoding="utf-8")
 
@@ -98,7 +99,9 @@ async def test_full_turn_cycle(tmp_path, default_params, network_params):
     await orchestrator.await_opponent_turn(ctx)
     assert ctx.machine.state is State.MY_TURN
 
-    assert len(ctx.runtime.client().calls) == 1
+    # Phase 4 (D-47): the move push plus the placeholder-hint push for the
+    # same turn -- both calls really happened, the move first.
+    assert len(ctx.runtime.client().calls) == 2
     name, args = ctx.runtime.client().calls[0]
     assert name == "receive_move"
     # receive_move's real wire signature carries no `type` key (the tool name
@@ -107,8 +110,16 @@ async def test_full_turn_cycle(tmp_path, default_params, network_params):
     rebuilt = {**args, "type": MessageType.MOVE.value}
     sent = Envelope.from_dict(rebuilt)
     assert sent.type is MessageType.MOVE
+    # Phase 4 (D-53): the outgoing payload is a direction token, never a
+    # coordinate (rule 27, LANG-02) -- move_payload.encode is the single
+    # source of truth for that shape, never re-derived here.
+    cop_start = engine.make_state(default_params).cop
     cop_dest = engine.legal_moves(engine.make_state(default_params), "cop", default_params)[0]
-    assert sent.payload == {"x": cop_dest[0], "y": cop_dest[1]}
+    assert sent.payload == move_payload.encode(cop_start, cop_dest, move_payload.ActionKind.MOVE)
+    assert "x" not in sent.payload and "y" not in sent.payload
+
+    hint_name, _hint_args = ctx.runtime.client().calls[1]
+    assert hint_name == "receive_hint"
 
     assert ctx.state.thief == thief_dest
     assert ctx.watchdog.touches >= 2
@@ -116,6 +127,25 @@ async def test_full_turn_cycle(tmp_path, default_params, network_params):
     assert len(lines) >= 2
     for line in lines:
         json.loads(line)
+
+
+async def test_take_my_turn_reports_technical_loss_when_the_move_push_fails(
+    tmp_path, default_params, network_params
+):
+    """Rules 16/22, D-13: the opponent never acking the move ends the game
+    cleanly via Outcome.TECHNICAL_LOSS -- never raises, and the placeholder
+    hint (D-47) is never attempted after a failed move push."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, role="police", label="push-fail",
+        client=FakeClient(fail=True),
+    )
+    outcome = await orchestrator.take_my_turn(ctx)
+    assert outcome is Outcome.TECHNICAL_LOSS
+    assert ctx.machine.state is State.GAME_OVER
+    # retry_count=1 in make_ctx -> 2 failed move attempts, all "receive_move";
+    # the hint push (D-47) is never attempted after the move push fails.
+    assert all(name == "receive_move" for name, _args in ctx.runtime.client().calls)
+    assert len(ctx.runtime.client().calls) == 2
 
 
 def test_orchestrator_never_polls():

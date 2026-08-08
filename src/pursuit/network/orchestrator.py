@@ -37,7 +37,7 @@ also re-exports the two names.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pursuit.constants import Outcome
@@ -76,7 +76,9 @@ class AgentContext:
     real per-agent resolution.json onto a live context.
     `pending_cop_action`/`pending_thief_move` buffer this turn's actions
     until both are known (turn_actions.py), then resolve_turn runs exactly
-    once and both slots are cleared."""
+    once and both slots are cleared. `pending_hints` (Phase 4, D-47)
+    buffers this turn's hint(s) by sender the same way, cleared alongside
+    the action slots when the turn resolves (turn_buffer.py)."""
 
     role: str
     params: GameParams
@@ -92,6 +94,7 @@ class AgentContext:
     rules: ResolutionRules = BOOK_ONLY
     pending_cop_action: CopAction | None = None
     pending_thief_move: Coord | None = None
+    pending_hints: dict[str, dict] = field(default_factory=dict)
 
 
 def engine_agent(role: str) -> str:

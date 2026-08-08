@@ -64,7 +64,11 @@ async def test_take_my_turn_proceeds_when_the_machine_is_already_at_my_turn(
     assert outcome is None  # no capture on the first legal move
     assert ctx.reporter.calls == []  # no illegal-transition report of any kind
     assert ctx.machine.state is State.WAIT_OPPONENT  # the move really happened
-    assert len(ctx.runtime.client().calls) == 1  # the move really was pushed
+    # Phase 4 (D-47): the move push plus the placeholder-hint push -- both
+    # calls really happened, the move first.
+    assert len(ctx.runtime.client().calls) == 2
+    assert ctx.runtime.client().calls[0][0] == "receive_move"
+    assert ctx.runtime.client().calls[1][0] == "receive_hint"
 
 
 async def test_silent_opponent_produces_a_technical_win(tmp_path, default_params, network_params):
@@ -80,7 +84,75 @@ async def test_silent_opponent_produces_a_technical_win(tmp_path, default_params
     assert len(wins) == 1
     assert wins[0]["retries_attempted"] == ctx.net.retry_count + 1
     assert wins[0]["timeout_seconds"] == ctx.net.response_timeout
-    assert len(ctx.runtime.client().calls) == 1  # the one push; never asked to keep playing
+    # Phase 4 (D-47): take_my_turn's move push AND its placeholder-hint push
+    # both succeed against the (non-failing) FakeClient; only the SUBSEQUENT
+    # await_opponent_turn wait on an empty queue times out -- never asked to
+    # keep playing beyond that.
+    assert len(ctx.runtime.client().calls) == 2
+
+
+async def test_await_opponent_turn_rejects_an_illegal_move_as_a_technical_loss(
+    tmp_path, default_params, network_params
+):
+    """Rules 13/14: an off-board (unparseable-to-legal) move from the peer
+    never crashes the handler -- it becomes Outcome.TECHNICAL_LOSS with a
+    technical_win JSONL record naming the reason (D-53)."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, label="illegal-move",
+        initial_state=State.WAIT_OPPONENT,
+    )
+    bad_move = Envelope(type=MessageType.MOVE, turn=0, sender="thief", payload={"x": 99, "y": 99})
+    ctx.runtime.queue.put_nowait(bad_move)
+
+    outcome = await orchestrator.await_opponent_turn(ctx)
+
+    assert outcome is Outcome.TECHNICAL_LOSS
+    assert ctx.machine.state is State.GAME_OVER
+    lines = ctx.log_path.read_text(encoding="utf-8").splitlines()
+    assert any('"technical_win"' in line for line in lines)
+
+
+async def test_await_opponent_turn_rejects_two_consecutive_hints_with_no_move(
+    tmp_path, default_params, network_params
+):
+    """The HintProtocolError raised by turn_buffer.await_move (two hints,
+    no move) is caught at the orchestrator entry point, never crashes the
+    caller, and ends the game as Outcome.TECHNICAL_LOSS."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, label="two-hints",
+        initial_state=State.WAIT_OPPONENT,
+    )
+    hint_payload = {"text": "heading uptown", "intent": "truth", "turn": 0}
+    ctx.runtime.queue.put_nowait(
+        Envelope(type=MessageType.HINT, turn=0, sender="thief", payload=hint_payload)
+    )
+    ctx.runtime.queue.put_nowait(
+        Envelope(type=MessageType.HINT, turn=0, sender="police", payload=hint_payload)
+    )
+
+    outcome = await orchestrator.await_opponent_turn(ctx)
+
+    assert outcome is Outcome.TECHNICAL_LOSS
+    assert ctx.machine.state is State.GAME_OVER
+
+
+async def test_await_opponent_turn_from_handshake_self_transitions_first(
+    tmp_path, default_params, network_params
+):
+    """D-09 design note 7: the thief's FIRST call is await_opponent_turn
+    while still in HANDSHAKE; it self-transitions to WAIT_OPPONENT before
+    waiting, exactly like take_my_turn's own guarded entry."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, role="thief", label="handshake-first",
+        initial_state=State.HANDSHAKE,
+    )
+    stay_in_place = {"x": ctx.state.cop[0], "y": ctx.state.cop[1]}
+    incoming = Envelope(type=MessageType.MOVE, turn=0, sender="police", payload=stay_in_place)
+    ctx.runtime.queue.put_nowait(incoming)
+
+    await orchestrator.await_opponent_turn(ctx)
+
+    assert ctx.machine.state is State.MY_TURN
 
 
 async def test_loop_ends_cleanly_on_a_real_outcome(tmp_path, default_params, network_params):
