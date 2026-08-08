@@ -32,6 +32,12 @@
 | `training/curves.py` | CSV append per episode: `episode, epsilon, alpha, mean_reward, winrate_vs_baseline, fallback_rate, role` (rule 42) |
 | `training/plot_curves.py` | matplotlib → README PNGs. The only matplotlib importer in the repo |
 | `artifacts/qtable_{police,thief}.json` | The shipped trained tables — human-readable and diffable, never pickle |
+| `src/pursuit/strategy/search/matrix.py` | **(03-13)** Solve one zero-sum stage game. Input is the ≤5×5 payoff matrix of (cop action × thief action) at a node; output is both sides' **mixed** strategies plus the game value. Regret matching — no LP, no scipy, so the runtime dep list stays `fastmcp` alone (P3-12 logic) |
+| `src/pursuit/strategy/search/smab.py` | **(03-13)** Simultaneous-move alpha-beta: depth-limited backward induction that calls `matrix.solve` at every node instead of taking a min or a max, with the Saffidine bounds for pruning. Honours a wall-clock deadline and returns the best move found so far |
+| `src/pursuit/strategy/search/evaluate.py` | **(03-13)** Leaf evaluation. Cycle-based per 03-13 — the thief's free component being a forest is the cop-win signal — **not** distance. Consumes the Q-table as a learned term when one is loaded, so the table becomes the evaluator rather than the policy |
+| `src/pursuit/strategy/searchbrain.py` | **(03-13)** `SearchBrain(BrainBase)` — wires the search behind the *existing* `_pick_move`/`_decide_move` seam so it is swappable by config alone (STRAT-03 unchanged) and the network layer never learns a new interface |
+| `src/pursuit/strategy/graph/cycles.py` | **(03-13/03-14, exists)** Already carries the cycle/component primitives `evaluate.py` and the barrier policy both need — extend, do not duplicate (QUAL-02) |
+| `scratchpad/mixed_thief.py` | **(03-11 evidence)** The measurement behind the mixing requirement, kept in-repo alongside `safe_thief.py` so the 96%→36% claim is reproducible rather than a remembered number |
 
 ## Interfaces & contracts
 
@@ -100,6 +106,26 @@ class QTable:
 
 # training/harness.py
 run_episode(cop_brain, thief_brain, params, rng) -> EpisodeResult   # steps sdk.engine only
+
+# strategy/search/matrix.py  (03-13)
+solve_zero_sum(payoff: list[list[float]], iters: int) -> tuple[list[float], list[float], float]
+                                              # (row mix, col mix, value). Regret matching, so the
+                                              # result is a DISTRIBUTION, never an argmax -- that is
+                                              # the whole point (see ADR P3-14). `iters` is an
+                                              # engineering default in [strategy], not a book value
+
+# strategy/search/smab.py  (03-13)
+search(state, params, role, depth, evaluate, deadline_ms, rng) -> Decision
+                                              # simultaneous-move alpha-beta. Returns a move SAMPLED
+                                              # from the root mixed strategy, not the modal action.
+                                              # Must return a legal move if the deadline expires
+                                              # mid-search -- never raise, never return None
+
+# strategy/search/evaluate.py  (03-13)
+evaluate(state, params, role, qtable=None) -> float
+                                              # cycle-based leaf value; +1 == thief's free component
+                                              # is a forest (cop wins). qtable, when present, is a
+                                              # learned CORRECTION term -- never the sole signal
 ```
 
 ## Phase ADRs
@@ -118,6 +144,8 @@ run_episode(cop_brain, thief_brain, params, rng) -> EpisodeResult   # steps sdk.
 | P3-10 | Two fully playable brains behind `BrainBase` | `HeuristicBrain` is both the fallback's logic home and the objective baseline for GATE-4 — without a playable baseline, "the RL learned something" is unfalsifiable | Q-only: no way to prove the phase goal |
 | P3-11 | `random` (seeded) for ε-greedy, `secrets` reserved for Phase 6 nonces | Training must be reproducible, which is exactly what `secrets` prevents; conflating them would either break reproducibility or weaken the crypto | One shared RNG helper: blurs a security boundary |
 | P3-12 | Matplotlib is dev/training-only | Keeps the shipped agent's runtime dependency list at `fastmcp` alone; nothing on the decision path imports it | Runtime dep: unnecessary weight on the league agent |
+| P3-13 | **Simultaneous-move** alpha-beta (Saffidine, Finnsson & Buro, AAAI 2012) — a matrix game solved at every node | Book §5.3.2 (p35) confirms the Acknowledge step guarantees the reveal happens only once **both** sides have fixed their moves, so no side ever moves second. Plain alpha-beta assumes it does, and therefore computes a maximin **security** value and a **deterministic** policy — the exact exploitability 03-11 exists to remove. Solving the ≤5×5 stage game restores the correct object at the same depth | Plain alpha-beta: wrong game, deterministic, exploitable. **MCTS: rejected** — Ramanujan et al. (ICAPS 2010) show sampling search misses shallow traps, and barrier sealing *is* a shallow trap (03-13). Lisý, Lanctot & Bowling (NIPS 2013) further show simultaneous-move tree search only converges to equilibrium when the per-node rule is ε-Hannan consistent, and measured UCT as the most exploitable selection rule tested |
+| P3-14 | Capture is modelled as a **one-step guessing game**, not a distance-minimisation | Both agents move one cell or stay, so their reachable sets intersect **only at Manhattan distance ≤ 2**. Beyond that no action pair can capture and the cop's move is pure positioning. At contact range the stage game is "cop picks a cell, thief picks a cell, capture iff equal" — matching-pennies-shaped, whose solution is *mixed*. This is why 03-11's safety rule must randomise and why 03-14's barriers pay: each barrier removes one of the thief's k options and lifts the cop's per-turn hit rate from 1/k toward 1/(k−1). Measured this session (`scratchpad/mixed_thief.py`): a search cop takes **96%** against a deterministic evader and **36%** against a mixing one | Distance-minimisation (what both current brains optimise): measured **0%** capture against an evader that simply maximises distance. Chasing cannot capture — this is the single clearest negative result of the session |
 
 ## Test plan (TDD)
 
@@ -133,6 +161,13 @@ run_episode(cop_brain, thief_brain, params, rng) -> EpisodeResult   # steps sdk.
 - **No test trains a real policy.** Gate tests load a small fixture Q-table; the overnight
   training run is an operator task, not a test. `test_beats_baseline.py` runs the shipped
   table against the baseline over the configured game count with fixed seeds.
+- **Search tests are known-answer, not coverage-driven (03-13).** A wrong matrix solve does not
+  crash — it plays slightly badly, silently, forever, and is then diagnosed weeks later from a lost
+  league game. Five named assertions catch that class outright: matching pennies solves to value 0
+  with both mixes uniform; a saddle-point matrix solves to its pure equilibrium; a forced one-move
+  capture is found at depth 1; a thief left exactly one safe option is captured with probability 1;
+  and an expired deadline still returns a **legal** move rather than raising. Prefer these five to
+  fifty line-coverage tests on the same module.
 - **Coverage target:** ≥85% (`fail_under=85`). `training/` is exercised by unit tests on the
   episode loop, sparring sampler and checkpoint atomicity — it is not exempt.
 
@@ -150,3 +185,25 @@ swaps the source of that cell without retraining the table. Until then, GATE-4's
 "beats the baseline" result is measured under full target knowledge and will need
 re-measuring once belief noise is introduced; that re-measurement is Phase 4 scope and is
 recorded here so the number is not later mistaken for a blind-play result.
+
+**Amended 2026-08-05 — the "known target" assumption is far closer to the real game than this
+section assumed, and the Phase-4 belief map's job is not what the roadmap implies.** Book §4.4
+(p29) states that each agent may sample the board and receive its opponent's **entire** scent map:
+*"כל סוכן יכול לדגום את הלוח ולקבל את מפת הריח של יריבו"*. Sensing is **global**, not local. Combined
+with the §4.3 emission model — a radial 5×5 field peaking at exactly 0.9 on the emitting cell, decayed
+geometrically — the opponent's exact cell is recoverable every turn by differencing consecutive maps:
+`τ(t) − 0.9·τ(t−1)` isolates this turn's deposit, whose 0.9 peak *is* the opponent. Measured this
+session with an exact particle filter over trajectories: belief entropy **0.00 bits of a possible
+5.615**, P(true cell) = 1.00, under every emission/decay variant tested.
+
+Two consequences, both of which change Phase 4 rather than Phase 3:
+
+1. **Phase 3's GATE-4 number will not need the large downward correction this section anticipated.**
+   Target knowledge is not a Phase-3 simplification that Phase 4 removes — it is approximately the
+   real game. Re-measure anyway, but expect a small delta, not a regime change.
+2. **The belief map's real job is lie detection, not localisation.** Book §4.4 (p30) works this
+   example explicitly: the thief declares "I moved north", the cop measures τ = 0.00 in the north
+   against an expected ≈0.81, and the claim is refuted. The book states the scent map *cannot* be
+   forged — *"מפת הריח אינה יכולה לשקר"*. So the Bayes update should weight the **declared move**
+   against physical evidence, not diffuse probability mass over candidate cells. Building an
+   elaborate positional filter would be solving a problem the game does not pose.

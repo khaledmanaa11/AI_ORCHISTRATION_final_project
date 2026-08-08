@@ -15,9 +15,11 @@ sh "$root/scripts/check_line_limit.sh" || {
   exit 1
 }
 
-# --- Gate 2 (enabled once uv project exists): ruff -------------------------
-# if command -v uv >/dev/null 2>&1 && [ -f "$root/pyproject.toml" ]; then
-#   uv run ruff check "$root" || { echo "Commit blocked by ruff gate."; exit 1; }
-# fi
+# --- Gate 2: ruff ----------------------------------------------------------
+# Enabled 03-20: the uv project exists, so this no longer has to stay dormant.
+# pytest --cov is deliberately NOT here (too slow for every commit) — CI runs it.
+if command -v uv >/dev/null 2>&1 && [ -f "$root/pyproject.toml" ]; then
+  uv run ruff check "$root" || { echo "Commit blocked by ruff gate."; exit 1; }
+fi
 
 exit 0

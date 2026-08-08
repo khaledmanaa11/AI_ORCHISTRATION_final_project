@@ -32,6 +32,22 @@ class ConfigKey:
     SCORE_TECHNICAL_LOSS = "technical_loss"
 
 
+class ResolutionKey(str, Enum):
+    """Keys for the optional negotiated resolution block (RULES-RESOLUTION.md Sec5).
+
+    Deliberately NOT part of ConfigKey: game_params.json must stay byte-identical
+    with a book-faithful peer (rule 11), so the negotiated predicates live in a
+    separate optional file that defaults to BOOK_ONLY when absent.
+    """
+
+    CAPTURE_ON_BARRIER_RACE = "capture_on_barrier_race"
+    CAPTURE_ON_SWAP = "capture_on_swap"
+
+    def __str__(self) -> str:
+        """Return the bare key string so json.dumps emits the field name."""
+        return self.value
+
+
 class NetworkConfigKey:
     """String keys matching the exact field names in network.json (D-04).
 
