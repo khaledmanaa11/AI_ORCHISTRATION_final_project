@@ -6,14 +6,18 @@ five MINIMUM-status rows floor-checked against _GATEKEEPER_MINIMA below, plus tw
 NEGOTIABLE rows loaded with no floor), `budget` (Table 18 row 4's negotiable series
 ceiling, plus two engineering-default degrade thresholds -- D-18 discipline: neither
 threshold is a book value, both are labelled as such here, not in the loader body),
-and `model` (an opaque dict; plan 04-06 defines and reads its contents -- this loader
-only requires the key to be present and object-typed).
+and `model` (D-32/D-52, 04-06: provider/model_id/max_tokens/timeout_seconds/
+every_n_steps/game_arena -- this loader only requires the key to be object-typed and
+delegates its own shape/value validation to shared/language_model_config.py).
 
-Deviation from the config_keys.py convention (04-PLAN-OUTLINE.md Sec4 point 2):
+Deviations from the config_keys.py convention (04-PLAN-OUTLINE.md Sec4 point 2):
 LanguageKey lives here, beside its own loader, instead of in pursuit.config_keys --
 that module is already 90 of its 150 permitted lines, and four more phase-4 key
 enums (Scent/Language/Belief/Deception) would breach the file-size gate. Every other
-phase-4 config loader follows the same pattern.
+phase-4 config loader follows the same pattern. 04-06 additionally split `model`'s
+own key enum and validation into shared/language_model_config.py at the same
+150-code-line gate (Segal Table 5): adding model-group validation inline here
+pushed this file to 173 counted lines, so it moved out rather than compressing.
 """
 
 import json
@@ -21,6 +25,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from pursuit.shared.language_model_config import validate_model_group
 from pursuit.shared.loader_helpers import require_int, require_key
 
 LANGUAGE_CONFIG_SOURCE = "language.json"
@@ -120,6 +125,7 @@ def load_language_config(path: "Path | str") -> LanguageParams:
             f"{LANGUAGE_CONFIG_SOURCE} field '{LanguageKey.GROUP_MODEL.value}' "
             f"must be an object, got {type(model).__name__}"
         )
+    validate_model_group(model, source=LANGUAGE_CONFIG_SOURCE)
 
     fields: dict[str, object] = {"version": version, "model": model}
     for name, key, _row, minimum in _GATEKEEPER_MINIMA:
