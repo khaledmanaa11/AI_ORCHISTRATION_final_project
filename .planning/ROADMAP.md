@@ -124,7 +124,7 @@ Plans:
 Plans:
 
 - [x] 04-01: Scent emission/decay model + cryptographic pre-game lock
-- [ ] 04-02: Bayesian belief map fusing scent + hint evidence
+- [x] 04-02: Bayesian belief map fusing scent + hint evidence
 - [x] 04-03: LLM hint decode (inference) + LLM bluff generation with intent flag
 - [x] 04-04: Write `docs/PRD_scent_map.md`, `docs/PRD_belief_map.md`, `docs/PRD_deception.md`
 - [ ] 04-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Base Logic | 5/5 | Complete | 2026-07-28 |
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
-| 4. Language and Scent | 3/14 | In Progress|  |
+| 4. Language and Scent | 6/14 | In Progress|  |
 | 5. Cloud Exposure and Tunneling | 0/3 | Not started | - |
 | 6. Security and Cryptography | 0/5 | Not started | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
