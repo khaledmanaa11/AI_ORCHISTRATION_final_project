@@ -137,3 +137,17 @@ def test_is_legal_false_when_not_ok():
 def test_is_legal_barrier_on_cops_own_cell(default_params, start_state):
     resolved = decode({"kind": "barrier", "direction": "stay"}, start_state.cop, default_params)
     assert is_legal(start_state.cop, resolved, start_state, default_params)
+
+
+def test_is_legal_true_for_a_real_legal_cop_move(default_params, start_state):
+    resolved = decode({"direction": "stay"}, start_state.cop, default_params)
+    assert is_legal(start_state.cop, resolved, start_state, default_params)
+
+
+def test_is_legal_false_for_a_cell_matching_neither_cop_nor_thief(default_params, start_state):
+    off_path = (start_state.cop[0], start_state.cop[1])
+    while off_path in (start_state.cop, start_state.thief):
+        off_path = (off_path[0] + 1, off_path[1])
+    resolved = decode({"direction": "stay"}, off_path, default_params)
+    assert resolved.ok
+    assert not is_legal(off_path, resolved, start_state, default_params)
