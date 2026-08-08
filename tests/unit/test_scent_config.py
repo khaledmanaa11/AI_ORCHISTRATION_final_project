@@ -100,6 +100,21 @@ def test_kernel_row_wrong_length_rejected(tmp_path):
         load_scent_model(_write(tmp_path, data))
 
 
+def test_kernel_entry_non_numeric_rejected(tmp_path):
+    data = _valid_data()
+    data["kernel"][0][0] = "high"
+    with pytest.raises(ValueError, match="must be numeric"):
+        load_scent_model(_write(tmp_path, data))
+
+
+def test_kernel_entry_bool_rejected(tmp_path):
+    """bool is a subclass of int in Python and must not pass silently as numeric."""
+    data = _valid_data()
+    data["kernel"][0][0] = True
+    with pytest.raises(ValueError, match="must be numeric"):
+        load_scent_model(_write(tmp_path, data))
+
+
 def test_kernel_entry_above_source_rejected(tmp_path):
     data = _valid_data()
     data["kernel"][0][0] = 1.5
