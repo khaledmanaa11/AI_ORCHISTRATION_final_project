@@ -15,12 +15,12 @@ jobs:
       - name: File line limit (<=150 code lines, blanks/comments excluded)
         run: sh scripts/check_line_limit.sh
 
-  # ruff + pytest --cov are added here once the uv project exists:
-  # lint-and-test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: astral-sh/setup-uv@v5
-  #     - run: uv sync
-  #     - run: uv run ruff check .
-  #     - run: uv run pytest --cov
+  # Enabled 03-20: the uv project exists, so these no longer have to stay dormant.
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest --cov

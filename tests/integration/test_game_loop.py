@@ -1,79 +1,84 @@
-"""Integration gate tests for Phase 1 — §10.4 milestone criteria.
+"""Integration gate tests for Phase 1 -- Sec10.4 milestone criteria, joint-turn
+edition (plan 03-14 / RULES-RESOLUTION.md).
 
-Three tests that exercise the full D-12 turn pipeline via the SDK facade only.
-All game-parameter values come from the default_params fixture; no hardcoded
-game numbers appear in this file.
+Three tests that exercise the full joint-turn pipeline via the SDK facade
+only (engine.make_state / engine.resolve_turn). All game-parameter values
+come from the default_params fixture; no hardcoded game numbers appear in
+this file -- the (row, col) scenario coordinates below are test-scenario
+data, not game parameters, matching the convention already used throughout
+test_resolve.py/test_terminal.py.
 """
+
+import pytest
 
 from pursuit.constants import Outcome
 from pursuit.sdk import engine
+from pursuit.sdk.actions import CopAction
+from pursuit.shared.resolution import PREFERRED
 from pursuit.shared.state import GameState
 
 
 def test_legal_turn_sequence(default_params):
-    """GATE-1: A legal cop-then-thief turn runs without error; game continues."""
+    """GATE-1: a legal joint turn -- both agents move at once -- runs
+    without error and the game continues."""
     state = engine.make_state(default_params)
 
-    # Cop turn: move to (0, 1), no barrier.
-    s1, cap1 = engine.apply_cop_action(state, (0, 1), None, default_params)
-    assert cap1 is None  # thief at (3,3); no capture
-
-    # Thief turn: move to (3, 4).
-    s2, end1 = engine.apply_thief_move(s1, (3, 4), default_params)
-    assert end1 is None  # turn 1; survival_threshold not reached
-    assert s2.turn == 1
-    assert s2.cop == (0, 1)
-    assert s2.thief == (3, 4)
+    post, outcome = engine.resolve_turn(
+        state, CopAction(move=(0, 1)), (3, 4), default_params, PREFERRED
+    )
+    assert outcome is None  # cop at (0,1), thief at (3,4): no overlap
+    assert post.turn == 1
+    assert post.cop == (0, 1)
+    assert post.thief == (3, 4)
 
 
 def test_barrier_quota_gate(default_params):
-    """GATE-2: Barrier placement at quota is rejected; barriers_placed unchanged."""
+    """GATE-2: barrier placement at quota is REJECTED (ValueError), not
+    silently absorbed -- resolve_turn validates both actions before
+    applying either (docs/phases/phase-3/RULES-RESOLUTION.md), unlike the
+    superseded apply_cop_action/place_barrier pair, which returned the
+    unchanged state on an over-quota placement."""
     over_quota_state = GameState(
-        cop=(0, 0),
-        thief=(3, 3),
-        barriers=frozenset(),
-        barriers_placed=default_params.barrier_quota,
-        turn=0,
+        cop=(0, 0), thief=(3, 3), barriers=frozenset(),
+        barriers_placed=default_params.barrier_quota, turn=0,
     )
-    new_state, outcome = engine.apply_cop_action(
-        over_quota_state, None, (1, 1), default_params
-    )
-    assert (1, 1) not in new_state.barriers
-    assert new_state.barriers_placed == default_params.barrier_quota
-    assert outcome is None
+    with pytest.raises(ValueError, match="illegal barrier"):
+        engine.resolve_turn(
+            over_quota_state, CopAction(barrier=(1, 0)), (3, 4), default_params, PREFERRED
+        )
 
 
 def test_all_capture_types(default_params):
-    """GATE-3: All three capture types yield Outcome.CAPTURE via engine.check_capture."""
-    # BASE-03: cop landed on thief's cell.
-    state_03 = GameState(
-        cop=(3, 3), thief=(3, 3), barriers=frozenset(), barriers_placed=0, turn=0
+    """GATE-3: the cop-lands-on-thief, barrier-on-thief and walled-in
+    predicates each yield Outcome.CAPTURE via the joint resolver; a clean
+    turn yields None."""
+    # Cop steps onto the thief's pre-turn cell.
+    landed = GameState(cop=(3, 2), thief=(3, 3), barriers=frozenset(), barriers_placed=0, turn=0)
+    _, outcome = engine.resolve_turn(
+        landed, CopAction(move=(3, 3)), (3, 3), default_params, PREFERRED
     )
-    assert engine.check_capture(state_03, default_params) is Outcome.CAPTURE
+    assert outcome is Outcome.CAPTURE
 
-    # BASE-04: barrier placed on thief's cell.
-    state_04 = GameState(
-        cop=(0, 0),
-        thief=(3, 3),
-        barriers=frozenset({(3, 3)}),
-        barriers_placed=1,
-        turn=0,
+    # Barrier placed on the thief's pre-turn cell (rule 46).
+    barriered = GameState(cop=(0, 0), thief=(0, 1), barriers=frozenset(), barriers_placed=0, turn=0)
+    _, outcome = engine.resolve_turn(
+        barriered, CopAction(barrier=(0, 1)), (0, 1), default_params, PREFERRED
     )
-    assert engine.check_capture(state_04, default_params) is Outcome.CAPTURE
+    assert outcome is Outcome.CAPTURE
 
-    # BASE-05: no legal move — thief's own cell is a barrier (same setup as BASE-04;
-    # detect_capture checks BASE-04 first; either condition produces CAPTURE).
-    state_05 = GameState(
-        cop=(0, 0),
-        thief=(3, 3),
-        barriers=frozenset({(3, 3)}),
-        barriers_placed=1,
-        turn=0,
+    # Thief walled in on every orthogonal neighbour (rule 47).
+    walled = GameState(
+        cop=(6, 6), thief=(0, 0),
+        barriers=frozenset({(0, 1), (1, 0)}), barriers_placed=2, turn=0,
     )
-    assert engine.check_capture(state_05, default_params) is Outcome.CAPTURE
+    _, outcome = engine.resolve_turn(
+        walled, CopAction(move=(6, 6)), (0, 0), default_params, PREFERRED
+    )
+    assert outcome is Outcome.CAPTURE
 
-    # Confirm a clean state returns None (game continues).
-    state_none = GameState(
-        cop=(0, 0), thief=(3, 3), barriers=frozenset(), barriers_placed=0, turn=0
+    # A clean turn: game continues.
+    clean = GameState(cop=(0, 0), thief=(3, 3), barriers=frozenset(), barriers_placed=0, turn=0)
+    _, outcome = engine.resolve_turn(
+        clean, CopAction(move=(0, 1)), (3, 4), default_params, PREFERRED
     )
-    assert engine.check_capture(state_none, default_params) is None
+    assert outcome is None

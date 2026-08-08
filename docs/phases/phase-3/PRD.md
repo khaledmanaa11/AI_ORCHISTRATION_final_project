@@ -1,113 +1,134 @@
-# Phase 3 PRD — Blind Strategy Module (RL policy)
+# Phase 3 PRD — the strategy module (run 2, rebuilt)
 
-**Version:** 1.00 · **Status:** approved · **Updated:** 2026-07-31
+**Milestone gate (book §10.4, stage 3):** two agents play a complete game blind of each
+other's process, with the move decided by an algorithm — never by a language model.
 
-> Phase-scoped PRD. Inherits the project [PRD.md](../../PRD.md); captures only what is
-> specific to Phase 3. Game numbers come from [PARAMETERS.md](../../PARAMETERS.md); the RL
-> hyperparameters are a different *category* of number and are labelled as such under
-> "Numeric sourcing" below.
+**Status:** run 2. Run 1 (tabular Q-learning) is withdrawn; see §2.
+**Binding rules contract:** [RULES-RESOLUTION.md](RULES-RESOLUTION.md)
+**Mechanism PRD:** [docs/PRD_matrix_mover.md](../../PRD_matrix_mover.md)
+**How it was actually built** — the failures, the measurements, the reversals, and what we
+got wrong: [ENGINEERING-LOG.md](ENGINEERING-LOG.md) · [RUN-1-POSTMORTEM.md](RUN-1-POSTMORTEM.md)
 
-## Goal
+---
 
-Deliver the decision engine: a `BrainBase` interface behind config `[strategy]`, with a
-trained tabular Q-learning policy choosing the move, a Bayes + BFS-distance fallback for
-states the table has never learned, and an offline self-play training harness whose
-learning curves are instrumented from the first episode. The agent plays **blind** — no
-scent, no hints, no language model. Given a believed target cell it walks a shortest
-barrier-aware path unaided.
+## 1. What this phase delivers
 
-## Requirements covered
-
-| REQ-ID | Description |
-|--------|-------------|
-| STRAT-01 | Move selection uses a trained tabular Q-learning policy via `BrainBase._pick_move` (§B) |
-| STRAT-02 | A Bayes + Manhattan heuristic fallback handles states the Q-table has never visited (§B) |
-| STRAT-03 | The strategy module is pluggable — declared in config `[strategy]` as `police_class`/`thief_class`, separate from networking (§C) |
-| STRAT-04 | Given a known target location, the agent computes and walks the shortest path with no manual intervention (Stage 3 gate) |
-| STRAT-05 | The cop selects barrier placement via `_decide_move` (STRATEGY.md) |
-| STRAT-06 | Training is offline (self-play + reference implementation); a trained Q-table ships; learning curves are instrumented from the first run (rule 42) |
-| STRAT-07 | The algorithm chooses the move — the language model never does (rule 25) |
-| QUAL-02 | No duplication — the BFS distance oracle is extracted once and consumed by both the fallback and the barrier sub-policy |
-| QUAL-08 | Every source and test file ≤150 lines — the strategy package is split by responsibility, never compressed to fit |
-| QUAL-11 | Zero hardcoded values in source — every threshold, rate and episode count in config |
-| DOC-02 | `docs/PRD_rl_strategy.md` — the per-mechanism PRD for the Q-learning policy |
-
-## Acceptance criteria (= §10.4 milestone gate)
-
-1. **GATE-1 — Shortest path unaided:** Given a known target location, the agent computes
-   and walks the shortest path with no manual intervention. Asserted on a barrier-free
-   board *and* on boards where a naive Manhattan step would enter a barrier pocket — the
-   walk must match BFS optimal length in both, and must terminate rather than oscillate.
-
-2. **GATE-2 — Q-policy with fallback:** Move selection comes from the tabular Q-learning
-   policy, with the Bayes + BFS-distance fallback for unvisited states. Asserted
-   positively both ways: a state key with visits ≥ threshold returns the table's argmax,
-   and a state key below threshold (or absent) is served by the fallback — with the
-   trigger boundary itself tested, not just the two extremes.
-
-3. **GATE-3 — Pluggable, separate, algorithm-decided:** The strategy module is swappable
-   via config `[strategy]` alone, is separate from networking, and the algorithm — never
-   the LLM — chooses the move. Asserted by loading each brain from config without touching
-   the network layer, and by a structural test that the decision path imports nothing that
-   could reach a language model (STRAT-07 is a disqualification risk, so it is tested, not
-   assumed).
-
-4. **GATE-4 — The RL actually learned something:** the shipped `QLearningBrain` beats
-   `HeuristicBrain` head-to-head over the fixed eval scenario set, at the win-rate
-   threshold and game count declared in config, and the learning-curve CSV + README PNGs
-   exist from the first run (rule 42). A tie or a loss means the phase goal is not met —
-   this criterion is what separates "a Q-table exists" from "a Q-table is worth shipping".
-
-## Numeric sourcing
-
-| Value | Source | Status |
+| # | Deliverable | Where |
 |---|---|---|
-| Board 7×7 | PARAMETERS.md Table 13 row 1 | minimum |
-| Barrier quota 14 | PARAMETERS.md Table 15 row 2 | minimum |
-| Move ceiling 35 | PARAMETERS.md Table 15 row 3 | minimum |
-| Survival threshold 35 | PARAMETERS.md Table 15 row 4 | minimum |
-| α (learning rate), γ (discount), ε schedule + floor | **Engineering default — NOT a PARAMETERS.md value** | config `[strategy]` |
-| `min_visits` fallback threshold | **Engineering default — NOT a PARAMETERS.md value** | config `[strategy]` |
-| Turn-bucket boundaries (early/mid/late) | **Engineering default — NOT a PARAMETERS.md value** | config `[strategy]` |
-| Training episode count, checkpoint interval, eval game count, win-rate bar | **Engineering default — NOT a PARAMETERS.md value** | config `[training]` |
+| D1 | The turn is **simultaneous**: one joint resolver, six terminal predicates | `src/pursuit/sdk/{resolve,actions,terminal}.py` |
+| D2 | Negotiated resolution semantics that cannot abort the handshake | `src/pursuit/shared/resolution.py`, `config/*/resolution.json` |
+| D3 | A matrix-game mover that plays an **unexploitable** (mixed) strategy | `src/pursuit/strategy/{matrix,equilibrium,valuebrain}.py` |
+| D4 | A 15-feature positional evaluation over the free-cell graph | `src/pursuit/strategy/{features,graphcache}.py` |
+| D5 | Two fixed sparring anchors representing a realistic opponent | `src/pursuit/strategy/naive.py` |
+| D6 | Self-play training with a randomised start distribution | `training/{run_selfplay,generation,pool,fit,starts}.py` |
+| D7 | A second optimiser targeting league points directly | `training/{evolve,run_evolve}.py` |
+| D8 | Held-out evaluation with 95% intervals on every rate | `training/{arena,run_eval}.py` |
 
-Appendix F fixes the *game*, not the *learner*. RL hyperparameters are ours to choose and
-are labelled as engineering defaults wherever they appear — the same honesty convention
-Phase 2 used for ports and watchdog cadence (D-16, D-18). Inventing a value in the first
-table is a disqualification; choosing one in the second is engineering.
+## 2. Why run 1 was withdrawn
 
-## In scope / Out of scope (this phase)
+Run 1 trained a tabular Q-learner for 300,000 episodes over a 103.7-million-value key. Its
+cop finished training beating the heuristic thief **90%** of the time and scored **25%** at
+the gate. The post-mortem attributed this to the fixed start state and a degenerate thief
+reward. Both were real. Neither was the root cause.
 
-- **In:** `BrainBase` interface + `Observation`/`Decision` contracts; state encoding with
-  canonical string keys; JSON Q-table with per-key visit counts; `QLearningBrain` with
-  ε-greedy selection and the visit-count fallback trigger; `HeuristicBrain` as a fully
-  playable baseline; Bayes motion-model prior; BFS distance oracle and walk on the
-  barrier-aware grid; cop barrier sub-policy; offline training harness with sparring pool
-  and resumable checkpoints; learning-curve CSV + plotting script;
-  `docs/PRD_rl_strategy.md`; the §10.4 gate tests.
+**The root cause is that the game is simultaneous and the engine was sequential.** Book
+§5.3.2 p.35 states that the Acknowledge phase *"guarantees that the reveal will occur only
+when both sides have already fixed their moves"*, and §5.2 names *"changing a move after
+the opponent's move has been revealed"* as one of the three frauds the mandatory
+Commit-Reveal protocol exists to prevent. The engine resolved cop-then-thief, so the thief
+chose while already seeing the cop's new cell — precisely the information Chapter 5 spends
+eight pages making cryptographically impossible.
 
-- **Out:** Scent, hints, pheromones, belief evidence and any LLM use (Phase 4 — the
-  *input contract* is fixed now as "a believed target cell" so Phase 4 plugs in without a
-  retrain); networking changes (Phase 2, done); cloud tunneling (Phase 5); commit-reveal
-  cryptography (Phase 6); Gmail reporting, live GUI and replay viewer (Phase 7 — this
-  phase only *emits* what Phase 7 will later visualize); submission and league operations
-  (Phase 8).
+That makes tabular Q-learning the wrong tool, not an under-trained one. `max_a' Q(s', a')`
+is a single-agent quantity with no meaning in a matrix game, and `argmax` over a Q-row is
+deterministic by construction. This repo's own measurement of the cost: a search cop
+captures a deterministic evader **96%** of the time and a mixing one **36%**.
 
-## Dependencies
+Three further engine defects were found by running the old engine and are fixed in D1:
+`apply_move` validated nothing (a thief could be placed on a barrier); the thief could step
+onto the cop uncaptured and then escape; and rule 47 (walled-in thief) was unreachable dead
+code because `get_legal_moves` appends STAY unconditionally.
 
-- Depends on: Phase 1 (`pursuit.sdk.engine` — the only route to game logic, and the
-  environment the training harness steps) and Phase 2 (`config/{police,thief}/` layout and
-  the loader helpers the `[strategy]` section is read through)
-- External: `matplotlib` as a **dev/training-only** dependency via `uv add --dev`, imported
-  solely by the plotting script. No new runtime dependency — the decision path stays pure
-  standard library, so the shipped agent's runtime dep list remains `fastmcp` alone.
+## 3. Acceptance criteria
 
-## Success metrics & test scenarios
+| ID | Criterion | How it is measured |
+|---|---|---|
+| AC-1 | Both agents decide from the **same** pre-turn state; the turn resolves once | `tests/unit/training/test_joint_game.py` asserts both brains receive an identical state object per turn |
+| AC-2 | All six terminal predicates fire correctly under both rule sets | `tests/unit/test_terminal.py` |
+| AC-3 | An illegal action is rejected, never absorbed | `tests/unit/test_resolve.py` |
+| AC-4 | A missing negotiated block degrades to BOOK_ONLY; a malformed one raises | `tests/unit/test_resolution_config.py` |
+| AC-5 | The mover plays a mixed strategy where one is required | `tests/unit/strategy/test_equilibrium.py` (matching pennies → 0.5/0.5) |
+| AC-6 | A decision fits comfortably inside the 30 s negotiated timeout | measured: **3.62 ms** cold, 2.14 ms warm |
+| AC-7 | The shipped weights beat the hand-set prior, or the prior ships | `training/run_eval.py`, 95% Wilson intervals, both seats |
+| AC-8 | No language model on the decision path | `scripts/check_no_llm_in_strategy.py` |
+| AC-9 | Segal Table 5 gates green | ruff, pytest --cov ≥85%, every file ≤150 code lines |
 
-- GATE-1…GATE-4 each map to named runnable tests (see [PLAN.md](PLAN.md) test plan)
-- `uv run pytest --cov=pursuit` — suite green with ≥85% coverage (QUAL-10)
-- `uv run ruff check .` — 0 violations (QUAL-09)
-- `bash scripts/check_line_limit.sh` — all source and test files ≤150 lines (QUAL-08)
-- `docs/PRD_rl_strategy.md` committed at v1.00 **before** the policy code it describes
-  (DOC-02, SEGAL §2.5 step 5)
-- Learning-curve CSV present from the first training run, README PNGs rendered (rule 42)
+## 4. Requirements covered
+
+- **STRAT-01** canonical action space — `sdk/actions.py`; movement set is *fixed* (Table 15).
+- **STRAT-03** one brain seam — `BrainBase`; three registered brains, explicit registry.
+- **STRAT-05** only the cop may place a barrier — enforced in `CopAction` and `naive.py`.
+- **STRAT-07 / rule 25** the algorithm decides — no LLM import is reachable from `strategy/`.
+- **BASE-03/04/05** capture conditions — now `sdk/terminal.py`, all three reachable.
+- **Rule 46/47/48** — predicates 1, 5 and the scoring table.
+- **Rule 42** — learning curves written to `artifacts/*/curve.json`.
+
+## 5. In scope / out of scope
+
+**In:** turn resolution, action spaces, the mover, the evaluation, training, evaluation
+harness, the negotiated rules block, retirement of the run-1 stack.
+
+**Out:** belief maps and blindness (Phase 4 — `Observation.target_cell` already has the
+right shape and carries the true cell for now); pheromones and hint text (Phase 4);
+barrier placement over the wire (Phase 6 — the wire action is currently always a move);
+commit-reveal itself (Phase 6); the live GUI and replay viewer (Phase 7).
+
+## 6. Measured results
+
+Held-out, n=200 per matchup, 95% Wilson intervals, `run_eval.py`. The prior and the
+trained vector are measured in the same run, so "did training help" is a comparison and
+not a number remembered from an earlier session.
+
+**On the negotiated opening — the board a league game actually plays:**
+
+| matchup | seat | prior | shipped | delta |
+|---|---|---|---|---|
+| vs chaser cop (seals) | thief | 43.5% [36.8, 50.4] | **58.0%** [51.1, 64.6] | **+14.5% — significant** |
+| vs chaser cop (no seals) | thief | 14.5% [10.3, 20.0] | **32.5%** [26.4, 39.3] | **+18.0% — significant** |
+| vs greedy evader | cop | 100.0% [98.1, 100] | **100.0%** [98.1, 100] | at ceiling |
+
+On randomised starts every matchup also improved (+3.0 to +4.5%) but none separably at
+n=200 — reported rather than claimed.
+
+**Training curve** (`artifacts/run2/curve.json`, 40 generations × 600 games = 24,000 games,
+≈1 h): cop 52.3% → 73.7%, thief 28.0% → 36.3% against the pool, loss 1.63 → 0.72.
+
+**What training changed in the model.** Two features had their sign **flipped** from the
+hand-set prior: `chokepoint_density` (+0.40 → −0.49) and `thief_on_chokepoint` (+0.30 →
+−0.39). The prior assumed chokepoints in the thief's region help the cop; the data says the
+opposite. `turns_remaining` more than tripled (0.35 → 1.14) and `thief_in_kill_range` fell
+from the deliberately extreme 3.00 to 1.84 — matching the ablation which showed 3.00 made
+the thief so proximity-averse it cornered itself.
+
+**The rejected artefact.** A second optimiser — `(1+λ)`-ES on league points with common
+random numbers — was run to completion and **not shipped**. It became a specialist: 85.5%
+against a barrier-blind chaser (vs 32.5%) but only **20.0%** against a sealing one (vs
+58.0%), and it gave up cop points (93.5% vs 100%). Total points were near-identical; the
+distribution was not. A competent opponent will use its barrier quota — rule 46 makes it
+decisive — so the balanced vector is the correct ship. Both runs and both curves are kept
+in `artifacts/` for the report.
+
+## 7. Known limitations, stated rather than hidden
+
+1. **Depth 1.** The mover expands one joint ply. A multi-turn barrier seal is visible only
+   as a gradient through the structure features, not as a plan. The one two-ply fact that
+   mattered most — rule 46's forced capture at distance 1 — is supplied explicitly as the
+   `thief_in_kill_range` feature, worth a measured **15% → 64%** on thief survival.
+2. **The game is cop-favoured under the book's defaults.** With a 14-barrier quota, a cop
+   that reaches Manhattan distance 1 wins outright. Our cop converts 100% against a naive
+   thief; our thief's survival is where the remaining headroom is, and it is bounded by
+   the rules rather than by the algorithm.
+3. **The negotiated rules change the game materially.** Making the swap a capture was
+   measured to drop thief survival against a barrier-blind chaser from **89% to 1%**. We
+   therefore propose the barrier race and decline the swap — a measured decision, recorded
+   in `resolution.py` and reversible if an opponent insists.

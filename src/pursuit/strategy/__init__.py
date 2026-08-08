@@ -1,7 +1,7 @@
 """Strategy package: the pluggable RL policy seam (STRAT-03).
 
 Exports the contracts only -- BrainBase, Observation, Decision. Concrete
-brains (QLearningBrain, HeuristicBrain) are registered via
+brains (ValueSearchBrain, ChaserCop, GreedyEvader) are registered via
 pursuit.strategy.registry.build_brain, not imported here.
 """
 

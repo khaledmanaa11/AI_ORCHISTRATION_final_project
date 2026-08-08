@@ -59,7 +59,7 @@ def test_observation_is_frozen() -> None:
 
 
 def test_decision_is_frozen() -> None:
-    decision = Decision(move=(1, 1), source=MoveSource.QTABLE)
+    decision = Decision(move=(1, 1), source=MoveSource.EQUILIBRIUM)
     with pytest.raises(FrozenInstanceError):
         decision.move = (2, 2)  # type: ignore[misc]
 

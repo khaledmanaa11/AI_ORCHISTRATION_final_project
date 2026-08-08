@@ -1,8 +1,8 @@
 """Structural constants and enumerations for the pursuit engine.
 
 No numeric game values live here (D-07). All game numbers are in game_params.json.
-Config key string constants (ConfigKey/NetworkConfigKey/StrategyKey/TrainingKey)
-live in pursuit.config_keys — split out there at the 03-07 150-code-line ceiling;
+Config key string constants (ConfigKey/NetworkConfigKey/StrategyKey) live in
+pursuit.config_keys — split out there at the 03-07 150-code-line ceiling;
 this module keeps only game-domain enums and the Action<->Direction helpers.
 """
 
@@ -47,11 +47,17 @@ class Outcome(Enum):
 
 
 class MoveSource(str, Enum):
-    """Decision.source provenance (AI-SPEC Sec5 E2/E3); never defaults to QTABLE."""
+    """Decision.source provenance (AI-SPEC Sec5 E2/E3); every brain must set
+    it truthfully -- it must never default silently to a value it did not
+    actually produce."""
 
-    QTABLE = "qtable"
     FALLBACK = "fallback"
     HEURISTIC = "heuristic"
+    EQUILIBRIUM = "equilibrium"
+    """Sampled from the solved matrix game -- the run-2 mover (03-20)."""
+
+    EXPLORATION = "exploration"
+    """A deliberate off-policy draw during training; never used in a league game."""
 
 
 class Action(IntEnum):

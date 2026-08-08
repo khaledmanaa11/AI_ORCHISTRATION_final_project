@@ -24,3 +24,16 @@ structured design + task evidence for all eight phases.
 
 > This exceeds Segal §2.2 (which requires only the single project-level triplet plus
 > per-mechanism `PRD_<mechanism>.md`). It is an intentional quality choice.
+
+## Beyond the triplet: how a phase actually went
+
+Some phases carry a fourth document — an engineering log recording the failures,
+measurements, reversals and rejected alternatives that the PRD/PLAN/TODO deliberately do
+not. A PRD states what the module does; it is a poor place to record that we picked a rule
+from a plausible argument and had to reverse it after measuring.
+
+| Phase | Log |
+|---|---|
+| 3 | [ENGINEERING-LOG.md](phase-3/ENGINEERING-LOG.md) — why run 1 failed for a reason its own post-mortem missed, the three live engine bugs found by *running* the engine, and the two optimisers of which one shipped |
+| 3 | [RUN-1-POSTMORTEM.md](phase-3/RUN-1-POSTMORTEM.md) — forensic analysis of the abandoned 300,000-episode run |
+| 3 | [RULES-RESOLUTION.md](phase-3/RULES-RESOLUTION.md) — every turn-resolution predicate pinned to a book quote or marked as a negotiated extension |

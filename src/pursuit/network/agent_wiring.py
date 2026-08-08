@@ -1,16 +1,19 @@
 """Small wiring closures + config-dir readers -- split out of
 agent_lifecycle.py at the 150-code-line gate (Segal Table 5): role.json
-reading, the NET-05/NET-07 JSONL sink closures, and the NET-09 inbound
-handshake seam. `agent_lifecycle.py` imports every name here and re-exports
-it, so `agent_lifecycle.load_role` / `.make_transition_reporter` /
-`.make_freeze_handler` / `.make_handshake_responder` keep working for every
-caller (including the tests) exactly as if they were still defined there.
+reading, `AgentConfig`/`load_agent_config` (the four per-agent config files),
+the NET-05/NET-07 JSONL sink closures, and the NET-09 inbound handshake
+seam. `agent_lifecycle.py` imports every name here and re-exports it, so
+`agent_lifecycle.load_role` / `.load_agent_config` /
+`.make_transition_reporter` / `.make_freeze_handler` /
+`.make_handshake_responder` keep working for every caller (including the
+tests) exactly as if they were still defined there.
 """
 
 from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 from pursuit.network import turn_events
@@ -24,6 +27,9 @@ from pursuit.network.state_machine import (
     TurnStateMachine,
 )
 from pursuit.network.tools import HandshakeHandler
+from pursuit.shared.config import GameParams, load_game_params
+from pursuit.shared.network_config import NetworkParams, load_network_config
+from pursuit.shared.resolution import RESOLUTION_SOURCE, ResolutionRules, load_resolution_rules
 
 
 class RoleKey:
@@ -42,6 +48,30 @@ def load_role(config_dir: Path | str) -> str:
     if not isinstance(role, str) or not role.strip():
         raise ValueError(f"{path}: missing or blank {RoleKey.ROLE!r}")
     return role
+
+
+@dataclass(frozen=True)
+class AgentConfig:
+    """The four per-agent config files, loaded once and handed to build_context."""
+
+    config_dir: Path
+    role: str
+    params: GameParams
+    net: NetworkParams
+    rules: ResolutionRules
+
+
+def load_agent_config(config_dir: Path | str) -> AgentConfig:
+    """Load role.json + network.json + game_params.json + the optional
+    negotiated resolution.json from ONE per-agent directory -- the only
+    source for this process's identity (NET-01). A missing resolution.json
+    is not an error: it degrades to BOOK_ONLY (RULES-RESOLUTION.md Sec5)."""
+    directory = Path(config_dir)
+    role = load_role(directory)
+    net = load_network_config(directory / "network.json")
+    params = load_game_params(directory / "game_params.json")
+    rules = load_resolution_rules(directory / RESOLUTION_SOURCE)
+    return AgentConfig(config_dir=directory, role=role, params=params, net=net, rules=rules)
 
 
 def make_transition_reporter(log_path: Path, *, game_uid: str, role: str) -> TransitionReporter:

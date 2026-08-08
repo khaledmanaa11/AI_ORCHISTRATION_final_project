@@ -1,0 +1,4 @@
+{
+  "capture_on_barrier_race": true,
+  "capture_on_swap": false
+}

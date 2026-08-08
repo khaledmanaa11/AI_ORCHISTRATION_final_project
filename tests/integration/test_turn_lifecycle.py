@@ -15,6 +15,7 @@ plan 02-10 and recorded in 02-10-SUMMARY.md.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 
 from fastmcp import Client
 
@@ -64,14 +65,31 @@ async def test_full_lifecycle_init_to_game_over(agent_log_paths, network_params)
 
     ctx_a.choose_move = _choose
 
-    thief_dest = engine.legal_moves(ctx_a.state, "thief", cfg_a.params)[0]
-    inject = Envelope(
-        type=MessageType.MOVE, turn=1, sender="thief",
-        payload={"x": thief_dest[0], "y": thief_dest[1]},
-    )
-    args = {k: v for k, v in inject.to_dict().items() if k != EnvelopeKey.TYPE}
-    async with Client(ctx_a.runtime.server) as client:
-        await client.call_tool("receive_move", args)
+    # Positions overridden to adjacent, reachable cells: resolve_turn now
+    # validates legality (RULES-RESOLUTION.md), so the old scenario -- the
+    # cop's second move teleporting from wherever its own first legal move
+    # left it straight onto the thief's first-move destination, several
+    # cells away -- is no longer reachable (it only "worked" because the
+    # superseded apply_move validated nothing). The thief STAYS both
+    # rounds (always legal), and a SECOND thief move is now injected too: a
+    # capture requires both sides' actions to be known before resolve_turn
+    # can fire -- the single-sided-capture bug this migration fixes -- so
+    # round 2 needs its own thief input, unlike the old apply_cop_action-
+    # only capture check that fired from the cop's move alone.
+    ctx_a.state = dataclasses.replace(ctx_a.state, cop=(0, 0), thief=(1, 1))
+    thief_dest = ctx_a.state.thief
+
+    async def _inject(turn: int) -> None:
+        envelope = Envelope(
+            type=MessageType.MOVE, turn=turn, sender="thief",
+            payload={"x": thief_dest[0], "y": thief_dest[1]},
+        )
+        args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
+        async with Client(ctx_a.runtime.server) as client:
+            await client.call_tool("receive_move", args)
+
+    await _inject(1)
+    await _inject(2)
 
     # An outer wall-clock ceiling, sourced from config (never a new literal), as a
     # safety net only -- the loop itself completes almost instantly (D-13, RESEARCH).

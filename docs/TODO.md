@@ -66,11 +66,11 @@ Gate: agent walks the shortest path to a known target unaided.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 03-01 `BrainBase` + Bayes+Manhattan fallback | P0 | ☐ | Khaled | Pluggable via config `[strategy]`; fallback tested (STRAT-02/03) |
-| 03-02 State encoding + tabular Q-learning + ε-greedy | P0 | ☐ | Khaled | Shortest path to known target unaided; algorithm picks move (STRAT-01/04/07) |
-| 03-03 Offline self-play harness + learning curves | P0 | ☐ | Khaled | Trained Q-table beats baseline; curves saved from run 1 (STRAT-06) |
-| 03-04 Write `docs/PRD_rl_strategy.md` | P1 | ☐ | Khaled | Full per-mechanism PRD committed (DOC-02) |
-| 03-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
+| 03-01 `BrainBase` + registry (3 brains) | P0 | ☑ | Khaled | Pluggable via config `[strategy]`; value_search/chaser_cop/greedy_evader (STRAT-02/03) |
+| 03-02 Simultaneous turn + matrix-game mover | P0 | ☑ | Khaled | `resolve_turn` joint resolver; equilibrium sampled, never an LLM (STRAT-01/04/07) |
+| 03-03 Self-play harness + learning curves | P0 | ☑ | Khaled | 24,000 games; trained beats prior +14.5/+18.0 pts, significant at 95% (STRAT-06) |
+| 03-04 Write `docs/PRD_matrix_mover.md` | P1 | ☑ | Khaled | Per-mechanism PRD committed; PRD_rl_strategy.md superseded (DOC-02) |
+| 03-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 
 ---
 

@@ -15,8 +15,9 @@ _STUB_NAME = "tests.stub:StubBrain"
 
 
 class _StubBrain(BrainBase):
-    """Locally-defined stub proving the construction mechanism -- 03-04/03-06
-    register the real HeuristicBrain/QLearningBrain classes, not this one."""
+    """Locally-defined stub proving the construction mechanism -- the
+    registry itself registers the real ValueSearchBrain/ChaserCop/
+    GreedyEvader classes (docs/PRD_matrix_mover.md), not this one."""
 
     def __init__(self, *, role: str, params, game_params) -> None:
         self.role = role

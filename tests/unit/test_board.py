@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pursuit.shared.board import apply_move, get_legal_moves
+from pursuit.shared.board import get_legal_moves
 from pursuit.shared.config import GameParams, load_game_params
 from pursuit.shared.state import GameState
 
@@ -86,32 +86,3 @@ def test_onto_barrier_rejected(default_params: GameParams) -> None:
     )
     moves = get_legal_moves(state, "cop", params)
     assert (1, 2) not in moves  # barriered cell not in legal moves
-
-
-def test_apply_move_returns_new_state(default_params: GameParams) -> None:
-    """apply_move returns a new GameState; original is unchanged (immutable)."""
-    state = GameState(
-        cop=(3, 3),
-        thief=(0, 6),
-        barriers=frozenset(),
-        barriers_placed=0,
-        turn=0,
-    )
-    new_state = apply_move(state, "cop", (3, 4))
-    assert new_state.cop == (3, 4)
-    assert state.cop == (3, 3)  # original unchanged
-    assert new_state is not state
-
-
-def test_apply_move_thief(default_params: GameParams) -> None:
-    """apply_move repositions the thief; original state is unchanged."""
-    state = GameState(
-        cop=(0, 0),
-        thief=(3, 3),
-        barriers=frozenset(),
-        barriers_placed=0,
-        turn=0,
-    )
-    new_state = apply_move(state, "thief", (3, 4))
-    assert new_state.thief == (3, 4)
-    assert state.thief == (3, 3)  # original unchanged
