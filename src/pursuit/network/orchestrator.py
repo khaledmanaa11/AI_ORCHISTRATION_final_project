@@ -4,8 +4,17 @@ Each process embeds exactly one `AgentContext` and drives it through this
 loop -- there is no third referee process and no shared runtime object
 between the cop and the thief (NET-01, NET-02, rule 2). Every live thing a
 turn needs -- state machine, runtime, watchdog, log path, game_uid, the
-GameState replica -- hangs off the AgentContext INSTANCE handed in, never a
+GameState replica, the negotiated resolution rules, this turn's action
+buffer -- hangs off the AgentContext INSTANCE handed in, never a
 module-level global.
+
+Joint turn (docs/phases/phase-3/RULES-RESOLUTION.md, supersedes D-12's
+cop-then-thief turn order): both agents choose their action from the SAME
+pre-turn state; the wire exchange below only decides who SENDS first, never
+who computed second. Each half of the MY_TURN/WAIT_OPPONENT cycle records
+its own or the opponent's action into the AgentContext buffer
+(`turn_actions.py`); whichever half fills the second slot calls
+`engine.resolve_turn` exactly once and stores the result.
 
 Game logic is reached ONLY through `pursuit.sdk.engine` (QUAL-01): this
 module never imports board/barrier/capture/outcome and computes no
@@ -43,11 +52,15 @@ from pursuit.network.state_machine import (
 )
 from pursuit.network.watchdog import Watchdog
 from pursuit.sdk import engine
+from pursuit.sdk.actions import CopAction
 from pursuit.shared.config import GameParams
 from pursuit.shared.network_config import NetworkParams
+from pursuit.shared.resolution import BOOK_ONLY, ResolutionRules
 from pursuit.shared.state import GameState
 
-ChooseMove = Callable[[GameState, str, GameParams], tuple[int, int]]
+Coord = tuple[int, int]
+
+ChooseMove = Callable[[GameState, str, GameParams], Coord]
 """The Phase-3 replacement point (design note 5): a plain algorithm, never an
 LLM (rule 25). Defaults to `first_legal_move` when unset on the context."""
 
@@ -56,7 +69,14 @@ LLM (rule 25). Defaults to `first_legal_move` when unset on the context."""
 class AgentContext:
     """Everything one process's turn loop needs -- an INSTANCE, never a
     module-level global (NET-02). Two contexts built in the same interpreter
-    share no field: build a fresh one per process."""
+    share no field: build a fresh one per process.
+
+    `rules` are the negotiated terminal predicates (RULES-RESOLUTION.md
+    Sec5); BOOK_ONLY is the safe default until agent_lifecycle.py loads a
+    real per-agent resolution.json onto a live context.
+    `pending_cop_action`/`pending_thief_move` buffer this turn's actions
+    until both are known (turn_actions.py), then resolve_turn runs exactly
+    once and both slots are cleared."""
 
     role: str
     params: GameParams
@@ -69,6 +89,9 @@ class AgentContext:
     game_uid: str
     state: GameState
     choose_move: ChooseMove | None = None
+    rules: ResolutionRules = BOOK_ONLY
+    pending_cop_action: CopAction | None = None
+    pending_thief_move: Coord | None = None
 
 
 def engine_agent(role: str) -> str:
@@ -81,7 +104,7 @@ def engine_agent(role: str) -> str:
     raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
 
 
-def first_legal_move(state: GameState, agent: str, params: GameParams) -> tuple[int, int]:
+def first_legal_move(state: GameState, agent: str, params: GameParams) -> Coord:
     """Phase-2 placeholder: the first legal destination the SDK offers.
     Deterministic and algorithmic, replaced by the Phase-3 RL policy (D-01
     seam). No LLM is involved in move choice anywhere in this project
@@ -89,23 +112,12 @@ def first_legal_move(state: GameState, agent: str, params: GameParams) -> tuple[
     return engine.legal_moves(state, agent, params)[0]
 
 
-def apply_role_move(
-    state: GameState, role: str, dest: tuple[int, int], params: GameParams
-) -> tuple[GameState, Outcome | None]:
-    """Dispatch ONLY (QUAL-01): police -> apply_cop_action (no barrier in
-    Phase 2, design note 6), thief -> apply_thief_move. No legality, capture
-    or scoring is computed here."""
-    if role == "police":
-        return engine.apply_cop_action(state, dest, None, params)
-    if role == "thief":
-        return engine.apply_thief_move(state, dest, params)
-    raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
-
-
 async def run_turn_loop(ctx: AgentContext) -> Outcome | None:
-    """Alternate MY_TURN/WAIT_OPPONENT per D-12 turn order (police first,
-    design note 7) until an outcome or a terminal state ends the game
-    (D-09); always closes with a persisted game_over record."""
+    """Alternate MY_TURN/WAIT_OPPONENT (police sends first, design note 7)
+    until an outcome or a terminal state ends the game (D-09); always closes
+    with a persisted game_over record. This ordering only decides who SENDS
+    first over the wire -- both sides still choose their action from the
+    same pre-turn state (module docstring; RULES-RESOLUTION.md)."""
     # Deferred import (not module-level): turn_actions.py imports FROM this
     # module, so importing it back at module-load time would be a genuine
     # load-order-dependent circular import (verified: it broke when

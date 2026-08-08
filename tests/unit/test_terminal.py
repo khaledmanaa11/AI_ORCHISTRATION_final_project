@@ -10,7 +10,7 @@ from pursuit.constants import Outcome
 from pursuit.sdk.actions import CopAction
 from pursuit.sdk.resolve import resolve_turn
 from pursuit.sdk.terminal import is_walled_in
-from pursuit.shared.resolution import BOOK_ONLY, PREFERRED
+from pursuit.shared.resolution import BOOK_ONLY, PREFERRED, ResolutionRules
 from pursuit.shared.state import GameState
 
 
@@ -57,10 +57,18 @@ def test_p3_same_cell_captures(default_params):
 
 
 def test_p4_swap_captures_only_when_negotiated(default_params):
-    """Without this the two agents pass through one another."""
+    """Without this the two agents pass through one another.
+
+    Note we agree the swap explicitly rather than via PREFERRED: our shipped
+    proposal deliberately DECLINES the swap, because making it a capture was
+    measured to cost the thief seat 88 points of survival against a barrier-blind
+    chaser while gaining the cop seat nothing (see resolution.py). The engine
+    still has to implement it correctly in case an opponent proposes it.
+    """
+    swap_agreed = ResolutionRules(capture_on_barrier_race=False, capture_on_swap=True)
     pre = _state(cop=(2, 2), thief=(2, 3))
     _, agreed = resolve_turn(
-        pre, CopAction(move=(2, 3)), (2, 2), default_params, PREFERRED
+        pre, CopAction(move=(2, 3)), (2, 2), default_params, swap_agreed
     )
     assert agreed is Outcome.CAPTURE
 

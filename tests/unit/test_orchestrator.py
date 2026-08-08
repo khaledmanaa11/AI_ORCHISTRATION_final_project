@@ -19,6 +19,7 @@ from pursuit.network import orchestrator
 from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State
 from pursuit.sdk import engine
+from pursuit.sdk.actions import CopAction
 from tests.unit._fakes_agent import make_ctx
 
 _ORCHESTRATOR_SRC = Path("src/pursuit/network/orchestrator.py").read_text(encoding="utf-8")
@@ -32,22 +33,53 @@ def test_first_legal_move_is_an_algorithm(default_params):
     assert orchestrator.first_legal_move(state, "cop", default_params) == dest
 
 
-def test_apply_role_move_dispatches_to_the_sdk_only(default_params):
-    """Pins the dispatch: cop -> apply_cop_action (no turn tick), thief ->
-    apply_thief_move (turn ticks) -- QUAL-01, nothing computed here."""
-    state = engine.make_state(default_params)
+async def test_take_my_turn_buffers_without_mutating_state_until_paired(
+    tmp_path, default_params, network_params
+):
+    """QUAL-01, joint-turn edition (plan 03-14): replaces
+    test_apply_role_move_dispatches_to_the_sdk_only -- apply_role_move is
+    gone, and it applied a single side's move immediately, which is exactly
+    the sequential defect RULES-RESOLUTION.md replaces. take_my_turn must
+    buffer this agent's own move and push it over the wire, but MUST NOT
+    apply it to ctx.state alone: state changes only once both sides' actions
+    are known and engine.resolve_turn -- the sole authority (QUAL-01) -- has
+    run."""
+    ctx = make_ctx(tmp_path, default_params, network_params, role="police", label="buffer")
+    pre_state = ctx.state
 
-    cop_dest = engine.legal_moves(state, "cop", default_params)[0]
-    new_state, _outcome = orchestrator.apply_role_move(state, "police", cop_dest, default_params)
-    assert new_state.cop == cop_dest
-    assert new_state.turn == state.turn
+    outcome = await orchestrator.take_my_turn(ctx)
 
-    thief_dest = engine.legal_moves(state, "thief", default_params)[0]
-    new_state2, _outcome2 = orchestrator.apply_role_move(
-        state, "thief", thief_dest, default_params
+    assert outcome is None
+    assert ctx.state is pre_state  # nothing applied yet -- the pair is incomplete
+    assert ctx.pending_cop_action is not None
+    assert ctx.pending_thief_move is None
+
+
+async def test_paired_turn_resolves_via_the_sdk_once(tmp_path, default_params, network_params):
+    """Once both sides are buffered, the completing half applies both
+    actions together through engine.resolve_turn -- the only place a joint
+    turn is computed (QUAL-01) -- and the buffer is cleared for next turn."""
+    ctx = make_ctx(tmp_path, default_params, network_params, role="police", label="paired")
+    thief_dest = engine.legal_moves(ctx.state, "thief", default_params)[0]
+    incoming = Envelope(
+        type=MessageType.MOVE, turn=1, sender="thief",
+        payload={"x": thief_dest[0], "y": thief_dest[1]},
     )
-    assert new_state2.thief == thief_dest
-    assert new_state2.turn == state.turn + 1
+    ctx.runtime.queue.put_nowait(incoming.to_dict())
+
+    pre_state = ctx.state
+    cop_dest = orchestrator.first_legal_move(pre_state, "cop", default_params)
+    expected_state, expected_outcome = engine.resolve_turn(
+        pre_state, CopAction(move=cop_dest), thief_dest, default_params, ctx.rules
+    )
+
+    await orchestrator.take_my_turn(ctx)
+    outcome = await orchestrator.await_opponent_turn(ctx)
+
+    assert ctx.state == expected_state
+    assert outcome == expected_outcome
+    assert ctx.pending_cop_action is None
+    assert ctx.pending_thief_move is None
 
 
 async def test_full_turn_cycle(tmp_path, default_params, network_params):

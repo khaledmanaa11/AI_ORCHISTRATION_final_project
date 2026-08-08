@@ -26,17 +26,19 @@ cannot decode through `Envelope.from_dict`, aborting every real handshake to
 from __future__ import annotations
 
 import secrets
-from dataclasses import dataclass
 from pathlib import Path
 
 from pursuit.constants import Outcome
 
-# load_role/make_freeze_handler/make_handshake_responder/make_transition_reporter and
-# engine_agent below are re-exported verbatim (this file's own body never calls them
-# directly except where shown) so `agent_lifecycle.<name>` keeps working for every
-# caller, per this module's required export surface -- noqa: F401 on the re-export-only
+# AgentConfig/load_agent_config/load_role/make_freeze_handler/
+# make_handshake_responder/make_transition_reporter and engine_agent below are
+# re-exported verbatim (this file's own body never calls them directly except
+# where shown) so `agent_lifecycle.<name>` keeps working for every caller, per
+# this module's required export surface -- noqa: F401 on the re-export-only
 # names.
 from pursuit.network.agent_wiring import (
+    AgentConfig,  # noqa: F401
+    load_agent_config,
     load_role,  # noqa: F401
     make_freeze_handler,
     make_handshake_responder,
@@ -54,28 +56,6 @@ from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
 from pursuit.network.watchdog import Watchdog
 from pursuit.sdk import engine
-from pursuit.shared.config import GameParams, load_game_params
-from pursuit.shared.network_config import NetworkParams, load_network_config
-
-
-@dataclass(frozen=True)
-class AgentConfig:
-    """The three per-agent config files, loaded once and handed to build_context."""
-
-    config_dir: Path
-    role: str
-    params: GameParams
-    net: NetworkParams
-
-
-def load_agent_config(config_dir: Path | str) -> AgentConfig:
-    """Load role.json + network.json + game_params.json from ONE per-agent
-    directory -- the only source for this process's identity (NET-01)."""
-    directory = Path(config_dir)
-    role = load_role(directory)
-    net = load_network_config(directory / "network.json")
-    params = load_game_params(directory / "game_params.json")
-    return AgentConfig(config_dir=directory, role=role, params=params, net=net)
 
 
 def build_context(
@@ -104,6 +84,7 @@ def build_context(
         game_uid=game_uid,
         state=engine.make_state(cfg.params),
         choose_move=choose_move,
+        rules=cfg.rules,
     )
 
 

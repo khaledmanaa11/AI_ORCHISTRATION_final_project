@@ -1,7 +1,11 @@
-"""Pure board functions: legal-move generation and state transition (D-08, D-13).
+"""Pure board functions: legal-move generation (D-08, D-13).
 
-Both functions are stateless and side-effect-free — they only compute new values
-from their inputs.  No global state, no I/O.
+Stateless and side-effect-free — only computes new values from its inputs.
+No global state, no I/O. The former `apply_move` state-transition helper is
+gone: it validated nothing (a bare `dataclasses.replace`), so a thief could
+be placed on a barrier. `pursuit.sdk.resolve.resolve_turn` is now the sole
+place a GameState is advanced, and it validates both actions before doing so
+(docs/phases/phase-3/RULES-RESOLUTION.md).
 
 Move convention (orthogonal-only, Table 15):
   - Four cardinal steps (NORTH/SOUTH/EAST/WEST) plus STAY in place.
@@ -10,8 +14,6 @@ Move convention (orthogonal-only, Table 15):
   - STAY (current position) is always included (D-13: the agent's own cell
     is never a barrier in a valid game state).
 """
-
-import dataclasses
 
 from pursuit.constants import Direction
 from pursuit.shared.config import GameParams
@@ -59,29 +61,3 @@ def get_legal_moves(state: GameState, agent: str, params: GameParams) -> list:
         result.append(candidate)
 
     return result
-
-
-def apply_move(state: GameState, agent: str, dest: Coord) -> GameState:
-    """Return a new GameState with *agent* repositioned to *dest*.
-
-    The original state is unchanged (GameState is frozen).
-    Turn management is the orchestrator's responsibility (Phase 2);
-    this function only moves the agent.
-
-    Parameters
-    ----------
-    state:
-        Current immutable game snapshot.
-    agent:
-        Either ``"cop"`` or ``"thief"``.
-    dest:
-        Target (row, col) cell.
-
-    Returns
-    -------
-    GameState
-        New frozen snapshot with the agent at *dest*.
-    """
-    if agent == "cop":
-        return dataclasses.replace(state, cop=dest)
-    return dataclasses.replace(state, thief=dest)

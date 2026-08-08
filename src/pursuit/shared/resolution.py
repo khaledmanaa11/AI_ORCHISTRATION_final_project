@@ -34,9 +34,15 @@ class ResolutionRules:
 #: What a book-faithful peer computes with no negotiation. The safe default.
 BOOK_ONLY = ResolutionRules(capture_on_barrier_race=False, capture_on_swap=False)
 
-#: What we propose in the pre-game declaration. Capture-favouring: the cop seat
-#: carries the higher reward (20 vs 10) and the swap is physically absurd.
-PREFERRED = ResolutionRules(capture_on_barrier_race=True, capture_on_swap=True)
+#: What we propose in the pre-game declaration. MEASURED, not assumed -- see
+#: docs/phases/phase-3/RULES-RESOLUTION.md Sec5.1. Making the swap a capture costs
+#: the thief seat enormously (survival against a barrier-less chaser falls from
+#: 89% to 1%) and gains the cop seat nothing it does not already have, because the
+#: cop already converts 100% against a naive thief. So we propose the barrier race
+#: -- which only ever fires on a cell the cop legitimately sealed -- and decline
+#: to propose the swap. Both remain supported; if an opponent proposes the swap we
+#: can accept it, and the search adapts because it expands through the live rules.
+PREFERRED = ResolutionRules(capture_on_barrier_race=True, capture_on_swap=False)
 
 
 def load_resolution_rules(path: Path | str | None) -> ResolutionRules:

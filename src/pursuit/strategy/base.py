@@ -2,8 +2,8 @@
 
 Observation and Decision are the frozen data contracts that cross the seam;
 BrainBase is the abstract move/decision interface every playable brain must
-implement. No policy logic lives here -- QLearningBrain and HeuristicBrain
-arrive in 03-04 and 03-06.
+implement. No policy logic lives here -- ValueSearchBrain, ChaserCop and
+GreedyEvader (docs/PRD_matrix_mover.md) implement it.
 """
 
 from abc import ABC, abstractmethod
@@ -40,11 +40,12 @@ class Observation:
 class Decision:
     """A brain's chosen move, with provenance and an optional barrier.
 
-    source names what produced move (qtable | fallback | heuristic) as a
-    data field, never an inference -- 03-AI-SPEC.md Sec5 dimensions E2
-    (decision provenance) and E3 (fallback trigger correctness) assert on
-    decision.source directly. Every brain must set it truthfully; it must
-    never default to MoveSource.QTABLE.
+    source names what produced move (equilibrium | exploration | heuristic |
+    fallback) as a data field, never an inference -- 03-AI-SPEC.md Sec5
+    dimensions E2 (decision provenance) and E3 (fallback trigger
+    correctness) assert on decision.source directly. Every brain must set it
+    truthfully; it must never default silently to a value it did not
+    actually produce.
 
     barrier is Optional and is always None for the thief -- only the cop's
     _decide_move may set it (D-12, STRAT-05).

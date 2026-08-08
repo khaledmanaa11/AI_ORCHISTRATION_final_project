@@ -3,10 +3,13 @@ PRD §10.4 criterion c).
 
 Three proofs, each mapped to one test:
 
-1. Both brain classes named in real config alone (`[strategy].police_class`/
-   `thief_class`) build via `registry.build_brain` and play a full game to a
-   terminal outcome -- "the swap needs no code edit" (E10).
-2. Playing both classes leaves `src/pursuit/network/` byte-for-byte
+1. Both a cop-capable and a thief-capable brain class named in real config
+   alone (`[strategy].police_class`/`thief_class`) build via
+   `registry.build_brain` and play a full game to a terminal outcome -- "the
+   swap needs no code edit" (E10). `value_search` (docs/PRD_matrix_mover.md)
+   plays either seat; `chaser_cop`/`greedy_evader` (strategy/naive.py) are
+   the fixed, role-specific sparring anchors.
+2. Playing every combination leaves `src/pursuit/network/` byte-for-byte
    unchanged (`git diff` snapshot taken before and after) -- the strategy
    package never reaches into the network layer to make the swap work.
 3. `scripts/check_no_llm_in_strategy.py` -- the SAME script CI runs -- is
@@ -23,67 +26,68 @@ import pathlib
 import subprocess
 
 from pursuit.sdk import engine
+from pursuit.sdk.actions import CopAction
 from pursuit.shared.config import GameParams
+from pursuit.shared.resolution import PREFERRED
 from pursuit.shared.state import GameState
 from pursuit.shared.strategy_config import StrategyParams
 from pursuit.strategy import registry
 from pursuit.strategy.base import BrainBase, Observation
-from pursuit.strategy.encoding import blocked_mask
-from pursuit.strategy.heuristic import HEURISTIC_BRAIN_NAME
-from pursuit.strategy.qlearning import QLEARNING_BRAIN_NAME
-from pursuit.strategy.qtable import QTable
+from pursuit.strategy.naive import CHASER_COP_NAME, GREEDY_EVADER_NAME
+from pursuit.strategy.valuebrain import VALUE_SEARCH_BRAIN_NAME
 from tests.integration.conftest import strategy_params
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 _CHECK_SCRIPT = _REPO_ROOT / "scripts" / "check_no_llm_in_strategy.py"
-_BRAIN_CLASSES = (HEURISTIC_BRAIN_NAME, QLEARNING_BRAIN_NAME)
-
-
-def _params_for_class(role: str, brain_class: str, qtable_path: pathlib.Path) -> StrategyParams:
-    params = strategy_params(role, brain_class=brain_class, qtable_path=qtable_path)
-    if brain_class == QLEARNING_BRAIN_NAME:
-        QTable().save(params.qtable_path)  # empty: every decision routes to the fallback
-    return params
+_COP_BRAIN_CLASSES = (VALUE_SEARCH_BRAIN_NAME, CHASER_COP_NAME)
+_THIEF_BRAIN_CLASSES = (VALUE_SEARCH_BRAIN_NAME, GREEDY_EVADER_NAME)
 
 
 def _observation(state: GameState, role: str, target, params: GameParams) -> Observation:
     own = state.cop if role == "cop" else state.thief
     return Observation(
-        own_cell=own,
-        target_cell=target,
-        blocked_mask=blocked_mask(state, own, role, params),
-        barriers_used=state.barriers_placed,
-        turn_index=state.turn,
+        own_cell=own, target_cell=target, blocked_mask=0, barriers_used=0, turn_index=state.turn
     )
 
 
 def _play_full_game(cop_brain: BrainBase, thief_brain: BrainBase, params: GameParams):
+    """Both brains decide from the SAME pre-turn state, then resolve once
+    (RULES-RESOLUTION.md): the cop-then-thief loop this replaces let the
+    thief see the cop's already-applied move before choosing its own, which
+    is exactly the sequential defect the joint turn closes. PREFERRED per
+    plan 03-14 -- this test is not about book-only semantics."""
     state = engine.make_state(params)
     outcome = None
     for _ in range(params.move_ceiling):
         cop_decision = cop_brain._decide_move(_observation(state, "cop", state.thief, params), state)
-        state, outcome = engine.apply_cop_action(state, cop_decision.move, cop_decision.barrier, params)
-        if outcome is not None:
-            break
         thief_decision = thief_brain._decide_move(_observation(state, "thief", state.cop, params), state)
-        state, outcome = engine.apply_thief_move(state, thief_decision.move, params)
+        cop_action = (
+            CopAction(barrier=cop_decision.barrier)
+            if cop_decision.barrier is not None
+            else CopAction(move=cop_decision.move)
+        )
+        state, outcome = engine.resolve_turn(state, cop_action, thief_decision.move, params, PREFERRED)
         if outcome is not None:
             break
     return outcome
 
 
+def _params_for(role: str, brain_class: str) -> StrategyParams:
+    return strategy_params(role, brain_class=brain_class)
+
+
 def test_both_brain_classes_build_from_config_alone_and_play_to_terminal(
-    tmp_path: pathlib.Path, default_params: GameParams
+    default_params: GameParams,
 ) -> None:
-    for index, brain_class in enumerate(_BRAIN_CLASSES):
-        cop_params = _params_for_class("cop", brain_class, tmp_path / f"cop_{index}.json")
-        thief_params = _params_for_class("thief", brain_class, tmp_path / f"thief_{index}.json")
+    for cop_class, thief_class in zip(_COP_BRAIN_CLASSES, _THIEF_BRAIN_CLASSES, strict=True):
+        cop_params = _params_for("cop", cop_class)
+        thief_params = _params_for("thief", thief_class)
         cop_brain = registry.build_brain("cop", cop_params, default_params)
         thief_brain = registry.build_brain("thief", thief_params, default_params)
 
         outcome = _play_full_game(cop_brain, thief_brain, default_params)
 
-        assert outcome is not None, f"{brain_class} never reached a terminal outcome"
+        assert outcome is not None, f"{cop_class}/{thief_class} never reached a terminal outcome"
 
 
 def _network_diff_snapshot() -> str:
@@ -95,12 +99,12 @@ def _network_diff_snapshot() -> str:
 
 
 def test_brain_swap_leaves_network_layer_byte_for_byte_unchanged(
-    tmp_path: pathlib.Path, default_params: GameParams
+    default_params: GameParams,
 ) -> None:
     before = _network_diff_snapshot()
-    for brain_class in _BRAIN_CLASSES:
-        cop_params = _params_for_class("cop", brain_class, tmp_path / "net_cop.json")
-        thief_params = _params_for_class("thief", brain_class, tmp_path / "net_thief.json")
+    for cop_class, thief_class in zip(_COP_BRAIN_CLASSES, _THIEF_BRAIN_CLASSES, strict=True):
+        cop_params = _params_for("cop", cop_class)
+        thief_params = _params_for("thief", thief_class)
         registry.build_brain("cop", cop_params, default_params)
         registry.build_brain("thief", thief_params, default_params)
     after = _network_diff_snapshot()

@@ -6,10 +6,12 @@ silent-opponent technical win, and a real-outcome clean exit.
 """
 
 import asyncio
+import dataclasses
 import json
 
 from pursuit.constants import Outcome
 from pursuit.network import orchestrator
+from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State, TransitionSeverity
 from tests.unit._fakes_agent import make_ctx
 
@@ -82,9 +84,23 @@ async def test_silent_opponent_produces_a_technical_win(tmp_path, default_params
 
 
 async def test_loop_ends_cleanly_on_a_real_outcome(tmp_path, default_params, network_params):
-    """A real SDK outcome (capture) ends the loop and persists game_over."""
+    """A real SDK outcome (capture) ends the loop and persists game_over.
+
+    Positions are overridden to adjacent cells reachable in one legal step:
+    resolve_turn now validates legality (RULES-RESOLUTION.md), so the old
+    scenario -- a cop "teleporting" six cells straight onto the thief's
+    start position, with no thief move involved at all -- is no longer
+    reachable (it only "worked" because the superseded apply_move validated
+    nothing). The thief's matching move is injected on the queue exactly as
+    test_full_turn_cycle does, because a capture now requires both sides'
+    actions to be known before resolve_turn can fire -- the single-sided-
+    capture bug this migration fixes."""
     ctx = make_ctx(tmp_path, default_params, network_params, role="police", label="capture")
-    ctx.choose_move = lambda state, agent, params: state.thief  # cop lands on thief
+    ctx.state = dataclasses.replace(ctx.state, cop=(2, 2), thief=(2, 3))
+    ctx.choose_move = lambda state, agent, params: state.thief  # cop steps onto the thief
+
+    incoming = Envelope(type=MessageType.MOVE, turn=1, sender="thief", payload={"x": 2, "y": 3})
+    ctx.runtime.queue.put_nowait(incoming.to_dict())
 
     outcome = await asyncio.wait_for(orchestrator.run_turn_loop(ctx), timeout=5)
 

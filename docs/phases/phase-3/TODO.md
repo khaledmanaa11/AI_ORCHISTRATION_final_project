@@ -1,97 +1,85 @@
-# Phase 3 TODO — Blind Strategy Module (RL policy)
+# Phase 3 TODO — run 2
 
-**Owner:** Khaled (solo) · **Updated:** 2026-08-01
+Definition of done for every task: code + tests landed, `uv run pytest` green,
+`uv run ruff check` clean, every file ≤150 code lines, committed.
 
-> Phase task list. Mirrors the `.planning/` plans for Phase 3. `/gsd:verify-work 3` marks
-> every row `[x]` and ticks the matching rows in the root [docs/TODO.md](../../TODO.md).
-> **Status:** ☐ not started · ◐ in progress · ☑ done · **Priority:** P0/P1/P2
+Run 1's task list is withdrawn wholesale — see [PRD §2](PRD.md). It planned a deeper
+tabular Q-learner for a game that turned out to be simultaneous, which made the whole
+approach unsound rather than under-trained.
 
-| Task | Pri | Status | Owner | Definition of Done |
-|------|-----|--------|-------|--------------------|
-| 03-00 Phase-3 scaffold + config sections + test stubs | P0 | ☑ | Khaled | `uv add --dev matplotlib`; `[strategy]` + `[training]` sections in `config/{police,thief}/`; `StrategyKey`/`TrainingKey` enums; hyperparameters loaded through the existing `loader_helpers` (QUAL-02/11/13); test stubs collect and exit 0 |
-| 03-01 `docs/PRD_rl_strategy.md` | P0 | ☑ | Khaled | v1.00; state encoding, reward function, update rule, fallback trigger and sparring pool all specified; every number carries a Source column marking it PARAMETERS.md vs engineering default. Written **before** the policy code it describes (DOC-02, SEGAL §2.5 step 5) |
-| 03-02 `BrainBase` + contracts + config pluggability | P0 | ☑ | Khaled | ABC with `_pick_move`/`_decide_move`; frozen `Observation`/`Decision`; brain resolved from config `[strategy]` `police_class`/`thief_class` with zero networking imports; unknown class name fails loud (STRAT-03) |
-| 03-03 BFS pathfinding + distance oracle | P0 | ☑ | Khaled | BFS over the barrier-aware grid; returns optimal distance **and** next step; extracted once and consumed by both the fallback and the barrier sub-policy (QUAL-02); barrier-pocket case proven not to dead-end (STRAT-04) |
-| 03-04 Bayes motion prior + fallback + `HeuristicBrain` | P0 | ☑ | Khaled | Uniform prior spread each turn by the opponent's legal moves (prediction step, no evidence — Phase 4 plugs evidence into this same update); fallback chooses by BFS distance, never raw Manhattan; `HeuristicBrain` fully playable and usable as the baseline opponent (STRAT-02) |
-| 03-05 State encoding + Q-table JSON persistence | P0 | ☑ | Khaled | Canonical string key from (own cell, believed target cell, blocked bitmask, barriers used, turn bucket) — **never** the full barrier bitmap; per-key visit counts; save→load round-trip preserves values and visits exactly; corrupt/partial table fails loud rather than loading empty |
-| 03-06 `QLearningBrain` — ε-greedy + fallback trigger | P0 | ☑ | Khaled | Q-update applied per step; argmax over the 5 actions when visits ≥ `min_visits`, fallback below it, boundary itself tested; no file I/O inside `_pick_move`; seeded RNG makes selection deterministic under test (STRAT-01) |
-| 03-07 Cop barrier sub-policy | P0 | ☑ | Khaled | Runs after `_pick_move`, keeping the Q action space at 5; blocks the thief's best escape corridor; never exceeds the 14-barrier quota; declaration is truthful (rules 16/22); thief never places one (STRAT-05) |
-| 03-08 Offline training harness + sparring pool | P0 | ☑ | Khaled | Episode loop steps the Phase-1 SDK engine; opponent sampled from {heuristic, past-self checkpoints, reference impl}; resumable — atomic checkpoint write, logged seed, interrupted run loses at most one interval (STRAT-06) |
-| 03-09 Learning curves + plotting + README section | P0 | ☑ | Khaled | CSV appended from episode 1 of run 1 (episode, reward, win-rate vs baseline, ε); matplotlib script renders the README PNGs; README learning-curve section present (rule 42) |
-| 03-10 §10.4 gate tests + coverage audit | P0 | ◐ | Khaled | GATE-1/2/3/4 each map to named runnable tests; STRAT-01…STRAT-07 coverage audit closes; trained table beats `HeuristicBrain` at the configured win-rate over the configured game count. **Tasks 1–4 all executed.** Tasks 1–3 landed the GATE-1/2/3 tests, `training/evaluate.py` + `artifacts/eval_scenarios.json`, and this coverage audit. **Task 4 ran on 2026-08-02** (300,000 episodes, seed 1337, completed uninterrupted) and **GATE-4 FAILED for both roles** — see the measured-result block below. Per the plan, the bar was not lowered and no table was promoted; the row stays ◐ until a retrained table clears the gate |
-| 03-10 op-1: redirect training output to a file (Windows QuickEdit) | P0 | ☑ | Khaled | `uv run python -m training.loop 2>&1 \| tee run.log` before the overnight run — console QuickEdit silently suspends the process the moment the window is clicked, the single most common "the run just stopped" cause (03-RESEARCH.md §3). Note: the entry point is `training.loop` (`main()`/`_load_run_config()`), not `training.harness` — `harness.py` only has the per-episode loop, no `__main__`; this was a real gap found and fixed post-03-08 (see STATE.md). **Evidence:** the run reached the full configured 300,000 episodes with no resume gap (`run_state.json` `episode=300000`, 600 curve rows = every 500-episode interval accounted for) |
-| 03-10 op-2: disable sleep for the training machine | P0 | ☑ | Khaled | `powercfg /change standby-timeout-ac 0` before starting the overnight run — `training/loop_setup.py`'s `SetThreadExecutionState` guard covers sleep only while the process itself is running, not the machine-level power policy (03-RESEARCH.md §3). **Evidence:** overnight run completed without interruption |
-| 03-10 op-3: exclude the artifacts directory from Defender real-time scanning | P0 | ☑ | Khaled | Add `training.artifacts_dir` (LOCALAPPDATA-based, outside OneDrive by default, D-22) to Windows Defender exclusions before starting — real-time scanning on every checkpoint rewrite adds latency (03-RESEARCH.md §3). **Evidence:** artifacts resolved to `%LOCALAPPDATA%\pursuit\training\` (outside OneDrive as designed); all checkpoint writes completed |
-| ~~03-10 T4-followup-1: retrain the cop to convergence (config-only)~~ | — | ✗ | Khaled | **WITHDRAWN 2026-08-02 — the premise was wrong.** Measured in `RUN-1-POSTMORTEM.md` Finding 1: the cop's training win rate reached **0.900** in its final 10 curve rows (peak 0.9435). It was not undertrained. It scored 0.250 at the gate because **0.600 of its eval games started from states it had trained on and 0.133 from states it had never seen** — only 5 of 20 eval start states cleared `min_visits`. All 300,000 episodes began at the identical board (`engine.make_state`), so the table covers one reachable cone. More episodes on one start state buys nothing. Superseded by 03-11 |
-| ~~03-10 T4-followup-2: diagnose the thief's regression (config-first)~~ | — | ✗ | Khaled | **WITHDRAWN 2026-08-02 — symptom, not cause, and the proposed fix was backwards.** Measured in `RUN-1-POSTMORTEM.md` Finding 2: the thief receives **no update at all when captured** — `harness.py::_turn` only calls `_update_learner` when the moving role IS the learner, and capture is produced on the *cop's* turn. Proven by instrumentation: 300/300 captured episodes delivered exactly one update worth `-0.01`. Compounded by γ=0.95 over a 35-turn horizon collapsing the survival bonus (usable value range **0.047** vs the cop's 0.626). Raising `min_visits` would have raised the score by using the *heuristic* more — the thief already scores 0.875 on unseen states precisely because it falls back — which hides the defect and violates STRAT-06's "a trained table ships". Superseded by 03-11/03-12 |
-| 03-10 T4-followup-3: fix the eval CLI's pseudo-replication | P1 | ☐ | Khaled | `repeats_per_scenario=10` replays each scenario **identically** (both brains deterministic at `epsilon_eval=0.0`; verified — 0 of 20 scenarios varied across repeats). `eval_games=200` therefore has effective **n=20**, and `training/evaluate.py`'s reported `mcnemar_p≈0.0000` / `z=3.95` are inflated by pseudo-replication. Either vary the replays or report n=20. **This makes the gate stricter, not weaker** — it is a correctness fix, not a bar change (honest n=20: cop *p*=0.250, thief *p*=0.500, neither significant) |
-| 03-11 Thief safety rule — never step into N[cop] | P0 | ☐ | Khaled | **Measured this session, no training needed:** a thief that moves only to cells outside the cop's closed neighbourhood scored **296/300 = 0.987** over random starts vs the current BFS thief's 283/300 = 0.943 (`scratchpad/safe_thief.py`, real engine, full rules). Tie (18/20) on the 20 GATE-4 scenarios. **Caveat recorded:** the "provably unbeatable" claim did NOT fully reproduce — it still lost 3/20 with new barrier placement disabled, and that control was itself flawed (the scenarios carry pre-placed barriers, so the board was never truly open). Treat as a real bounded gain, not a solved thief. **AMENDED 2026-08-05 — the safety rule is necessary but not sufficient: it must be paired with MIXING.** A safety rule alone is deterministic, and under simultaneous moves capture is decided by predicting the opponent's next cell, so a deterministic thief is maximally exploitable. Measured this session (`scratchpad/mixed.py`, engine rules, swap excluded): a search cop captures a deterministic evader **96%** of the time and a mixing evader **36%** — the single largest thief-side effect found. Requirement: choose **uniformly at random among the cells that pass the N[cop] safety filter**, seeded RNG for reproducibility. Free side-benefit: this also repairs T4-followup-3 — `repeats_per_scenario=10` currently replays identically because both brains are deterministic at `epsilon_eval=0.0`, so a mixing thief makes those repeats genuinely independent and `eval_games=200` stops being pseudo-replication |
-| 03-12 Pre-flight assertions — no run may start broken again | P0 | ☐ | Khaled | Six checks computable **before episode 1** (`TRAINING-METHODOLOGY.md` §F): terminal reward present for each role; discounted terminal-value spread per role; ε/α floor ≤ 15% of episodes; ≥200 distinct start states covering every eval start; weak-opponent floor in each sparring pool. **Run 1 failed four of these at t=0** — the whole night was avoidable. This gates every future run |
-| 03-13 Cycle-based evaluation + alpha-beta, both roles | P0 | ☐ | Khaled | The unifying result (`PURSUIT-AND-EVASION-STRATEGY.md`): barriers keep the board triangle-free, so **cop-win ⟺ the thief's free component is a forest**. Cop destroys cycles, thief preserves one. **Distance is the wrong quantity for both sides** — which is what both current brains optimise. Alpha-beta not MCTS (MCTS misses shallow traps, Ramanujan et al. ICAPS 2010; barrier sealing *is* a shallow trap); trap closing in k thief moves needs depth ≥ 2k plies. **Measured on our real engine this session: depth 5 with a useful eval, depth 8 with Manhattan** — the algorithm researcher's 11–12 ply claim did not reproduce and its correction pass was cut off by an API limit. `strategy.max_decision_ms` is ours to raise; test 100/200 ms early. **AMENDED 2026-08-05 — use the SIMULTANEOUS-MOVE variant of alpha-beta, not plain alpha-beta.** The Ramanujan shallow-trap argument for preferring alpha-beta over MCTS stands and is not in dispute. But plain alpha-beta assumes the opponent moves *after* seeing our move; commit-reveal makes the moves concurrent, so minimaxing computes a maximin **security** strategy rather than the equilibrium, and yields a deterministic policy — exactly the exploitability 03-11 exists to remove on the thief side. Correct algorithm: **Saffidine, Finnsson & Buro, "Alpha-Beta Pruning for Games with Simultaneous Moves" (AAAI 2012)** — backward induction that solves a matrix game at each node, with pruning; the per-node game here is at most 5×5 (4 moves + stay, and ≤5 barrier candidates for the cop), so the node solve is trivial. Corroborating: Lisý, Lanctot & Bowling (NIPS 2013) prove that simultaneous-move tree search converges to an approximate Nash equilibrium only when the per-node selection rule is ε-Hannan consistent, and measured regret matching and OOS as less exploitable than UCT on every domain tested. **Keep the depth-5 measurement — this changes the node rule, not the depth budget.** |
-| 03-17 Capture condition — decision simultaneity CONFIRMED, resolution order still inferred | P0 | ☐ | Khaled | **Read against the book 2026-08-05 (`police_thief_p2p.pdf`, ch. 3 + ch. 5).** §5.3.2 (book p35) settles the protocol half outright: the Acknowledge step "מבטיח שהחשיפה תתרחש רק כששני הצדדים כבר קיבעו את מהלכיהם" — the reveal happens **only once both sides have already fixed their moves**, so neither side can ever condition this turn's action on the opponent's. **Decisions are simultaneous; that is now sourced, not asserted.** What the book does *not* state verbatim is the resolution order: §3.5 Table 2 (book p22) defines capture only as "השוטר נוחת על תא הגנב ומכריז Capture Claim" — *the cop lands on the thief's cell*. That wording does not disambiguate the thief's pre-move cell (B==C, what `capture.py` implements) from its post-move cell (B==D). **Strong inference, not a quotation: B==D.** A cop-acts-then-thief-acts resolution contradicts the whole point of the Acknowledge lock, and "lands on the thief's cell" reads naturally as the resolved state. Treat as B==D unless a later chapter says otherwise; confirm before 03-15 spends another 300,000 episodes. **Separate confirmed bug in the same rule:** §3.4 (book p21) states a thief "שנכלא ללא מהלך חוקי כלשהו (כל התאים הצמודים חסומים במחסומים ו/או בשולי הלוח)" is captured — *all adjacent cells blocked*. `capture.py`'s BASE-05 delegates to `get_legal_moves`, which always includes STAY, so **this capture condition can never fire in the current engine**. It is a real, reachable win the cop is currently unable to claim. Original note retained below. `capture.py`'s D-12 contract resolves the cop's action and calls `detect_capture` **before the thief moves**, so `state.cop == state.thief` tests the cop landing on the thief's **pre-move** cell (B==C). An authoritative-sounding answer this session states capture is decided on the **resulting** state (B==D — cop lands where the thief *ends up*), with trading places explicitly NOT a capture. These are different games, and B==C is materially more generous to the cop. Neither `docs/RULES.md` nor `docs/PARAMETERS.md` contains a turn-resolution entry, and `police_thief_p2p.pdf` is **not present in the repo**, so this could not be settled here. **Resolve by reading the book (ch. 3 turn order; PDF page = book page + 16) before 03-15 runs** — training 300,000 episodes against the wrong transition function is exactly the class of avoidable waste 03-12 exists to prevent. If B==D is confirmed, the fix is architectural, not a one-line edit: `apply_cop_action`/`apply_thief_move` collapse into a single joint-action resolution, rippling into `peer_runtime`, `turn_actions`, `training/harness.py` and every Phase-1 capture test. Second-order consequence: a peer computing B==C while the opponent computes B==D will disagree about whether a capture occurred, which surfaces at the mutual log audit (rule 36) |
-| 03-18 Barrier on the cop's own cell — **CONFIRMED BUG, verbatim from the book** | P0 | ☐ | Khaled | **Settled against the source 2026-08-05.** §3.4 (book p21), both in the prose and again inside the חוק המחסום box: the cop may place a barrier "בכל תא שבמרחק צעד אחד ממנו — **התא שבו הוא ניצב עצמו** או אחד מארבעת התאים הצמודים אורתוגונלית" — *the cell he stands on himself*, or one of the four orthogonally adjacent. `barrier.py` rejection case 2 rejects `cell == state.cop` outright, so the engine forbids a placement the book explicitly permits. The in-flight `_within_one_step` helper already returns True at distance 0; only that earlier guard excludes it. This is a **5th barrier candidate per turn** that 03-14's placement search must consider. Two further clauses from the same box, both confirmed and both load-bearing: the barriered cell "הופך לבלתי עביר עבור **שני השחקנים** עד תום המשחק" (**impassable for BOTH players**, permanently), and the book states the cop's own constraint outright — "על השוטר 'לסחוט' את הגנב אל פינה **מבלי לחסום בטעות את נתיבי הגישה של עצמו**" (squeeze the thief into a corner *without accidentally blocking his own access paths*). The self-lockout guard 03-14 needs is therefore a book requirement, not an engineering nicety. Superseded note below — and the in-flight `_within_one_step` helper returns True at distance 0, so the own-cell case is excluded only by that earlier guard. Either the guard is wrong or the stated rule is. Resolve alongside 03-17 from the same book section; if own-cell is legal it is a 5th barrier candidate per turn, which 03-14's placement search must then consider. Note it is never *useful* to self-barrier under the current move-XOR-barrier reading — the cop would wall its own cell while standing on it — so confirm what the book actually intends before changing code |
-| 03-14 Barrier placement rewrite | P0 | ☐ | Khaled | Current rule (maximise BFS distance to a fixed corner anchor) **has no support anywhere in the literature**. Sourced replacements: only place barriers touching the board edge or an existing barrier (Guibas et al. 1999 — barriers in open space create islands the thief orbits); prefer degree-4 cells inside the thief's component (each kills 3 cycles). Budget: decycling number of the 7×7 grid is **13** and quota is 14, but 13 placements + ~32 chase rounds = 45 > the 35-turn limit, so **decycle only the thief's component, never the board**. **AMENDED 2026-08-05 — add a HARD self-lockout constraint, and it is a book requirement, not an engineering nicety.** §3.4 (book p21) states barriers become *"בלתי עביר עבור **שני השחקנים**"* — impassable for **both** players — and instructs the cop to squeeze the thief into a corner *"**מבלי לחסום בטעות את נתיבי הגישה של עצמו**"*, without accidentally blocking his own access paths. A barrier that severs the cop from the thief's component hands the thief a **guaranteed** survival: the cop can then never reach it, no matter how well it plays for the remaining turns. Required invariant, asserted before any placement is proposed and covered by a named test: **the cop and the believed thief cell remain in the same connected component after the placement.** Decycling normally preserves connectivity, so this should rarely bind — which is exactly why it must be an assertion rather than an assumption, since the failure is silent, total, and unrecoverable |
-| 03-15 Run-2 training config (only after 03-11…03-14) | P0 | ☐ | Khaled | Per-role settings, all sourced in `TRAINING-METHODOLOGY.md`: **γ_cop = 0.99, γ_thief = 1.0** (discounting is the cop's capture-sooner incentive and actively harms the thief); terminal rewards from the real scoring table (cop 20/5, thief 10/**5** — lower when caught, never absent); randomised start states (Kakade & Langford restart distribution μ ⊇ eval distribution d; reverse curriculum for the thief, Florensa et al. CoRL 2017); ε floor at 10–15% not 100%; opponent sampling by PFSP `f(x)=x(1−x)`. Named failure mode: **coevolutionary disengagement** (Cartlidge & Bullock, *Evolutionary Computation* 12(2) 2004) — remedy "reduce virulence" yields higher quality on **both** sides |
-| 03-16 Replace `turn_bucket(3)` with exact `turns_remaining` | P1 | ☐ | Khaled | Two researchers reached this independently via different citations: Puterman 1994 ch.4 (finite-horizon optimal policies are non-stationary in exact time-to-go) and Pardo et al. ICML 2018 *Time Limits in RL* (a deadline task is non-Markov unless `turns_remaining` is in the state). Replaces the bucket entirely, does not sit alongside it |
-| 03-19 Scent decay law is recorded WRONG in the Phase-4 context — **fix before Phase 4 plans** | P0 | ☐ | Khaled | **Confirmed against the book 2026-08-05, §4.3 (book p27).** The law is `τij(t+1) = max(0, (1−ρ)·τij(t) + Δτij)` with ρ = 0.10, and the book spells out the meaning: "הגורם (1−ρ) מכווץ בכל תור את הריח הקיים ל-90% מערכו" — the factor shrinks existing scent to **90% of its value every turn**. That is **geometric** decay. `.planning/phases/04-language-and-scent/04-CONTEXT.md` records it as "(0.9 − 0.10·age)" — **linear**, dying at exactly 9 turns. The two models differ enormously: geometric leaves a usable trail indefinitely (book Figure 5, p29, plots it out to t=20 still above 0.1), linear erases history at t=9. Rule 23 locks this model cryptographically and a deviation **voids the game**, so the wrong formula in a planning doc is a live disqualification path. Also confirmed same section, and also absent from our docs: the 5×5 emission is **radial, not uniform** — Figure 4 (book p28) gives the exact matrix 0.90 centre / 0.62 orthogonal / 0.42 diagonal / 0.20 / 0.14 / 0.04 — and **both agents emit** ("גם השוטר וגם הגנב מותירים שדה ריח משלהם"), each reading only the opponent's field. §4.4 (p29) confirms sensing is **global**: "כל סוכן יכול לדגום את הלוח ולקבל את מפת הריח של יריבו" |
-| 03-20 Record that the book makes RL **optional** — affects how GATE-4 is defended, not whether it is met | P2 | ☐ | Khaled | §6.3 (book p43), verbatim: "למידת חיזוקים היא אחת האפשרויות לממש את מדיניות התנועה — **כלי אופציונלי בלבד**, ולא 'מה שהקורס לימד'. הקורס לא כלל למידת חיזוקים, **וקבוצות רבות יגיעו לניצחון ללא RL כלל**" — RL is one optional tool, the course did not teach it, and many teams will win without it, via pure heuristics (Manhattan + Bayesian belief) or a bespoke heuristic algorithm. This does **not** change the decision taken 2026-08-05 (RL ships to close GATE-4 honestly, search layers on top). It is recorded so the choice is defended as a deliberate one rather than an assumed requirement, and so that if 03-15's retrain fails a second time, switching tracks is a **documented, book-sanctioned** fallback rather than a retreat |
-| 03-96 Build the graphify graph | P1 | ☑ | Khaled | `.planning/graphs/` built (first build, 03-09) and refreshed after this plan's Tasks 1–2 landed real code (3190 nodes / 5849 edges / 201 communities, CLAUDE.md) |
-| 03-97 Phase doc triplet at plan-phase | P1 | ☑ | Khaled | `docs/phases/phase-3/{PRD,PLAN,TODO}.md` created and filled (CLAUDE.md) |
-| 03-99 Verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☐ | Khaled | Phase gate met; all TODOs checked; root docs/TODO.md Phase 3 section all ☑ (DOC-01) |
+---
 
-## STRAT-01…STRAT-07 coverage audit (03-10 Task 3)
+## Wave 1 — the rules, settled from the book
 
-Every requirement below maps to at least one named, currently-passing test. Where a clause of
-the requirement is not yet demonstrated (GATE-4's "a trained Q-table ships"), that gap is
-recorded explicitly rather than the row being marked done.
+- [x] **03-20a** Read the book directly (§3.4, §3.5, §5.2, §5.3, Appendix ה, Appendix ו) and
+      settle every resolution predicate. → [RULES-RESOLUTION.md](RULES-RESOLUTION.md)
+- [x] **03-20b** Establish that the turn is simultaneous, with the quote that proves it
+      (§5.3.2 p.35) rather than by inference.
+- [x] **03-20c** Record the binding parameter table and its status column
+      (*fixed* / *minimum* / *negotiated*) from Appendix ו.
+- [x] **03-20d** Record the league facts that shape strategy: one counted game per opponent
+      (rule 52), unscored warm-ups permitted, code may change between games.
 
-| REQ-ID | Named test(s) | Status |
-|--------|---------------|--------|
-| STRAT-01 (Q-policy via `_pick_move`) | `tests/unit/strategy/test_qlearning.py`, `test_qlearning_learning.py`; `tests/integration/test_policy_fallback.py` (GATE-2) | ☑ met |
-| STRAT-02 (Bayes+BFS fallback for unvisited states) | `tests/unit/strategy/test_fallback.py`, `test_prior.py`; `tests/integration/test_policy_fallback.py` (E4), `test_shortest_path.py` | ☑ met |
-| STRAT-03 (pluggable via config `[strategy]`) | `tests/unit/strategy/test_registry.py`, `test_heuristic.py`, `test_qlearning.py`; `tests/integration/test_strategy_pluggable.py` (GATE-3) | ☑ met |
-| STRAT-04 (known-target shortest path, unaided) | `tests/unit/strategy/test_pathfind.py`; `tests/integration/test_shortest_path.py` (GATE-1) | ☑ met |
-| STRAT-05 (cop barrier placement via `_decide_move`) | `tests/unit/strategy/test_barriers.py`, `test_barriers_integration.py` | ☑ met |
-| STRAT-06 (offline training; **a trained Q-table ships**; curves from run 1) | Harness/curves: `tests/unit/training/test_harness.py`, `test_loop.py`, `test_curves.py`, `test_checkpoint.py`, `test_sparring.py`, `test_plot_curves.py`. Eval machinery: `test_eval_scenarios.py`, `test_eval_arms.py`, `test_eval_stats.py`, `test_evaluate.py`. GATE-4 itself: `tests/integration/test_beats_baseline.py` | ◐ **open gap, now measured rather than untested**: the harness ran a full 300,000-episode training run (2026-08-02) and the curves from run 1 ship, so "offline training" and "curves from run 1" are met. The **"a trained Q-table ships"** clause is *not* met: the resulting tables failed GATE-4 for both roles and were therefore **not promoted** into `artifacts/`, so `test_beats_baseline_smoke_subset` still skips for want of a *blessed* table. Closed by the T4-followup rows above, not by another gate test |
-| STRAT-07 (algorithm decides, never the LLM) | `tests/unit/strategy/test_registry.py` (structural import scan, 03-02); `tests/integration/test_strategy_pluggable.py`; `scripts/check_no_llm_in_strategy.sh` (standalone CI gate, verified to exit nonzero when a forbidden import is introduced) | ☑ met |
+## Wave 2 — the engine becomes simultaneous
 
-### QUAL-08/09/10/11/13 + DOC-02 gate commands
+- [x] **03-21a** `resolve_turn` — one joint resolver; both actions validated; turn advances once.
+- [x] **03-21b** `sdk/actions.py` — `CopAction` (move XOR barrier), both action generators.
+      Cop's own cell is a legal barrier target (§3.4), which the old engine rejected.
+- [x] **03-21c** `sdk/terminal.py` — the six predicates in order, BOOK rows unconditional.
+- [x] **03-21d** Fix: `apply_move` validated nothing.
+- [x] **03-21e** Fix: thief could step onto the cop uncaptured and escape.
+- [x] **03-21f** Fix: rule 47 was unreachable dead code.
+- [x] **03-21g** Negotiated resolution block, outside `game_params.json` (ADR-02).
+- [x] **03-21h** Migrate the network layer to buffer both moves and resolve once.
+- [x] **03-21i** Delete `shared/capture.py` — its semantics are now wrong.
+- [x] **03-21j** Enable the ruff and pytest gates that were commented out of the hook and CI.
 
-| REQ-ID | Gate command | Status |
-|--------|--------------|--------|
-| QUAL-08 (≤150 code lines/file) | `bash scripts/check_line_limit.sh` | ☑ clean |
-| QUAL-09 (ruff 0 violations) | `uv run ruff check .` | ☑ clean |
-| QUAL-10 (`pytest --cov` ≥ 85%) | `uv run pytest --cov=pursuit --cov=training` | ☑ met (96.45%, 425 passed / 2 skipped) |
-| QUAL-11 (zero hardcoded values in `src/`) | No single command — enforced by the config/`constants.py`/`Enum` design plus targeted `ast`-walk tests, e.g. `test_barriers.py`'s quota scan and `test_registry.py`'s eval/exec scan | ☑ enforced |
-| QUAL-13 (`uv` only) | `uv sync` / `uv run ...` (`pyproject.toml` + `uv.lock`, no `requirements.txt`) | ☑ met |
-| DOC-02 (per-mechanism PRD) | `docs/PRD_rl_strategy.md` committed at v1.00 (03-01), before the policy code it describes | ☑ met |
+## Wave 3 — the mover
 
-## Phase gate (§10.4)
+- [x] **03-22a** `graphcache.py` — memoised passability, regions, chokepoints, BFS maps.
+- [x] **03-22b** `features.py` — φ(s), 15 components, all scaled from `GameParams`.
+- [x] **03-22c** `equilibrium.py` — pure saddle, else regret matching; seeded sampling.
+- [x] **03-22d** `matrix.py` — one-ply joint expansion, bounded leaf values.
+- [x] **03-22e** `valuebrain.py` — one brain, both seats, seeded and reproducible.
+- [x] **03-22f** `weights.py` — artefact I/O + the hand-set prior; fail-loud on a missing
+      configured file.
+- [x] **03-22g** `naive.py` — the two fixed sparring anchors.
+- [x] **03-22h** Benchmark the decision cost before building on it. **3.62 ms cold** against
+      a 30 s timeout; ~14,200 self-play games/hour/core.
+- [x] **03-22i** Add `thief_in_kill_range` after measuring that rule 46 makes distance 1 a
+      forced loss the depth-1 search could not see. Worth **15% → 64%** thief survival.
 
-- [x] Shortest path to a known target walked unaided, barrier-free **and** through a barrier pocket (GATE-1, STRAT-04)
-- [x] Q-policy serves visited states, fallback serves unvisited ones, trigger boundary tested (GATE-2, STRAT-01/02)
-- [x] Brain swapped via config `[strategy]` alone, networking untouched, no LLM reachable from the decision path (GATE-3, STRAT-03/07)
-- [ ] Trained `QLearningBrain` beats `HeuristicBrain` head-to-head at the configured win-rate and game count (GATE-4, STRAT-01/06) — **measured 2026-08-02 and FAILED for both roles** (cop 0.250 vs 0.100 baseline: clears the margin, misses the 0.55 floor; thief 0.800 vs 0.900 baseline: below the baseline). No longer "blocked on Task 4" — Task 4 ran; this is a real negative result awaiting the config-only retrain in T4-followup-1/2
-- [x] Learning-curve CSV present from run 1; README PNGs rendered (rule 42, STRAT-06) — `artifacts/curves/curves.csv` (600 rows, from episode 1 of run 1) plus `winrate_cop.png`, `winrate_thief.png`, `mean_reward.png`, all three embedded in the README's rule-42 section with measured numbers
+## Wave 4 — training
 
-### GATE-4 measured result — run 1, 300,000 episodes (2026-08-02)
+- [x] **03-23a** `joint_game.py` — the single game loop; both brains decide from one state.
+- [x] **03-23b** `starts.py` — randomised start distribution (the fix run 1 most needed).
+- [x] **03-23c** `pool.py` — anchored opponent pool.
+- [x] **03-23d** `fit.py` — outcome regression with Adagrad.
+- [x] **03-23e** `generation.py` / `run_selfplay.py` — batch-synchronous generations.
+- [x] **03-23f** `evolve.py` / `run_evolve.py` — `(1+λ)`-ES on league points, common random
+      numbers.
+- [x] **03-23g** `arena.py` / `run_eval.py` — held-out evaluation, 95% Wilson intervals.
+- [ ] **03-23h** Run both optimisers to completion and record the curves.
+- [ ] **03-23i** Choose the shipped artefact by held-out comparison against the prior.
 
-Run: 300,000 episodes (150,000 cop / 150,000 thief), `seed=1337`, config hash `5fa4d554…`,
-completed uninterrupted. Tables written to `%LOCALAPPDATA%\pursuit\training\`
-(`qtable_police.json` 39,483 keys / 3,525,039 visits; `qtable_thief.json` 29,703 keys /
-1,355,252 visits) and **deliberately not promoted** into `artifacts/`.
+## Wave 5 — retire run 1
 
-| Role | Learner win rate | Measured baseline | Margin | Margin ok (≥0.10) | Floor ok (≥0.55) | E6 convergence | GATE-4 |
-|---|---|---|---|---|---|---|---|
-| Cop | 0.250 | 0.100 | +0.150 | ☑ | ☐ | not converged — `decile_gain=+0.848`, `final_slope=+0.094` (still climbing at the ε floor) | **FAIL** |
-| Thief | 0.800 | 0.900 | −0.100 | ☐ | ☑ | not converged — `decile_gain=−0.068` (final decile worse than first) | **FAIL** |
+- [ ] **03-24a** Delete the tabular Q-learning stack and every module that depends on it.
+- [ ] **03-24b** Relocate any test covering behaviour that survives.
+- [ ] **03-24c** Registry reduced to three brains; strategy config keys pruned to what is read.
 
-Honest significance at the true effective sample size (n=20 paired scenarios, not 200
-replays — see T4-followup-3): cop McNemar exact *p*=0.250, thief *p*=0.500. **Neither role
-is significant at α=0.05.** The bar was not lowered and no unmeasured number was written
-anywhere; per 03-10-PLAN Task 4, tuning is the follow-up.
-- [x] `uv run pytest --cov=pursuit --cov=training` ≥ 85% (QUAL-10)
-- [x] `uv run ruff check .` → 0 violations (QUAL-09)
-- [x] `bash scripts/check_line_limit.sh` passes all src/ and tests/ files (QUAL-08)
-- [x] `docs/PRD_rl_strategy.md` committed at v1.00 (DOC-02)
-- [x] `docs/phases/phase-3/{PRD,PLAN,TODO}.md` committed and filled (CLAUDE.md)
+## Wave 6 — close the phase
+
+- [ ] **03-25a** Full suite green, coverage ≥85%, ruff clean, line limit clean.
+- [x] **03-25b** Per-mechanism PRD for the mover → [docs/PRD_matrix_mover.md](../../PRD_matrix_mover.md).
+- [x] **03-25c** Phase triplet refreshed (this file, PRD, PLAN).
+- [ ] **03-25d** Refresh the knowledge graph in `.planning/graphs/`.
+- [ ] **03-25e** Tick the matching rows in the root `docs/TODO.md`.
+
+## Withdrawn from run 1
+
+- **T4-followup / 03-15 / 03-16 / 03-17..03-19** — deeper tabular learner, feature-vector
+  bolt-on, alpha-beta over the sequential engine. All assumed a sequential turn order that
+  contradicts §5.3.2. Superseded by Waves 2–4.
+- **GATE-4 as specified** — measured a Q-table that no longer exists. Replaced by AC-7,
+  which compares against the prior with intervals instead of against a bare threshold.
