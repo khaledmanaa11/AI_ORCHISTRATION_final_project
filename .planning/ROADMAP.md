@@ -20,7 +20,7 @@ completion.
 
 - [x] **Phase 1: Base Logic** - Grid, movement rules, barrier quota, capture detection. No networking, no AI.
 - [ ] **Phase 2: FastMCP Infrastructure** - Two separate processes exposing geometric tools over localhost, coordinates only.
-- [ ] **Phase 3: Blind Strategy Module (RL policy)** - The Q-Learning decision engine, with no scent and no natural language yet.
+- [x] **Phase 3: Blind Strategy Module** - The decision engine. Delivered as a matrix-game mover over a learned 15-weight evaluation, NOT Q-learning; see docs/phases/phase-3/PRD.md §2.
 - [ ] **Phase 4: Language and Scent** - Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
 - [ ] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
 - [ ] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration.
@@ -85,26 +85,28 @@ Plans:
 
 ### Phase 3: Blind Strategy Module (RL policy)
 
-**Goal**: The Q-Learning decision engine, with no scent and no natural language yet.
+**Goal**: The decision engine, with no scent and no natural language yet.
+**Delivered as**: a simultaneous-move matrix-game mover over a learned 15-weight evaluation.
+Tabular Q-learning was withdrawn as unsound under simultaneous play (PRD §2, ENGINEERING-LOG.md).
 **Depends on**: Phase 2
 **Requirements**: STRAT-01, STRAT-02, STRAT-03, STRAT-04, STRAT-05, STRAT-06, STRAT-07
 **Success Criteria** (book milestone gate, §10.4):
 
   1. Given a known target location, the agent computes and walks the shortest path with no manual intervention
-  2. Move selection comes from a tabular Q-learning policy, with a Bayes+Manhattan fallback for unvisited states
+  2. Move selection comes from the algorithm — a solved matrix game per turn, sampled from its equilibrium
   3. The strategy module is pluggable via config `[strategy]`, separate from networking; the algorithm — never the LLM — chooses the move
 
 **Plans**: TBD
 
 Plans:
 
-- [ ] 03-01: BrainBase interface + Bayes+Manhattan fallback policy
-- [ ] 03-02: State encoding + tabular Q-learning policy and ε-greedy action selection
-- [ ] 03-03: Offline self-play training harness + learning-curve instrumentation
-- [ ] 03-04: Write `docs/PRD_rl_strategy.md` (the Q-Learning policy)
-- [ ] 03-96: Build the graphify graph — run `/gsd:graphify` at plan-phase (first build; `src/` now exists) and refresh after execute
-- [ ] 03-97: Create/refresh `docs/phases/phase-3/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
-- [ ] 03-99: On verify-work, mark all Phase 3 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
+- [x] 03-01: BrainBase interface + registry (value_search / chaser_cop / greedy_evader)
+- [x] 03-02: Simultaneous joint resolver + matrix-game mover (supersedes tabular Q-learning)
+- [x] 03-03: Offline self-play harness + learning curves (24,000 games; artifacts/run2/curve.json)
+- [x] 03-04: Write `docs/PRD_matrix_mover.md` (supersedes PRD_rl_strategy.md)
+- [x] 03-96: Build the graphify graph — run `/gsd:graphify` at plan-phase (first build; `src/` now exists) and refresh after execute
+- [x] 03-97: Create/refresh `docs/phases/phase-3/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [x] 03-99: On verify-work, mark all Phase 3 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 4: Language and Scent
 
