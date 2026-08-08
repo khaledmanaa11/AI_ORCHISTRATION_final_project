@@ -1,0 +1,18 @@
+{
+  "version": "1.00",
+  "gatekeeper": {
+    "requests_per_minute": 30,
+    "parallel_requests": 2,
+    "wait_after_error_seconds": 5,
+    "retries_before_failure": 3,
+    "queue_depth": 100,
+    "response_timeout_seconds": 30,
+    "watchdog_threshold_seconds": 60
+  },
+  "budget": {
+    "token_budget_per_series": 200000,
+    "short_prompt_threshold_tokens": 140000,
+    "template_only_threshold_tokens": 180000
+  },
+  "model": {}
+}
