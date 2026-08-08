@@ -134,7 +134,17 @@ def test_regime_b_stays_a_valid_distribution_for_ten_turns_scent_only(model, bel
 
 def test_regime_b_diffuses_without_evidence_then_reconcentrates(model, belief_cfg, params):
     """No further evidence -> pure predict()-driven diffusion lowers the
-    peak; a fresh trail elsewhere afterwards raises it again."""
+    peak; a fresh trail on a cell the thief can actually occupy raises it again.
+
+    The trail must land on a cell carrying prior mass. A fresh (age 0) reading
+    boosts only its own deposit cell (scent_likelihood leaves every other cell
+    at _NEUTRAL), so a deposit on a zero-probability cell multiplies the whole
+    support by the same constant and renormalises back to an identical
+    distribution -- the peak then moves only by float noise, in whichever
+    direction the rounding falls. (0, 0) is exactly such a cell here: it is the
+    cop's square, which the legal-motion model correctly holds at probability 0
+    for the thief. Asserting a strict rise there passed on one machine and
+    failed on CI at 1e-17. The non-vacuity assertion below pins this down."""
     n = params.board_size
     belief = BeliefMap(n, "thief")
     belief.observe_exact((3, 3))
@@ -150,8 +160,19 @@ def test_regime_b_diffuses_without_evidence_then_reconcentrates(model, belief_cf
     assert peak_diffused < peak_before
 
     fresh_field = ScentField(model=model, board_size=n)
-    fresh_field.emit_opponent((0, 0))
+    fresh_field.emit_opponent(state.thief)
     fresh_likelihood = scent_likelihood(fresh_field, "thief", state, params, model, belief_cfg)
+
+    # Non-vacuity: the evidence must actually discriminate across the support,
+    # or the update below is a no-op and the peak assertion tests only rounding.
+    support = [
+        fresh_likelihood[r][c]
+        for r, row in enumerate(belief.posterior())
+        for c, mass in enumerate(row)
+        if mass > 0.0
+    ]
+    assert len(set(support)) > 1
+
     belief.update(fresh_likelihood)
     peak_reconcentrated = max(max(row) for row in belief.posterior())
     assert peak_reconcentrated > peak_diffused
