@@ -17,6 +17,8 @@ for it.
 from pursuit.services.llm.anthropic_provider import AnthropicProvider
 from pursuit.services.llm.bucket import TokenBucket
 from pursuit.services.llm.budget import DegradeLevel, TokenBudget
+from pursuit.services.llm.decode import DecodeContext, decode_hint
+from pursuit.services.llm.decode_schema import DECODE_SCHEMA
 from pursuit.services.llm.gatekeeper import CallResult, Gatekeeper, GatekeeperOverflow
 from pursuit.services.llm.provider import (
     LlmFailure,
@@ -28,8 +30,10 @@ from pursuit.services.llm.provider import (
 from pursuit.services.llm.template_provider import TemplateProvider
 
 __all__ = (
+    "DECODE_SCHEMA",
     "AnthropicProvider",
     "CallResult",
+    "DecodeContext",
     "DegradeLevel",
     "Gatekeeper",
     "GatekeeperOverflow",
@@ -40,5 +44,6 @@ __all__ = (
     "TemplateProvider",
     "TokenBucket",
     "TokenBudget",
+    "decode_hint",
     "get_provider_class",
 )

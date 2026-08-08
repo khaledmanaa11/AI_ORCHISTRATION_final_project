@@ -1,0 +1,34 @@
+{
+  "language": "he",
+  "note": "D-44: the decoder must survive the script the book itself is written in. Real Hebrew, not transliteration, including the right-to-left comma/full-stop placement a naive tokeniser mangles. Same file shape and same OUTPUT vocabulary as hints_en.json - the schema's enum is English regardless of input language, and the matching English cases are `plain-region`, `place-cue`, `heading-only` and `no-locational-content`.",
+  "cases": [
+    {
+      "id": "plain-region",
+      "why": "The Hebrew counterpart of the English plain-region case.",
+      "hint": "אני נמצא בצד הצפוני של הלוח.",
+      "response": {"region": "north", "cells": [], "direction": null, "confidence": 0.85},
+      "expect": {"region": "north", "direction": null, "cells": [], "confidence": 0.85, "is_evidence": true}
+    },
+    {
+      "id": "place-cue",
+      "why": "A New York place cue written in Hebrew, with a heading clause after the comma.",
+      "hint": "עברתי ליד טיימס סקוור, וממשיך מזרחה.",
+      "response": {"region": "center", "cells": [], "direction": "east", "confidence": 0.6},
+      "expect": {"region": "center", "direction": "east", "cells": [], "confidence": 0.6, "is_evidence": true}
+    },
+    {
+      "id": "heading-only",
+      "why": "A bare heading in Hebrew: preserved as a direction, not treated as positional evidence.",
+      "hint": "אני נע דרומה עכשיו.",
+      "response": {"region": null, "cells": [], "direction": "south", "confidence": 0.0},
+      "expect": {"region": null, "direction": "south", "cells": [], "confidence": 0.0, "is_evidence": false}
+    },
+    {
+      "id": "no-locational-content",
+      "why": "Hebrew taunt with no locational content - must decode to nothing.",
+      "hint": "בהצלחה בתפיסה שלי היום!",
+      "response": {"region": null, "cells": [], "direction": null, "confidence": 0.0},
+      "expect": {"region": null, "direction": null, "cells": [], "confidence": 0.0, "is_evidence": false}
+    }
+  ]
+}
