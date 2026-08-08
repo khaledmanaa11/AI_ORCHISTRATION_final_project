@@ -25,6 +25,8 @@ import importlib.util
 import pathlib
 import subprocess
 
+import pytest
+
 from pursuit.sdk import engine
 from pursuit.sdk.actions import CopAction
 from pursuit.shared.config import GameParams
@@ -90,6 +92,22 @@ def test_both_brain_classes_build_from_config_alone_and_play_to_terminal(
         assert outcome is not None, f"{cop_class}/{thief_class} never reached a terminal outcome"
 
 
+def _inside_git_work_tree() -> bool:
+    """True when the suite is running from a git checkout.
+
+    This test compares `git diff` before and after, so it needs a repository.
+    A source archive, an sdist, or an unpacked release has no .git, and git
+    exits 129 there -- which surfaced as a bare CalledProcessError that said
+    nothing about the real cause. CI (actions/checkout) and any clone do have
+    one, so the coverage is not lost; it is only declared honestly.
+    """
+    result = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        capture_output=True, text=True, check=False, cwd=_REPO_ROOT,
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
 def _network_diff_snapshot() -> str:
     result = subprocess.run(
         ["git", "diff", "--", "src/pursuit/network"],
@@ -98,6 +116,10 @@ def _network_diff_snapshot() -> str:
     return result.stdout
 
 
+@pytest.mark.skipif(
+    not _inside_git_work_tree(),
+    reason="needs a git work tree: the assertion is a git-diff comparison",
+)
 def test_brain_swap_leaves_network_layer_byte_for_byte_unchanged(
     default_params: GameParams,
 ) -> None:
