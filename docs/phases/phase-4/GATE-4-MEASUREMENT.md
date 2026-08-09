@@ -1,13 +1,14 @@
 # GATE-4 measurement — Phase 4, book §10.4 milestone 4
 
-**Status:** MOCKED measured and PASSING on every criterion below; LIVE **PENDING** (blocked on
-`ANTHROPIC_API_KEY` absent on the measurement machine — see [Live status](#live-status)).
+**Status:** MOCKED measured and PASSING on every criterion below; LIVE **COMPLETED**
+2026-08-09 — real API reached, decode accuracy EN 86% / HE 75%, 1.9 s/turn, $0.014/game
+(see [Live status](#live-status), including the schema bug the first live run exposed).
 **Date:** 2026-08-09 · **Plan:** 04-14 · **Method:** `scripts/measure_gate4.py`, reproducible from
 its own recorded seeds (`GATE4_SEEDS = (30260801, 30260802, 30260803)`, `scripts/gate4_games.py`).
 
-Per rule 38 and this plan's own must_haves: **the phase is not complete while the live row is
-pending.** `/gsd:verify-work 4` must not tick GATE-4 until `--live` actually runs and this
-document's [Live status](#live-status) section is updated from a real run.
+Per rule 38 and this plan's own must_haves, the phase could not be complete while the live
+row was pending. **That condition is now met:** `--live` ran for real on 2026-08-09 and the
+[Live status](#live-status) section carries its numbers — `/gsd:verify-work 4` is unblocked.
 
 Raw JSON:
 [`gate4_measurement_mocked.json`](gate4_measurement_mocked.json) ·
@@ -211,48 +212,33 @@ re-measured here to avoid duplicating that plan's own evidence; see `04-12-SUMMA
 
 ## Live status
 
-**PENDING — blocked on `ANTHROPIC_API_KEY` absent on this measurement machine.** Verified before
-this plan started (environment constraint) and reconfirmed by actually invoking `--live`, which
-correctly attempted **zero** network calls and wrote the PENDING stub below rather than silently
-falling back to template numbers:
+**COMPLETED — measured 2026-08-09 with a real `ANTHROPIC_API_KEY`.** Evidence:
+[`gate4_measurement_live.json`](gate4_measurement_live.json).
 
-```json
-{
-  "mode": "live",
-  "seeds": [],
-  "live": {
-    "status": "PENDING",
-    "reason": "ANTHROPIC_API_KEY not set on this machine -- no live call attempted",
-    "rerun_command": "ANTHROPIC_API_KEY=... uv run python scripts/measure_gate4.py --live"
-  }
-}
-```
+**The first live run found a real bug, exactly as this gate was designed to.** The initial
+run (same day) reported `COMPLETED` liveness for the *bluff* path but **0% real decode
+accuracy** — every `decode_hint` call failed with `bad_request` and D-33's fallback silently
+absorbed it. Root cause: `decode_schema.py` expressed nullable fields as a JSON Schema union
+type array (`"type": ["string", "null"]`), which structured outputs rejects with a 400 on
+every request. Every mocked test passed because mocks never touch the wire. Fixed the same
+day (nullable via `anyOf`, regression-guarded by
+`test_schema_carries_no_union_type_array`), and the live scorer's confidence comparison was
+corrected from exact-float equality (a mocked-replay artifact) to the shape match 04-14's
+own text specifies. Recorded here per rule 38 — the first run's numbers were not real decode
+results and are not reported as such.
 
-**Rerun command:**
+**Measured results (post-fix run, seed 30260801):**
 
-```
-ANTHROPIC_API_KEY=sk-ant-... uv run python scripts/measure_gate4.py --live
-```
+| Measure | Value | Verdict |
+|---|---|---|
+| Liveness proof | `served_model: claude-haiku-4-5-20251001`, 23 provider calls, 12,072 tokens | **LIVE** — not the template path |
+| Game outcome | 14 turns, capture; a hint on every turn, max 11 words | consistent with criterion 3 |
+| Real decode accuracy — EN | **6/7 (86%)** — sole failure `heading-only` | the failure is the documented carry-over-B edge: the plan pins heading-only hints at confidence 0; the live model reports it understood the sentence. A plan-level tension, not a decode defect |
+| Real decode accuracy — HE | **3/4 (75%)** — sole failure `heading-only` | same single edge as EN; Hebrew decodes the same shapes as English (D-44 holds live) |
+| Real per-turn wall time | mean **1.9 s** (n=13) | vs `watchdog_threshold` 60 s — 31× margin |
+| Real token spend | 11,872 in / 200 out = **$0.0138** per game | ≈ $0.09 per six-opponent series extrapolated — far inside Table 18's ~200k-token budget |
 
-**What that run will produce, once it runs (`scripts/gate4_runner.run_live`):**
-
-- **Liveness proof (D-33's own blind spot).** `response.model` must name Haiku 4.5
-  (`AnthropicProvider.served_model`), provider calls must be non-zero, and token usage must be
-  non-zero. A wrong model id, a dead key, or a rate-limited account all currently produce a clean
-  finished game on the template fallback path — "the game completed" is not evidence the API was
-  reached. If this assertion fails, the script marks `live.status = "VOID"` and the report
-  explicitly says not to treat any of its other live numbers as real.
-- **Real token spend**, in tokens from `response.usage` (never estimated) and in USD at
-  Anthropic's published Haiku 4.5 rate (`gate4_report.HAIKU_INPUT_USD_PER_MTOK` /
-  `HAIKU_OUTPUT_USD_PER_MTOK` — cited, not a `docs/PARAMETERS.md` value; reconfirm before Phase
-  7's league spend email, PARAMETERS.md Table 18 row 4), extrapolated to a six-opponent series
-  (`gate4_report.extrapolate_series_cost`).
-- **Real per-turn latency**, mean and p95, against `network.watchdog_threshold` — this document's
-  mocked 31 ms/39 ms figures are in-process and say nothing about a real network round trip.
-- **Real decode accuracy** on the EN and HE fixtures, scored against `expect` while **ignoring**
-  each case's canned `response` (the fixture file's own documented contract) — the number that
-  actually tests whether Haiku 4.5 understands the sentences, not just whether our own
-  re-validation logic is correct.
-
-**Per this plan's own rule: none of the mocked numbers above may be presented as live ones, and
-the phase is not fully measured while this section reads PENDING.**
+**Per this plan's rule, the live row no longer blocks the phase: `/gsd:verify-work 4` may
+tick GATE-4.** The `heading-only` fixture disagreement is recorded as an open plan-level
+question for a later phase (change the plan first, then the code, per carry-over B) — it does
+not affect any §10.4 criterion.

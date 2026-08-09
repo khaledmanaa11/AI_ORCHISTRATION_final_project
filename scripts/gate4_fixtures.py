@@ -90,29 +90,42 @@ def _describe(inference) -> dict:
     }
 
 
-def _matches(got: dict, expect: dict) -> bool:
-    return (
+def _matches(got: dict, expect: dict, *, exact_confidence: bool = True) -> bool:
+    """Shape match per 04-14 ("accuracy against their expected shapes").
+
+    `exact_confidence=True` is for MOCKED scoring, where the canned response
+    IS the expected object and any drift is a codec bug. Live scoring passes
+    False: a real model never reproduces a recorded float to 1e-9, and what
+    the gate measures there is the SHAPE -- region/direction/cells and
+    whether the hint counted as evidence at all.
+    """
+    shape_ok = (
         got["region"] == expect["region"]
         and got["direction"] == expect["direction"]
         and got["cells"] == expect["cells"]
-        and abs(got["confidence"] - expect["confidence"]) < 1e-9
         and got["is_evidence"] == expect["is_evidence"]
     )
+    if not exact_confidence:
+        return shape_ok
+    return shape_ok and abs(got["confidence"] - expect["confidence"]) < 1e-9
 
 
-async def _score_case(case: dict, provider: Provider) -> FixtureResult:
+async def _score_case(
+    case: dict, provider: Provider, *, exact_confidence: bool = True
+) -> FixtureResult:
     context = DecodeContext(
         provider=provider, board_size=_BOARD_SIZE, arena=_ARENA, word_limit=_WORD_LIMIT
     )
     inference = await decode_hint(case["hint"], context)
     got = _describe(inference)
-    return FixtureResult(case["id"], case["hint"], _matches(got, case["expect"]), got, case["expect"])
+    matched = _matches(got, case["expect"], exact_confidence=exact_confidence)
+    return FixtureResult(case["id"], case["hint"], matched, got, case["expect"])
 
 
 async def score_fixture_language_mocked(language: str) -> list[FixtureResult]:
     """Score every case in hints_<language>.json, one fresh
     `_RecordedResponseProvider` per case (each case owns its own canned
-    answer)."""
+    answer). Exact-confidence match: the canned response IS the expectation."""
     data = _load(language)
     return [
         await _score_case(case, _RecordedResponseProvider(case["response"]))
@@ -123,6 +136,10 @@ async def score_fixture_language_mocked(language: str) -> list[FixtureResult]:
 async def score_fixture_language_live(language: str, provider: Provider) -> list[FixtureResult]:
     """Score every case in hints_<language>.json against ONE real provider
     instance (shared across cases so the gatekeeper's own accounting is
-    honest about how many real calls this check made)."""
+    honest about how many real calls this check made). Shape match only --
+    a live model never reproduces the recorded confidence float."""
     data = _load(language)
-    return [await _score_case(case, provider) for case in data["cases"]]
+    return [
+        await _score_case(case, provider, exact_confidence=False)
+        for case in data["cases"]
+    ]

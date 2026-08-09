@@ -112,6 +112,26 @@ def test_schema_carries_no_unsupported_numeric_bound():
     assert "maximum" not in text
 
 
+def test_schema_carries_no_union_type_array():
+    """`"type": ["string", "null"]` is ALSO rejected by structured outputs
+    (400 on every request -- found by the live GATE-4 run, 2026-08-09).
+    Nullable fields must use `anyOf` with a `{"type": "null"}` arm."""
+
+    def walk(node):
+        if isinstance(node, dict):
+            assert not isinstance(node.get("type"), list), node
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(DECODE_SCHEMA)
+    nullable = [DECODE_SCHEMA["properties"][k] for k in ("region", "direction")]
+    for prop in nullable:
+        assert {"type": "null"} in prop["anyOf"]
+
+
 def test_schema_requires_every_property_and_forbids_extras():
     assert set(DECODE_SCHEMA["required"]) == set(DECODE_SCHEMA["properties"])
     assert DECODE_SCHEMA["additionalProperties"] is False

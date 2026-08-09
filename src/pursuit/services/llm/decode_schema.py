@@ -20,20 +20,31 @@ from pursuit.shared.inference import REGION_NAMES, Coord, Inference, Region
 
 SCHEMA_NAME = "hint_inference"
 
-# Structured-output schemas do NOT support numeric bounds: `minimum`/`maximum`
-# on `confidence` are rejected by the API, so the [0, 1] range check lives in
-# validate() below and MUST stay there. Do not "fix" this by adding a
-# `minimum` keyword -- the request fails outright and every hint degrades to
-# no-evidence (D-33) with nothing in the logs pointing at the schema.
+# Structured-output schemas support a RESTRICTED JSON Schema subset, and the
+# API rejects the whole request (400) on any unsupported construct -- after
+# which D-33 degrades every hint to no-evidence with nothing in the logs
+# pointing at the schema. Two constructs have already bitten and MUST stay
+# out:
+#   * numeric bounds -- `minimum`/`maximum` on `confidence` are rejected, so
+#     the [0, 1] range check lives in validate() below;
+#   * union type arrays -- `"type": ["string", "null"]` is rejected
+#     (found by the live GATE-4 run, 2026-08-09); nullable is expressed as
+#     `anyOf` with an explicit `{"type": "null"}` arm instead.
+_NULLABLE_REGION = {
+    "anyOf": [{"type": "string", "enum": [*REGION_NAMES]}, {"type": "null"}],
+}
+_NULLABLE_DIRECTION = {
+    "anyOf": [{"type": "string", "enum": [*DIRECTION_WORDS]}, {"type": "null"}],
+}
 DECODE_SCHEMA: dict = {
     "type": "object",
     "properties": {
-        "region": {"type": ["string", "null"], "enum": [*REGION_NAMES, None]},
+        "region": _NULLABLE_REGION,
         "cells": {
             "type": "array",
             "items": {"type": "array", "items": {"type": "integer"}},
         },
-        "direction": {"type": ["string", "null"], "enum": [*DIRECTION_WORDS, None]},
+        "direction": _NULLABLE_DIRECTION,
         "confidence": {"type": "number"},
     },
     "required": ["region", "cells", "direction", "confidence"],

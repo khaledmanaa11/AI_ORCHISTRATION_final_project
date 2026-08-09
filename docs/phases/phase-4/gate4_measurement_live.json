@@ -1,9 +1,44 @@
 {
+  "decode_fixture_accuracy": {
+    "en": {
+      "accuracy": 0.8571428571428571,
+      "cases": 7,
+      "failures": [
+        "heading-only"
+      ],
+      "matched": 6
+    },
+    "he": {
+      "accuracy": 0.75,
+      "cases": 4,
+      "failures": [
+        "heading-only"
+      ],
+      "matched": 3
+    }
+  },
+  "hints_sent": 14,
   "live": {
-    "reason": "ANTHROPIC_API_KEY not set on this machine -- no live call attempted",
-    "rerun_command": "ANTHROPIC_API_KEY=... uv run python scripts/measure_gate4.py --live",
-    "status": "PENDING"
+    "assertion": "response.model names Haiku 4.5 and calls/tokens > 0",
+    "provider_calls": 23,
+    "served_model": "claude-haiku-4-5-20251001",
+    "status": "COMPLETED",
+    "token_usage": 12072
   },
   "mode": "live",
-  "seeds": []
+  "outcome": "capture",
+  "seeds": [
+    30260801
+  ],
+  "token_spend": {
+    "cost_usd": 0.013828,
+    "input_tokens": 11633,
+    "output_tokens": 439
+  },
+  "turns_played": 14,
+  "wall_time_seconds": {
+    "mean": 1.9017719999999996,
+    "n": 13
+  },
+  "word_limit": 15
 }
