@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 5 PLAN 03 EXECUTED (2d3cbcd, 2026-08-09) -- scripts/gate5_tunnel_smoke.py (the scriptable half of GATE-5, driving the real TunnelManager/SharedSecretMiddleware through a public ngrok URL) + GATE-5-MEASUREMENT.md (both Sec10.4 criteria PENDING, honestly, with exact rerun/remote-round procedures) + LOCALTONET-FALLBACK.md (D-57, zero code) + graph refresh. 1116 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy all clean. Phase 5's three plans are all CODE+TEST COMPLETE; the phase itself is NOT verified -- GATE-5 needs a human to run the smoke script (env vars absent on this machine) AND the genuine remote round (needs a second machine). NEXT -- plan Phase 6 (Security and Cryptography), or run the two pending Phase-5/Phase-4 human gate items first. Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it. /gsd:verify-work 5 stays blocked the same way until GATE-5's two PENDING items close.
-last_updated: "2026-08-09T05:45:00.000Z"
-last_activity: 2026-08-09 -- Phase 05 plan 03 executed (05-03: scripts/gate5_tunnel_smoke.py -- one command, env-gated on NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, starts one real PeerRuntime + the real TunnelManager (05-01) + SharedSecretMiddleware (05-02, zero parallel reimplementation of either), brings the tunnel up, makes an authorized round trip through the PUBLIC url (secret header, expects the five D-05 tool names) and an unauthorized one (no header, expects 403 THROUGH THE TUNNEL not just loopback), tears both down, writes JSON evidence into docs/phases/phase-5/. scripts/gate5_smoke_checks.py (new) -- missing_env_vars/check_public_url/build_evidence/write_evidence, the offline-testable core the must_haves demanded, split at the gate4_* helper-module precedent; preflight() (inside gate5_tunnel_smoke.py) raises SystemExit naming every missing env var before touching pyngrok/PeerRuntime/network at all. 11 new offline tests (test_gate5_smoke_checks.py, test_gate5_tunnel_smoke_preflight.py) import scripts/ via the same sys.path-bootstrap idiom measure_gate4.py already established -- the first time this project writes offline tests importing FROM scripts/. docs/phases/phase-5/GATE-5-MEASUREMENT.md quotes both Sec10.4 criteria verbatim and marks BOTH PENDING (not one mocked/one live like GATE-4 -- nothing in Phase 5 can run without a real ngrok account this machine lacks, so no numbers were fabricated for criterion 1 either): criterion 1 states field-by-field what a PASS verdict in the evidence JSON must show plus the exact rerun command; criterion 2 (CLOUD-02, the genuine remote round) carries the full seven-step human procedure (start agent, read the exchange block, deliver URL+secret out-of-band, remote PURSUIT_OPPONENT_URL paste via the Phase-2 seam, play one full round, retain both event logs + verdicts, note the machine/network pair) plus an explicit paragraph on why this criterion cannot be scripted from this repo alone. docs/phases/phase-5/LOCALTONET-FALLBACK.md -- the D-57 rule-10 fallback runbook (install, --authtoken, dashboard port mapping to 127.0.0.1:<agent's local port>, --install-service/--start-service, the 30-minute free-tier timeout stated as the reason ngrok is primary, league-day re-establish-per-window note including the URL changing on every restart); states explicitly no Localtonet code path exists anywhere and why that satisfies rule 10 without doubling the engineering surface. Knowledge graph refreshed (graphify update .: 5806 nodes/10476 edges/367 communities; graph.html skipped, over the 5000-node HTML viz limit same as 04-12's own pass); TunnelManager and SharedSecretMiddleware both confirmed present in the committed GRAPH_REPORT.md. Full suite 1116 passed (+11 vs the 1105 baseline), 95.70% coverage unchanged (scripts/ is outside [tool.coverage.run] source = ["src", "training"], matching the gate4_* precedent), ruff/line-limit/no-llm-in-strategy all clean. NOTHING TICKED anywhere -- ROADMAP.md Phase 5 row updated by hand to 3/3 plans, status left "In Progress (GATE-5 both criteria PENDING)" rather than "Complete" (gsd-tools roadmap update-plan-progress again reported updated:true but wrote no diff -- same documented no-op; verified via git status before/after))
+stopped_at: PHASE 6 PLAN 01 EXECUTED (c85b302, 2026-08-09) -- src/pursuit/security/ package (commit_pack.py: build_commit_payload/commit/verify_reveal, D-59; state_record.py: build_state_record, D-60; ledger.py: CommitLedger, D-64), src/pursuit/shared/security_config.py (11th per-agent config block), config/{police,thief}/security.json (byte-identical, D-65). 100% coverage on the new security/ package (77/77 statements), 34 new tests, full suite 1150 passed / 1 pre-existing timing flake (unrelated, passes in isolation), 95.81% coverage, ruff/line-limit/no-llm-in-strategy all clean. This plan is purely additive -- nothing wired into the turn loop, handshake, or any existing network file yet; that is 06-02/06-03's job. Knowledge graph refreshed (6035 nodes/10756 edges/384 communities). NEXT -- execute 06-02 (four-phase wire protocol: MessageType members, tool handlers, turn_commit.py's D-58 both-locked exchange, barrier-over-the-wire D-66).
+last_updated: "2026-08-09T16:20:00.000Z"
+last_activity: 2026-08-09 -- Phase 06 plan 01 executed (06-01: the standalone crypto core, wave 1 of 4, no dependencies). Task 1 (ca84968): security_config.py + config/{police,thief}/security.json -- SecurityKey/SecurityParams/load_security_config following the *Key-beside-loader convention (TunnelKey/ScentKey precedent), commit_reveal=true + team_code=khm-mn17 byte-identical across both agent dirs (D-65), 11 tests incl. byte-identity + 8-char team_code check. Task 2 (cdcc39c): commit_pack.py + state_record.py -- the ONE build_commit_payload() function (D-59) that commit()/verify_reveal() both call, never rebuilt ad hoc; nonce via secrets.token_hex(16) inside commit() only; hashing via config_hash.canonical_json (the one documented, plan-pre-authorized exception to security/'s own sdk/shared-only boundary) + digests_match (secrets.compare_digest); move stays completely shape-opaque (isinstance(move, dict) only, no move_payload import) so 06-02's composite {move,barrier} action dict passes through untouched -- round-trip test proven with BOTH a move-only and a barrier-bearing example, including a nested-barrier-key-only tamper test; build_state_record returns exactly D-60's five fields with a local non-bool-int guard (4-line duplicate of envelope.py's own, matching the existing 3-site precedent rather than a cross-package import). Task 3 (c85b302): ledger.py -- CommitLedger.append/.read_all, validate->serialize->write->flush->os.fsync mirroring event_log.append_event's exact durability order; missing-file read_all() returns [] (not an error); malformed line raises json.JSONDecodeError (fail-loud). Verification step 3 confirmed by grep: exactly one real json.dumps call in security/ (ledger.py's storage line), commit_pack.py contains zero. All 3 tasks committed atomically, pre-commit hook passing every time, never bypassed. 06-01-SUMMARY.md written carrying every exact signature 06-02 needs verbatim. Self-check PASSED (all 11 files + 3 commit hashes verified present). NOTHING TICKED anywhere -- ROADMAP.md Phase 6 checkboxes left unchecked, docs/phases/phase-6/TODO.md not yet created (06-97's job, still pending for this phase).
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 39
+  completed_plans: 40
   percent: 33
 ---
 
@@ -21,24 +21,56 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 05 — cloud-exposure-and-tunneling
+**Current focus:** Phase 06 — security-and-cryptography
 
 ## Current Position
 
-Phase: 05 (cloud-exposure-and-tunneling) — EXECUTED, NOT VERIFIED (all 3
-  plans code+test complete: 05-01, 05-02, 05-03. See
-  .planning/phases/05-cloud-exposure-and-tunneling/05-03-SUMMARY.md.
-  GATE-5 (book Sec10.4 milestone 5) has TWO human-pending items before
+Phase: 06 (security-and-cryptography) — EXECUTING (1 of 4 plans code+test
+  complete: 06-01. See
+  .planning/phases/06-security-and-cryptography/06-01-SUMMARY.md.
+  06-01 is the standalone crypto core (src/pursuit/security/ package +
+  security_config.py + the security.json pair) -- purely additive, wave 1,
+  no dependencies. Nothing wired into the turn loop/handshake yet. NEXT:
+  execute 06-02 (four-phase wire protocol -- MessageType members, tool
+  handlers, turn_commit.py's D-58 both-locked exchange, barrier-over-the-
+  wire D-66), which depends on 06-01's shipped signatures.)
+Plan: 1 of 4 (06-01 done; 06-02, 06-03, 06-04 remain)
+
+Phase 05 (cloud-exposure-and-tunneling) status carried forward unchanged:
+  EXECUTED, NOT VERIFIED (all 3 plans code+test complete). GATE-5 (book
+  Sec10.4 milestone 5) still has TWO human-pending items before
   /gsd:verify-work 5 can run: (1) the smoke run
   (`uv run python scripts/gate5_tunnel_smoke.py`, needs NGROK_AUTHTOKEN/
   PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, absent on this machine) and
   (2) the genuine remote round (CLOUD-02, needs a second machine on a
   different network -- full procedure in
-  docs/phases/phase-5/GATE-5-MEASUREMENT.md). NEXT: either run those two
-  human items, or begin planning Phase 6 (Security and Cryptography) --
-  Phase 6 depends on Phase 5's shipped CODE, not on GATE-5's own
-  measurement being closed.)
-Plan: 3 of 3 (05-01, 05-02, 05-03 all done; phase gate measurement PENDING)
+  docs/phases/phase-5/GATE-5-MEASUREMENT.md). Per CLAUDE.md's autonomy
+  directive, Phase 6 proceeds ahead of GATE-5's human-pending items since
+  Phase 6 depends on Phase 5's shipped CODE, not on GATE-5's measurement.
+
+06-01 delivered: src/pursuit/security/ (new package, 100% covered) --
+  commit_pack.py (build_commit_payload/commit/verify_reveal, D-59: the ONE
+  payload-builder both commit and audit-time re-hash call, never rebuilt ad
+  hoc; SHA-256 via the reused config_hash.canonical_json, secrets.token_hex(16)
+  nonce generated inside commit() only, digests_match/secrets.compare_digest
+  for verification; move stays completely shape-opaque so 06-02's composite
+  {move,barrier} action dict passes through untested-but-untouched -- proven
+  by a round-trip test using both a move-only and a barrier-bearing example,
+  including a nested-"barrier"-key-only tamper case), state_record.py
+  (build_state_record, D-60's exact five-field set with a local non-bool-int
+  guard mirroring envelope.py's own), ledger.py (CommitLedger.append/read_all,
+  D-64's fsync durability mirroring event_log.append_event exactly, nonce
+  never on any wire-mirroring log). src/pursuit/shared/security_config.py
+  (SecurityKey/SecurityParams/load_security_config, the 11th per-agent config
+  block) + config/{police,thief}/security.json (byte-identical, commit_reveal
+  default true + team_code khm-mn17, D-65). See frontmatter last_activity for
+  the full task-by-task account. 34 new tests, security/ package 100%
+  coverage (77/77 statements). Full suite 1150 passed, 1 pre-existing timing
+  flake (isolated re-run confirms it passes; unrelated to this plan, not
+  touched), 95.81% coverage, ruff/line-limit/no-llm-in-strategy all clean.
+  Knowledge graph refreshed (6035 nodes/10756 edges/384 communities). Nothing
+  ticked anywhere. Purely additive -- zero wiring into turn_actions.py,
+  handshake, or any existing network file (that is 06-02/06-03's scope).
 
 05-03 delivered: scripts/gate5_tunnel_smoke.py (env-gated smoke script
   driving the REAL TunnelManager/SharedSecretMiddleware through a public
@@ -646,6 +678,20 @@ Recent decisions affecting current work:
   stated split. First time this project writes offline tests importing
   FROM scripts/ (gate5_smoke_checks.py, gate5_tunnel_smoke.py's preflight),
   closing a gap the gate4_* precedent itself left open.
+
+- [Phase 06-01]: D-59/D-60/D-64/D-65 implemented exactly as
+  06-PLAN-OUTLINE.md specified -- no re-derivation, no invented number.
+  commit_pack.py imports canonical_json/digests_match from
+  pursuit.network.config_hash -- the plan's own pre-authorized, documented
+  exception to the security/ package's "sdk/shared only" boundary (a pure,
+  dependency-free hashing leaf, no AgentContext/turn-loop coupling).
+  build_commit_payload's `move` parameter stays completely shape-opaque
+  (isinstance(move, dict) only) -- commit_pack.py never imports
+  move_payload and never validates the composite {"move":...,"barrier":...}
+  action dict's internal shape, by design, so 06-02 is free to build that
+  shape however turn_commit.py needs. state_record.py's non-bool-int guard
+  is a local 4-line duplicate of envelope.py's own (Pitfall 3's existing
+  3-site precedent), not a cross-package import.
 
 ### Pending Todos
 

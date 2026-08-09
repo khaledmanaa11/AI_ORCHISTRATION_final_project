@@ -176,9 +176,10 @@ Plans:
 
 **Plans**: 4 (waves 1-4; see `.planning/phases/06-security-and-cryptography/06-PLAN-OUTLINE.md`)
 
-Plans:
+Plans (executed 06-01; 06-02..06-04 remain — nothing below is ticked until
+`/gsd:verify-work 6` runs, after GATE-6 measurement in 06-04):
 
-- [ ] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair
+- [ ] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair (CODE+TEST COMPLETE, see 06-01-SUMMARY.md; not yet verified)
 - [ ] 06-02: Four-phase wire protocol — 4 message kinds, the both-locked Commit→Ack→Reveal exchange (D-58), barrier placement inside the committed action (D-66, SEC-07), toggle-off byte-equivalence
 - [ ] 06-03: Step-0 hardware declaration (verified at handshake, D-62/D-63) + negotiated `game_id` (D-61) + end-game mutual log audit with the revealed-vs-played cross-check (D-67)
 - [ ] 06-04: GATE-6 measurement (localhost, zero env vars) + `docs/PRD_commit_reveal.md` (the cryptographic protocol)
