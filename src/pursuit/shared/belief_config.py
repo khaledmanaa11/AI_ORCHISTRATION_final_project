@@ -1,9 +1,9 @@
 """Fail-loud config loader for belief.json -- the belief map's engineering
-defaults, one owning plan per group (04-PLAN-OUTLINE.md Sec4):
-`scent_likelihood` (04-05, D-42) and `reliability` (04-09, D-51). None of
-these numbers is a docs/PARAMETERS.md value; all are engineering defaults
-this module labels as such and validates, never presenting them as fixed
-(D-18 discipline).
+defaults across three groups, one owning plan each (04-PLAN-OUTLINE.md
+Sec4): `scent_likelihood` (04-05, D-42), `reliability` (04-09, D-51) and
+`hint_likelihood` (04-09, D-40). None of these numbers is a
+docs/PARAMETERS.md value; all are engineering defaults this module labels as
+such and validates, never presenting them as fixed (D-18 discipline).
 
 BeliefKey lives HERE, not in pursuit.config_keys, for the same reason
 ScentKey/LanguageKey do (04-PLAN-OUTLINE.md Sec4 point 2): config_keys.py is
@@ -11,10 +11,13 @@ already at its 150-code-line ceiling. Every group's keys are added to this
 SAME enum -- 04-05's own SUMMARY anticipated exactly this extension -- so
 there is one place a reader checks for every belief.json field name.
 
-`reliability`'s own dataclass and validation live in
-`shared/reliability_config.py` -- split out at the SAME 150-code-line
-ceiling this file would otherwise breach. This file stays the single
-`load_belief_config()` entry point every other module imports.
+`reliability` and `hint_likelihood`'s own dataclasses and validation live in
+`shared/reliability_config.py` and `shared/hint_likelihood_config.py`
+respectively -- split out at the SAME 150-code-line ceiling this file would
+otherwise breach by carrying three groups' worth of typed containers. This
+file stays the single `load_belief_config()` entry point every other module
+imports, and is where `hint_likelihood.weight` is checked against
+`scent_likelihood.weight`, by name (D-40's asymmetry, enforced structurally).
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from pursuit.shared.hint_likelihood_config import HintLikelihoodParams, validate_hint_likelihood
 from pursuit.shared.loader_helpers import require_float, require_int, require_key
 from pursuit.shared.reliability_config import ReliabilityParams, validate_reliability
 
@@ -31,8 +35,8 @@ BELIEF_CONFIG_SOURCE = "belief.json"
 
 
 class BeliefKey(str, Enum):
-    """Field names for config/{police,thief}/belief.json, across every
-    group. Structural only -- no numeric literal lives on this enum.
+    """Field names for config/{police,thief}/belief.json, across all three
+    groups. Structural only -- no numeric literal lives on this enum.
 
     Unlike ScentKey/ResolutionKey, belief.json is never canonically
     re-serialised or hashed, so there is no `__str__` override here: a plain
@@ -55,6 +59,8 @@ class BeliefKey(str, Enum):
     CONTRADICTION_STEP = "contradiction_step"
     RECOVERY_RATE = "recovery_rate"
 
+    GROUP_HINT_LIKELIHOOD = "hint_likelihood"
+
 
 @dataclass(frozen=True)
 class BeliefParams:
@@ -72,6 +78,7 @@ class BeliefParams:
     age_cap: int
     freshness_decay: float
     reliability: ReliabilityParams
+    hint_likelihood: HintLikelihoodParams
 
 
 def load_belief_config(path: Path | str) -> BeliefParams:
@@ -85,7 +92,8 @@ def load_belief_config(path: Path | str) -> BeliefParams:
         If any leaf value carries the wrong type.
     ValueError
         If any group's fields fail its own validation -- see
-        `_validate_scent_likelihood` and `reliability_config.validate_reliability`.
+        `_validate_scent_likelihood`, `reliability_config.validate_reliability`
+        and `hint_likelihood_config.validate_hint_likelihood`.
     """
     with Path(path).open(encoding="utf-8") as fh:
         data = json.load(fh)
@@ -96,6 +104,9 @@ def load_belief_config(path: Path | str) -> BeliefParams:
     )
     reliability_group = require_key(
         data, BeliefKey.GROUP_RELIABILITY.value, source=BELIEF_CONFIG_SOURCE
+    )
+    hint_group = require_key(
+        data, BeliefKey.GROUP_HINT_LIKELIHOOD.value, source=BELIEF_CONFIG_SOURCE
     )
 
     weight = require_float(scent_group, BeliefKey.WEIGHT.value, source=BELIEF_CONFIG_SOURCE)
@@ -119,6 +130,11 @@ def load_belief_config(path: Path | str) -> BeliefParams:
     )
     validate_reliability(reliability, source=BELIEF_CONFIG_SOURCE)
 
+    hint_likelihood = HintLikelihoodParams(
+        weight=require_float(hint_group, BeliefKey.WEIGHT.value, source=BELIEF_CONFIG_SOURCE)
+    )
+    validate_hint_likelihood(hint_likelihood, scent_weight=weight, source=BELIEF_CONFIG_SOURCE)
+
     return BeliefParams(
         version=version,
         scent_weight=weight,
@@ -126,6 +142,7 @@ def load_belief_config(path: Path | str) -> BeliefParams:
         age_cap=age_cap,
         freshness_decay=freshness_decay,
         reliability=reliability,
+        hint_likelihood=hint_likelihood,
     )
 
 

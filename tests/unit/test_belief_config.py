@@ -5,14 +5,14 @@ config/ loaders under shared/ get their tests in tests/unit/, not
 tests/unit/strategy/ (matching those two files' own precedent, and 04-05's
 own SUMMARY.md).
 
-The `reliability` group's own validation (04-09, D-51) lives in
-test_reliability_config.py -- split out at the SAME 150-code-line ceiling
-that split this file out of test_belief_scent.py in the first place,
-mirroring exactly how its source dataclass lives in
-shared/reliability_config.py rather than here. This file keeps the
-byte-identical check and a smoke test that load_belief_config() wires the
-new group up at all, since that is about the LOADER as a whole, not the
-group individually.
+The `reliability` and `hint_likelihood` groups' own validation (04-09,
+D-51/D-40) live in test_reliability_config.py / test_hint_likelihood_config.py
+-- split out at the SAME 150-code-line ceiling that split this file out of
+test_belief_scent.py in the first place, mirroring exactly how their source
+dataclasses live in shared/reliability_config.py / shared/hint_likelihood_config.py
+rather than here. This file keeps the byte-identical check and a smoke test
+that load_belief_config() wires both new groups up at all, since those are
+about the LOADER as a whole, not either group individually.
 """
 
 import json
@@ -108,10 +108,10 @@ def test_out_of_range_fields_raise(tmp_path, key, value):
         load_belief_config(bad)
 
 
-def test_loads_the_reliability_group():
-    """A loader-level smoke test that the 04-09 group is actually wired into
-    BeliefParams -- its own field-by-field validation lives in
-    test_reliability_config.py."""
+def test_loads_the_reliability_and_hint_likelihood_groups():
+    """A loader-level smoke test that both 04-09 groups are actually wired
+    into BeliefParams -- their own field-by-field validation lives in
+    test_reliability_config.py / test_hint_likelihood_config.py."""
     raw = json.loads(POLICE_BELIEF.read_text(encoding="utf-8"))
     cfg = load_belief_config(POLICE_BELIEF)
     reliability_group = raw[BeliefKey.GROUP_RELIABILITY]
@@ -128,3 +128,5 @@ def test_loads_the_reliability_group():
         reliability_group[BeliefKey.CONTRADICTION_STEP],
         reliability_group[BeliefKey.RECOVERY_RATE],
     )
+    hint_group = raw[BeliefKey.GROUP_HINT_LIKELIHOOD]
+    assert cfg.hint_likelihood.weight == hint_group[BeliefKey.WEIGHT]

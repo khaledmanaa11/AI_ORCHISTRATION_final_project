@@ -12,5 +12,8 @@
     "r_max": 0.95,
     "contradiction_step": 0.3,
     "recovery_rate": 0.05
+  },
+  "hint_likelihood": {
+    "weight": 0.3
   }
 }
