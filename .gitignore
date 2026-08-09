@@ -72,6 +72,13 @@ htmlcov/
 *.qtable
 models/checkpoints/
 
+# Rule 37/38's per-role games-played counter is mutable runtime state, not
+# fixed config -- persisted BESIDE config/{police,thief}/ by design (06-03)
+# so it survives across real games, but never version-controlled, same
+# reasoning as *.qtable/nonces/ above. Its *.prev durable-write rotation
+# generation is covered by the same glob.
+config/*/games_played*.json
+
 # Local run output. NOTE: the four required JSON artifacts
 # (declaration_/config_/log_/result_) MUST be committed per rule 50 and
 # Appendix F rule 4 — keep them out of this ignore list.

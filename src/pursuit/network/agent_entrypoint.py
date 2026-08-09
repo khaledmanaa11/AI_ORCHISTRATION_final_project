@@ -11,13 +11,23 @@ runtime comes up and stops AFTER `shutdown_cleanly` returns; when unset --
 the default for every existing test and dev flow -- `run_with_tunnel` is a
 transparent no-op, so `run_agent` behaves exactly as it did before this
 plan.
+
+06-03 (D-61/D-62/D-63/D-67): Step-0 is declared+signed before the handshake
+and rides its third payload digest; on a successful handshake the
+declaration is written to disk under the negotiated game_id; after
+`run_turn_loop` returns, the Final-Reveal mutual audit runs (when
+`security.commit_reveal` is on) and can override the outcome to
+`TECHNICAL_LOSS`. All of it lives behind `agent_audit_wiring.py` -- this
+function stays a thin caller.
 """
 
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 
 from pursuit.constants import Outcome
+from pursuit.network.agent_audit_wiring import declare_step0, run_final_audit, write_declaration
 from pursuit.network.agent_lifecycle import default_context, shutdown_cleanly, start_server
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
@@ -34,7 +44,12 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
     tunnel = build_tunnel_manager(cfg.config_dir, cfg.net)
 
     async def _play() -> Outcome | None:
-        ctx = default_context(cfg, game_uid=game_uid)
+        resolved_game_uid = game_uid or secrets.token_hex(8)
+        step0_digest, declaration_envelope = await declare_step0(cfg)
+        ctx = default_context(
+            cfg, game_uid=resolved_game_uid,
+            local_step0_digest=step0_digest, local_game_id=resolved_game_uid,
+        )
         ctx.watchdog.start()
         await start_server(ctx)
         try:
@@ -45,10 +60,17 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                     machine=ctx.machine, reporter=ctx.reporter, local_digest=local_digest,
                     local_role=ctx.role, call_peer=make_client_caller(client),
                     local_scent_digest=local_scent_digest,
+                    local_step0_digest=step0_digest, local_game_id=resolved_game_uid,
                 )
             if not result.agreed:
                 return None
-            return await run_turn_loop(ctx)
+            write_declaration(ctx, cfg, result, declaration_envelope)
+            outcome = await run_turn_loop(ctx)
+            if ctx.security.commit_reveal:
+                audit_outcome = await run_final_audit(ctx)
+                if audit_outcome is not None:
+                    outcome = audit_outcome
+            return outcome
         finally:
             await shutdown_cleanly(ctx)
 

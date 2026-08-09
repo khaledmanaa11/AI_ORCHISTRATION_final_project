@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 
+import psutil
 import pytest
 
 from pursuit.security import step0_collect
@@ -35,6 +36,25 @@ def test_a_failing_nvidia_smi_yields_the_honest_not_detected_shape(monkeypatch):
     monkeypatch.setattr(subprocess, "run", _raise)
     gpu = step0_collect._collect_gpu()
     assert gpu == {"present": False, "detail": "not detected"}
+
+
+def test_a_raising_cpu_freq_yields_an_honest_none_frequency(monkeypatch):
+    def _raise():
+        raise OSError("cpu_freq unavailable on this platform")
+
+    monkeypatch.setattr(psutil, "cpu_freq", _raise)
+    cpu = step0_collect._collect_cpu()
+    assert cpu["freq_mhz"] is None
+    assert cpu["cores"] == psutil.cpu_count()
+
+
+def test_a_succeeding_nvidia_smi_is_parsed_into_a_present_gpu(monkeypatch):
+    class _FakeResult:
+        stdout = "NVIDIA GeForce RTX 4090, 24576 MiB\n"
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult())
+    gpu = step0_collect._collect_gpu()
+    assert gpu == {"present": True, "name": "NVIDIA GeForce RTX 4090", "vram": "24576 MiB"}
 
 
 def test_a_failing_git_command_raises_loudly(monkeypatch):
