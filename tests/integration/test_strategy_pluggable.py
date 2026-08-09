@@ -155,3 +155,32 @@ def test_check_script_flags_a_synthetic_forbidden_import(tmp_path: pathlib.Path)
     violations = check.find_violations(root=tmp_path)
     assert len(violations) == 1
     assert "socket" in violations[0]
+
+
+_SERVICES_IMPORT_LINES = (
+    "from pursuit.services.llm.decode import decode_hint\n",
+    "import pursuit.services\n",
+)
+
+
+@pytest.mark.parametrize("import_line", _SERVICES_IMPORT_LINES)
+def test_check_script_flags_a_synthetic_services_import(tmp_path: pathlib.Path, import_line: str) -> None:
+    """Closes the rule-25 guard's services hole (plan 04-01, Task 4): once
+    services/llm/ exists, a strategy module reaching it (bare or dotted)
+    would put an LLM on the decision path with this script printing OK,
+    absent this branch."""
+    check = _load_check_module()
+    (tmp_path / "poisoned.py").write_text(import_line, encoding="utf-8")
+    violations = check.find_violations(root=tmp_path)
+    assert len(violations) == 1
+    assert "STRAT-07" in violations[0]
+
+
+def test_check_script_allows_shared_inference_import(tmp_path: pathlib.Path) -> None:
+    """pursuit.shared is the legal seam for cross-cutting types -- reading a
+    shared module must never trip the guard."""
+    check = _load_check_module()
+    (tmp_path / "clean.py").write_text(
+        "from pursuit.shared.inference import Something\n", encoding="utf-8"
+    )
+    assert check.find_violations(root=tmp_path) == []

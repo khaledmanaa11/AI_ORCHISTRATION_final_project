@@ -57,7 +57,7 @@ RL; the rationale is argued in [PROJECT_GUIDE.md §B](PROJECT_GUIDE.md#b-why-rei
 
 | Component | Purpose | Status |
 |---|---|---|
-| Belief map | Probability grid over opponent position, updated by Bayes rule from scent + hints | _TBD — Phase 4_ |
+| Belief map | Probability grid over opponent position, updated by Bayes rule from scent + hints | **Built.** `strategy/belief.py`'s `BeliefMap` (predict/update/observe_exact/sample), fed by `belief_scent.py` (D-42, inverts trail age) and `belief_hint.py` (D-40, weight 0.3 fixed below scent's 4.0). Two regimes on one object: Regime A observes the opponent's one-turn-stale revealed cell then predicts; Regime B runs on scent+hints alone. `BeliefAdapter` (04-11) samples the target cell (D-43, never argmax) and substitutes it into a believed `GameState` (Option A) for the unmodified Phase-3 mover. Full detail: [PRD_belief_map.md](PRD_belief_map.md). |
 | State encoding | How `(own pos, belief, barriers, turn)` compresses into a Q-table key | _TBD — Phase 3_ |
 | Action space | 4 orthogonal moves + stay; plus barrier placement for the cop | Fixed by spec |
 | Reward function | Derived from the scoring table (§1.3 states R "translates directly" from it) | See [PARAMETERS.md](PARAMETERS.md) Table 17 |
@@ -89,9 +89,9 @@ it was being honest (§5.3).
 
 | Question | Decision |
 |---|---|
-| When to lie vs. tell the truth | _TBD — Phase 4_ |
+| When to lie vs. tell the truth | **Built, role-specific.** Thief: danger-adaptive (D-37) — lie probability flat at a config ceiling (0.8 shipped) inside `danger_distance`, flat at a floor (0.333 measured) beyond `safe_distance`, linear between, computed over the whole belief posterior's expected cop distance; never a survivable lie our own scent trail would betray. Cop: herding (D-38) — lies only when a believing-thief's best response (scored with the same evaluation the mover uses) beats the truthful claim by a configured margin; measured 125/194 = 0.644 over random positions. Both role policies are frozen dataclasses that structurally cannot mark a capture/barrier declaration a lie (rules 15/16/21/22). Full detail: [PRD_deception.md](PRD_deception.md). |
 | How the bluff text is generated | LLM, constrained to `[hint word limit]` words |
-| How opponent hints are weighted against scent evidence | _TBD — Phase 4_ |
+| How opponent hints are weighted against scent evidence | **Built.** A hint's fixed mixing weight (`hint_likelihood.weight = 0.3`) is validated at load to stay strictly below scent's own weight (`scent_likelihood.weight = 4.0`) — "scent cannot lie, words can" (D-40), reproduced in the fused posterior's `argmax` following the real scent trail, never a false claim, in both a fully-truthful and a fully-lying 10-turn run. On top of the fixed weight, an adaptive per-opponent reliability coefficient (D-51, a disclosed revision of D-40 — see [RULES-RESOLUTION-LANG.md](phases/phase-4/RULES-RESOLUTION-LANG.md)) drops on a §4.4-style caught contradiction (measured: 0.5 → 0.2 → 0.05 within two turns) and recovers toward the prior on consistency. Full detail: [PRD_belief_map.md](PRD_belief_map.md) §4–§5. |
 
 Truthfulness is mandatory in exactly one place: **at the moment of capturing a thief**,
 the declaration must be true (rules 21–22). Lying there is immediate disqualification.

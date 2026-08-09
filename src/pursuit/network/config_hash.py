@@ -57,3 +57,25 @@ def digests_match(left: str, right: str) -> bool:
     if not isinstance(left, str) or not isinstance(right, str):
         raise TypeError("digests_match requires two str arguments")
     return secrets.compare_digest(left, right)
+
+
+def compare_named_digest(name: str, local: str, remote: str | None) -> tuple[bool, str]:
+    """Compare one named pair of digests exchanged at handshake (D-46, rule 23).
+
+    A `remote` of None counts as a mismatch: a peer whose payload carries no
+    digest under this name has not locked the corresponding model, so
+    non-agreement is the same outcome as an actual value difference — only
+    the returned detail distinguishes "absent" from "differed", so an
+    operator can tell an older build from an incompatible one.
+
+    Returns (matched, detail); detail names `name` and is ready to fold into
+    an abort message. Reuses digests_match (secrets.compare_digest) so a
+    second digest never opens a second, weaker '==' comparison (QUAL-02) —
+    the handshake (02-08) is the one caller today, and any later digest
+    exchange reuses this rather than hand-rolling its own compare.
+    """
+    if remote is None:
+        return False, f"{name} digest absent from peer payload"
+    if digests_match(local, remote):
+        return True, f"{name} digests agree"
+    return False, f"{name} digest mismatch: local={local} remote={remote}"

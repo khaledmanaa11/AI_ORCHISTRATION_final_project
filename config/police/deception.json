@@ -1,0 +1,14 @@
+{
+  "version": "1.00",
+  "_note": "Every number here is an ENGINEERING DEFAULT (D-18 discipline), not a docs/PARAMETERS.md value. The book fixes no lie rate, danger threshold or truth floor. Tune in test games; both role files stay byte-identical.",
+  "thief": {
+    "truth_floor": 0.2,
+    "min_lie_probability": 0.1,
+    "danger_distance": 2.0,
+    "safe_distance": 8.0,
+    "lie_candidate_pool": 3
+  },
+  "cop": {
+    "min_herding_gain": 0.01
+  }
+}

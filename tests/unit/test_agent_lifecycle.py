@@ -21,6 +21,7 @@ from pursuit.network import agent_lifecycle, handshake
 from pursuit.network.config_hash import config_digest, digests_match
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
 from pursuit.network.state_machine import State, TransitionSeverity
+from pursuit.shared.scent_config import load_scent_model, scent_digest
 from tests.unit._fakes_agent import FakeReporter, FakeWatchdog
 
 _STATIC_TARGETS = (
@@ -76,7 +77,10 @@ def test_two_agents_share_no_runtime_state(tmp_path):
 
 async def test_handshake_tool_answers_a_real_peer(tmp_path):
     """THE NET-09 WIRING GATE -- proves 02-08's responder is bound behind the
-    REAL handshake tool, not merely present and unwired."""
+    REAL handshake tool, not merely present and unwired. 04-12: the real
+    responder now opts into the D-46 scent lock (`local_scent_digest`), so
+    this test's own hand-built offer must carry one too, exactly like a
+    real peer's `default_context`-built offer does."""
     police = agent_lifecycle.default_context(
         agent_lifecycle.load_agent_config("config/police"),
         game_uid="g-police", log_path=tmp_path / "police.jsonl",
@@ -86,8 +90,10 @@ async def test_handshake_tool_answers_a_real_peer(tmp_path):
         game_uid="g-thief", log_path=tmp_path / "thief.jsonl",
     )
 
+    police_scent_digest = scent_digest(load_scent_model(pathlib.Path("config/police") / "scent.json"))
     offer = handshake.build_offer(
-        config_digest(pathlib.Path("config/police") / "game_params.json"), police.role
+        config_digest(pathlib.Path("config/police") / "game_params.json"), police.role,
+        local_scent_digest=police_scent_digest,
     )
     args = {k: v for k, v in offer.to_dict().items() if k != EnvelopeKey.TYPE}
 

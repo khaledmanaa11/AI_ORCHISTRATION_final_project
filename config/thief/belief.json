@@ -1,0 +1,23 @@
+{
+  "version": "1.00",
+  "scent_likelihood": {
+    "weight": 4.0,
+    "epsilon": 0.05,
+    "age_cap": 5,
+    "freshness_decay": 0.75
+  },
+  "reliability": {
+    "prior": 0.5,
+    "r_min": 0.05,
+    "r_max": 0.95,
+    "contradiction_step": 0.3,
+    "recovery_rate": 0.05
+  },
+  "hint_likelihood": {
+    "weight": 0.3
+  },
+  "belief": {
+    "enabled": true,
+    "seed": 20260809
+  }
+}

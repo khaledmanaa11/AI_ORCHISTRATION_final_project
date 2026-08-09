@@ -1,0 +1,103 @@
+{
+  "belief_on_off_win_rate": {
+    "belief_off_cop_win_rate": 0.0,
+    "belief_on_cop_win_rate": 1.0,
+    "note": "Outline Sec1's honesty clause predicts no scoring gain in Regime A; this is the measured result, reported as-is."
+  },
+  "criterion_1_hint_to_inference": {
+    "evidence_turns": 22,
+    "fraction_hint_became_inference": 0.16176470588235295,
+    "mean_absolute_posterior_change_on_evidence_turns": 1.1714960279007078,
+    "turns_measured": 136,
+    "verdict": "PASS"
+  },
+  "criterion_2_scent_decay": {
+    "handshake_scent_digest_matched": true,
+    "max_deviation": 1.1102230246251565e-16,
+    "police_scent_digest": "c0e63220b31f5b82a0354534ff5cc12abd6fc1fd45460a8c4794c8150cff4c9e",
+    "thief_scent_digest": "c0e63220b31f5b82a0354534ff5cc12abd6fc1fd45460a8c4794c8150cff4c9e",
+    "turns": 12,
+    "verdict": "PASS"
+  },
+  "criterion_3_hint_every_turn": {
+    "both_intents_occurred": true,
+    "hint_every_turn": true,
+    "hints_sent": 68,
+    "intent_committed_before_text_fraction": 1.0,
+    "intent_committed_before_text_method": "structural, not timestamp-based: build_deception_plan() (which fixes plan.intent) returns before compose_outgoing()/compose() is even called -- `plan` is a required positional argument to compose_outgoing, so no call that produces hint text can exist without an intent already decided. Cross-checked against tests/integration/test_language_pipeline.py's own Figure-7 order spy and tests/integration/test_gate4.py's GATE-4-specific one.",
+    "intent_counts": {
+      "lie": 55,
+      "truth": 13
+    },
+    "max_word_count": 11,
+    "outgoing_coordinate_leaks": 0,
+    "turns_played": 68,
+    "verdict": "PASS",
+    "within_word_limit": true,
+    "word_limit": 15
+  },
+  "decode_fixture_accuracy": {
+    "en": {
+      "accuracy": 1.0,
+      "cases": 7,
+      "failures": [],
+      "matched": 7
+    },
+    "he": {
+      "accuracy": 1.0,
+      "cases": 4,
+      "failures": [],
+      "matched": 4
+    }
+  },
+  "generated_at": "2026-08-09T03:45:59.576782+00:00",
+  "live": {
+    "reason": "ANTHROPIC_API_KEY not set on the measurement machine",
+    "rerun_command": "ANTHROPIC_API_KEY=... uv run python scripts/measure_gate4.py --live",
+    "status": "PENDING",
+    "what_it_will_prove": [
+      "response.model names Haiku 4.5 (liveness, guards against D-33 masking a dead key)",
+      "provider calls > 0 and token usage > 0 (not the template fallback)",
+      "real per-turn latency against the watchdog threshold",
+      "real token spend from response.usage, in tokens and USD",
+      "real decode accuracy on the EN/HE fixtures via the actual model"
+    ]
+  },
+  "mode": "mocked",
+  "seeds": [
+    30260801,
+    30260802,
+    30260803
+  ],
+  "token_spend": {
+    "games": [
+      {
+        "budget": null,
+        "calls": 23,
+        "input_tokens": 895,
+        "level": "full (simulated)",
+        "output_tokens": 330
+      },
+      {
+        "budget": null,
+        "calls": 42,
+        "input_tokens": 1640,
+        "level": "full (simulated)",
+        "output_tokens": 606
+      },
+      {
+        "budget": null,
+        "calls": 48,
+        "input_tokens": 1870,
+        "level": "full (simulated)",
+        "output_tokens": 690
+      }
+    ],
+    "note": "mocked mode uses SIMULATED per-call token counts, never real API usage"
+  },
+  "wall_time_seconds": {
+    "mean": 0.03131518461538462,
+    "n": 65,
+    "p95": 0.039155
+  }
+}

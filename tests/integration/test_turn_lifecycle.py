@@ -27,6 +27,7 @@ from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.orchestrator import run_turn_loop
 from pursuit.network.state_machine import State, TransitionSeverity
 from pursuit.sdk import engine
+from pursuit.shared.scent_config import scent_digest
 from tests.integration.conftest import read_events
 
 
@@ -45,10 +46,15 @@ async def test_full_lifecycle_init_to_game_over(agent_log_paths, network_params)
     ctx_a.runtime.client = lambda: Client(ctx_b.runtime.server)
 
     local_digest = config_digest(cfg_a.config_dir / "game_params.json")
+    # 04-12: default_context's real inbound responder now opts B into the
+    # D-46 scent lock too, so A's own outbound offer must carry one --
+    # exactly what run_agent() does in production (agent_lifecycle.py).
+    local_scent_digest = scent_digest(cfg_a.scent)
     async with ctx_a.runtime.client() as client:
         handshake_result = await perform_handshake(
             machine=ctx_a.machine, reporter=ctx_a.reporter, local_digest=local_digest,
             local_role=ctx_a.role, call_peer=make_client_caller(client),
+            local_scent_digest=local_scent_digest,
         )
     # game_params.json is byte-identical across config/{police,thief} (D-06/NET-09);
     # no JSONL record exists for a SUCCESSFUL handshake (only aborts are reported, per

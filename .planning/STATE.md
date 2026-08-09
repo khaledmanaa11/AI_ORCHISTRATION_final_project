@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 COMPLETE and merged to main (6ca38fa). Phase 3 was REBUILT FROM ZERO on 2026-08-08 outside the GSD plan mechanism, because the 15-plan run-2 set (03-11..03-25) assumed a SEQUENTIAL turn order that book §5.3.2 p.35 forbids -- the mandatory Commit-Reveal protocol exists precisely to make the turn simultaneous. Plans 03-14..03-25 are unexecuted and now carry a SUPERSEDED banner; do NOT execute them. What shipped is documented in docs/phases/phase-3/{PRD,PLAN,TODO,RULES-RESOLUTION,ENGINEERING-LOG}.md and docs/PRD_matrix_mover.md. NEXT COMMAND -- `/gsd:plan-phase 4 --chunked` (04-CONTEXT.md was captured 2026-07-28 and is still valid). Do NOT run execute-phase 3 or verify-work 3. ONE CARRY-OVER for Phase 4, stated in PRD §8: ValueSearchBrain never reads its Observation -- it builds the payoff matrix from GameState, which holds the opponent's TRUE cell -- so making the agent blind is a real design decision (believed state vs expectation over the belief), not the field swap the earlier docs claimed.
-last_updated: "2026-08-08T00:00:00+03:00"
-last_activity: 2026-08-08 -- PHASE 3 REBUILT AND CLOSED. Root cause of run 1's failure was NOT the learner: the engine resolved turns cop-then-thief while the book's mandatory Commit-Reveal protocol exists to make them simultaneous (§5.3.2 p.35). That makes the game a zero-sum Markov game, so tabular Q-learning was the wrong tool rather than an under-trained one. SHIPPED: one joint resolver (resolve_turn) + six terminal predicates pinned to book quotes; a negotiated resolution block that cannot abort the handshake; a matrix-game mover (one-ply joint expansion, pure saddle else regret matching, seeded equilibrium sampling); a 15-weight evaluation over the free-cell graph; two fixed sparring anchors; self-play training with randomised starts; a (1+lambda)-ES second optimiser; held-out evaluation with 95% Wilson intervals. THREE LIVE ENGINE BUGS fixed, all present through run 1: apply_move validated nothing, the thief could step onto the cop uncaptured, rule 47 was unreachable dead code. MEASURED (n=200, negotiated opening): thief 43.5->58.0% vs a sealing chaser and 14.5->32.5% vs a barrier-blind one, both significant; cop 100% at ceiling; decision cost 3.62 ms against a 30 s timeout. The ES artefact was run to completion and NOT shipped -- a specialist at 85.5%/20.0% across the two cop archetypes. Two negotiated-rule findings: rule 46 makes distance 1 a forced loss a one-ply search cannot see (named as a feature, worth 15->64%), and swap-as-capture costs 88 points of thief survival so we decline it. Retired the entire run-1 stack (9 strategy modules + shared/barrier.py + 21 training modules). Re-enabled the ruff and pytest --cov gates, which had been commented out of BOTH the pre-commit hook and CI. Gates: 366 passed, coverage 90.57%, ruff clean, all files <=150 code lines -- verified from a clean `git archive` extraction with no .git and no untracked files. PRIOR: 2026-08-04 -- EXECUTED 03-13-PLAN.md (turns_remaining + the whole run-2 config surface, wave 1's third plan). 3 tasks, all fully committed (da27684 turns_remaining, 050d95d config surface, dd7384e qtable schema-version fail-loud). Task 1: `src/pursuit/strategy/encoding.py` -- `turn_bucket` deleted entirely, `turns_remaining(turn_index, game_params) -> int` = `move_ceiling - turn_index` clamped at 0 (D-06 superseded, Puterman 1994 ch.4 + Pardo et al. ICML 2018); key field 5 is now exact; `encode_state`'s 3-arg signature UNCHANGED so `training/harness.py`/`qlearning.py` (03-14's, same wave) needed no edits. Task 2: the whole run-2 config surface declared once -- 9 new `StrategyKey` members (search_depth_cap, feature_scale_divisor, weights_path, learner_rule, barrier_candidate_min_degree, barrier_weight_{cycle_rank,component_size,territory,distance}) + 6 new `TrainingKey` members (pfsp_exponent, weak_opponent_floor, min_distinct_starts, terminal_spread_min, terminal_spread_ratio_max, floor_episode_fraction_max), `TURN_BUCKET_FRACTIONS` removed; both `config/{police,thief}/strategy.json` carry the identical new key set (weights_path/learner_rule differ per role as qtable_path already did). Values labelled by provenance: search_depth_cap=5 MEASURED (D-26's real-engine figure); min_distinct_starts=200/terminal_spread_min=0.1/terminal_spread_ratio_max=3.0/floor_episode_fraction_max=0.15 SOURCED verbatim from TRAINING-METHODOLOGY.md SF.3; pfsp_exponent=1.0 follows AlphaStar's f_var(x)=x(1-x) but the exact exponent itself is flagged secondary-sourced only; everything else (weights_path, learner_rule, barrier_candidate_min_degree=3, the four barrier_weight_* magnitudes) is an ENGINEERING DEFAULT, none claimed as a PARAMETERS.md value (D-18). 150-line-gate split (measured, not the outline's stale raw-line estimate): `StrategyParams` + its schema table moved to new `src/pursuit/shared/strategy_schema.py`; `strategy_config.py` keeps only the loader + re-exports `StrategyParams` via `__all__` so ~20 existing import sites needed zero changes. Task 3: `qtable.py` `SCHEMA_VERSION` bumped 1->2, `_validate_top_level` now rejects a version mismatch by name -- closes the gap where a run-1-format key (`0,0|3,3|9|0|1`, still 5 integers under the new format) would otherwise load silently against a wrong time field; no migration written, none was safe (no table was ever promoted). One deviation (Rule 3 - blocking, repeat of the 03-05/06/07/08 pattern): `test_strategy_config.py` hit 162 code lines after adding run-2 key coverage; split into new `tests/unit/strategy/test_strategy_config_run2.py`, original file reverted to byte-identical content (net zero diff). Known, deliberately-left-alone stale references (documented in 03-13-SUMMARY.md, not fixed): `docs/PRD_rl_strategy.md` Sec2 still shows the old key format (03-22's file, D-27 deviation-defence deliverable) and `training/harness.py`'s docstring still says "turn_bucket_fractions" (03-14's file this wave, outline SS7 file-ownership). Full repo gates green: `ruff check .` 0 violations, line-limit clean, 474 passed / 2 skipped (same 2 pre-existing skips), full-suite run ~2m46s. Graphify rebuilt (3583 nodes/6484 edges/234 communities), `GRAPH_REPORT.md` refreshed. `docs/phases/phase-3/TODO.md` deliberately NOT touched this plan -- same rationale as 03-11/03-12 (03-24's job). Next: 03-14 (terminal signal, R2+R4), wave 1's fourth and final plan. PRIOR: 2026-08-04 -- EXECUTED 03-12-PLAN.md (thief safety rule -- never step into N[cop], wave 1's second plan). 2 tasks, both fully committed (71b201d safety.py, 20d87f6 wiring + regression guard). Task 1: `src/pursuit/strategy/safety.py` -- `closed_neighbourhood(state, params)` (N[cop] via one `get_legal_moves(state, "cop", params)` call, no second neighbourhood walk) and `safe_moves(candidates, state, params)` (strips N[cop] cells, order-preserving, never returns `[]` -- when every candidate is inside N[cop] the unfiltered list comes back). Pure, no module-level state (D-03). Module docstring carries the full D-31 provenance (296/300=0.987 vs 283/300=0.943, random starts, no training) AND the unsoftened caveat ("provably unbeatable" did not fully reproduce -- 3/20 losses with new-barrier-placement disabled, and that control was itself flawed since the scenarios carry pre-placed barriers). Written test-first: `test_safety.py` confirmed red (ModuleNotFoundError) before `safety.py` existed, green after -- 7 tests. Task 2: `fallback.py::_evade` now filters legal moves through `safe_moves` before ranking survivors with the UNCHANGED `(unreachable?, distance, onward)` key -- filter-then-rank, not a new key; `_pursue` and the cop path untouched (verified byte-identical in diff). `tests/unit/strategy/test_fallback.py` needed ZERO changes -- ran before and after wiring the filter, all 6 existing cases assert generic distance/reachability inequalities that hold under the filtered behaviour too; none was rewritten (the plan's own conditional instruction to update only genuinely-changed cases applied to nothing here, verified not assumed). New `tests/integration/test_thief_safety.py`: a non-vacuous 160-game regression guard -- two arms (real filtered `safe_moves` vs a monkeypatched no-op via `monkeypatch.context()` against the production `fallback.safe_moves` call site, no new production toggle parameter added) replayed over the 20 committed GATE-4 scenarios plus 60 seeded random starts (`n=60`, `REGRESSION_TOLERANCE=0.05`, `seed=314159` -- named test-local constants, D-19, never `secrets`). Asserts: grid filtered-survival count never below unfiltered (D-31 measured an 18/20 tie here, so `>=` not `>`); random-start filtered rate never more than one noise band (0.05) below unfiltered; the filter actually strips a candidate at least once across the 160 games (non-vacuity, via a spy wrapper's `bound_calls` counter); and the per-turn N[cop] invariant holds on EVERY thief turn across all 160 games (the assertion with real power -- checked per turn via the spy, not just per game). Does not reproduce D-31's own disabled-barrier control (recorded as flawed, not repeated). One deviation (documentation correction, not a code fix): the plan's own context-section estimate of ~100ms/game did NOT reproduce -- measured ~34-38s for the 160-game suite (~215-240ms/game); `cProfile` on 10 real games traced ~80% of per-game cost to `barriers.py::choose_barrier` (03-07, pre-existing, cop-side, out of this plan's scope), not this plan's own code. Recorded honestly in the test module's own docstring with the real number and cause; `n=60` was NOT reduced (load-bearing for the tolerance derivation) and barrier placement was NOT disabled (would repeat D-31's flawed control) just to hit the stale `<=30s` target. Full repo gates green: `ruff check .` 0 violations, line-limit clean (new files 50/76/157 code lines, `fallback.py` still well inside its own ceiling), 464 passed / 2 skipped (same 2 pre-existing skips as 03-11: GATE-4 smoke subset awaiting a trained table, and the 03-08 reference-clone test) -- 8 new tests (456->464, matches 7 unit + 1 integration exactly), coverage 97.95% (>=85% floor), `safety.py` and `fallback.py` both individually 100% covered. Full-repo `--cov` run took 7m47s on this Windows machine (confirmed genuinely CPU-bound throughout via `Get-Process ... CPU`, not the known Windows stdio-hang pattern noted elsewhere in project memory). Graphify rebuilt (3523 nodes/6406 edges/233 communities), `GRAPH_REPORT.md` refreshed and committed with this session's docs. `docs/phases/phase-3/TODO.md` deliberately NOT touched this plan -- same rationale as 03-11 (03-24's "triplet refresh" job, not each plan's piecemeal). Next: 03-13 (turns_remaining + config surface), wave 1's third plan. PRIOR: 2026-08-04 -- EXECUTED 03-11-PLAN.md (graph primitives, wave 1's first plan). All 3 tasks + 1 post-task coverage-gap fix, fully committed (12be2e4 components.py, 52c85f2 cycles.py, b4b06fa territory.py, af5f0de test coverage fix). New pure-library package `pursuit.strategy.graph` measures the run-2 objective directly (D-09 superseded): components.py (free_cells/neighbors/component_of/degree/edge_count/articulation_points -- iterative Hopcroft-Tarjan with an explicit stack, no recursion; adjacency pinned equal to board.get_legal_moves minus STAY by an exhaustive per-free-cell equivalence test, QUAL-02), cycles.py (cycle_rank=E-V+1, is_forest, reduction_value=degree-1, pinned to the cited 7x7 oracle V=49/E=84/rank=36), territory.py (voronoi_split -- two source frontiers advanced one BFS layer per round in the same loop so a tie is exactly "reached the same round"; equidistant/unreachable-from-both cells belong to neither side; territory_diff reuses components.edge_count, exactly antisymmetric under argument swap). __init__.py re-exports the full public surface so 03-16/03-17/03-18 import from pursuit.strategy.graph, never a submodule. Zero role knowledge in code (D-03, grep for cop|thief under the package hits docstrings only) and zero numeric literals beyond the cited E-V+1/d-1 identities and ordinary loop arithmetic (no tunable knob in this package, exactly as the plan specified -- nothing added to config). One deviation, Rule 2 (missing coverage): pytest --cov first showed components.py 99% / cycles.py 90% -- two documented-but-untested contract branches (articulation_points' DFS-root-is-itself-a-cut-vertex case, distinct from the non-root case the barrier-corridor test already covered; and cycle_rank(frozenset())==0's explicit "empty input is 0" contract) had no direct test; closed with 2 added tests, package coverage 98%->100%, committed separately (af5f0de) since it was found during final verification, after all three task commits. Full repo gates green: ruff 0, line-limit clean (new files 100/37/55/32 code lines, all under the plan's own stated budgets), 456 passed / 2 skipped (the pre-existing GATE-4 skip, untouched), coverage ~97% (>=85% floor). Graphify rebuilt (3457 nodes/6273 edges/234 communities), GRAPH_REPORT.md refreshed and committed with this session's docs (graph.json/graph.html stay gitignored build artifacts per CLAUDE.md). docs/phases/phase-3/TODO.md deliberately NOT touched this plan -- its 03-11..03-16 row numbering is stale (pre-dates the 15-plan wave breakdown from the 2026-08-03 planning session; its own "03-11" row actually describes what is now plan 03-12, the thief safety rule), and the wave plan below already assigns that reconciliation to 03-24 ("triplet refresh"), not to each of the 15 individual plans piecemeal -- touching it here would create the exact kind of edit conflict 03-24 exists to avoid. Next: 03-12 (thief safety rule -- never step into N[cop]), wave 1's second plan. PRIOR SESSION 2026-08-03 -- PLANNED RUN 2. Fifteen plans, 03-11..03-25, ~3,255 lines across 7 waves, all frontmatter- and structure-validated (0 errors, 0 warnings). No code changed. (A) 03-CONTEXT.md gained a <superseded> section: the run-1 half is kept as the record of why 03-00..03-10 look the way they do, and the new section overrides it from 03-11 on, each entry carrying the measurement that overturned it. Overturned: D-04, D-06, D-09, D-12, D-13, single-gamma. New user-confirmed decisions D-26 (alpha-beta REPLACES the Q-policy as the mover, RL demoted to ~60 eval weights), D-27 (the STRAT-01/06 deviation defence is a deliverable), D-28 (0.55 bar NOT lowered), D-29 (everything lands, then exactly one run), D-30 (pre-flight assertions hard-gate every run), D-31 (thief safety rule). (B) WAVES: w1 03-11 graph primitives / 03-12 thief safety / 03-13 turns_remaining + config surface / 03-14 terminal signal; w2 03-15 randomised starts / 03-16 features+linear eval; w3 03-17 barrier rewrite / 03-18 alpha-beta; w4 03-19 SearchBrain / 03-20 linear learner; w5 03-21 run-2 regime / 03-22 deviation defence; w6 03-23 pre-flight gate / 03-24 triplet refresh; w7 03-25 RUN 2 (operator, autonomous:false). (C) THREE CORRECTIONS MEASURED DURING PLANNING, not inherited: the 150-line gate counts CODE lines not raw (fallback.py 83 not 99, harness.py 132 not 158, strategy_config.py 138 not 169), which falsified the outline's "03-13 needs no split"; R2 IS SYMMETRIC and the post-mortem documented only half of it -- engine.py emits CAPTURE on the cop's turn and SURVIVAL on the thief's, so a COP learner is blind to survival exactly as the thief is blind to capture, and both halves are now fixed and tested in 03-14; and terminal rewards are the PARAMETERS.md Table 17 FIXED 20/5/5/10 already in GameParams, so the thief's capture penalty is the relative +5-vs-+10 gap and the post-mortem's illustrative -1.0 appears in no plan (rule 1 stays clean). (D) 03-13 additionally claims qtable.py to make "write no migration" safe rather than lucky: _validate_top_level checks that `version` exists but never what it equals, and a run-1 key parses cleanly under the new format, so a stale table would load silently against a wrong time field. (E) PROCESS NOTE for future sessions: the gsd-planner subagents cost 130-165k tokens each, three stalled mid-stream on the known Windows stdio hang (one recovered via SendMessage with its context intact -- much cheaper than a cold restart), and one died on the monthly spend limit. Plans 03-17..03-25 were written INLINE by the orchestrator instead, at a small fraction of the cost and with no loss of validation. Prefer inline authoring once the outline exists. PRIOR SESSION 2026-08-02 (EVENING) -- Post-mortem + literature review, no production code changed. (1) DIAGNOSIS, all measured, written to docs/phases/phase-3/RUN-1-POSTMORTEM.md (250 lines): an independent re-implementation of the eval arms reproduces the official GATE-4 numbers EXACTLY (cop 5/20=0.250, thief 16/20=0.800), so every split below is arithmetically forced. COP -- not undertrained: final-decile training win rate 0.854, last 10 curve rows 0.900, peak 0.9435. It failed because all 300,000 episodes started from the identical state (engine.make_state; its key 0,0|3,3|9|0|0 has exactly 150,000 visits) while the 20 eval scenarios use 17 distinct start pairs; only 5/20 eval start states cleared min_visits; split is 3/5=0.600 on trained starts vs 2/15=0.133 on unseen. THIEF -- reward is degenerate: harness.py::_turn only calls _update_learner when the moving role IS the learner, and capture is produced on the COP's turn, so the thief NEVER receives a capture update. Proven by instrumentation (300/300 captured episodes -> exactly one update worth -0.01). Plus gamma=0.95 over a 35-turn horizon leaves a usable value range of 0.047 vs the cop's 0.626 (13x weaker); among thief keys past the min_visits gate the median best-vs-second Q margin is 0.00033 and 17.6% are exact ties. Also found: no terminal-state marking anywhere (terminal keys collide with live keys); sparring_mix renormalised to 0.375/0.625 because reference_impl_path is empty; the barrier LAYOUT is invisible to the policy (key carries 4 local bits + a count) so the cop's ceiling is bounded by the hand-written choose_barrier. (2) ABLATION -- 4 arms x 10,000 episodes ran to completion and is INCONCLUSIVE; recorded as such, not spun. Every pairwise comparison insignificant (Fisher exact: cop A-vs-C p=0.407, thief A-vs-D p=0.451). n=20 is the real sample size (deterministic replays) and the budget was 3.3% of run 1's. (3) LITERATURE REVIEW -- three agents, 2,577 lines / 147 sourced links in docs/research/{ALG-COMPARISON,PURSUIT-AND-EVASION-STRATEGY,TRAINING-METHODOLOGY}.md. Key results: the cop number of an m x n grid is 2 (Neufeld & Nowakowski, Discrete Math 186:253-268, 1998; capture time Mehrabian, Discrete Math 311:102-105, 2011 -- NOTE an earlier attribution in this session to arXiv:1708.08255 was WRONG and is corrected here), so one cop can never catch a perfect evader by chasing; barriers are its only substitute for the missing second cop. UNIFYING RESULT: barriers keep the board triangle-free, so cop-win <=> the thief's free component is a FOREST -- cop destroys cycles, thief preserves one, and DISTANCE IS THE WRONG QUANTITY FOR BOTH SIDES (which is what both current brains optimise). Decycling number of the 7x7 grid is 13 vs quota 14, but 13 placements + ~32 chase rounds = 45 > the 35-turn limit, so the cop must decycle only the thief's COMPONENT. Our barrier rule (max BFS distance to a fixed corner anchor) has no literature support at all; sourced replacement is edge/existing-barrier-adjacent placement (Guibas et al. 1999) preferring degree-4 cells. Our self-play failure has a name: coevolutionary disengagement (Cartlidge & Bullock, Evolutionary Computation 12(2):193-222, 2004, VERIFIED independently); remedy "reduce virulence" raises quality on BOTH sides. gamma must differ by role (cop 0.99, thief 1.0). turn_bucket(3) is a modelling error per two independent citations (Puterman 1994 ch.4; Pardo et al. ICML 2018). Alpha-beta not MCTS (Ramanujan et al. ICAPS 2010 -- MCTS misses shallow traps; barrier sealing is one). (4) MEASURED FREE WIN: a thief that never steps into N[cop] scores 296/300=0.987 over random starts vs the current BFS thief's 283/300=0.943, no training required -- BUT the "provably unbeatable" claim did NOT fully reproduce (lost 3/20 with new barriers disabled, and that control was itself flawed since the scenarios carry pre-placed barriers). (5) VERIFICATION OF AGENT OUTPUT: the algorithms researcher's headline benchmark (11-12 plies in 50ms) did NOT reproduce against the real engine -- measured depth 8 with Manhattan, depth 5 with a useful eval, and cop/thief identical once barrier branching is excluded. Both correction passes were cut off by API session limits and are unfinished; treat those two reports' depth figures and the Bansal delta-uniform numbers as UNVERIFIED. PRIOR SESSION (same day, morning): Task 4 (the blocking human-action checkpoint) RAN. The operator's 300,000-episode training run (150k cop / 150k thief, seed 1337, config hash 5fa4d554..) completed uninterrupted; tables landed in %LOCALAPPDATA%\pursuit\training\ (police 39,483 keys / 3,525,039 visits; thief 29,703 keys / 1,355,252 visits). GATE-4 was measured with `training/evaluate.py --full --assert-gate` (exit 1) and FAILED for both roles on the 20 held-out scenarios: cop learner 0.250 vs measured baseline 0.100 (margin +0.150 clears win_rate_margin but misses the 0.55 min_win_rate_absolute floor); thief learner 0.800 vs baseline 0.900 (margin -0.100 -- the learned thief is WORSE than the heuristic it replaces). E6 convergence failed for both: cop decile_gain +0.848 but final_slope +0.094 (still climbing when epsilon hit its floor -- run stopped early, not converged); thief decile_gain -0.068 (final decile worse than first; curve peaks ~0.13 near episode 100k then declines to ~0, mean reward +0.283 -> -0.040). Two findings recorded rather than worked around: (a) the thief's fallback_rate collapsed 0.76 -> 0.009, i.e. once visit counts crossed min_visits=20 it abandoned the BFS fallback for Q-values that never became better than it, compounded by sparring_mix past_self=0.50 feeding it an ever-stronger cop and an almost all-loss signal (hypothesis, consistent with the curves, not isolated experimentally); (b) training/evaluate.py PSEUDO-REPLICATES -- all 10 repeats per scenario replay identically because both brains are deterministic at epsilon_eval=0.0 (verified: 0 of 20 scenarios varied across repeats), so eval_games=200 has effective n=20 and the CLI's reported mcnemar_p~0.0000 / z=3.95 are inflated; honest recomputation at n=20 gives cop p=0.250 and thief p=0.500, NEITHER significant at alpha=0.05. Per 03-10-PLAN Task 4 no bar was lowered, no table was promoted into artifacts/ (so test_beats_baseline_smoke_subset still skips -- now for want of a BLESSED table rather than any table), and no unmeasured number was written: the README rule-42 section now embeds the three real figures (winrate_cop/winrate_thief/mean_reward.png) plus curves.csv and carries the failing numbers including the corrected n=20 statistics. Three follow-up rows added to docs/phases/phase-3/TODO.md (T4-followup-1 retrain the cop to convergence, T4-followup-2 diagnose the thief regression -- both config-only; T4-followup-3 fix the eval pseudo-replication, a correctness fix that makes the gate stricter). 03-10-SUMMARY.md written. Gates green: ruff 0, line-limit clean, 427 passed / 2 skipped, coverage 96.43%. PRIOR SESSION (2026-08-01) executed Tasks 1-3: Task 1 added tests/integration/{test_shortest_path,test_policy_fallback,test_strategy_pluggable}.py (GATE-1/2/3) plus scripts/check_no_llm_in_strategy.{py,sh} promoting 03-02's structural import check into a standalone CI-runnable gate (manually verified to exit 1 when a forbidden import is temporarily introduced, then reverted); a shared strategy_params() helper was added to tests/integration/conftest.py (QUAL-02). Task 2 added training/evaluate.py (three arms: heuristic-vs-heuristic baseline, Q-cop vs heuristic-thief, Q-thief vs heuristic-cop; --smoke/--full/--assert-gate modes) plus its supporting training/eval_{scenarios,arms,stats,report}.py modules (McNemar exact test + two-proportion z, pure stdlib) and artifacts/eval_scenarios.json (20 hand-authored scenarios across normal/corner-edge/barrier-pocket/near-capture/turn-limit-stall groups, seeds = training_seed + eval_seed_offset + index, held-out disjointness asserted in code via assert_seeds_held_out); tests/integration/test_beats_baseline.py correctly SKIPS with a stated reason (no trained table exists yet) rather than passing vacuously. Task 3 produced the STRAT-01..07 + QUAL/DOC coverage audit in docs/phases/phase-3/TODO.md (every requirement mapped to a named passing test; STRAT-06's "a trained Q-table ships" clause recorded as an explicit open gap, not hidden), reconciled the phase-gate checklist (GATE-1/2/3 ticked, GATE-4 and the rule-42 CSV/PNG line explicitly left unticked "blocked on Task 4"), and added the 3 Windows operator-step rows from 03-RESEARCH.md Sec3 as new unticked rows; 03-99 deliberately untouched. Full repo gates green: ruff 0, line-limit clean, 425 passed / 2 skipped (GATE-4 smoke test waiting on Task 4's table; the pre-existing reference-clone test from 03-08), coverage 96.45% overall. Graphify graph rebuilt (3190 nodes/5849 edges/201 communities) and GRAPH_REPORT.md refreshed.
+stopped_at: PHASE 5 PLAN 03 EXECUTED (2d3cbcd, 2026-08-09) -- scripts/gate5_tunnel_smoke.py (the scriptable half of GATE-5, driving the real TunnelManager/SharedSecretMiddleware through a public ngrok URL) + GATE-5-MEASUREMENT.md (both Sec10.4 criteria PENDING, honestly, with exact rerun/remote-round procedures) + LOCALTONET-FALLBACK.md (D-57, zero code) + graph refresh. 1116 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy all clean. Phase 5's three plans are all CODE+TEST COMPLETE; the phase itself is NOT verified -- GATE-5 needs a human to run the smoke script (env vars absent on this machine) AND the genuine remote round (needs a second machine). NEXT -- plan Phase 6 (Security and Cryptography), or run the two pending Phase-5/Phase-4 human gate items first. Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it. /gsd:verify-work 5 stays blocked the same way until GATE-5's two PENDING items close.
+last_updated: "2026-08-09T05:45:00.000Z"
+last_activity: 2026-08-09 -- Phase 05 plan 03 executed (05-03: scripts/gate5_tunnel_smoke.py -- one command, env-gated on NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, starts one real PeerRuntime + the real TunnelManager (05-01) + SharedSecretMiddleware (05-02, zero parallel reimplementation of either), brings the tunnel up, makes an authorized round trip through the PUBLIC url (secret header, expects the five D-05 tool names) and an unauthorized one (no header, expects 403 THROUGH THE TUNNEL not just loopback), tears both down, writes JSON evidence into docs/phases/phase-5/. scripts/gate5_smoke_checks.py (new) -- missing_env_vars/check_public_url/build_evidence/write_evidence, the offline-testable core the must_haves demanded, split at the gate4_* helper-module precedent; preflight() (inside gate5_tunnel_smoke.py) raises SystemExit naming every missing env var before touching pyngrok/PeerRuntime/network at all. 11 new offline tests (test_gate5_smoke_checks.py, test_gate5_tunnel_smoke_preflight.py) import scripts/ via the same sys.path-bootstrap idiom measure_gate4.py already established -- the first time this project writes offline tests importing FROM scripts/. docs/phases/phase-5/GATE-5-MEASUREMENT.md quotes both Sec10.4 criteria verbatim and marks BOTH PENDING (not one mocked/one live like GATE-4 -- nothing in Phase 5 can run without a real ngrok account this machine lacks, so no numbers were fabricated for criterion 1 either): criterion 1 states field-by-field what a PASS verdict in the evidence JSON must show plus the exact rerun command; criterion 2 (CLOUD-02, the genuine remote round) carries the full seven-step human procedure (start agent, read the exchange block, deliver URL+secret out-of-band, remote PURSUIT_OPPONENT_URL paste via the Phase-2 seam, play one full round, retain both event logs + verdicts, note the machine/network pair) plus an explicit paragraph on why this criterion cannot be scripted from this repo alone. docs/phases/phase-5/LOCALTONET-FALLBACK.md -- the D-57 rule-10 fallback runbook (install, --authtoken, dashboard port mapping to 127.0.0.1:<agent's local port>, --install-service/--start-service, the 30-minute free-tier timeout stated as the reason ngrok is primary, league-day re-establish-per-window note including the URL changing on every restart); states explicitly no Localtonet code path exists anywhere and why that satisfies rule 10 without doubling the engineering surface. Knowledge graph refreshed (graphify update .: 5806 nodes/10476 edges/367 communities; graph.html skipped, over the 5000-node HTML viz limit same as 04-12's own pass); TunnelManager and SharedSecretMiddleware both confirmed present in the committed GRAPH_REPORT.md. Full suite 1116 passed (+11 vs the 1105 baseline), 95.70% coverage unchanged (scripts/ is outside [tool.coverage.run] source = ["src", "training"], matching the gate4_* precedent), ruff/line-limit/no-llm-in-strategy all clean. NOTHING TICKED anywhere -- ROADMAP.md Phase 5 row updated by hand to 3/3 plans, status left "In Progress (GATE-5 both criteria PENDING)" rather than "Complete" (gsd-tools roadmap update-plan-progress again reported updated:true but wrote no diff -- same documented no-op; verified via git status before/after))
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 30
-  completed_plans: 30
-  percent: 37
+  total_plans: 56
+  completed_plans: 39
+  percent: 33
 ---
 
 # Project State
@@ -21,12 +21,249 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 03 — blind-strategy-module-rl-policy (Phases 01-02 code complete; run 1's 03-00..03-10 stand as the record of why GATE-4 failed; run 2 is fully planned as 15 plans 03-11..03-25 and wave 1 is now executing — 03-11, 03-12, 03-13 done)
+**Current focus:** Phase 05 — cloud-exposure-and-tunneling
 
 ## Current Position
 
-Phase: 04 (language-and-scent) — NOT STARTED. Phase 03 is complete and merged (6ca38fa).
-Plan: 03-00..03-10 (run 1) landed a full offline Q-learning pipeline that trained to
+Phase: 05 (cloud-exposure-and-tunneling) — EXECUTED, NOT VERIFIED (all 3
+  plans code+test complete: 05-01, 05-02, 05-03. See
+  .planning/phases/05-cloud-exposure-and-tunneling/05-03-SUMMARY.md.
+  GATE-5 (book Sec10.4 milestone 5) has TWO human-pending items before
+  /gsd:verify-work 5 can run: (1) the smoke run
+  (`uv run python scripts/gate5_tunnel_smoke.py`, needs NGROK_AUTHTOKEN/
+  PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, absent on this machine) and
+  (2) the genuine remote round (CLOUD-02, needs a second machine on a
+  different network -- full procedure in
+  docs/phases/phase-5/GATE-5-MEASUREMENT.md). NEXT: either run those two
+  human items, or begin planning Phase 6 (Security and Cryptography) --
+  Phase 6 depends on Phase 5's shipped CODE, not on GATE-5's own
+  measurement being closed.)
+Plan: 3 of 3 (05-01, 05-02, 05-03 all done; phase gate measurement PENDING)
+
+05-03 delivered: scripts/gate5_tunnel_smoke.py (env-gated smoke script
+  driving the REAL TunnelManager/SharedSecretMiddleware through a public
+  ngrok URL, JSON evidence writer) + scripts/gate5_smoke_checks.py (the
+  offline-testable core) + docs/phases/phase-5/GATE-5-MEASUREMENT.md (both
+  Sec10.4 criteria PENDING, honestly, with exact procedures) +
+  docs/phases/phase-5/LOCALTONET-FALLBACK.md (D-57, zero code) + graph
+  refresh (05-96). See frontmatter last_activity for the full account.
+  Full suite 1116 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy
+  all clean. Nothing ticked anywhere.
+
+05-02 delivered: src/pursuit/network/secret_guard.py
+  (SharedSecretMiddleware -- pure ASGI callable, secrets.compare_digest,
+  403 before any FastMCP session/tool dispatch, rejection logged by fact
+  only never the value; build_middleware()/client_headers() factories);
+  PeerRuntime gains shared_secret=(header_name, value) -- _run_http() wires
+  middleware=build_middleware(...) into the SAME run_async() call that
+  already passes sockets= (D-57 comment on host_origin_protection staying
+  off sits there), client() ALWAYS builds an explicit
+  StreamableHttpTransport (never a bare URL string) carrying
+  ngrok-skip-browser-warning unconditionally plus the secret header when
+  configured; src/pursuit/network/secret_wiring.py (new) --
+  resolve_shared_secret(config_dir), the factory-function seam
+  agent_lifecycle.default_context calls (landed in a new module, not
+  agent_wiring.py -- Rule 3 deviation, agent_wiring.py had no room at
+  135/150 lines); tests/integration/test_secret_channel.py proves all
+  three cases over REAL loopback sockets (correct secret succeeds, missing
+  header gets a plain-text 403 proving it never reached MCP routing, wrong
+  secret fails on two independent attempts). .env-example gains
+  NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET.
+  Full suite 1105 passed (+18), 95.70% coverage (+0.06pp),
+  ruff/line-limit/no-llm-in-strategy all clean.
+
+05-01 delivered: pyngrok>=8.1.2 (D-54, uv add, never ngrok-python --
+  requires-python >=3.12 vs this project's 3.11.9);
+  config/{police,thief}/tunnel.json (byte-identical, five string fields --
+  provider/secret_header/authtoken_env/domain_env/secret_env -- zero
+  numeric leaf, D-55) + src/pursuit/shared/tunnel_config.py
+  (TunnelKey/TunnelParams/load_tunnel_config/require_env, the Phase-4
+  *Key-beside-loader convention); src/pursuit/network/tunnel_manager.py
+  (TunnelManager -- start/healthy/ensure_connected/stop, every pyngrok
+  call (connect/disconnect/kill/get_process) plus sleep/clock injected,
+  real pyngrok defaults bound in one place, matching Gatekeeper/Watchdog's
+  DI style; reconnect to the SAME domain bounded by NetworkParams'
+  existing retry_count/backoff_seconds, zero new numbers);
+  src/pursuit/network/tunnel_wiring.py (build_tunnel_manager -- tunnel-off
+  unless the static-domain env var is set, the structural default every
+  existing test/dev flow relies on; exchange_block -- the paste-ready
+  URL+secret-env-NAME block, never a value; run_with_tunnel -- start
+  before/stop after, a start failure aborts before the wrapped body runs
+  at all) + src/pursuit/network/agent_entrypoint.py (run_agent moved out
+  of agent_lifecycle.py wholesale, wrapped in run_with_tunnel, once
+  wrapping it in place would have pushed agent_lifecycle.py -- already AT
+  its 150-code-line ceiling -- over the gate; agent_lifecycle.py resolves
+  run_agent back lazily via PEP 562 __getattr__, the same
+  one-directional-dependency fix orchestrator.py/turn_actions.py already
+  proved). Existing lifecycle tests (test_agent_lifecycle.py,
+  test_agent_lifecycle_resilience.py) pass byte-unmodified. Full suite
+  1087 passed (+36 vs the 1051 baseline), 95.64% coverage (+0.43pp),
+  ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md's Phase 5 row
+  updated programmatically (gsd-tools roadmap update-plan-progress: 1/3
+  plans, In Progress).
+
+<!-- The narrative below this line is Phase 4 history, retained deliberately. -->
+
+04-14 delivered: scripts/measure_gate4.py + 7 helper modules (gate4_games,
+  gate4_beliefspy, gate4_scent, gate4_mockprovider, gate4_fixtures,
+  gate4_report, gate4_runner) -- a seeded two-peer GATE-4 runner reusing
+  04-12's tests/integration/two_peer_game.play_two_peer_game (RESUME.md
+  carry-over W) rather than hand-rolling a second harness. --mocked (the
+  default, no key, reproducible: two runs with GATE4_SEEDS = (30260801,
+  30260802, 30260803) produce byte-identical criterion numbers, verified
+  by diff) feeds tests/fixtures/hints_{en,he}.json's own recorded
+  responses through a provider that never touches a network; --live
+  refuses to attempt ANYTHING when ANTHROPIC_API_KEY is absent, verified
+  by actually invoking it and confirming zero network calls plus a clean
+  PENDING JSON. Criterion 1 (hint -> inference) is measured by spying
+  BeliefAdapter.decide -- the real, UNMODIFIED method -- reading
+  self.belief.posterior() before/after each call (22/136 turns carried
+  evidence, mean L1 posterior shift 1.171 on exactly those turns).
+  Criterion 2 (scent decay, locked) drives the shipped ScentField/scent.py
+  with the loaded scent.json directly (max deviation 1.11e-16 from the
+  closed form over 12 turns) since 04-12 never logs a per-turn scent
+  snapshot to the JSONL, plus a real scent_digest() comparison (both
+  peers hash to c0e6322..., matching 04-01/RESUME.md's own wave-1 record).
+  Criterion 3 (hint every turn) reads the police-side JSONL directly:
+  68/68 turns carried a hint, max 11 words (limit 15), both intents
+  occurred (55 lie / 13 truth), zero outgoing coordinate leaks across
+  hint text AND move payloads, intent-before-text proven STRUCTURALLY
+  (compose_outgoing requires plan.intent as a positional argument, so no
+  call can exist without it) rather than by a log timestamp the JSONL
+  does not carry. docs/phases/phase-4/GATE-4-MEASUREMENT.md quotes all
+  three ROADMAP.md criteria verbatim with these numbers and PASS
+  verdicts, reports decode-fixture accuracy 1.0/1.0 EN/HE (explicitly
+  labelled a re-validation-logic check, not a live-model proof), and
+  reports the belief-on/off comparison HONESTLY: measured 1.0 vs 0.0 cop
+  win rate does NOT match Outline Sec1's "no gain" prediction, and the
+  doc explains why rather than smoothing it over -- belief.enabled=false's
+  own fallback path (turn_language.py, pre-dating D-48/D-43) hands the
+  raw brain the omniscient TRUE opponent cell, not a blind one, so the
+  comparison is confounded and the honesty clause's actual claim was not
+  cleanly tested. tests/integration/test_gate4.py freezes the structural
+  absolutes (handshake digest match, hint every turn + zero coordinates,
+  intent-before-text via a live call-order spy) as 3 mocked, no-key,
+  no-network tests; empirically verified via a throwaway (discarded)
+  probe that silencing one side's hint channel trips the exact assertion
+  this suite makes. NOTHING TICKED anywhere. Full suite 1051 passed
+  (1048 + 3), 95.21% coverage, ruff/line-limit/no-llm-in-strategy all
+  clean.
+
+04-13 delivered: docs/phases/phase-4/RULES-RESOLUTION-LANG.md (both sides of
+  the Sec5.3.2 per-turn-Reveal vs Sec6.4 blindness contradiction, quoted with
+  book+PDF pages VERIFIED DIRECTLY against police_thief_p2p.pdf this session
+  -- pages 5/50-53/62-64 read via the Read tool, not re-copied from a prior
+  extract unchecked; D-48's four reasons, D-49's rule-23 argument, an 18-row
+  BOOK/NEGOTIATED/DERIVED table); docs/PRD_{scent_map,belief_map,deception}.md
+  (three per-mechanism PRDs, every number traced to a plan SUMMARY -- the
+  shipped scent digest verbatim, the reliability trajectory and Sec4.4
+  0.9->0.81 reproduction, both role lie-rate curves, the D-39 style guide
+  verbatim; PRD_belief_map.md states the Regime-A honesty clause in plain
+  words and records D-51 as a DISCLOSED REVISION of D-40, not an extension);
+  docs/phases/phase-4/{PRD,PLAN,TODO}.md (the phase triplet, PLAN.md
+  references 04-PLAN-OUTLINE.md Sec2 for D-32..D-53 rather than copying it,
+  TODO.md states its row-ID = plan-ID namespace convention explicitly);
+  docs/STRATEGY.md's three TBD - Phase 4 rows filled (TBD - Phase 3 rows
+  untouched); .planning/ROADMAP.md's Phase 4 plan list replaced with the
+  real fourteen (was four stale placeholder rows), plans-complete corrected
+  6/14 -> 13/14; knowledge graph refreshed (5320 nodes/9778 edges/333
+  communities) with a PROGRAMMATIC layering check against graph.json's raw
+  edges (not the rendered report): zero edges services/llm<->strategy in
+  either direction, corroborating scripts/check_no_llm_in_strategy.py
+  independently. Zero source/config/test files touched (docs-only plan);
+  full suite re-confirmed byte-identical: 1048 passed, 95.21% coverage,
+  ruff/line-limit/no-llm-in-strategy all clean. NOTHING TICKED anywhere --
+  every ROADMAP checkbox and every phase-4 TODO status stayed unticked
+  (half-circle for executed-not-verified work, empty box for 04-14/04-99);
+  /gsd:verify-work 4 ticks, after 04-14 measures GATE-4.
+
+04-12 delivered: the real Figure-7 pipeline (book Sec6.2) wired live into
+  network/turn_actions.py's take_my_turn/await_opponent_turn -- decode the
+  opponent's last-revealed hint -> choose the move (BeliefAdapter.decide()
+  when belief.enabled, else the raw brain, else first_legal_move) ->
+  buffer + resolve -> send the direction-token move -> plan the claim
+  AFTER the move (so it can reference what was actually committed to) ->
+  compose -> send the hint; 04-04's PLACEHOLDER_HINT_TEXT is gone (grep
+  confirms). agent_lifecycle.default_context now builds a REAL registry
+  brain (BeliefAdapter-wrapped when enabled), one ScentField per role, and
+  one LanguageRuntime (gatekeeper + provider + HintBank + deception RNG)
+  per process/game -- the first plan in the project that wires Phase 3's
+  strategy and Phase 4's language layer into the actual live two-process
+  turn loop (every prior phase only exercised them via direct engine
+  calls or single-sided injected tests). D-48's regime decision
+  (known_opponent_cell) lives in one place, logged per turn via new
+  turn_events.language_turn_record (regime, belief entropy/argmax,
+  reliability, token spend, incoming/outgoing hint). The live handshake
+  now sends a real local_scent_digest (closes 04-02's carry-over 1).
+  [Rule 1 - Bug] A real two-peer CONCURRENT game (tests/integration/
+  two_peer_game.py, never run before this plan) found 04-04's own
+  "late hint"/"duplicate hint" HintProtocolError checks turning ordinary
+  network/processing jitter into a spurious TECHNICAL_LOSS -- fixed: a
+  late hint drops silently, a duplicate overwrites, only await_move's
+  separate two-hints-no-move liveness cap still raises. Four full
+  two-peer degradation games (no key, all calls failing, budget
+  exhausted, silent peer) all finish correctly scored; measured per-turn
+  wall time 37ms/turn language-ON vs 18ms/turn OFF against a 60s
+  watchdog_threshold. Full gates green: 1048 passed, 95.21% coverage,
+  ruff/line-limit/no-llm-in-strategy all clean. Knowledge graph refreshed
+  (5221 nodes / 9687 edges / 336 communities; graph.html skipped this
+  pass, over graphify's 5000-node HTML limit).
+
+04-11 delivered: strategy/beliefadapter.py (BeliefAdapter -- Figure 7's
+  per-turn order: observe -> predict -> update(scent) -> update(hint) ->
+  sample -> decide; Option A believed-state substitution via
+  dataclasses.replace; D-43 samples the target cell, never argmax),
+  shared/belief_toggle_config.py (BeliefToggleParams: enabled/seed, a null
+  seed derives + logs a fallback rather than being non-deterministic),
+  registry.build_brain(..., belief_config=, scent_model=) wiring the
+  adapter in behind belief.enabled with zero impact on existing
+  3-positional callers. Regime A identity proven exactly (boxed-in
+  fixture, holds for any RNG draw); Regime B proven to differ from truth
+  only in the opponent's coordinate. target_cell is no longer vestigial:
+  same true state + different belief -> different Decision. Per-turn
+  decision time measured with belief enabled: cop max 4.99ms, thief max
+  ~3.7-4.99ms, against a 50ms budget. valuebrain.py/matrix.py/features.py/
+  equilibrium.py untouched (git diff --stat empty on all four). Full gates
+  green: 1020 passed, 94.94% coverage, ruff/line-limit/no-llm-in-strategy
+  all clean. Issue found (not a regression): tests/integration/
+  test_beats_baseline.py, named in the plan's own verification block,
+  does not exist -- deleted in Phase 3's run-2 rebuild (commit f3d9847),
+  before this session. test_strategy_pluggable.py confirmed present,
+  passing, and byte-unmodified.
+
+04-10 delivered: services/llm/wordcount.py (count()/truncate(), one
+  whitespace-splitting rule), services/llm/hintbank.py +
+  hintbank_templates.py (HintBank, a seeded per-game template bank keyed
+  by ClaimKind/Intent, import-time validated against the REAL shipped
+  language.json word limit), services/llm/bluff.py + bluff_prompt.py
+  (BluffContext + compose(), the total 5-step hint composer: one call,
+  one retry on overflow, truncate, assert_no_coordinates, bank fallback
+  on every failure path; D-39's style guide never reveals `intent` to the
+  model, D-36). Deviation: the word limit's config home is language.json's
+  model group (not deception.json as the plan's files_modified listed) --
+  reasoning in 04-10-SUMMARY.md, RESUME.md carry-over A closed / J opened.
+  assert_no_coordinates moved network/hint_payload.py -> new
+  shared/hint_guard.py (re-exported), matching 04-08's Intent precedent.
+  Full gates green: 1001 passed, 94.81% coverage, ruff/line-limit/
+  no-llm-in-strategy all clean. Knowledge graph refreshed this session
+  (4917 nodes / 8593 edges / 311 communities).
+
+04-09 delivered: strategy/scent_check.py (contradicts(), the Sec4.4 lie
+  detector reproducing the book's 0.9 -> 0.81 worked example exactly),
+  strategy/reliability.py (Reliability, a bounded [r_min, r_max] adaptive
+  coefficient, D-51 — a disclosed revision of D-40's "fixed" framing),
+  strategy/belief_hint.py (hint_likelihood(), the D-40 Bayes mix weighted
+  well below scent and never zeroing a cell), plus two new belief.json
+  config groups (reliability, hint_likelihood). End-to-end Sec4.4
+  reproduction measured and committed: a fully-lying opponent's reliability
+  collapses 0.5 -> 0.2 -> 0.05 (r_min) within two turns; a fully-truthful
+  one holds at 0.5 for all ten; both regimes' fused-posterior argmax
+  tracks the real scent trail, not the claim. Full gates green: 903
+  passed, 94.55% coverage, ruff/line-limit/no-llm-in-strategy all clean.
+
+<!-- The narrative below this line is Phase 3 history, retained deliberately: it
+     records why the run-2 architecture exists. It is NOT the current position. -->
+
   completion but FAILED GATE-4 for both roles on real, measured evidence (see
   docs/phases/phase-3/RUN-1-POSTMORTEM.md) — no bar was lowered, no table was promoted.
   That diagnosis plus a 3-agent literature review produced D-09-superseded (distance is
@@ -50,7 +287,7 @@ Plan: 03-00..03-10 (run 1) landed a full offline Q-learning pipeline that traine
   files (15 added, 1 removed); `QTable.SCHEMA_VERSION` bumped 1->2 so a run-1-format
   table fails loud instead of loading wrong, 3 commits (da27684/050d95d/dd7384e).
   Next: 03-14 (terminal signal, R2+R4) finishes wave 1.
-Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 still
+Status: Executing Phase 04
   pending). Phase 3 run 2 wave 1 is underway: 3 of 15 run-2 plans done. Waves 1-6 are
   autonomous; wave 7 (03-25) is a human-operator checkpoint (the overnight training run
   and the real GATE-4 remeasurement) — do not run verify-work 3 until it passes. Three
@@ -58,7 +295,7 @@ Status: Phase 1 of 8 done, Phase 2's code plans all executed (verify-work 2 stil
   exit 0 before any training job starts; the 0.55 GATE-4 bar is NOT lowered (D-28); and
   03-21 stops and asks rather than inventing a number if its two target checks conflict.
   5 phases remain after Phase 3 closes.
-Last activity: 2026-08-04 -- Executed 03-13-PLAN.md (turns_remaining + the whole run-2
+Last activity: 2026-08-08 -- Phase 04 execution started
   config surface). Full account is in the frontmatter `last_activity` field above;
   condensed here: 3 tasks (encode_state's turns_remaining field, the full run-2
   StrategyKey/TrainingKey + strategy_schema.py + both config files, qtable
@@ -126,6 +363,12 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P10 | ~40min (Tasks 1-3 only; Task 4 pending operator) | 3 of 4 tasks | ~20 files |
 | Phase 03 P11 (run-2 wave 1) | ~25min | 3 tasks + 1 coverage-gap fix | 8 files |
 | Phase 03 P13 | 45min | 3 tasks | 12 files |
+| Phase 04 P11 | ~65min | 3 tasks | 13 files |
+| Phase 04 P12 | ~110min | 4 tasks | 25 files |
+| Phase 04 P13 | ~35min | 4 tasks | 10 files |
+| Phase 05-cloud-exposure-and-tunneling P01 | ~50min | 3 tasks | 11 files |
+| Phase 05-cloud-exposure-and-tunneling P02 | ~30min | 3 tasks | 11 files |
+| Phase 05-cloud-exposure-and-tunneling P03 | ~35min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -229,12 +472,14 @@ Recent decisions affecting current work:
   `voronoi_split` advances both source frontiers one BFS layer per round inside a
   single loop rather than running two independently-timed BFS passes and comparing
   distances afterward, so "reached on the same round" is the literal definition of a tie
+
 - [Phase 03-11]: STATE.md's own YAML frontmatter does not parse (`yaml.safe_load`
   raises `ScannerError`, confirmed pre-existing on `HEAD` before this session touched
   the file) -- long unquoted plain scalars containing natural-language colons break
   YAML's plain-scalar grammar. ~85 occurrences repo-wide; full fix is out of scope for
   a single plan (would mean reformatting the whole historical narrative). Logged in
   Deferred Items, not fixed, per the deviation rules' scope boundary
+
 - [Phase 03-12]: No new decisions beyond what D-31 and the plan already specified. Two
   implementation notes worth recording: (1) the two-arm regression test differs ONLY by
   monkeypatching `fallback.safe_moves` (real spy vs a no-op) inside `monkeypatch.context()`
@@ -244,6 +489,7 @@ Recent decisions affecting current work:
   cProfile-traced to 03-07's pre-existing `choose_barrier`, not this plan's code) --
   recorded honestly in the test module's docstring rather than shrinking `n=60` or
   disabling barrier placement to hit the stale target
+
 - [Phase 03-13]: Every seeded value is labelled by provenance in 03-13-SUMMARY.md
   (measured / sourced / engineering default), none claimed as a PARAMETERS.md value:
   `search_depth_cap=5` is D-26's own measured real-engine figure; `min_distinct_starts`,
@@ -256,11 +502,157 @@ Recent decisions affecting current work:
   by name -- left untouched deliberately (03-22's and 03-14's files respectively, per
   outline SS7 file-ownership), flagged for the owning plan to correct in passing
 
+- [Phase 04-09]: D-51 implemented as a literal DISCLOSED REVISION of D-40, not an
+  extension: `belief.json`'s `hint_likelihood.weight` (fixed, validated below
+  `scent_likelihood.weight` by name) and `reliability.prior` (the adaptive
+  coefficient's starting point) are two INDEPENDENT config fields, not the same
+  number reused twice -- resolves an ambiguous reading in 04-09-PLAN.md's own
+  prose, documented in 04-09-SUMMARY.md's Decisions Made for 04-13 to carry into
+  `PRD_belief_map.md`/`RULES-RESOLUTION-LANG.md`. `strategy/scent_check.py::contradicts()`
+  reproduces the book's Sec4.4 worked example (0.9 -> 0.81) exactly;
+  `strategy/reliability.py::Reliability.observe()` is measured to settle EXACTLY at
+  `r_min`/`prior` under 1000 extreme observations, not just bounded;
+  `strategy/belief_hint.py::hint_likelihood()` returns an all-zero grid at
+  confidence=0 specifically so `BeliefMap.update()`'s own zero-guard buys an EXACT
+  (not approx) no-op for `NO_EVIDENCE`, per the plan's own stricter verify wording
+
+- [Phase 04-11]: Option A (believed-state substitution) shipped over Option B
+  (expectation over the belief's support) per docs/phases/phase-3/PRD.md
+  Sec8's own cost argument, now measured rather than merely asserted:
+  belief-enabled decisions stay under 5ms against the 50ms
+  strategy.max_decision_ms budget. D-43 (sample, not argmax) implemented
+  literally -- BeliefMap.sample(rng) feeds Observation.target_cell and the
+  believed GameState both. Reliability is constructed inside
+  BeliefAdapter.__init__ (not externally by 04-12 as 04-09's carry-over F
+  literally proposed) and exposed as a public attribute so 04-12 can still
+  drive .observe() on the same instance -- constructing BeliefAdapter IS
+  the "handshake time" moment carry-over F meant. decide()'s known_cell:
+  Coord | None keyword is new beyond the plan's literal prose: Regime A/B
+  cannot be read off GameState alone since state always carries the
+  engine's true joint position (needed by resolve_turn regardless of
+  blindness), so the regime has to be told to the adapter, not inferred
+
+- [Phase 04-12]: Hint-sending is now CONDITIONAL on AgentContext.language
+  (None -> move-only, matching pre-04-04 mechanics) rather than 04-04's
+  unconditional placeholder -- every real game (agent_lifecycle.
+  default_context) always wires it, so LANG-01 holds for actual play;
+  bare test fixtures that never opt in are unaffected in behaviour except
+  the hint call itself. [Rule 1 - Bug] record_hint's "late"/"duplicate"
+  hint checks (04-04's own design) both raised HintProtocolError and
+  ended the game as a spurious TECHNICAL_LOSS -- found only by running a
+  TRUE two-peer concurrent game for the first time in this project
+  (tests/integration/two_peer_game.py); fixed to silently drop/overwrite,
+  since the move and the hint are independent, variable-latency
+  round-trips and neither timing pattern is a real protocol violation.
+  D-48's regime decision (known_opponent_cell) is computed ONCE, before
+  record_action/maybe_resolve can mutate the state it reads, and threaded
+  explicitly rather than recomputed. agent_lifecycle.default_context is
+  now the first place in the whole project that constructs a REAL
+  registry brain + ScentField + LanguageRuntime for the LIVE network
+  turn loop (every prior phase/plan only exercised strategy/language code
+  via direct engine calls or single-sided injected tests)
+
+- [Phase 04-13]: Documentation-only plan, zero source/config/test files touched.
+  D-51 recorded, in both PRD_belief_map.md and RULES-RESOLUTION-LANG.md, as a
+  DISCLOSED REVISION of D-40 -- not an extension -- per 04-09's own carry-over
+  instruction. Every book+PDF page pair quoted in RULES-RESOLUTION-LANG.md was
+  verified directly against police_thief_p2p.pdf this session (pages 5, 50-53,
+  62-64), not re-copied from 04-PLAN-OUTLINE.md Sec1 without checking; the
+  preface's PDF page (5, roman-numbered front matter) had never been cited
+  anywhere in this repo before. ROADMAP.md's Phase 4 "Plans:" checkboxes were
+  left unticked for ALL fourteen real plans, including the twelve
+  (04-01..04-12) with real SUMMARY.md files already on disk -- read broadly,
+  this plan's "TICK NOTHING" environment rule applies to every tick mark in
+  every touched file, not narrowly to the sq/half-circle/checkmark TODO.md
+  convention alone. The Plans-Complete NUMERIC count was still corrected to
+  13/14, since a plain number is not a tick. Knowledge-graph layering check
+  (services/llm <-> strategy) run programmatically against graph.json's raw
+  node/edge data, not by reading the rendered GRAPH_REPORT.md: zero violations
+  either direction
+
+- [Phase 04-14]: GATE-4 measured mocked, PASSING on all three Sec10.4
+  criteria; live confirmation PENDING (no ANTHROPIC_API_KEY on this
+  machine). The scent decay law (criterion 2) is verified by driving the
+  shipped ScentField/scent.py directly with the locked config, NOT mined
+  from the network JSONL -- 04-12 never logs a per-turn scent snapshot,
+  only belief entropy/argmax/reliability, so "extracted from the event
+  log" for this one criterion means "the same production objects a real
+  game mutates", not literally a JSONL field. "Intent committed before
+  text" (criterion 3) is likewise a STRUCTURAL proof (compose_outgoing
+  requires the already-decided DeceptionPlan as a positional argument),
+  not a timestamp diff, since the JSONL fuses text+intent into one record
+  once both exist. Both deviations from a literal "read it off the JSONL"
+  reading are documented in GATE-4-MEASUREMENT.md and are stronger
+  guarantees than a log-timestamp comparison would give, not weaker ones.
+  The belief-on/off comparison surfaced a genuine, unplanned finding:
+  network/turn_language.py's belief.enabled=false fallback (pre-dating
+  D-48/D-43) hands the raw brain the TRUE current opponent cell, not a
+  blind one -- so it measures "belief vs omniscience", not "belief vs
+  blindness", and the measured 1.0/0.0 win-rate gap is reported with that
+  caveat rather than read as evidence about the belief layer's value.
+  Anthropic's published Haiku 4.5 rate ($1/$5 per MTok input/output,
+  scripts/gate4_report.py) is cited, not sourced from PARAMETERS.md --
+  flagged for reconfirmation before Phase 7's league spend email.
+
+- [Phase 05-01]: D-54: pyngrok (8.1.2), not ngrok-python -- ngrok-python
+  1.7.0 requires Python >=3.12, this project runs 3.11.9. D-55: zero new
+  numeric parameters -- tunnel.json is five strings only; reconnect
+  retry_count/backoff_seconds and the liveness cadence are reused straight
+  from NetworkParams (Table 19 + the D-18 precedent), never redeclared.
+  Tunnel-on/off is decided by the static-domain env var's PRESENCE, not a
+  tunnel.json boolean -- keeps D-55's "strings only" contract literal and
+  makes tunnel-off the structural default for every existing test. run_agent
+  moved out of agent_lifecycle.py entirely into a new agent_entrypoint.py
+  (re-exported via a PEP 562 __getattr__, the same one-directional-
+  dependency fix orchestrator.py/turn_actions.py already use) once
+  agent_lifecycle.py -- already at exactly 150 code lines -- had no room
+  left to absorb the tunnel wrapping in place.
+
+- [Phase 05-02]: D-56 implemented exactly as 05-PLAN-OUTLINE.md/
+  05-RESEARCH.md specified: SharedSecretMiddleware as a pure ASGI callable
+  wired via run_async(middleware=[...]) -- the SAME call that already
+  passes sockets= -- never a check inside an @mcp.tool handler; client()
+  always builds an explicit StreamableHttpTransport (a bare Client(url)
+  string infers headers={}, verified by direct probe against the installed
+  fastmcp 3.4.5 source); secrets.compare_digest for the comparison, the
+  same idiom config_hash.digests_match already established. D-57: verified
+  by reading fastmcp.settings.http_host_origin_protection directly --
+  already False/off by default, so no code change was needed, only the
+  comment at the run_async call site. Two Rule-3 (blocking) file-location
+  deviations from the plan's literal file list, both forced by the
+  150-code-line gate: resolve_shared_secret landed in a new
+  secret_wiring.py (not agent_wiring.py, which was already at 135/150) and
+  build_middleware()/client_headers() landed in secret_guard.py (not
+  inlined in peer_runtime.py, which had no room left). .gitignore's broad
+  *_secret*/*-secret* rule-4 guard silently dropped every D-56 test file
+  by NAME (test_secret_guard.py, test_secret_wiring.py,
+  test_peer_runtime_secret.py, test_secret_channel.py) -- fixed with four
+  explicit negations, same precedent as the existing !.env-example line;
+  none of the four holds a real secret value.
+
+- [Phase 05-03]: GATE-5-MEASUREMENT.md records BOTH Sec10.4 criteria
+  PENDING, not one mocked/one live like GATE-4 -- nothing in Phase 5 can
+  execute without a real ngrok account this machine lacks, so criterion 1
+  has no numbers to report either; stated honestly rather than filled with
+  a description of what would happen. D-57 (Localtonet) stays
+  documentation-only: a second TunnelManager-equivalent integration would
+  double the engineering surface for a path whose only job is standing by
+  if ngrok is unusable on league day; LOCALTONET-FALLBACK.md satisfies
+  rule 10 with zero lines of code. The smoke script's env preflight
+  (`preflight()`) is deliberately split into its own synchronous,
+  dependency-free function so a test can assert the refusal message
+  without faking pyngrok/sockets/asyncio at all -- the live network path
+  (`run_smoke()`) stays reviewed-logic-only, per the must_haves' own
+  stated split. First time this project writes offline tests importing
+  FROM scripts/ (gate5_smoke_checks.py, gate5_tunnel_smoke.py's preflight),
+  closing a gap the gate4_* precedent itself left open.
+
 ### Pending Todos
 
 - 03-13..03-16 in `docs/phases/phase-3/TODO.md` (pre-flight assertions, cycle-based eval +
   alpha-beta, barrier rewrite, run-2 config, exact `turns_remaining` -- 03-11/03-12/03-13's
   rows are now code-complete, still unticked pending 03-24's reconciliation pass)
+
 - Two subagent correction passes were cut off by API limits and never finished: re-measure the
   alpha-beta depth table against the real engine, and pin exact page/section for the Bansal
   δ-uniform ablation numbers and the ε-floor figures. Until then those specific numbers in
@@ -272,6 +664,20 @@ Recent decisions affecting current work:
 - ~~Team code (SUB-06)~~ **Decided: `khm-mn17`** (08-CONTEXT.md); per-game config naming still a league prerequisite
 - Reporting (REPORT-01) is submission-critical: a missing/contradictory report zeroes both teams
 - League opponents must be contacted early (this week) — scored games realistically Aug 11–12 post-exam
+- **GATE-4 live confirmation (D-32) is blocked on `ANTHROPIC_API_KEY`** — not set on any machine
+  this phase has run on. Phase 4 cannot be declared fully measured, and `/gsd:verify-work 4` must
+  not run, until a human sets the key and runs `uv run python scripts/measure_gate4.py --live`,
+  then updates `docs/phases/phase-4/GATE-4-MEASUREMENT.md`'s Live status section from that run.
+- **GATE-5 (book Sec10.4 milestone 5) has TWO human-pending items, neither closeable from this
+  machine** — Phase 5's code (05-01/05-02/05-03) is fully executed and tested, but
+  `/gsd:verify-work 5` must not run until both close:
+  1. **The smoke run** — `NGROK_AUTHTOKEN` / `PURSUIT_NGROK_DOMAIN` / `PURSUIT_TUNNEL_SECRET`
+     are unset on every machine this phase has run on; a human with a real ngrok account runs
+     `uv run python scripts/gate5_tunnel_smoke.py` and updates criterion 1 in
+     `docs/phases/phase-5/GATE-5-MEASUREMENT.md` from the resulting evidence JSON.
+  2. **The genuine remote round (CLOUD-02)** — inherently needs a second machine on a different
+     network and a human operator; the full seven-step procedure is already written in
+     `docs/phases/phase-5/GATE-5-MEASUREMENT.md`'s criterion 2 section.
 
 ## Deferred Items
 

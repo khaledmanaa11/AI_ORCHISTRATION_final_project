@@ -5,6 +5,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash scripts/ensure_gsd.sh"
+          },
+          {
+            "type": "command",
             "command": "bash scripts/graph_status.sh"
           }
         ]

@@ -17,7 +17,9 @@ import pytest
 from fastmcp import Client
 
 from pursuit.network.peer_runtime import PeerRuntime
+from pursuit.shared.belief_config import BeliefParams, load_belief_config
 from pursuit.shared.network_config import NetworkParams, load_network_config
+from pursuit.shared.scent_config import ScentModel, load_scent_model
 from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 
 _THIEF_NETWORK_CONFIG = (
@@ -28,6 +30,23 @@ _STRATEGY_CONFIG_PATHS = {
     "cop": _CONFIG_ROOT / "police" / "strategy.json",
     "thief": _CONFIG_ROOT / "thief" / "strategy.json",
 }
+_POLICE_BELIEF_CONFIG = _CONFIG_ROOT / "police" / "belief.json"
+_POLICE_SCENT_CONFIG = _CONFIG_ROOT / "police" / "scent.json"
+
+
+@pytest.fixture
+def belief_cfg() -> BeliefParams:
+    """Real config/police/belief.json (04-11's §10.4-facing gate module).
+    Function-scoped -- `dataclasses.replace(belief_cfg, ...)` in one test
+    must never leak into another."""
+    return load_belief_config(_POLICE_BELIEF_CONFIG)
+
+
+@pytest.fixture(scope="module")
+def scent_model() -> ScentModel:
+    """Real config/police/scent.json, module-scoped like `default_params`:
+    the locked payload is read-only and identical across every test."""
+    return load_scent_model(_POLICE_SCENT_CONFIG)
 
 
 @pytest.fixture

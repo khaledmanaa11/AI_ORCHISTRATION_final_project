@@ -1,0 +1,8 @@
+{
+  "version": "1.00",
+  "provider": "ngrok",
+  "secret_header": "X-Pursuit-Secret",
+  "authtoken_env": "NGROK_AUTHTOKEN",
+  "domain_env": "PURSUIT_NGROK_DOMAIN",
+  "secret_env": "PURSUIT_TUNNEL_SECRET"
+}

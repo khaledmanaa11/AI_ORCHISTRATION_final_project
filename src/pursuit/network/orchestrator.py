@@ -9,9 +9,8 @@ buffer -- hangs off the AgentContext INSTANCE handed in, never a
 module-level global.
 
 Joint turn (docs/phases/phase-3/RULES-RESOLUTION.md, supersedes D-12's
-cop-then-thief turn order): both agents choose their action from the SAME
-pre-turn state; the wire exchange below only decides who SENDS first, never
-who computed second. Each half of the MY_TURN/WAIT_OPPONENT cycle records
+cop-then-thief order): both agents choose from the SAME pre-turn state; the
+wire exchange only decides who SENDS first. Each half of the cycle records
 its own or the opponent's action into the AgentContext buffer
 (`turn_actions.py`); whichever half fills the second slot calls
 `engine.resolve_turn` exactly once and stores the result.
@@ -21,28 +20,26 @@ module never imports board/barrier/capture/outcome and computes no
 legality, capture or score itself. The GameState replica kept on the context
 includes the opponent's coordinate, but that value arrives only over the
 wire in a received Envelope or as this agent's own move -- nothing here
-reads the opponent's process, memory, config directory or log (Phase 2 is
-the book's open-coordinate stage; blindness arrives in Phase 4).
+reads the opponent's process, memory, config directory or log.
 
-The two turn-cycle halves (`take_my_turn`, `await_opponent_turn`) are
-implemented in `turn_actions.py` -- split out at the 150-code-line gate
-(Segal Table 5) -- and imported back below so this module still exports the
-full six-name surface the plan's artifacts require. `turn_actions.py`
-imports the AgentContext shape and the SDK-dispatch helpers FROM this
-module, never the reverse; the import below is deferred to the bottom of
-this file so that one-directional dependency holds even though this module
-also re-exports the two names.
+The two turn-cycle halves (`take_my_turn`, `await_opponent_turn`) live in
+`turn_actions.py` -- split out at the 150-code-line gate -- and are
+imported back below so this module still exports the full surface callers
+expect. `turn_actions.py` imports the AgentContext shape FROM this module,
+never the reverse; the import is deferred to call time so that
+one-directional dependency holds regardless of import order.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pursuit.constants import Outcome
 from pursuit.network import turn_events
 from pursuit.network.event_log import append_event
+from pursuit.network.language_wiring import LanguageRuntime
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.state_machine import (
     TERMINAL_STATES,
@@ -57,6 +54,9 @@ from pursuit.shared.config import GameParams
 from pursuit.shared.network_config import NetworkParams
 from pursuit.shared.resolution import BOOK_ONLY, ResolutionRules
 from pursuit.shared.state import GameState
+from pursuit.strategy.base import BrainBase
+from pursuit.strategy.beliefadapter import BeliefAdapter
+from pursuit.strategy.scentfield import ScentField
 
 Coord = tuple[int, int]
 
@@ -76,7 +76,17 @@ class AgentContext:
     real per-agent resolution.json onto a live context.
     `pending_cop_action`/`pending_thief_move` buffer this turn's actions
     until both are known (turn_actions.py), then resolve_turn runs exactly
-    once and both slots are cleared."""
+    once and both slots are cleared. `pending_hints` (Phase 4, D-47)
+    buffers this turn's hint(s) by sender the same way, cleared alongside
+    the action slots when the turn resolves (turn_buffer.py).
+
+    Phase 4 (04-12) adds four OPTIONAL fields, defaulting to None/empty so
+    a pre-existing fixture that never sets them is unaffected: `brain` (the
+    registry-built mover), `scent_field` (this role's trail, held for the
+    game), `language` (the gatekeeper/provider/hint-bank runtime), and
+    `incoming_hints` (the LAST hint per sender -- unlike `pending_hints`,
+    NOT cleared at resolve, so `take_my_turn` decodes it one call later;
+    see turn_language.py)."""
 
     role: str
     params: GameParams
@@ -92,6 +102,11 @@ class AgentContext:
     rules: ResolutionRules = BOOK_ONLY
     pending_cop_action: CopAction | None = None
     pending_thief_move: Coord | None = None
+    pending_hints: dict[str, dict] = field(default_factory=dict)
+    brain: BrainBase | BeliefAdapter | None = None
+    scent_field: ScentField | None = None
+    language: LanguageRuntime | None = None
+    incoming_hints: dict[str, dict] = field(default_factory=dict)
 
 
 def engine_agent(role: str) -> str:

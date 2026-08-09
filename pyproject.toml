@@ -4,7 +4,9 @@ version = "1.00.0"
 requires-python = ">=3.10"
 description = "Cops-and-robbers pursuit engine"
 dependencies = [
+    "anthropic>=0.121.0",
     "fastmcp>=3.4.5",
+    "pyngrok>=8.1.2",
 ]
 
 [build-system]

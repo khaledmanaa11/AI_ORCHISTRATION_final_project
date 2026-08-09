@@ -27,9 +27,14 @@ from pursuit.network.state_machine import (
     TurnStateMachine,
 )
 from pursuit.network.tools import HandshakeHandler
+from pursuit.shared.belief_config import BeliefParams, load_belief_config
 from pursuit.shared.config import GameParams, load_game_params
+from pursuit.shared.deception_config import DeceptionParams, load_deception_config
+from pursuit.shared.language_config import LanguageParams, load_language_config
 from pursuit.shared.network_config import NetworkParams, load_network_config
 from pursuit.shared.resolution import RESOLUTION_SOURCE, ResolutionRules, load_resolution_rules
+from pursuit.shared.scent_config import ScentModel, load_scent_model
+from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 
 
 class RoleKey:
@@ -52,26 +57,43 @@ def load_role(config_dir: Path | str) -> str:
 
 @dataclass(frozen=True)
 class AgentConfig:
-    """The four per-agent config files, loaded once and handed to build_context."""
+    """The nine per-agent config files, loaded once and handed to
+    build_context. Phase 4 adds five negotiated blocks (strategy, language,
+    belief, scent, deception) so the live turn loop can build a real mover
+    and a real language pipeline instead of the Phase-2/3 placeholders."""
 
     config_dir: Path
     role: str
     params: GameParams
     net: NetworkParams
     rules: ResolutionRules
+    strategy: StrategyParams
+    language: LanguageParams
+    belief: BeliefParams
+    scent: ScentModel
+    deception: DeceptionParams
 
 
 def load_agent_config(config_dir: Path | str) -> AgentConfig:
     """Load role.json + network.json + game_params.json + the optional
-    negotiated resolution.json from ONE per-agent directory -- the only
-    source for this process's identity (NET-01). A missing resolution.json
-    is not an error: it degrades to BOOK_ONLY (RULES-RESOLUTION.md Sec5)."""
+    negotiated resolution.json, plus strategy/language/belief/scent/
+    deception.json, from ONE per-agent directory -- the only source for
+    this process's identity (NET-01). A missing resolution.json is not an
+    error: it degrades to BOOK_ONLY (RULES-RESOLUTION.md Sec5)."""
     directory = Path(config_dir)
     role = load_role(directory)
     net = load_network_config(directory / "network.json")
     params = load_game_params(directory / "game_params.json")
     rules = load_resolution_rules(directory / RESOLUTION_SOURCE)
-    return AgentConfig(config_dir=directory, role=role, params=params, net=net, rules=rules)
+    strategy = load_strategy_config(directory / "strategy.json")
+    language = load_language_config(directory / "language.json")
+    belief = load_belief_config(directory / "belief.json")
+    scent = load_scent_model(directory / "scent.json")
+    deception = load_deception_config(directory / "deception.json")
+    return AgentConfig(
+        config_dir=directory, role=role, params=params, net=net, rules=rules,
+        strategy=strategy, language=language, belief=belief, scent=scent, deception=deception,
+    )
 
 
 def make_transition_reporter(log_path: Path, *, game_uid: str, role: str) -> TransitionReporter:
@@ -111,17 +133,21 @@ def make_freeze_handler(
 
 
 def make_handshake_responder(
-    *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str, local_role: str
+    *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str, local_role: str,
+    local_scent_digest: str | None = None,
 ) -> HandshakeHandler:
     """THE NET-09 inbound seam (D-05, D-08, design note 12): an `async def`
     adapter around 02-08's synchronous `respond_to_handshake` -- required to
     be async because 02-06's tool body awaits it directly on this process's
-    event loop (RESEARCH Pitfall 2)."""
+    event loop (RESEARCH Pitfall 2). `local_scent_digest` (04-12, closing
+    RESUME.md's still-open carry-over 1) locks D-46/rule 23 on the LIVE
+    path -- default None so a caller opting out still degrades to
+    config-only agreement rather than a hard requirement."""
 
     async def _respond(turn: int, sender: str, payload: dict) -> dict:
         reply, _result = respond_to_handshake(
             machine=machine, reporter=reporter, local_digest=local_digest,
-            local_role=local_role,
+            local_role=local_role, local_scent_digest=local_scent_digest,
             incoming={
                 EnvelopeKey.TYPE: MessageType.HANDSHAKE.value,
                 EnvelopeKey.TURN: turn,

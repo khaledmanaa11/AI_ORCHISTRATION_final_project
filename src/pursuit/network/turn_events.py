@@ -113,3 +113,43 @@ def game_over_record(*, game_uid: str, turn: int, sender: str, outcome: Outcome)
         EventField.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
         "outcome": outcome.value,
     }
+
+
+def language_turn_record(
+    *,
+    game_uid: str,
+    turn: int,
+    sender: str,
+    regime: str,
+    belief_entropy: float | None,
+    belief_argmax: tuple | None,
+    reliability: float | None,
+    token_spend: dict,
+    incoming: dict,
+    outgoing: dict,
+) -> dict:
+    """The Task-3 per-turn language snapshot: the whole language channel,
+    once per turn, in one record (rules 8-9: every field is what THIS peer
+    believed or observed -- never a ground-truth board). No matching
+    `EventType` member exists either (same reason as `game_over_record`
+    above -- that module is owned by 02-04 and not edited by this plan), so
+    the four common fields are assembled directly here.
+
+    `belief_entropy`/`belief_argmax`/`reliability` are None when
+    `belief.enabled` is false this game -- an honest "not run", never a
+    fabricated number. `incoming`/`outgoing` are plain dicts (text, decode
+    outcome/reason, or text+intent) built by `turn_language.py`."""
+    return {
+        EventField.GAME_UID: game_uid,
+        EventField.TURN: turn,
+        EventField.EVENT: "language_turn",
+        EventField.SENDER: sender,
+        EventField.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
+        "regime": regime,
+        "belief_entropy": belief_entropy,
+        "belief_argmax": list(belief_argmax) if belief_argmax is not None else None,
+        "reliability": reliability,
+        "token_spend": token_spend,
+        "incoming_hint": incoming,
+        "outgoing_hint": outgoing,
+    }

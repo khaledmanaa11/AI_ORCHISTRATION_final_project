@@ -6,6 +6,10 @@ D-05's tool surface itself is covered by test_tools.py/test_tools_dispatch.py;
 this file is NET-02 (no shared runtime state) and NET-03 (server + client in
 one process) plus PeerRuntime's own start/stop lifecycle. No test here opens
 a socket, spawns a subprocess, or contacts the opponent.
+
+D-56's `shared_secret` seam (client headers + the `middleware=` kwarg to
+`run_async`) is covered separately in test_peer_runtime_secret.py, split
+out at the 150-code-line gate.
 """
 
 import ast
@@ -34,7 +38,7 @@ async def test_build_server_registers_the_tool_surface():
     mcp = build_server(queue, "pursuit-test-peer")
     async with Client(mcp) as client:
         names = {t.name for t in await client.list_tools()}
-    assert names == {"handshake", "receive_move", "receive_barrier", "game_over"}
+    assert names == {"handshake", "receive_move", "receive_barrier", "game_over", "receive_hint"}
 
 
 async def test_two_runtimes_share_no_runtime_state(network_params):

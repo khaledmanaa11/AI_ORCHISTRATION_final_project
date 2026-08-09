@@ -119,14 +119,25 @@ Plans:
   2. The scent map updates (0.9 at source, 0.10 decay/turn, 5×5 window) and decays each turn; the decay model is locked pre-game
   3. The LLM emits a ≤15-word hint each turn, either true or false, with the `intent` flag committed in advance; comms stay natural-language-only
 
-**Plans**: TBD
+**Plans**: 14 (waves 1-8; see `.planning/phases/04-language-and-scent/04-PLAN-OUTLINE.md`)
 
-Plans:
+Plans (executed 04-01..04-13; 04-14 remains — GATE-4 measurement against the live API; nothing
+below is ticked until `/gsd:verify-work 4` runs, after 04-14):
 
-- [ ] 04-01: Scent emission/decay model + cryptographic pre-game lock
-- [ ] 04-02: Bayesian belief map fusing scent + hint evidence
-- [ ] 04-03: LLM hint decode (inference) + LLM bluff generation with intent flag
-- [ ] 04-04: Write `docs/PRD_scent_map.md`, `docs/PRD_belief_map.md`, `docs/PRD_deception.md`
+- [ ] 04-01: Locked scent model — Table 16 values, Figure-4 kernel, `ScentField`, digest helper
+- [ ] 04-02: Handshake carries the scent digest (rule 23, `SCENT_MISMATCH`)
+- [ ] 04-03: LLM gatekeeper — Table 19 token bucket, FIFO queue, D-35 budget ladder
+- [ ] 04-04: Transport — `MessageType.HINT`, direction-token move/barrier codec (D-53)
+- [ ] 04-05: Belief map core — grid, motion model, scent likelihood (D-42)
+- [ ] 04-06: Provider layer — registry, `template`, `claude_api` (Haiku 4.5)
+- [ ] 04-07: Hint decoder — constrained JSON, EN + HE, total (never raises)
+- [ ] 04-08: Deception planner — intent + claim, cop herding / thief danger-adaptive lying
+- [ ] 04-09: Belief fusion — hint likelihood, adaptive reliability, Sec4.4 lie detector (D-51)
+- [ ] 04-10: Bluff generator — word limit, retry, truncate, template bank
+- [ ] 04-11: `BeliefAdapter` — sample from belief (D-43), believed-state substitution (Option A)
+- [ ] 04-12: Turn-pipeline integration — Figure 7 wired into the live two-process turn loop
+- [ ] 04-13: Three per-mechanism PRDs, `RULES-RESOLUTION-LANG.md`, phase triplet
+- [ ] 04-14: GATE-4 measurement against the live API (not yet run)
 - [ ] 04-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 04-97: Create/refresh `docs/phases/phase-4/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 04-99: On verify-work, mark all Phase 4 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -141,12 +152,13 @@ Plans:
   1. Each peer is reachable on the public internet through ngrok/Localtonet
   2. An agent on a remote machine connects through the tunnel and plays a full round against the local agent
 
-**Plans**: TBD
+**Plans**: 3 (05-01..05-03, see `05-PLAN-OUTLINE.md`)
 
 Plans:
 
-- [ ] 05-01: Tunnel integration + public URL wiring into the peer config
-- [ ] 05-02: Remote end-to-end round validation
+- [ ] 05-01: Tunnel lifecycle -- pyngrok dep, tunnel.json + loader, TunnelManager (DI'd, reconnect bounded by Table 19), lifecycle wiring, URL/secret exchange printout (CODE+TEST COMPLETE, see 05-01-SUMMARY.md; not yet verified)
+- [ ] 05-02: Shared-secret channel -- ASGI middleware, client transport headers, env plumbing, `.env-example` (CODE+TEST COMPLETE, see 05-02-SUMMARY.md; not yet verified)
+- [ ] 05-03: Gate 5 -- smoke script, in-process integration proof, `GATE-5-MEASUREMENT.md`, Localtonet runbook, graph refresh
 - [ ] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -238,8 +250,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Base Logic | 5/5 | Complete | 2026-07-28 |
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
-| 4. Language and Scent | 0/5 | Not started | - |
-| 5. Cloud Exposure and Tunneling | 0/3 | Not started | - |
+| 4. Language and Scent | 13/14 | In Progress | - |
+| 5. Cloud Exposure and Tunneling | 3/3 | In Progress (GATE-5 both criteria PENDING -- human smoke run + remote round) | - |
 | 6. Security and Cryptography | 0/5 | Not started | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |
