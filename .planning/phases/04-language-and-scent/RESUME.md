@@ -1,7 +1,7 @@
 # Phase 4 — resume point
 
-**Updated:** 2026-08-09 · **Status:** waves 1–4 EXECUTED (10/14 plans: 04-01..04-10). Wave 4 is
-now COMPLETE (04-09 + 04-10). Waves 5–8 not started.
+**Updated:** 2026-08-09 · **Status:** waves 1–5 EXECUTED (11/14 plans: 04-01..04-11). Wave 5 is
+now COMPLETE (04-11). Waves 6–8 not started.
 
 Nothing is half-finished: every dispatched plan completed, merged, and passed the gates.
 
@@ -27,30 +27,32 @@ git checkout claude/gsd-parallelism-config-6b4aqp
 | 3 | 04-08 | Deception planner — a `DeceptionPlan` whose constructor refuses a lying capture/barrier claim, thief danger-adaptive lying with a measured truth floor, cop herding scored with the Phase-3 evaluation | ✅ |
 | 4 | 04-09 | Belief fusion — `scent_check.contradicts()` (Sec4.4 lie detector, reproduces 0.9→0.81 exactly), `reliability.Reliability` (bounded adaptive coefficient, D-51), `belief_hint.hint_likelihood()` (D-40 mix, weighted below scent, never zeroes a cell) | ✅ |
 | 4 | 04-10 | Bluff generator — `compose()`, the three-layer word limit (D-45): one call, one retry on overflow, truncate, `assert_no_coordinates`, total fallback to a seeded `HintBank` on every failure path; `bluff_prompt.py`'s style guide (D-39) never reveals `intent` to the model (D-36) | ✅ |
+| 5 | 04-11 | `BeliefAdapter` — Figure-7 per-turn order (observe→predict→update(scent)→update(hint)→sample), Option A believed-state substitution (D-43 samples, never argmax), `registry.build_brain()` wired behind a `belief.enabled` config flag with a seeded RNG | ✅ |
 
-Gates on the merged tree after wave 4 (04-09 + 04-10) — measured, not inherited from agent
-self-reports:
+Gates on the merged tree after wave 5 (04-11) — measured, not inherited from agent self-reports:
 
 | Check | Result |
 |---|---|
-| `uv run pytest --cov` | **1001 passed, 94.81%** (floor 85%) |
+| `uv run pytest --cov` | **1020 passed, 94.94%** (floor 85%) |
 | `uv run ruff check .` | 0 violations |
 | `scripts/check_line_limit.sh` | clean repo-wide |
 | `scripts/check_no_llm_in_strategy.py` | clean — `strategy/` imports no `pursuit.services` |
 | End-to-end Sec4.4 reproduction | fully-lying opponent's reliability 0.5→0.2→0.05 within 2 turns; fully-truthful holds at 0.5 for 10 turns; fused-posterior argmax follows scent in both regimes (`tests/unit/strategy/test_belief_fusion_e2e.py`) |
 | `grep -nE "\b15\b" src/pursuit/services/llm/` | no match — the word limit is config-only everywhere |
 | `compose()` adversarial property test | 300 iterations, always non-empty/in-limit/coordinate-free, never raises (`tests/unit/services/test_bluff_property.py`) |
+| `git diff --stat` on `valuebrain.py`/`matrix.py`/`features.py`/`equilibrium.py` | empty across all three 04-11 commits — Phase 3's mover genuinely untouched |
+| Belief-enabled per-turn decision time | cop max 4.99ms, thief max ~3.7–4.99ms, against a 50ms `strategy.max_decision_ms` budget (`tests/integration/test_belief_policy.py`) |
 
-Remaining waves: `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
+Remaining waves: `w6: 12` · `w7: 13` · `w8: 14`.
 
 ## The next command
 
 ```
-/gsd:execute-phase 4 --wave 5
+/gsd:execute-phase 4 --wave 6
 ```
 
-This starts wave 5 at 04-11 (`BeliefAdapter`) — wave 4 (04-09 + 04-10) is fully done. Drop the
-`--wave` flag to run waves 5–8 straight through. Run it on a fresh context.
+This starts wave 6 at 04-12 (turn-pipeline integration) — wave 5 (04-11) is fully done. Drop the
+`--wave` flag to run waves 6–8 straight through. Run it on a fresh context.
 
 **If you are resuming in a Claude-Code-on-the-web container, the slash command will not
 resolve** — the GSD plugin is not installed there (`.claude/` holds only `settings.json`, there
@@ -64,7 +66,60 @@ scaffold default, not a decision). Plans within a wave now execute concurrently.
 default for this key is `true`, and `execute-phase` still drops a wave back to sequential by
 itself if it detects two plans in it touching the same file.
 
-## Carry-overs from execution — read before continuing wave 5 (04-11) and beyond
+## Carry-overs from execution — read before continuing wave 6 (04-12) and beyond
+
+**New in wave 5 (04-11) — 04-12 needs all of these; they document the ACTUAL calling
+conventions `beliefadapter.py`/`registry.py` shipped, some of which differ from the plan's own
+literal prose (04-11-SUMMARY.md's `key-decisions` has the full reasoning for each):**
+
+- **O. `BeliefAdapter(brain, role, game_params, belief_config, scent_model, rng)` —
+  positional, in that order.** `role` is OUR OWN seat ("cop"/"thief"), not the opponent's;
+  the adapter derives `opponent_role` internally. `rng` must be a `random.Random` the caller
+  seeded (never module-level `random`, never `secrets`) — `registry.build_brain(...,
+  belief_config=, scent_model=)` builds this seed via `_resolve_belief_seed(belief_config
+  .belief.seed)`, which derives and LOGS a fallback when the config's `seed` is `null`.
+- **P. `adapter.decide(state, inference, opponent_field, rules, *, known_cell=None)` —
+  `known_cell` is REQUIRED reasoning, not optional decoration.** It is the one thing 04-12
+  must supply correctly every turn: the opponent's pre-turn cell when THIS turn's Reveal was
+  integrable (Regime A), or `None` when it was not (Regime B — `observe_exact` is skipped
+  entirely and the belief runs on prediction + scent + hint alone). It cannot be derived from
+  `state` itself — `state.cop`/`state.thief` keep carrying the engine's TRUE joint position
+  regardless of regime (the engine needs it for `resolve_turn` either way), so "was the reveal
+  usable this turn" is a fact 04-12's transport layer has to hand in explicitly. **`rules` is
+  accepted by `decide()` but NOT read inside it** — the wrapped `ValueSearchBrain` already
+  carries its own negotiated `ResolutionRules` from construction; do not expect changing the
+  `rules` argument to change behaviour without also reconstructing the wrapped brain.
+- **Q. `BeliefAdapter` owns `Reliability`, NOT 04-12 — closing 04-09's carry-over F with a
+  different owner than that carry-over proposed.** `self.reliability` (and `self.belief`) are
+  constructed fresh inside `BeliefAdapter.__init__`, exposed as public attributes. 04-12's job
+  is narrower than carry-over F said: call `scent_check.contradicts(inference, opponent_field,
+  model, belief_config)` then `adapter.reliability.observe(score)` — on the adapter's OWN
+  instance — once per turn a hint arrives, in that order. Do NOT construct a second, separate
+  `Reliability` for the same opponent; there is exactly one, and `BeliefAdapter` already built
+  it. The "handshake time" moment carry-over F meant IS the moment 04-12 constructs the
+  `BeliefAdapter` itself (via `registry.build_brain`).
+- **R. `registry.build_brain(role, params, game_params, *, belief_config=None,
+  scent_model=None)` — SAME function as before, two new OPTIONAL keyword args, not a second
+  `build_brain_with_belief()`.** Supplying both, with `belief_config.belief.enabled`, returns a
+  `BeliefAdapter`-wrapped brain; omitting either (or `enabled=false`) returns the identical raw
+  `BrainBase` Phase 3 shipped. `build_brain`'s return type is therefore `BrainBase |
+  BeliefAdapter` in practice — a caller that needs to know which it got should
+  `isinstance(brain, BeliefAdapter)`, exactly as `tests/integration/test_belief_policy.py`'s own
+  `decide()` dispatch helper does.
+- **S. One `ScentField` per ROLE (not per game, not per adapter) is 04-12's to own and hold for
+  the game's duration**, matching the `Reliability`/`HintBank` ownership pattern 04-09/04-10
+  already established. `BeliefAdapter.decide()` MUTATES the field it is given every call
+  (`emit_own`/`emit_opponent`) but never calls `.advance()` — decay is a POST-resolution,
+  once-per-joint-turn operation (`ScentField.advance()`'s own docstring), and `decide()` runs
+  BEFORE the turn resolves. **04-12 must call `field.advance()` exactly once per joint turn,
+  after `resolve_turn`, on both the cop's-view and thief's-view fields** — forgetting this
+  turns the trail into a monotonically growing, never-decaying pile.
+- **T. The believed-state substitution is NOT what gets sent to the opponent or logged as the
+  "real" move context.** `BeliefAdapter.decide()` returns a plain `Decision` (move/source/
+  barrier) — identical in shape to what a raw `BrainBase` returns. 04-12's turn pipeline can
+  treat a `BeliefAdapter`-wrapped brain and a raw one interchangeably from the OUTSIDE; only the
+  call site differs (`.decide(state, inference, opponent_field, rules, known_cell=...)` vs.
+  `._decide_move(observe(state, role), state)`), never the returned `Decision`'s meaning.
 
 **New in wave 4 (04-10) — 04-11/04-12 need these:**
 
@@ -193,6 +248,12 @@ itself if it detects two plans in it touching the same file.
    waves not yet executed. **Decide before wave 7** whether to backfill the triplet now (matching
    CLAUDE.md's ordering) or let 04-13 produce it (matching the plan set). Either way the phase is
    not verified until it exists with every task checked.
+6. **`tests/integration/test_beats_baseline.py` does not exist** — 04-11 confirmed via `git log
+   --all` that it was deleted in Phase 3's run-2 rebuild (commit `f3d9847`), before ANY Phase-4
+   plan started. Any later plan or verify-work step whose text names this file (04-11-PLAN.md's
+   own verification block did) should treat it as a stale reference, not a regression to chase.
+   `tests/integration/test_strategy_pluggable.py` — the file that same text usually pairs it
+   with — DOES exist and stays the real GATE-3 regression anchor.
 
 ## What a reader should still know (unchanged from planning)
 

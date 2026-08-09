@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-10 (bluff generator). Phase 4 wave 4 (04-09 + 04-10) is now fully done. Wave 5 (04-11) is next.
-last_updated: "2026-08-09T01:12:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 4 completed (04-10 bluff generator: wordcount.py, hintbank.py/hintbank_templates.py, bluff.py/bluff_prompt.py, compose() total by construction)
+stopped_at: Completed 04-11 (BeliefAdapter). Phase 4 wave 5 (04-11) is now fully done. Wave 6 (04-12) is next.
+last_updated: "2026-08-09T04:55:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 5 completed (04-11 BeliefAdapter: Figure-7 belief order, Option A believed-state substitution, registry belief.enabled wiring)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 34
-  percent: 30
+  completed_plans: 35
+  percent: 31
 ---
 
 # Project State
@@ -26,11 +26,32 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 10 of 14 (waves 1–4 done: 04-01..04-10; wave 4 now FULLY COMPLETE —
-  see .planning/phases/04-language-and-scent/04-10-SUMMARY.md.
-  Next: 04-11 (BeliefAdapter), starting wave 5. Resume point (carry-overs
-  J-N are new from 04-10, still relevant to 04-12):
+Plan: 11 of 14 (waves 1–5 done: 04-01..04-11; wave 5 now FULLY COMPLETE —
+  see .planning/phases/04-language-and-scent/04-11-SUMMARY.md.
+  Next: 04-12 (turn-pipeline integration), starting wave 6. Resume point:
   .planning/phases/04-language-and-scent/RESUME.md)
+
+04-11 delivered: strategy/beliefadapter.py (BeliefAdapter -- Figure 7's
+  per-turn order: observe -> predict -> update(scent) -> update(hint) ->
+  sample -> decide; Option A believed-state substitution via
+  dataclasses.replace; D-43 samples the target cell, never argmax),
+  shared/belief_toggle_config.py (BeliefToggleParams: enabled/seed, a null
+  seed derives + logs a fallback rather than being non-deterministic),
+  registry.build_brain(..., belief_config=, scent_model=) wiring the
+  adapter in behind belief.enabled with zero impact on existing
+  3-positional callers. Regime A identity proven exactly (boxed-in
+  fixture, holds for any RNG draw); Regime B proven to differ from truth
+  only in the opponent's coordinate. target_cell is no longer vestigial:
+  same true state + different belief -> different Decision. Per-turn
+  decision time measured with belief enabled: cop max 4.99ms, thief max
+  ~3.7-4.99ms, against a 50ms budget. valuebrain.py/matrix.py/features.py/
+  equilibrium.py untouched (git diff --stat empty on all four). Full gates
+  green: 1020 passed, 94.94% coverage, ruff/line-limit/no-llm-in-strategy
+  all clean. Issue found (not a regression): tests/integration/
+  test_beats_baseline.py, named in the plan's own verification block,
+  does not exist -- deleted in Phase 3's run-2 rebuild (commit f3d9847),
+  before this session. test_strategy_pluggable.py confirmed present,
+  passing, and byte-unmodified.
 
 04-10 delivered: services/llm/wordcount.py (count()/truncate(), one
   whitespace-splitting rule), services/llm/hintbank.py +
@@ -164,6 +185,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P10 | ~40min (Tasks 1-3 only; Task 4 pending operator) | 3 of 4 tasks | ~20 files |
 | Phase 03 P11 (run-2 wave 1) | ~25min | 3 tasks + 1 coverage-gap fix | 8 files |
 | Phase 03 P13 | 45min | 3 tasks | 12 files |
+| Phase 04 P11 | ~65min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -310,6 +332,22 @@ Recent decisions affecting current work:
   `strategy/belief_hint.py::hint_likelihood()` returns an all-zero grid at
   confidence=0 specifically so `BeliefMap.update()`'s own zero-guard buys an EXACT
   (not approx) no-op for `NO_EVIDENCE`, per the plan's own stricter verify wording
+
+- [Phase 04-11]: Option A (believed-state substitution) shipped over Option B
+  (expectation over the belief's support) per docs/phases/phase-3/PRD.md
+  Sec8's own cost argument, now measured rather than merely asserted:
+  belief-enabled decisions stay under 5ms against the 50ms
+  strategy.max_decision_ms budget. D-43 (sample, not argmax) implemented
+  literally -- BeliefMap.sample(rng) feeds Observation.target_cell and the
+  believed GameState both. Reliability is constructed inside
+  BeliefAdapter.__init__ (not externally by 04-12 as 04-09's carry-over F
+  literally proposed) and exposed as a public attribute so 04-12 can still
+  drive .observe() on the same instance -- constructing BeliefAdapter IS
+  the "handshake time" moment carry-over F meant. decide()'s known_cell:
+  Coord | None keyword is new beyond the plan's literal prose: Regime A/B
+  cannot be read off GameState alone since state always carries the
+  engine's true joint position (needed by resolve_turn regardless of
+  blindness), so the regime has to be told to the adapter, not inferred
 
 ### Pending Todos
 
