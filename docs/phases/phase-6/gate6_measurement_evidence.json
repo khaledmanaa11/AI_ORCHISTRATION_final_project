@@ -1,0 +1,103 @@
+{
+  "criterion_1_four_phases_commit_reveal": {
+    "barrier_note": "an honest count from this ONE clean run -- 0 is a valid outcome if the scripted cop brain never chose to place one; the forced round-trip PROOF that a barrier CAN be committed/revealed/applied lives in tests/integration/test_commit_reveal_protocol_barrier.py (06-02), cited here by name, not re-run",
+    "barrier_placements_this_run": 1,
+    "both_locked_gate_ordering": {
+      "police_ok": true,
+      "police_violations": [],
+      "thief_ok": true,
+      "thief_violations": []
+    },
+    "declarations": {
+      "note": "both sides share GAME_UID by construction in this harness (same caveat test_step0_and_audit.py's own docstring states); the LOAD-BEARING D-61 negotiation proof (deliberately DIFFERENT local_game_id per side) is tests/unit/test_handshake_step0.py::test_game_id_negotiation_resolves_to_the_initiators_value",
+      "police": {
+        "own_declaration_exists": true,
+        "peer_declaration_exists": true,
+        "predates_detail": "declaration mtime=1786292967.0771873 <= first move-content ts=1786292967.123572",
+        "predates_first_move_content": true
+      },
+      "thief": {
+        "own_declaration_exists": true,
+        "peer_declaration_exists": true,
+        "predates_detail": "declaration mtime=1786292967.0857973 <= first move-content ts=1786292967.110547",
+        "predates_first_move_content": true
+      }
+    },
+    "envelope_counts": {
+      "police_received": {
+        "commit": 5,
+        "reveal": 5
+      },
+      "police_sent": {
+        "ack": 5,
+        "commit": 5,
+        "hint": 5,
+        "reveal": 5
+      },
+      "thief_received": {
+        "commit": 5,
+        "reveal": 5
+      },
+      "thief_sent": {
+        "ack": 5,
+        "commit": 5,
+        "hint": 5,
+        "reveal": 5
+      }
+    },
+    "final_outcome_police": "capture",
+    "final_outcome_thief": "capture",
+    "final_reveal_audit_confirmed": {
+      "police": true,
+      "thief": true
+    },
+    "final_reveal_note": "FINAL_REVEAL push/receive (agent_audit_exchange.py) is not itself logged as a message_sent/message_received envelope record -- only record_audit_verdict()/record_technical_loss() write to the JSONL. Final-Reveal/Audit's occurrence is therefore measured via the audit_verdict record's presence, not an envelope-type count.",
+    "game_uid": "gate6-clean",
+    "ledger_nonce_bearing_records": {
+      "police_all_carry_nonce": true,
+      "police_count": 5,
+      "thief_all_carry_nonce": true,
+      "thief_count": 5
+    },
+    "nonce_absent_from_wire_log": {
+      "police": true,
+      "thief": true
+    },
+    "outcomes_agree": true,
+    "verdict": "PASS"
+  },
+  "criterion_2_hash_nonce_mismatch_technical_loss": {
+    "nonce_absent_from_wire_log": {
+      "police": true,
+      "thief": true
+    },
+    "tamper_a_corrupted_ledger_payload": {
+      "mismatch_names_h_commit": true,
+      "police_self_audit_also_caught_it": true,
+      "thief_audit_verdict_matched": false,
+      "thief_outcome_is_technical_loss": true
+    },
+    "tamper_b_hash_verifies_but_action_differs": {
+      "hash_alone_still_verified_before_corruption": true,
+      "mismatch_names_d67": true,
+      "police_self_audit_stayed_clean": true,
+      "thief_outcome_is_technical_loss": true
+    },
+    "verdict": "PASS"
+  },
+  "criterion_3_step0_verified_before_move_1": {
+    "aborted_to_error_state": true,
+    "detail": "step0 declaration content does not hash to its own claimed digest; aborting before move 1 (rule 11/23, D-15/D-46/D-61/D-62)",
+    "detecting_side": "thief",
+    "forged_side": "police",
+    "is_step0_mismatch": true,
+    "machine_state": "error",
+    "move_1_unreachable_after_abort": true,
+    "outcome": "step0_mismatch",
+    "run_turn_loop_ever_called": false,
+    "verdict": "PASS"
+  },
+  "env_vars_required": [],
+  "gate": "GATE-6 (book Sec10.4 milestone 6)",
+  "generated_at": "2026-08-09T16:29:28.833163+00:00"
+}
