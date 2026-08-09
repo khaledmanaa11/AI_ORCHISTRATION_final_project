@@ -21,6 +21,7 @@ def _valid_model(**overrides: object) -> dict:
         "timeout_seconds": 30,
         "every_n_steps": 1,
         "game_arena": "New York",
+        "hint_word_limit": 15,
     }
     model.update(overrides)
     return model
@@ -70,6 +71,29 @@ def test_timeout_seconds_zero_is_rejected() -> None:
 
 def test_empty_game_arena_is_valid_and_means_generic_cues() -> None:
     validate_model_group(_valid_model(game_arena=""), source=_SOURCE)
+
+
+def test_hint_word_limit_zero_is_rejected() -> None:
+    """04-10, Table 14 row 2: the limit is our own, but it must be positive."""
+    with pytest.raises(ValueError, match=ModelKey.HINT_WORD_LIMIT.value):
+        validate_model_group(_valid_model(hint_word_limit=0), source=_SOURCE)
+
+
+def test_hint_word_limit_negative_is_rejected() -> None:
+    with pytest.raises(ValueError, match=ModelKey.HINT_WORD_LIMIT.value):
+        validate_model_group(_valid_model(hint_word_limit=-1), source=_SOURCE)
+
+
+def test_hint_word_limit_missing_raises_key_error() -> None:
+    model = _valid_model()
+    del model["hint_word_limit"]
+    with pytest.raises(KeyError):
+        validate_model_group(model, source=_SOURCE)
+
+
+def test_hint_word_limit_may_be_negotiated_above_the_default() -> None:
+    """Negotiable (Table 14 row 2), unlike the Table 19 minima -- no ceiling here."""
+    validate_model_group(_valid_model(hint_word_limit=25), source=_SOURCE)
 
 
 def test_missing_provider_key_raises_key_error() -> None:

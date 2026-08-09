@@ -1,4 +1,4 @@
-"""Validation for language.json's `model` group (D-32, D-52, Table 14 row 2, 04-06).
+"""Validation for language.json's `model` group (D-32, D-52, Table 14, 04-06/04-10).
 
 Split out of language_config.py at the 150-code-line gate (Segal Table 5):
 language_config.py already owns the gatekeeper/budget groups and adding
@@ -6,6 +6,17 @@ model-group validation inline pushed it over the limit. This module owns
 model's key names and validation only; load_language_config() calls
 validate_model_group() and otherwise treats `model` as an opaque dict
 (LanguageParams.model's type is unchanged).
+
+`hint_word_limit` (04-10, Table 14 row 2) lives HERE rather than in a new
+`deception.json` field, per carry-over A in RESUME.md: the emission side
+(`services/llm/bluff.py`/`bluff_prompt.py`) and the future decode side
+(`DecodeContext.word_limit`, 04-07/04-12) must read the SAME negotiated
+number, and both are properties of the LLM channel (`language.json`'s
+`model` group already carries the sibling `game_arena`, Table 14 row 1) --
+not of the deception POLICY (`deception.json`'s lie-probability/herding
+knobs, which govern WHAT is claimed, never how many words phrase it). This
+is a deliberate deviation from 04-10-PLAN.md's own `files_modified` list,
+recorded in 04-10-SUMMARY.md.
 """
 
 from enum import Enum
@@ -26,6 +37,7 @@ class ModelKey(str, Enum):
     TIMEOUT_SECONDS = "timeout_seconds"
     EVERY_N_STEPS = "every_n_steps"
     GAME_ARENA = "game_arena"
+    HINT_WORD_LIMIT = "hint_word_limit"
 
 
 def validate_model_group(model: dict, *, source: str) -> None:
@@ -74,3 +86,10 @@ def validate_model_group(model: dict, *, source: str) -> None:
         raise ValueError(f"{source} field '{ModelKey.TIMEOUT_SECONDS.value}' must be >= 1")
 
     require_str(model, ModelKey.GAME_ARENA.value, source=source)  # "" == generic cues
+
+    hint_word_limit = require_int(model, ModelKey.HINT_WORD_LIMIT.value, source=source)
+    if hint_word_limit < 1:
+        raise ValueError(
+            f"{source} field '{ModelKey.HINT_WORD_LIMIT.value}' must be >= 1 -- "
+            f"docs/PARAMETERS.md Table 14 row 2 (negotiable), got {hint_word_limit}"
+        )

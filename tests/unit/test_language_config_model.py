@@ -45,6 +45,17 @@ def test_empty_model_id_fails_at_load_through_the_full_file(tmp_path: Path) -> N
         load_language_config(bad)
 
 
+def test_hint_word_limit_zero_fails_at_load_through_the_full_file(tmp_path: Path) -> None:
+    """04-10: the emission side's word limit is validated on the same path
+    every other model-group field already is."""
+    bad = _write_variant(
+        tmp_path,
+        lambda d: d[LanguageKey.GROUP_MODEL].__setitem__("hint_word_limit", 0),
+    )
+    with pytest.raises(ValueError, match="hint_word_limit"):
+        load_language_config(bad)
+
+
 def test_loading_succeeds_with_anthropic_api_key_unset(monkeypatch: pytest.MonkeyPatch) -> None:
     """A provider of claude_api with no key set is not a load-time error (D-33)."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

@@ -4,25 +4,23 @@ Split from envelope.py at the 150-code-line gate (Segal Table 5), mirroring
 the handshake.py / handshake_wire.py split (02-08/02-09): envelope.py stays
 a four-key, payload-agnostic shape validator (its own ownership-boundary
 docstring is unchanged by this plan except for the one new MessageType
-member); this module owns the HINT payload's internal shape and the LANG-02
-outgoing guard.
+member); this module owns the HINT payload's internal shape.
 
 `assert_no_coordinates` sits on the SEND path only (LANG-02, rule 27):
 incoming text is data, logged as received, never censored -- semantic
 judgement of a hint belongs to the strategy layer, not to a transport
-module (see tools.py's receive_hint, which never imports this guard).
+module (see tools.py's receive_hint, which never imports this guard). The
+check itself now lives in `shared/hint_guard.py` (04-10), re-exported
+here unchanged -- see that module's docstring for why.
 """
 
 from __future__ import annotations
 
-import re
 from enum import Enum
 
 from pursuit.network.envelope import Envelope, MessageType
 from pursuit.shared.deception_types import Intent  # noqa: F401 -- re-export
-
-_DIGIT_PAIR = re.compile(r"\d+\s*,\s*\d+")
-_ROW_COLUMN = re.compile(r"\brow\s+\d+\s+col(?:umn)?\s+\d+\b", re.IGNORECASE)
+from pursuit.shared.hint_guard import assert_no_coordinates  # noqa: F401 -- re-export
 
 # Intent is imported, not declared here. 04-08's planner DECIDES the flag and
 # lives under strategy/, which may not import pursuit.network at all
@@ -39,15 +37,6 @@ class HintKey(str, Enum):
     TEXT = "text"
     INTENT = "intent"
     TURN = "turn"
-
-
-def assert_no_coordinates(text: str) -> None:
-    """LANG-02 / rule 27 outgoing guard: raise ValueError if `text` carries
-    a digit pair (covers both "3,4" and "(3, 4)") or a bare "row N column
-    M" grid reference. SEND path only -- we must never EMIT an illegal
-    hint; what we RECEIVE is data, not ours to police."""
-    if _DIGIT_PAIR.search(text) or _ROW_COLUMN.search(text):
-        raise ValueError(f"hint text carries a coordinate-shaped reference: {text!r}")
 
 
 def validate_hint_payload(payload: dict) -> None:

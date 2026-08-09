@@ -20,6 +20,7 @@
     "max_tokens": 300,
     "timeout_seconds": 30,
     "every_n_steps": 1,
-    "game_arena": "New York"
+    "game_arena": "New York",
+    "hint_word_limit": 15
   }
 }
