@@ -84,6 +84,23 @@ class FakeClient:
         return {"status": "ack"}
 
 
+class FailAfterClient(FakeClient):
+    """Succeeds on the first `succeed_calls` pushes, fails every one after
+    -- 06-02: lets a test drive a multi-message exchange (e.g. D-58's
+    Commit-then-Reveal) past its first N sends before simulating the
+    opponent going silent partway through."""
+
+    def __init__(self, succeed_calls: int) -> None:
+        super().__init__()
+        self._succeed_calls = succeed_calls
+
+    async def call_tool(self, name, args, **kwargs):
+        self.calls.append((name, args))
+        if len(self.calls) > self._succeed_calls:
+            raise McpError(ErrorData(code=-1, message="simulated opponent gone silent mid-exchange"))
+        return {"status": "ack"}
+
+
 class FakeRuntime:
     """Stands in for 02-06's PeerRuntime. Owns a real asyncio.Queue -- nothing
     else here is real; no socket is ever opened."""

@@ -36,8 +36,13 @@ def _language_turns(records: list[dict]) -> list[dict]:
 
 
 def _moves(records: list[dict]) -> list[dict]:
+    """06-02 (D-58): under commit_reveal (default true), the action rides a
+    `reveal`-typed envelope carrying the composite `{move, barrier}` dict,
+    not a flat `move`-typed one -- widen the type filter to both, shape-
+    aware callers inspect `payload["move"]`/`payload["barrier"]`."""
     return [
-        r for r in records if r["event"] == "message_sent" and r["envelope"]["type"] == "move"
+        r for r in records
+        if r["event"] == "message_sent" and r["envelope"]["type"] in ("move", "reveal")
     ]
 
 
@@ -82,29 +87,45 @@ async def test_a_hint_rides_every_turn_with_no_outgoing_coordinate(tmp_path, mon
             assert outgoing["intent"] in (Intent.TRUTH.value, Intent.LIE.value)
             assert_no_coordinates(outgoing["text"])  # raises ValueError on a leak
         for move in _moves(records):
-            payload = move["envelope"]["payload"]
-            assert "x" not in payload
-            assert "y" not in payload
+            envelope = move["envelope"]
+            payload = envelope["payload"]
+            if envelope["type"] == "reveal":
+                # The composite dict's TOP level never has "x"/"y" either,
+                # but that would be checking the wrong nesting level (rule
+                # 27's real guarantee is about the coordinate never
+                # existing anywhere) -- inspect both sub-payloads.
+                assert "x" not in payload["move"]
+                assert "y" not in payload["move"]
+                if payload.get("barrier") is not None:
+                    assert "x" not in payload["barrier"]
+                    assert "y" not in payload["barrier"]
+            else:
+                assert "x" not in payload
+                assert "y" not in payload
 
 
 async def test_intent_is_always_committed_before_the_hint_text_exists(tmp_path, monkeypatch):
-    """LANG-03/rule 25, frozen structurally: `send_turn_hint` calls
-    `build_deception_plan()` (which fixes `plan.intent`) and only then
-    calls `compose_outgoing(plan, ...)` -- `plan` is a required positional
-    argument, so no call producing hint text can exist without an intent
-    already decided. Verified with a live call-order spy over a full game,
-    mirroring test_language_pipeline.py's own Figure-7 order test but at
-    GATE-4's own full-game granularity."""
-    order: list[str] = []
+    """LANG-03/rule 25, frozen structurally under D-58's real cross-side
+    concurrency (06-02): `plan_turn_deception()` (which fixes `plan.intent`)
+    always produces a plan strictly before any `compose_outgoing(plan, ...)`
+    call that uses that SAME plan object -- proven identity-based (`id()`),
+    not by the old per-side back-to-back atomicity assumption, which D-58
+    no longer guarantees: the responder's plan and compose calls are now
+    separated by a real network round trip (multiple await points), not
+    two adjacent sync statements. This proves the SAME real invariant
+    (intent fixed before text exists) under legitimate concurrent
+    interleaving."""
+    order: list[tuple[str, object]] = []
     real_plan = turn_language_io.build_deception_plan
     real_compose = turn_language_io.compose_outgoing
 
     def spy_plan(*args, **kwargs):
-        order.append("plan")
-        return real_plan(*args, **kwargs)
+        result = real_plan(*args, **kwargs)
+        order.append(("plan", result))
+        return result
 
     async def spy_compose(*args, **kwargs):
-        order.append("compose")
+        order.append(("compose", args[0]))
         return await real_compose(*args, **kwargs)
 
     turn_language_io.build_deception_plan = spy_plan
@@ -122,5 +143,12 @@ async def test_intent_is_always_committed_before_the_hint_text_exists(tmp_path, 
 
     assert outcome_a is not None and outcome_a == outcome_b
     assert order, "no turn ever planned/composed a hint"
-    for i in range(0, len(order), 2):
-        assert order[i : i + 2] == ["plan", "compose"], "intent was not committed before text"
+    seen_plan_ids: set[int] = set()
+    saw_a_pair = False
+    for kind, obj in order:
+        if kind == "plan":
+            seen_plan_ids.add(id(obj))
+        else:
+            assert id(obj) in seen_plan_ids, "intent was not committed before text"
+            saw_a_pair = True
+    assert saw_a_pair, "no turn ever planned/composed a hint"

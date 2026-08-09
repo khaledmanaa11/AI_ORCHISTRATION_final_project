@@ -1,24 +1,21 @@
-"""04-12 must_haves: the Figure 7 call order (book Sec6.2, p.43/PDF 59) and
-a full two-peer game carrying a real hint + direction-token move every
-turn. No test here performs network I/O: the order test uses a
-`FakeProvider`, the full-game test degrades to the real `NO_KEY` path.
+"""04-12 must_haves: the Figure 7 call order (book Sec6.2, p.43/PDF 59).
+No test here performs network I/O -- a `FakeProvider` stands in.
+
+The full two-peer game test (+ its `_replay_from_log` helper) lives in the
+sibling `test_language_pipeline_replay.py`, split out at the 150-code-line
+gate (06-02: D-58/D-66's shape-aware replay logic pushed this file over).
 """
 
 from __future__ import annotations
 
 import dataclasses
-import json
 
 from pursuit.network import turn_actions, turn_language_io
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.brain_wiring import build_brain_and_scent
 from pursuit.network.hint_payload import HintKey, Intent
 from pursuit.network.language_wiring import build_language_runtime
-from pursuit.network.move_payload import decode as decode_move
-from pursuit.sdk import engine
-from pursuit.sdk.actions import CopAction
 from pursuit.services.llm.provider import LlmResult
-from tests.integration.two_peer_game import play_two_peer_game
 from tests.unit._fakes_agent import make_ctx
 
 
@@ -103,80 +100,3 @@ async def test_figure_7_order_is_decode_then_move_then_deception_then_compose(
         turn_language_io.compose_outgoing = real_compose
 
     assert order == ["decode", "choose", "plan", "compose"]
-
-
-async def test_two_peer_game_carries_a_direction_move_and_a_hint_every_turn(
-    tmp_path, monkeypatch,
-):
-    """A complete two-peer game (04-12's own harness, RESEARCH Pattern 5):
-    every turn logs a direction-token move and a legal hint with an
-    `intent` flag on BOTH sides, and the final score matches a direct
-    engine simulation of the same recorded action sequence."""
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    cfg_a = load_agent_config("config/police")
-    cfg_b = load_agent_config("config/thief")
-
-    outcome_a, outcome_b, ctx_a, ctx_b = await play_two_peer_game(
-        cfg_a, cfg_b, game_uid="lang-pipeline", log_dir=tmp_path,
-    )
-
-    assert outcome_a is not None and outcome_a == outcome_b
-
-    for ctx, log_path in ((ctx_a, tmp_path / "a.jsonl"), (ctx_b, tmp_path / "b.jsonl")):
-        events = [_json_line(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
-        language_turns = [e for e in events if e["event"] == "language_turn"]
-        assert language_turns, f"{ctx.role}: no language_turn records at all"
-        for record in language_turns:
-            outgoing = record["outgoing_hint"]
-            assert outgoing["text"]
-            assert len(outgoing["text"].split()) <= cfg_a.language.model["hint_word_limit"]
-            assert outgoing["intent"] in (Intent.TRUTH.value, Intent.LIE.value)
-        moves = [e for e in events if e["event"] == "message_sent" and e["envelope"]["type"] == "move"]
-        for record in moves:
-            assert "x" not in record["envelope"]["payload"]
-            assert "direction" in record["envelope"]["payload"]
-
-    replayed_outcome, replayed_state = _replay_from_log(tmp_path / "a.jsonl", cfg_a)
-    assert replayed_outcome == outcome_a
-    assert replayed_state == ctx_a.state
-
-
-def _json_line(line: str) -> dict:
-    return json.loads(line)
-
-
-def _replay_from_log(log_path, cfg_a):
-    """Reconstruct the (cop_action, thief_move) sequence purely from ctx_a's
-    OWN JSONL log, in file order, and replay it through engine.resolve_turn
-    from a fresh make_state -- proving the log alone is enough to reproduce
-    the scored game (rule 20's replay viewer needs exactly this)."""
-    params = cfg_a.params
-    events = [_json_line(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
-    cop_cell, thief_cell = params.cop_start, params.thief_start
-    pending_cop, pending_thief = None, None
-    sequence: list[tuple[CopAction, tuple]] = []
-    for record in events:
-        if record["event"] not in ("message_sent", "message_received"):
-            continue
-        envelope = record["envelope"]
-        if envelope["type"] != "move":
-            continue
-        pre = cop_cell if envelope["sender"] == "police" else thief_cell
-        resolved = decode_move(envelope["payload"], pre, params)
-        assert resolved.ok, f"unreplayable move: {envelope}"
-        if envelope["sender"] == "police":
-            pending_cop = CopAction(move=resolved.cell)
-        else:
-            pending_thief = resolved.cell
-        if pending_cop is not None and pending_thief is not None:
-            sequence.append((pending_cop, pending_thief))
-            cop_cell, thief_cell = pending_cop.move, pending_thief
-            pending_cop, pending_thief = None, None
-
-    state = engine.make_state(params)
-    outcome = None
-    for cop_action, thief_move in sequence:
-        state, outcome = engine.resolve_turn(state, cop_action, thief_move, params, cfg_a.rules)
-        if outcome is not None:
-            break
-    return outcome, state
