@@ -1,19 +1,23 @@
 ---
-status: complete
+status: diagnosed
 phase: 06-security-and-cryptography
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md]
 started: 2026-08-09T16:58:43Z
-updated: 2026-08-09T17:05:00Z
+updated: 2026-08-09T17:35:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+[testing complete — 9 pass, 2 issues, both diagnosed]
 
 ## Tests
 
 > Every result below was re-measured during this UAT session against `HEAD = b3655348`,
 > not copied from the plan SUMMARY files.
+>
+> **All three §10.4 gate criteria measured PASS.** The two issues below were found by an
+> adversarial audit run *in addition to* the gate: they are cases the gate's own harnesses
+> do not construct, because every existing harness stamps envelope turns honestly.
 
 ### 1. GATE-6 runs from one command, zero env vars
 expected: measure_gate6.py exits 0 with all three §10.4 criteria PASS, zero env vars, evidence JSON written
@@ -52,13 +56,17 @@ measured: criterion 3 — `is_step0_mismatch: true`, `outcome: "step0_mismatch"`
 
 ### 8. A forged reveal is a technical loss (D-67)
 expected: both tamper classes — a corrupted ledger payload, and the D-67 case where the hash still verifies but the claimed action differs from what was actually played — produce AUDIT_HASH_MISMATCH → TECHNICAL_LOSS; the tampering side's own self-audit catches it too
-result: pass
-measured: tamper (a) — `thief_outcome_is_technical_loss: true`, `thief_audit_verdict_matched: false`, `mismatch_names_h_commit: true`, `police_self_audit_also_caught_it: true`. tamper (b), the D-67 case — `hash_alone_still_verified_before_corruption: true` (proving a hash-only audit would have missed it), `thief_outcome_is_technical_loss: true`, `mismatch_names_d67: true`, `police_self_audit_stayed_clean: true`. Both `test_step0_and_audit_tamper.py` cases PASSED.
+result: issue
+reported: "Holds for the two tamper classes actually measured, but both are defeated by a peer that skews its own envelope `turn` stamps, and the resulting TECHNICAL_LOSS is not durable."
+severity: blocker
+measured: the *measured* tamper classes do pass — tamper (a) `thief_outcome_is_technical_loss: true`, `mismatch_names_h_commit: true`, `police_self_audit_also_caught_it: true`; tamper (b) `hash_alone_still_verified_before_corruption: true`, `mismatch_names_d67: true`, `police_self_audit_stayed_clean: true`. **But both harnesses stamp turns honestly.** Reproduced against the shipped `audit_peer_records` with a paired control: commit to action A, play action B, stamp that REVEAL envelope `turn=1001` instead of `1` → `all_matched = True`, detail *"turn 1: trailing commit, no in-game reveal observed -- hash verified"*. The identical data honestly stamped correctly returns *"revealed action does not match what was actually played (D-67)"*. See Gaps 1. Separately, even when a mismatch IS caught, the verdict is not durable — see Gaps 2.
 
 ### 9. A peer that publishes no nonces fails the audit (rule 36)
 expected: a peer sending FINAL_REVEAL {"records": []}, or silently dropping one fully-exchanged turn, is caught with one named mismatch per omitted turn — not vacuously passed; an honest trailing commit-without-reveal is still matched
-result: pass
-measured: all 3 `tests/unit/test_audit_coverage.py` cases PASSED (one omitted fully-exchanged turn mismatches exactly that turn; empty records with N turns observed produces N mismatches; a genuinely turn-less game stays vacuously matched). Integration: `test_tamper_d_truncated_final_reveal_records_fail_the_coverage_check` PASSED.
+result: issue
+reported: "The coverage check is keyed on the peer's own declared turn stamps, so the empty-records evasion reopens against a peer that skews them."
+severity: blocker
+measured: all 3 `tests/unit/test_audit_coverage.py` cases and `test_tamper_d_*` PASSED — but every one hard-codes matching keys in both observed dicts. Reproduced with a paired control: 3 fully-exchanged turns, peer sends `{"records": []}` → honest stamping gives 3 *"committed and revealed in-game but absent from final reveal"* mismatches (`all_matched = False`); the same game with every COMMIT stamped `turn=0` and every REVEAL stamped `turn=99` gives `all_matched = True`, **0 records** — the exact hole (i) evasion, reopened. See Gaps 1.
 
 ### 10. The Segal §19.1 Table-5 gate is green on the whole repo
 expected: ruff check → 0 violations, full pytest suite passes, coverage ≥ 85%, every file ≤ 150 code lines, no secrets in source, uv-only
@@ -73,14 +81,56 @@ measured: `docs/PRD_commit_reveal.md` 292 lines, every SEC-01…SEC-08 ID presen
 ## Summary
 
 total: 11
-passed: 11
-issues: 0
+passed: 9
+issues: 2
 pending: 0
 skipped: 0
 
 ## Gaps
 
-[none — all 11 tests passed on re-measured evidence]
+<!-- Found by a 5-lens adversarial audit run during this verify-work session.
+     All five lenses converged independently on Gap 1; all five skeptics failed
+     to refute it. Both gaps were then reproduced by hand against the shipped
+     code with paired controls before being recorded here. -->
+
+- truth: "A forged reveal, or a withheld set of nonces, is caught by the mutual audit and becomes a technical loss"
+  status: failed
+  reason: "The audit's join key is attacker-controlled. `observed()` builds BOTH observed_commits and observed_reveals keyed on `envelope.get(EnvelopeKey.TURN)` — the peer's own declared turn number, taken verbatim off the wire. Nothing in src/ ever compares an inbound envelope's turn to ctx.state.turn (grep for `.turn ==` / `envelope.turn` returns only sites that CONSUME it as a key). So a peer that stamps its COMMIT and REVEAL envelopes with disjoint turn numbers makes `set(observed_commits) & set(observed_reveals)` empty, which (a) makes _missing_turns' rule-36 coverage check yield nothing, re-opening the empty-`{\"records\": []}` evasion, and (b) sends every entry down _audit_one's `turn not in observed_reveals` branch, which returns matched=True as a 'trailing commit'. The cheapest variant stamps every envelope turn=0, collapsing a whole game to one key: a single valid record then satisfies the audit of an N-turn game and N-1 nonces stay secret forever."
+  severity: blocker
+  test: 8, 9
+  root_cause: "`agent_audit_exchange.observed()` keys the audit's two evidence dicts on untrusted peer-declared `envelope.turn`; `audit.py`'s trailing-commit exemption and coverage check both trust those keys as local truth."
+  artifacts:
+    - path: "src/pursuit/network/agent_audit_exchange.py:78"
+      issue: "turn = envelope.get(EnvelopeKey.TURN) — attacker-supplied value used as the audit's join key for both dicts (:81, :83)"
+    - path: "src/pursuit/security/audit.py:62"
+      issue: "`if turn not in observed_reveals` returns matched=True (trailing-commit exemption) — reachable for EVERY turn once the keys are skewed"
+    - path: "src/pursuit/security/audit.py:82"
+      issue: "`fully_exchanged = set(observed_commits) & set(observed_reveals)` — empties out under skew, so the rule-36 coverage check yields nothing"
+    - path: "src/pursuit/network/turn_commit_wait.py:107-170"
+      issue: "all four D-58 waits match on MessageType + payload h_commit only; none validates envelope.turn against ctx.state.turn"
+    - path: "tests/unit/test_audit_coverage.py"
+      issue: "every case hard-codes matching keys in both observed dicts, so the suite cannot see this class of bypass"
+  missing:
+    - "Validate an inbound COMMIT/REVEAL envelope's turn against local turn state on the receive path, and reject/technical-loss on mismatch (the honest peer always knows the true turn number)"
+    - "OR key observed_commits/observed_reveals on locally-authoritative turn state rather than the peer's declared value"
+    - "A regression test whose observed_commits and observed_reveals keys DISAGREE, asserting the audit still reports a mismatch"
+
+- truth: "Any mismatch is a technical loss (§10.4 criterion 2)"
+  status: failed
+  reason: "When the audit DOES catch a cheat, the verdict never reaches anything durable. `turn_events.game_over_record` has exactly one call site (orchestrator.py:105), inside run_turn_loop — so the JSONL's only outcome-bearing line is written with the BOARD outcome BEFORE run_final_audit runs (agent_entrypoint.py:73-77). run_final_audit's Outcome.TECHNICAL_LOSS is returned up to run_agent, and main.py then discards it: `asyncio.run(agent_lifecycle.run_agent(args.config_dir))` followed by an unconditional `return 0`. The result is an audit_verdict line appended after a game_over line that still records the cheater's win, and a zero exit code. Any Phase-7 reporter reading the outcome field reads the cheater's result."
+  severity: major
+  test: 8
+  root_cause: "game_over is recorded before the audit runs and is never corrected; run_agent's overridden outcome is discarded by main.py."
+  artifacts:
+    - path: "src/pursuit/network/orchestrator.py:105"
+      issue: "the only game_over_record call site — runs before run_final_audit"
+    - path: "src/pursuit/main.py:51"
+      issue: "asyncio.run(run_agent(...)) discards the returned outcome; `return 0` unconditionally"
+  missing:
+    - "Write a corrected game_over (or an explicit outcome-superseding record) after the audit overrides the outcome"
+    - "Propagate the final outcome to main.py's exit code"
+
+## Standing notes carried forward (not gaps)
 
 ## Standing notes carried forward (not gaps)
 

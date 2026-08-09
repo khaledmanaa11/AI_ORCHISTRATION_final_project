@@ -104,7 +104,11 @@ Gate: remote agent plays a full round via tunnel.
 
 Gate: move committed then revealed with valid nonce; Step-0 verified.
 **Gate met — all three §10.4 criteria PASS on measured evidence
-([GATE-6-MEASUREMENT.md](phases/phase-6/GATE-6-MEASUREMENT.md)); UAT 11/11 pass 2026-08-09.**
+([GATE-6-MEASUREMENT.md](phases/phase-6/GATE-6-MEASUREMENT.md)). UAT 2026-08-09: 9/11 pass,
+**2 security gaps open (06-98)** — the mutual audit's join key is the peer's own declared
+`envelope.turn`, unvalidated, so the D-67 forgery check and the rule-36 coverage check are
+both bypassable by turn-skew; and a caught mismatch never reaches a durable outcome record.
+Phase 6 is not closed until 06-98 lands.**
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
@@ -115,6 +119,7 @@ Gate: move committed then revealed with valid nonce; Step-0 verified.
 | 06-96 Refresh the graphify graph (plan-phase + after execute) | P2 | ☑ | Khaled | GRAPH_REPORT.md current with `security/` and the new network modules — final refresh 6577 nodes / 11972 edges / 413 communities |
 | 06-97 Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` | P1 | ☑ | Khaled | Phase triplet exists and matches the plan set (created 2026-08-09; all rows closed at verify-work) |
 | 06-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
+| 06-98 **GAP CLOSURE (blocker)** — bind the mutual audit to local turn truth; make a caught mismatch durable | P0 | ☐ | Khaled | Turn-skew can no longer convert a forgery into a "trailing commit" nor empty the rule-36 coverage set; regression test with disagreeing observed dicts still mismatches; caught mismatch yields a corrected `game_over` + non-zero exit (SEC-05/08) |
 
 ---
 

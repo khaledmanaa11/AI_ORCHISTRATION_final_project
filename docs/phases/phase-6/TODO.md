@@ -1,6 +1,7 @@
 # Phase 6 TODO — Security and Cryptography
 
-**Owner:** Khaled (solo) · **Updated:** 2026-08-09 · **Status: all rows ☑ — closed by `/gsd:verify-work 6`**
+**Owner:** Khaled (solo) · **Updated:** 2026-08-09 · **Status: plan rows ☑, §10.4 gate met —
+but `/gsd:verify-work 6` found 2 open security gaps (06-98). Phase not closed.**
 
 > Phase task list. Row IDs and plan IDs are deliberately the same (the Phase-4 convention).
 > `/gsd:verify-work 6` marks every row `[x]` and ticks the matching rows in the root
@@ -15,7 +16,8 @@
 | 06-04 Gate 6 — `measure_gate6.py`, `GATE-6-MEASUREMENT.md`, `docs/PRD_commit_reveal.md` | P1 | ☑ | Khaled | One command, zero env vars, real localhost evidence per criterion; PASS/FAIL reported honestly; per-mechanism PRD complete (SEC-01…SEC-08, DOC-02) |
 | 06-96 Refresh the graphify graph at plan-phase and after execute | P2 | ☑ | Khaled | GRAPH_REPORT.md current with `security/`, `turn_commit.py`, `agent_context.py` (plan-phase refresh 2026-08-09; post-06-01 refresh 6035 nodes/10756 edges/384 communities; 06-04 refresh 6510/11909/408; final verify-work refresh 2026-08-09 → **6577 nodes / 11972 edges / 413 communities**) |
 | 06-97 Create/refresh docs/phases/phase-6/{PRD,PLAN,TODO}.md at plan-phase | P1 | ☑ | Khaled | This triplet exists and matches the plan set (created at plan-phase 2026-08-09; all rows closed at verify-work) |
-| 06-99 On verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☑ | Khaled | Phase gate met on measured evidence; all TODOs checked (DOC-01) — see [06-UAT.md](../../../.planning/phases/06-security-and-cryptography/06-UAT.md), 11/11 pass |
+| 06-99 On verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☑ | Khaled | Phase gate met on measured evidence; all TODOs checked (DOC-01) — see [06-UAT.md](../../../.planning/phases/06-security-and-cryptography/06-UAT.md), **9/11 pass, 2 gaps open** |
+| 06-98 **GAP CLOSURE (blocker)** — audit join key + verdict durability | P0 | ☐ | Khaled | Inbound COMMIT/REVEAL turn validated against local turn state (or the audit keyed on local truth) so turn-skew can no longer convert every forgery into a "trailing commit"; a regression test whose two observed dicts DISAGREE still reports a mismatch; a caught mismatch produces a corrected `game_over` record and a non-zero exit (SEC-05, SEC-08) |
 
 ## Phase gate (§10.4)
 - [x] A move is committed (SHA-256) and then revealed with a valid nonce; the four phases run
@@ -32,3 +34,21 @@
 
 Unlike GATE-4 and GATE-5, **every criterion here is machine-measurable on this one machine** —
 no API key, no ngrok account, no second host. There is no human-pending item in this phase.
+
+## Open after verify-work — the gate is not the whole security story
+
+The three criteria above are met and measured. Separately, a 5-lens adversarial audit run
+during `/gsd:verify-work 6` found two real gaps, both reproduced against the shipped code
+with paired controls:
+
+1. **(blocker)** The mutual audit's join key is the peer's own declared `envelope.turn`
+   (`agent_audit_exchange.py:78`), which nothing on the receive path validates. Skewing it
+   sends every entry down `audit.py:62`'s trailing-commit exemption and empties
+   `audit.py:82`'s coverage intersection — reopening BOTH the D-67 forgery bypass and the
+   rule-36 empty-`{"records": []}` evasion. Every existing harness stamps turns honestly,
+   so no current test can see it.
+2. **(major)** A caught mismatch is not durable: `game_over` is written before the audit
+   runs (`orchestrator.py:105`) and never corrected, and `main.py:51` discards the
+   overridden outcome and returns 0.
+
+Tracked as **06-98**. Detail, exploit paths, and controls: `06-UAT.md` Gaps.
