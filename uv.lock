@@ -1844,6 +1844,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "fastmcp" },
+    { name = "pyngrok" },
 ]
 
 [package.dev-dependencies]
@@ -1860,6 +1861,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.121.0" },
     { name = "fastmcp", specifier = ">=3.4.5" },
+    { name = "pyngrok", specifier = ">=8.1.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -2080,6 +2082,18 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
+]
+
+[[package]]
+name = "pyngrok"
+version = "8.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8d/ae/6664934258773db4666e65730c43b4b06730f78d49861a9a04ebcf4742ff/pyngrok-8.1.2.tar.gz", hash = "sha256:3b5383ec7dc4646ac0d046435eb58c6cd1cbc9acad70e6dee012b05dc25b070a", size = 45078, upload-time = "2026-04-29T15:16:53.969Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/5c/7733776a6a9704bffee19d203f9be80f25f78a5011a9863971be60fe2763/pyngrok-8.1.2-py3-none-any.whl", hash = "sha256:849e9f55706288b00eb28f4ae8ea16b05e52c609f80ef4a88ca23b385f2f9178", size = 25935, upload-time = "2026-04-29T15:16:52.088Z" },
 ]
 
 [[package]]
