@@ -1,5 +1,5 @@
-"""D-67's own two-tamper-class proof, at the real two-peer integration
-level -- imports the harness from test_step0_and_audit.py (mirrors
+"""D-67's own tamper-class proof, at the real two-peer integration level --
+imports the harness from test_step0_and_audit.py (mirrors
 test_handshake_scent.py importing shared fakes from test_handshake.py).
 
 (a) a corrupted ledger PAYLOAD fails the hash re-verify (check 2) -- the
@@ -7,6 +7,9 @@ test_handshake_scent.py importing shared fakes from test_handshake.py).
 (b) THE D-67 case: hash/payload left untouched (still verifies) but what
     the other side actually observed in-game differs from the claim -- the
     hash-only bypass D-67's own rationale describes, genuinely closed.
+(d) rule-36 COVERAGE: a side's own FINAL_REVEAL records truncated (one
+    genuinely committed-and-revealed turn simply missing) -- the OTHER
+    side's audit catches the omission, never passes it vacuously.
 """
 
 from __future__ import annotations
@@ -97,3 +100,38 @@ async def test_tamper_b_the_d67_case_hash_verifies_but_action_differs(tmp_path, 
     assert mismatches and all("D-67" in r["detail"] for r in mismatches)
     # A's own side never touched anything -- its audit stays clean.
     assert final_a is not Outcome.TECHNICAL_LOSS
+
+
+async def test_tamper_d_truncated_final_reveal_records_fail_the_coverage_check(
+    tmp_path, monkeypatch,
+):
+    """Rule-36 coverage check (audit.py's own follow-up fix): a side whose
+    FINAL_REVEAL omits a turn it genuinely committed AND revealed in-game
+    -- the cheapest form being an entirely empty `{"records": []}` -- must
+    not pass the mutual audit vacuously."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    cfg_a, cfg_b = load_agent_config("config/police"), load_agent_config("config/thief")
+    outcome_a, outcome_b, ctx_a, ctx_b = await _play_to_turn_loop_end(
+        cfg_a, cfg_b, game_uid="step0-audit-tamper-d", log_dir=tmp_path,
+    )
+
+    ledger_path = _ledger_path(ctx_a)
+    lines = ledger_path.read_text(encoding="utf-8").splitlines()
+    assert lines, "the game must have committed at least one turn to prove anything"
+    truncated_turn = json.loads(lines[-1])["turn"]
+    ledger_path.write_text("\n".join(lines[:-1]) + ("\n" if len(lines) > 1 else ""), encoding="utf-8")
+
+    final_a, final_b = await _run_audit_and_merge(outcome_a, outcome_b, ctx_a, ctx_b)
+
+    # THE plan's own required assertion: the OTHER side's audit catches
+    # the omission and returns TECHNICAL_LOSS.
+    assert final_b is Outcome.TECHNICAL_LOSS
+    verdict_b = [e for e in _events(ctx_b.log_path) if e["event"] == "audit_verdict"][-1]
+    mismatches = [r for r in verdict_b["peer_audit"] if not r["matched"]]
+    assert any(
+        r["turn"] == truncated_turn and "absent from final reveal" in r["detail"]
+        for r in mismatches
+    )
+    # Same symmetric-honesty consequence as tamper (a): A's own self-audit
+    # also catches its now-incomplete ledger.
+    assert final_a is Outcome.TECHNICAL_LOSS

@@ -1,7 +1,10 @@
 """D-67: the Final-Reveal mutual audit -- both tamper classes proven
 distinctly: (a) the payload/hash itself disagrees, (b) the hash verifies
 perfectly but the revealed action differs from what was actually played
-(the hash-only bypass D-67 exists to close)."""
+(the hash-only bypass D-67 exists to close). The rule-36 COVERAGE check
+(a peer omitting turns entirely, up to and including an empty
+FINAL_REVEAL) and the trailing-commit fairness fix live in the sibling
+test_audit_coverage.py, split at the 150-line gate."""
 
 from __future__ import annotations
 
@@ -67,7 +70,7 @@ def test_tamper_b_the_d67_case_hash_verifies_but_revealed_action_differs():
     assert commit_pack.verify_reveal(observed_commits[2], **peer_records[1]["payload"]) is True
 
 
-def test_tamper_c_a_missing_observed_commit_or_reveal_is_named_not_skipped():
+def test_tamper_c_a_missing_observed_commit_is_named_not_skipped():
     observed_commits, observed_reveals, peer_records = _genuine_records([1, 2, 3])
     del observed_commits[2]
     records = audit_peer_records(observed_commits, observed_reveals, peer_records)
@@ -76,9 +79,17 @@ def test_tamper_c_a_missing_observed_commit_or_reveal_is_named_not_skipped():
     assert by_turn[2].matched is False
     assert "no observed commit" in by_turn[2].detail
 
-    oc2, or2, pr2 = _genuine_records([1, 2, 3])
-    del or2[3]
-    records2 = audit_peer_records(oc2, or2, pr2)
-    by_turn2 = {r.turn: r for r in records2}
-    assert by_turn2[3].matched is False
-    assert "no observed reveal" in by_turn2[3].detail
+
+def test_a_trailing_commit_without_an_observed_reveal_is_matched_not_a_false_accusation():
+    """The fairness fix: CommitLedger.append runs BEFORE the REVEAL send,
+    so an abnormal ending can leave an HONEST peer with a
+    committed-never-revealed entry in its own final reveal -- that must
+    never be misbranded as a forgery (rules 16/22/38, the other direction)."""
+    observed_commits, observed_reveals, peer_records = _genuine_records([1, 2, 3])
+    del observed_reveals[3]
+
+    records = audit_peer_records(observed_commits, observed_reveals, peer_records)
+    by_turn = {r.turn: r for r in records}
+    assert by_turn[1].matched is True and by_turn[2].matched is True
+    assert by_turn[3].matched is True
+    assert "trailing" in by_turn[3].detail and "hash verified" in by_turn[3].detail
