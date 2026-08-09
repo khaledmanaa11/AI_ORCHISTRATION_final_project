@@ -22,11 +22,15 @@ class Observation:
     alongside this Observation instead (D-05), so the barrier bitmap never
     bloats the encoding input.
 
-    target_cell is a *believed* target cell (D-11): Phase 3 populates it
-    with the known target (the Stage-3 gate condition); Phase 4 will
-    populate it with the belief map's argmax cell instead. The field's
-    shape never changes between the two -- no brain, encoding, or trained
-    Q-table needs to change when Phase 4's belief map arrives.
+    target_cell is a *believed* target cell (D-11): Phase 3 populated it
+    with the known target (the Stage-3 gate condition). Phase 4's
+    `strategy/beliefadapter.py` populates it with a cell SAMPLED from the
+    belief posterior instead -- D-43 overrides this docstring's earlier
+    "argmax" guess: an argmax target makes pursuit deterministic given the
+    opponent's own model of our belief, and a deterministic pursuit is
+    exploitable in a one-counted-game league (rule 52). The field's shape
+    never changes across either source -- no brain, encoding, or trained
+    Q-table needs to change when the value's origin does.
     """
 
     own_cell: tuple[int, int]

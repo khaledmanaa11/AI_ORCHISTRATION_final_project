@@ -1,4 +1,4 @@
-"""BeliefAdapter: connects the belief map to the mover (D-43, D-48 Task 1).
+"""BeliefAdapter: connects the belief map to the mover (D-43, D-48, Task 1+2).
 
 Owns one opponent's belief lifecycle for one game -- a fresh `BeliefMap` and
 a fresh `Reliability`, both constructed HERE, never persisted or shared
@@ -38,6 +38,7 @@ language model.
 from __future__ import annotations
 
 import random
+from dataclasses import replace
 
 from pursuit.shared.belief_config import BeliefParams
 from pursuit.shared.config import GameParams
@@ -156,7 +157,8 @@ class BeliefAdapter:
             barriers_used=state.barriers_placed,
             turn_index=state.turn,
         )
-        return self.brain._decide_move(obs, state)
+        believed_state = replace(state, **{self.opponent_role: sampled_cell})
+        return self.brain._decide_move(obs, believed_state)
 
 
 def _positive_cells(posterior: tuple) -> list[tuple[Coord, float]]:

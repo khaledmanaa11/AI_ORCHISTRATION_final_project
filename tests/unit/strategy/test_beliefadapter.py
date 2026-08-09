@@ -1,5 +1,6 @@
-"""BeliefAdapter Task 1 (D-43, D-48): the Figure-7 per-turn order, seeded
-reproducibility, and that the hint-update step is not a no-op.
+"""BeliefAdapter (D-43, D-48 Task 1+2): the Figure-7 per-turn order, seeded
+reproducibility, that the hint-update step is not a no-op, and the
+Regime-A/B believed-state substitution contract (Task 2).
 """
 
 import pathlib
@@ -22,6 +23,12 @@ _CONFIG_DIR = pathlib.Path(__file__).parents[3] / "config"
 POLICE_BELIEF = _CONFIG_DIR / "police" / "belief.json"
 POLICE_SCENT = _CONFIG_DIR / "police" / "scent.json"
 POLICE_GAME = _CONFIG_DIR / "police" / "game_params.json"
+
+#: The thief boxed in at (0,0): both in-bounds neighbours barriered, so
+#: get_legal_moves returns ONLY STAY. spread() from a delta there therefore
+#: returns another delta at the SAME cell -- the Regime-A identity holds for
+#: ANY RNG draw, not merely a lucky seed.
+_BOXED_BARRIERS = frozenset({(1, 0), (0, 1)})
 
 
 @pytest.fixture(scope="module")
@@ -49,6 +56,10 @@ def _cop_brain(params):
 
 def _open_state(thief=(3, 3), turn=0):
     return GameState(cop=(0, 0), thief=thief, barriers=frozenset(), barriers_placed=0, turn=turn)
+
+
+def _boxed_state(cop=(6, 6)):
+    return GameState(cop=cop, thief=(0, 0), barriers=_BOXED_BARRIERS, barriers_placed=2, turn=0)
 
 
 def _spy(obj, name, log):
@@ -119,3 +130,59 @@ def test_removing_hint_evidence_changes_the_sampled_distribution(params, belief_
     with_hint = run(Inference(region=Region.NORTHWEST, confidence=1.0))
 
     assert no_hint != with_hint
+
+
+def test_regime_a_substitution_is_the_identity_for_a_cornered_opponent(params, belief_cfg, model):
+    """Task 2: observe_exact collapses the prior to a delta and one predict
+    step from a boxed-in cell (only STAY legal) spreads it right back onto
+    itself -- the believed state handed to the brain is `==` the true one,
+    not merely close, for ANY RNG draw."""
+    brain = _cop_brain(params)
+    adapter = _adapter(brain, params, belief_cfg, model)
+    captured = {}
+    original = brain._decide_move
+
+    def spy(obs, believed_state):
+        captured["state"] = believed_state
+        return original(obs, believed_state)
+
+    brain._decide_move = spy
+    true_state = _boxed_state()
+    field = ScentField(model=model, board_size=params.board_size)
+
+    adapter.decide(true_state, NO_EVIDENCE, field, PREFERRED, known_cell=(0, 0))
+
+    assert captured["state"] == true_state
+
+
+def test_regime_b_substitution_differs_only_in_opponent_coordinate(params, belief_cfg, model):
+    """Task 2: with no exact reveal (known_cell=None), the believed state
+    handed to the brain keeps the cop, barriers and turn untouched but
+    swaps in a sampled -- generally different -- thief cell."""
+    brain = _cop_brain(params)
+    adapter = _adapter(brain, params, belief_cfg, model)
+    captured = {}
+    original = brain._decide_move
+
+    def spy(obs, believed_state):
+        captured["state"] = believed_state
+        return original(obs, believed_state)
+
+    brain._decide_move = spy
+    true_state = _open_state(thief=(3, 3))
+    field = ScentField(model=model, board_size=params.board_size)
+
+    adapter.decide(
+        true_state,
+        Inference(region=Region.SOUTHEAST, confidence=0.9),
+        field,
+        PREFERRED,
+        known_cell=None,
+    )
+
+    believed = captured["state"]
+    assert believed.cop == true_state.cop
+    assert believed.barriers == true_state.barriers
+    assert believed.barriers_placed == true_state.barriers_placed
+    assert believed.turn == true_state.turn
+    assert believed.thief != true_state.thief
