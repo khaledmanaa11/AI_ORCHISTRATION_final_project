@@ -60,6 +60,7 @@ class HandshakeCaller(Protocol):
 async def perform_handshake(
     *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str,
     local_role: str, call_peer: HandshakeCaller, local_scent_digest: str | None = None,
+    local_step0_digest: str | None = None, local_game_id: str | None = None,
 ) -> HandshakeResult:
     """OUTBOUND handshake half. Exactly one attempt -- no retry, no timeout, no sleep."""
     machine.attempt(State.HANDSHAKE)
@@ -67,7 +68,10 @@ async def perform_handshake(
         return not_attempted(machine, local_digest)
 
     try:
-        offer = build_offer(local_digest, local_role, local_scent_digest=local_scent_digest)
+        offer = build_offer(
+            local_digest, local_role, local_scent_digest=local_scent_digest,
+            local_step0_digest=local_step0_digest, local_game_id=local_game_id,
+        )
         raw = await call_peer(offer)
     except McpError as exc:
         detail = f"peer unreachable during handshake: {exc}"
@@ -75,18 +79,24 @@ async def perform_handshake(
                   severity=TransitionSeverity.RECOVERABLE, reason=detail)
         return build_result(HandshakeOutcome.UNREACHABLE, machine, local_digest, detail=detail)
 
-    return evaluate(machine, reporter, local_digest, local_scent_digest, raw)
+    return evaluate(machine, reporter, local_digest, local_scent_digest, local_step0_digest, raw)
 
 
 def respond_to_handshake(
     *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str,
     local_role: str, incoming: dict, local_scent_digest: str | None = None,
+    local_step0_digest: str | None = None, local_game_id: str | None = None,
 ) -> tuple[dict, HandshakeResult]:
     """INBOUND handshake half (NET-03 symmetry). Pure, synchronous, never raises."""
-    reply = build_offer(local_digest, local_role, local_scent_digest=local_scent_digest).to_dict()
+    reply = build_offer(
+        local_digest, local_role, local_scent_digest=local_scent_digest,
+        local_step0_digest=local_step0_digest, local_game_id=local_game_id,
+    ).to_dict()
 
     machine.attempt(State.HANDSHAKE)
     if machine.state is not State.HANDSHAKE:
         return reply, not_attempted(machine, local_digest)
 
-    return reply, evaluate(machine, reporter, local_digest, local_scent_digest, incoming)
+    return reply, evaluate(
+        machine, reporter, local_digest, local_scent_digest, local_step0_digest, incoming,
+    )

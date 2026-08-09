@@ -140,19 +140,25 @@ def make_freeze_handler(
 def make_handshake_responder(
     *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str, local_role: str,
     local_scent_digest: str | None = None,
+    local_step0_digest: str | None = None, local_game_id: str | None = None,
 ) -> HandshakeHandler:
     """THE NET-09 inbound seam (D-05, D-08, design note 12): an `async def`
     adapter around 02-08's synchronous `respond_to_handshake` -- required to
     be async because 02-06's tool body awaits it directly on this process's
-    event loop (RESEARCH Pitfall 2). `local_scent_digest` (04-12, closing
-    RESUME.md's still-open carry-over 1) locks D-46/rule 23 on the LIVE
-    path -- default None so a caller opting out still degrades to
-    config-only agreement rather than a hard requirement."""
+    event loop (RESEARCH Pitfall 2). `local_scent_digest` (04-12) locks
+    D-46/rule 23 on the LIVE path; `local_step0_digest`/`local_game_id`
+    (06-03, D-61/D-62) do the same for Step-0 presence and the negotiated
+    game_id -- every one defaults None so a caller opting out still
+    degrades to config-only agreement rather than a hard requirement. Every
+    value here MUST be a plain parameter, computed before this closure is
+    built (design note 12): it cannot close over an AgentContext that does
+    not exist yet."""
 
     async def _respond(turn: int, sender: str, payload: dict) -> dict:
         reply, _result = respond_to_handshake(
             machine=machine, reporter=reporter, local_digest=local_digest,
             local_role=local_role, local_scent_digest=local_scent_digest,
+            local_step0_digest=local_step0_digest, local_game_id=local_game_id,
             incoming={
                 EnvelopeKey.TYPE: MessageType.HANDSHAKE.value,
                 EnvelopeKey.TURN: turn,

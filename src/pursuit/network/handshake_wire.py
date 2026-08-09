@@ -12,6 +12,12 @@ always reserved for exactly this kind of extension (see handshake.py's module do
 `local_scent_digest` defaults to None so a call site not yet migrated to send one (04-12
 wires the live agent path) still builds a legal, config-only offer: the key is OMITTED, not
 sent as null, so that offer reads identically to an old-style peer's.
+
+D-61/D-62 (06-03): a THIRD and FOURTH key, STEP0_DIGEST and GAME_ID, extend the SAME payload
+the SAME way -- omit-don't-null, opt-in per call site. `local_step0_digest` rides Step-0's
+declaration commitment (verified for PRESENCE, not equality -- see handshake_evaluate.py's
+own docstring for why); `local_game_id` is each side's own proposed game_id (D-61) -- the
+initiator's value is the one both sides ultimately adopt (agent_audit_wiring.py's job).
 """
 
 from __future__ import annotations
@@ -32,19 +38,27 @@ class HandshakeKey:
 
     DIGEST = "digest"
     SCENT_DIGEST = "scent_digest"
+    STEP0_DIGEST = "step0_digest"
+    GAME_ID = "game_id"
 
 
 def build_offer(
-    local_digest: str, local_role: str, *, local_scent_digest: str | None = None
+    local_digest: str, local_role: str, *, local_scent_digest: str | None = None,
+    local_step0_digest: str | None = None, local_game_id: str | None = None,
 ) -> Envelope:
-    """Build this agent's outbound/reply handshake envelope (D-06, D-46).
+    """Build this agent's outbound/reply handshake envelope (D-06, D-46, D-61/D-62).
 
-    The payload carries exactly the two documented keys when a scent digest
-    is given, and only DIGEST when it is not -- never a null placeholder.
+    The payload carries each optional key only when its value is given --
+    never a null placeholder, so an offer from a call site that has not
+    opted into a given lock reads identically to an old-style peer's.
     """
     payload = {HandshakeKey.DIGEST: local_digest}
     if local_scent_digest is not None:
         payload[HandshakeKey.SCENT_DIGEST] = local_scent_digest
+    if local_step0_digest is not None:
+        payload[HandshakeKey.STEP0_DIGEST] = local_step0_digest
+    if local_game_id is not None:
+        payload[HandshakeKey.GAME_ID] = local_game_id
     return Envelope(
         type=MessageType.HANDSHAKE, turn=HANDSHAKE_TURN, sender=local_role, payload=payload,
     )
