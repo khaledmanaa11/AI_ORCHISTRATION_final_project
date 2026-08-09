@@ -103,7 +103,12 @@ async def await_and_respond(ctx: AgentContext) -> tuple[Envelope | None, Technic
         return await next_protocol_message(ctx)
 
     current = ctx.machine.state
-    opponent_h_commit, verdict = await wait_for_opponent_commit(ctx, current)
+    # Captured BEFORE the wait and reused as this turn's single local
+    # authority: it is the log join key for the opponent's COMMIT (Gap 1)
+    # and the turn this side commits+reveals under. ctx.state cannot
+    # advance in between -- nothing here calls record_action/maybe_resolve.
+    turn = ctx.state.turn
+    opponent_h_commit, verdict = await wait_for_opponent_commit(ctx, current, turn)
     if verdict is not None:
         return None, verdict
 
@@ -124,7 +129,6 @@ async def await_and_respond(ctx: AgentContext) -> tuple[Envelope | None, Technic
     plan = plan_turn_deception(ctx, agent, pre_turn_state, dest) if ctx.language is not None else None
 
     intent = plan.intent.value if plan is not None else Intent.TRUTH.value
-    turn = ctx.state.turn
     h_commit, action_payload = commit_own_action(
         ctx, pre_cell=pre_cell, dest=dest, barrier=barrier, intent=intent, turn=turn,
     )

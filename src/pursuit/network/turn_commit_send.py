@@ -73,11 +73,28 @@ async def send_and_log(
     return None
 
 
-def log_received(ctx: AgentContext, envelope: Envelope, *, state_from: State, state_to: State) -> None:
+def log_received(
+    ctx: AgentContext, envelope: Envelope, *, state_from: State, state_to: State, local_turn: int,
+) -> None:
+    """Log an inbound envelope under THIS side's own turn number, never the
+    peer's declared `envelope.turn`.
+
+    The record's top-level `turn` is the join key the Final-Reveal audit
+    indexes on (`agent_audit_exchange.observed`), so it must be locally
+    authoritative: an adversarial peer that stamps its COMMIT and REVEAL
+    envelopes with disjoint turn numbers would otherwise empty the rule-36
+    coverage intersection AND route every entry into `audit.py`'s
+    trailing-commit exemption, defeating the D-67 check outright (found at
+    /gsd:verify-work 6, reproduced with paired controls -- see 06-UAT.md
+    Gap 1).
+
+    `envelope.to_dict()` is stored UNCHANGED, so whatever turn the peer
+    actually claimed stays on record as evidence -- the fix removes the
+    peer from the join key without destroying what the peer said."""
     append_event(
         ctx.log_path,
         turn_events.turn_record(
-            game_uid=ctx.game_uid, turn=envelope.turn, event="message_received", sender=ctx.role,
+            game_uid=ctx.game_uid, turn=local_turn, event="message_received", sender=ctx.role,
             state_from=state_from, state_to=state_to, envelope=envelope.to_dict(),
         ),
     )

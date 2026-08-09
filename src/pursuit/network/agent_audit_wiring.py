@@ -11,7 +11,6 @@ public entry points and D-61's game_id resolution policy.
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 from pursuit.constants import Outcome
 from pursuit.network.agent_audit_exchange import (
@@ -25,6 +24,7 @@ from pursuit.network.agent_context import AgentContext
 from pursuit.network.agent_wiring import AgentConfig
 from pursuit.network.handshake_evaluate import HandshakeResult
 from pursuit.network.secret_wiring import resolve_shared_secret
+from pursuit.network.turn_commit_ledger import ledger_path
 from pursuit.security import step0_collect, step0_sign
 from pursuit.security.audit import audit_peer_records
 from pursuit.security.ledger import CommitLedger
@@ -37,11 +37,6 @@ _LLM_NAME_UNKNOWN = "unspecified"
 # (03-05-SUMMARY.md) -- not a PARAMETERS.md value.
 _DECLARE_RETRIES = 3
 _DECLARE_BACKOFF_SECONDS = 0.1
-
-
-def _ledger_path(ctx: AgentContext) -> Path:
-    """D-64's `<log-file-stem>.ledger.jsonl` convention (see 06-02-SUMMARY.md)."""
-    return ctx.log_path.parent / f"{ctx.log_path.stem}.ledger.jsonl"
 
 
 async def declare_step0(cfg: AgentConfig) -> tuple[str, dict]:
@@ -103,7 +98,7 @@ async def run_final_audit(ctx: AgentContext) -> Outcome | None:
     `ctx.security.commit_reveal` is True, AFTER `run_turn_loop` returns --
     `ctx.machine` is already terminal; this function never calls
     `ctx.machine.attempt` again."""
-    own_records = CommitLedger(_ledger_path(ctx)).read_all()
+    own_records = CommitLedger(ledger_path(ctx)).read_all()
 
     send_verdict = await push_final_reveal(ctx, own_records)
     if send_verdict is not None:

@@ -43,6 +43,7 @@ from pursuit.network.event_log import append_event
 from pursuit.network.orchestrator import AgentContext, engine_agent
 from pursuit.network.state_machine import State
 from pursuit.network.turn_buffer import HintProtocolError, log_illegal
+from pursuit.network.turn_commit_send import technical_loss
 from pursuit.network.turn_language import choose_destination, known_opponent_cell
 from pursuit.network.turn_language_io import (
     compose_and_send_hint,
@@ -136,19 +137,19 @@ async def await_opponent_turn(ctx: AgentContext) -> Outcome | None:
         return turn_buffer.reject_peer_payload(ctx, reason=str(exc))
 
     if verdict is not None:
-        append_event(
-            ctx.log_path,
-            turn_events.technical_win_record(
-                game_uid=ctx.game_uid, turn=ctx.state.turn, sender=ctx.role,
-                retries_attempted=verdict.attempts, timeout_seconds=verdict.timeout_seconds,
-                reason=verdict.reason.value,
-            ),
-        )
-        ctx.machine.attempt(State.GAME_OVER)
-        return Outcome.TECHNICAL_LOSS
+        # Was an inline copy of turn_commit_send.technical_loss, byte-for-byte
+        # (same record, same GAME_OVER attempt, same return) -- extracted per
+        # the no-duplication rule rather than kept as a second copy.
+        return technical_loss(ctx, verdict)
 
     agent = engine_agent(move_envelope.sender)
     pre_cell = ctx.state.cop if agent == "cop" else ctx.state.thief
+    # Captured BEFORE record_action/maybe_resolve: maybe_resolve advances
+    # ctx.state.turn, and this is the join key the Final-Reveal audit
+    # indexes the opponent's REVEAL on. It must be the turn the action was
+    # actually played for, and it must be OUR number, not the peer's
+    # declared move_envelope.turn (06-UAT.md Gap 1).
+    observed_turn = ctx.state.turn
     ok, reason, move_cell, barrier_cell = decode_revealed_action(
         move_envelope.payload, pre_cell, ctx.state, ctx.params, composite=ctx.security.commit_reveal,
     )
@@ -160,7 +161,7 @@ async def await_opponent_turn(ctx: AgentContext) -> Outcome | None:
     append_event(
         ctx.log_path,
         turn_events.turn_record(
-            game_uid=ctx.game_uid, turn=ctx.state.turn, event="message_received", sender=ctx.role,
+            game_uid=ctx.game_uid, turn=observed_turn, event="message_received", sender=ctx.role,
             state_from=current, state_to=State.MY_TURN, envelope=move_envelope.to_dict(),
         ),
     )
