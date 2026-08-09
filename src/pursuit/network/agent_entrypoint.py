@@ -24,9 +24,13 @@ function stays a thin caller.
 from __future__ import annotations
 
 import secrets
+import time
 from pathlib import Path
 
+from fastmcp.exceptions import ToolError
+
 from pursuit.constants import Outcome
+from pursuit.network.agent_audit_exchange import record_technical_loss
 from pursuit.network.agent_audit_wiring import declare_step0, run_final_audit, write_declaration
 from pursuit.network.agent_lifecycle import default_context, shutdown_cleanly, start_server
 from pursuit.network.agent_wiring import load_agent_config
@@ -35,6 +39,7 @@ from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.orchestrator import run_turn_loop
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.tunnel_wiring import build_tunnel_manager, run_with_tunnel
+from pursuit.network.verdict import peer_protocol_verdict
 from pursuit.shared.scent_config import scent_digest
 
 
@@ -72,7 +77,16 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
             write_declaration(ctx, cfg, result, declaration_envelope)
             outcome = await run_turn_loop(ctx)
             if ctx.security.commit_reveal:
-                audit_outcome = await run_final_audit(ctx)
+                # Same containment as run_turn_loop's own (06-06): a peer
+                # that rejects our FINAL_REVEAL push must not kill this
+                # process on the way out, after the game already resolved.
+                audit_started = time.monotonic()
+                try:
+                    audit_outcome = await run_final_audit(ctx)
+                except ToolError as exc:
+                    audit_outcome = record_technical_loss(
+                        ctx, peer_protocol_verdict(exc, audit_started),
+                    )
                 if audit_outcome is not None:
                     outcome = audit_outcome
             return outcome

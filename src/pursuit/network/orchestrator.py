@@ -38,11 +38,16 @@ working with zero edits.
 
 from __future__ import annotations
 
+import time
+
+from fastmcp.exceptions import ToolError
+
 from pursuit.constants import Outcome
 from pursuit.network import turn_events
 from pursuit.network.agent_context import AgentContext, ChooseMove, Coord
 from pursuit.network.event_log import append_event
 from pursuit.network.state_machine import TERMINAL_STATES, State
+from pursuit.network.verdict import peer_protocol_verdict
 from pursuit.sdk import engine
 from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
@@ -57,6 +62,18 @@ def engine_agent(role: str) -> str:
         return "cop"
     if role == "thief":
         return "thief"
+    raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
+
+
+def opponent_role(role: str) -> str:
+    """The role this agent expects on every inbound envelope's `sender`
+    (06-06). Lives here beside `engine_agent` because this module already
+    owns the {"police","thief"} vocabulary -- adding the literals anywhere
+    else would be a second, driftable copy."""
+    if role == "police":
+        return "thief"
+    if role == "thief":
+        return "police"
     raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
 
 
@@ -82,6 +99,7 @@ async def run_turn_loop(ctx: AgentContext) -> Outcome | None:
     # modules are always already fully loaded. Mirrors shared/state.py's
     # own local-import precedent for the identical reason.
     from pursuit.network.turn_actions import await_opponent_turn, take_my_turn  # noqa: PLC0415
+    from pursuit.network.turn_commit_send import technical_loss  # noqa: PLC0415
 
     outcome: Outcome | None = None
     first, second = (
@@ -89,13 +107,26 @@ async def run_turn_loop(ctx: AgentContext) -> Outcome | None:
         if ctx.role == "police"
         else (await_opponent_turn, take_my_turn)
     )
-    while ctx.machine.state not in TERMINAL_STATES:
-        outcome = await first(ctx)
-        if outcome is not None or ctx.machine.state in TERMINAL_STATES:
-            break
-        outcome = await second(ctx)
-        if outcome is not None or ctx.machine.state in TERMINAL_STATES:
-            break
+    started = time.monotonic()
+    try:
+        while ctx.machine.state not in TERMINAL_STATES:
+            outcome = await first(ctx)
+            if outcome is not None or ctx.machine.state in TERMINAL_STATES:
+                break
+            outcome = await second(ctx)
+            if outcome is not None or ctx.machine.state in TERMINAL_STATES:
+                break
+    except ToolError as exc:
+        # The opponent's tool body REJECTED one of our calls. deadline.py
+        # re-raises ToolError on purpose (an application-level rejection is
+        # not a transport failure and must never be retried) -- but nothing
+        # above it used to catch it, so the process died by traceback with
+        # our nonces already ledgered and no FINAL_REVEAL sent, making US
+        # the side that published nothing (rule 36) on one line of their
+        # code. Ending through the existing technical-loss pathway instead
+        # keeps the terminal path -- and therefore the Final-Reveal audit
+        # that publishes our ledger -- intact. See 06-06.
+        outcome = technical_loss(ctx, peer_protocol_verdict(exc, started))
 
     if ctx.machine.state not in TERMINAL_STATES:
         ctx.machine.attempt(State.GAME_OVER)
