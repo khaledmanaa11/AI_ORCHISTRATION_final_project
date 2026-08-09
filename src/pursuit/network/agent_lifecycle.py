@@ -1,16 +1,25 @@
 """Per-agent startup/wiring/shutdown (NET-01, NET-02, NET-04, NET-09, D-01).
 
-`run_agent` is THE single per-agent entry point: load this agent's own config,
-build a fully-wired AgentContext, start its own FastMCP server, perform the
-outbound handshake, play the turn loop, then shut down cleanly. Every
-collaborator is constructed fresh, per call, into a new `AgentContext`
+This module builds a fully-wired `AgentContext` (`default_context`), starts
+its FastMCP server (`start_server`) and tears it down (`shutdown_cleanly`).
+Every collaborator is constructed fresh, per call, into a new `AgentContext`
 instance -- there is no shared object between the cop and the thief (NET-02).
 
-The small wiring closures (`RoleKey`, `load_role`, `make_transition_reporter`,
-`make_freeze_handler`, `make_handshake_responder`) live in `agent_wiring.py`;
-04-12's mover/scent/language wiring lives in `brain_wiring.py`. Both are
-split out at the 150-code-line gate and imported back so each stays
-reachable as `agent_lifecycle.<name>`.
+`run_agent` -- THE per-agent single entry point (load config, build the
+context, handshake, play the turn loop, shut down) -- now lives in
+`agent_entrypoint.py`, split out at the 150-code-line gate (it wraps its
+whole body in `tunnel_wiring.run_with_tunnel`, CLOUD-01: the tunnel starts
+BEFORE the runtime comes up and stops AFTER `shutdown_cleanly` returns when
+tunnel.json's domain env var is set; a transparent no-op, the default for
+every existing test/dev flow, when unset). `agent_entrypoint.py` imports
+`default_context`/`start_server`/`shutdown_cleanly` FROM this module, so
+`run_agent` is resolved back here lazily (PEP 562 `__getattr__`, the same
+one-directional-dependency fix `orchestrator.py`/`turn_actions.py` already
+uses) rather than an eager import that would be a genuine load-order
+circular import. The small wiring closures (`RoleKey`, `load_role`,
+`make_transition_reporter`, `make_freeze_handler`, `make_handshake_responder`)
+live in `agent_wiring.py`; 04-12's mover/scent/language wiring lives in
+`brain_wiring.py` -- both re-exported the same way.
 
 The inbound handshake responder is bound at CONSTRUCTION time (design note
 12): the responder must be handed to `PeerRuntime` before `start_server`
@@ -24,15 +33,13 @@ from __future__ import annotations
 import secrets
 from pathlib import Path
 
-from pursuit.constants import Outcome
-
 # AgentConfig/load_agent_config/load_role/make_freeze_handler/
 # make_handshake_responder/make_transition_reporter/engine_agent are
 # re-exported verbatim so `agent_lifecycle.<name>` keeps working for every
 # caller -- noqa: F401 on the re-export-only names.
 from pursuit.network.agent_wiring import (
     AgentConfig,  # noqa: F401
-    load_agent_config,
+    load_agent_config,  # noqa: F401
     load_role,  # noqa: F401
     make_freeze_handler,
     make_handshake_responder,
@@ -40,13 +47,11 @@ from pursuit.network.agent_wiring import (
 )
 from pursuit.network.brain_wiring import build_turn_collaborators
 from pursuit.network.config_hash import config_digest
-from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.language_wiring import LanguageRuntime
 from pursuit.network.orchestrator import (
     AgentContext,
     ChooseMove,
     engine_agent,  # noqa: F401
-    run_turn_loop,
 )
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
@@ -149,24 +154,17 @@ async def shutdown_cleanly(ctx: AgentContext) -> None:
     await ctx.runtime.stop()
 
 
-async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> Outcome | None:
-    """THE per-agent single entry point (NET-04, D-01): one process, one
-    orchestrator, one TurnStateMachine -- no referee, no shared state."""
-    cfg = load_agent_config(config_dir)
-    ctx = default_context(cfg, game_uid=game_uid)
-    ctx.watchdog.start()
-    await start_server(ctx)
-    try:
-        local_digest = config_digest(cfg.config_dir / "game_params.json")
-        local_scent_digest = scent_digest(cfg.scent)
-        async with ctx.runtime.client() as client:
-            result = await perform_handshake(
-                machine=ctx.machine, reporter=ctx.reporter, local_digest=local_digest,
-                local_role=ctx.role, call_peer=make_client_caller(client),
-                local_scent_digest=local_scent_digest,
-            )
-        if not result.agreed:
-            return None
-        return await run_turn_loop(ctx)
-    finally:
-        await shutdown_cleanly(ctx)
+def __getattr__(name: str):
+    """PEP 562 lazy re-export: `run_agent` is implemented in
+    `agent_entrypoint.py` (the 150-line split) and resolved here on first
+    EXTERNAL access, so `agent_lifecycle.run_agent` keeps working for every
+    caller (including `main.py`) without a load-time circular import --
+    `agent_entrypoint.py` imports `default_context`/`start_server`/
+    `shutdown_cleanly` FROM this module, so an eager import back here would
+    invert that one-directional dependency (same fix as
+    `orchestrator.py`/`turn_actions.py`)."""
+    if name == "run_agent":
+        from pursuit.network import agent_entrypoint
+
+        return agent_entrypoint.run_agent
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
