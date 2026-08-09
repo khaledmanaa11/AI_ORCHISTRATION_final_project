@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 6 PLAN 02 EXECUTED (bf5d6ff, 2026-08-09) -- turn_commit.py's D-58 both-locked Commit-Ack-Reveal exchange wired live into the turn loop (both roles), D-66/SEC-07 barrier-over-the-wire closed, MessageType.COMMIT/ACK/REVEAL/FINAL_REVEAL + tool handlers, AgentContext.security/commit_state. A real measured deadlock found and fixed (Rule 1): the plan's own literal unconditional await_and_respond reading hung a two-peer game 136s before a false technical loss; fixed with a ctx.role branch, now 1.15s. turn_commit.py needed a THIRD sibling (turn_commit_send.py) beyond the plan's two pre-authorized files. Toggle-off proven byte-equivalent; forced-barrier round-trip proven identical on both engines; jitter (duplicate ACK) proven tolerated. Full suite 1184 passed / 1 pre-existing timing flake (unrelated, passes in isolation), 96.07% coverage, ruff/line-limit/no-llm-in-strategy all clean. Knowledge graph NOT yet refreshed this plan (06-96 still pending). NEXT -- execute 06-03 (Step-0 + final audit: uv add psutil, step0 collect/sign, handshake third digest + game_id adoption D-61, FINAL_REVEAL exchange, audit verdicts, games-played counter).
-last_updated: "2026-08-09T17:40:00.000Z"
-last_activity: 2026-08-09 -- Phase 06 plan 02 executed (06-02: the D-58 wire protocol, wave 2 of 4, depends on 06-01). Task 1 (0711829): MessageType gains COMMIT/ACK/REVEAL/FINAL_REVEAL (nine members); tools.py gains the four matching handlers mirroring receive_hint's _accept pattern. Task 2 (fb7d46a): agent_context.py + commit_state.py split out of orchestrator.py/agent_lifecycle.py (both were AT the 150-line ceiling) -- AgentContext gains security: SecurityParams (required, no default) and commit_state: CommitTurnState (defaulted); agent_wiring.py's AgentConfig gains security, load_agent_config loads security.json; _fakes_agent.py's make_ctx gains an optional security= param defaulting commit_reveal=False so every pre-existing fake-driven test stays byte-equivalent with zero edits; three stale hardcoded 5-tool-name sets (test_peer_runtime.py, test_secret_channel.py, gate5_tunnel_smoke.py) fixed as Task-1 fallout caught by the full suite. Task 3 (22c75fc): turn_commit.py/turn_commit_wait.py/turn_commit_send.py (a THIRD sibling forced by the 150-line gate, mirroring the handshake.py/handshake_wire.py/handshake_evaluate.py precedent) -- initiate/await_and_respond/reveal_pending, the three D-58 entry points; turn_language.py's choose_destination now stashes Decision.barrier onto ctx.commit_state.chosen_barrier (D-66); turn_resolve.py's record_action gains an optional barrier (move XOR barrier) plus a new decode_revealed_action shape-aware receive-side helper; turn_actions.py rewired to branch take_my_turn on ctx.commit_state.pending_action. A REAL MEASURED DEADLOCK found and fixed here: await_and_respond needed a ctx.role branch (police already committed+revealed via initiate() by the time its own await_opponent_turn runs) -- the plan's own literal unconditional reading hung a real two-peer game 136.00s before a false technical loss; fixed, re-measured 1.15s. test_turn_lifecycle.py's GATE-3 single-sided harness opted out via security.commit_reveal=False (its own pre-existing LIMITATION note: peer B's turn loop never runs, structurally incompatible with a real D-58 handshake). Task 4 (bf5d6ff): test_commit_reveal_protocol.py (+_barrier +_jitter, split at the 150-line gate) proves the full protocol on a REAL two-peer game -- commit/ack/reveal types present, zero move-typed envelopes, zero nonce text in the wire log, a matching ledger record count, the both-locked-gate ordering (REVEAL sent strictly after opponent's COMMIT received, every turn), a forced one-shot barrier round-tripping identically on both engines, toggle-off byte-equivalence, and duplicate-ACK jitter tolerance (hand-rolled two-peer wiring since play_two_peer_game's wire= hook runs before runtime.client is assigned). test_gate4.py's _moves()/intent-order test and test_language_pipeline.py's inline check/_replay_from_log fixed exactly per critical_correctness_3 (split into test_language_pipeline_replay.py at the 150-line gate); the identity-based intent-before-text check verified via a throwaway probe to still catch a real violation before being left in place. Rule-2 coverage-closing tests added for every new technical-loss branch (test_turn_commit_initiate_failures.py, test_turn_commit_respond_failures.py, test_turn_resolve.py) plus a shared FailAfterClient fake. All 4 tasks committed atomically, pre-commit hook passing every time, never bypassed. 06-02-SUMMARY.md written carrying turn_commit.py's exact signatures, PendingAction/CommitTurnState's shape, the composite action dict shape, and the ledger filename convention verbatim for 06-03. Self-check PASSED (all 15 files + 4 commit hashes verified present). NOTHING TICKED anywhere -- ROADMAP.md Phase 6 checkboxes left unchecked, docs/phases/phase-6/TODO.md not yet created (06-97's job, still pending for this phase). Knowledge graph refresh (06-96) still pending -- not run this plan.
+stopped_at: PHASE 6 PLAN 03 EXECUTED (be75519, 2026-08-09) -- Step-0 declaration auto-collect+sign (D-62/D-63), the handshake's third digest (D-62, CORRECTED to presence-only -- a literal SCENT_DIGEST-style equality check would abort every real two-role game), D-61 game_id negotiation via HandshakeResult.peer_game_id, and the D-67 Final-Reveal mutual audit wired live into run_agent (agent_audit_wiring.py + agent_audit_exchange.py). Both D-67 tamper classes proven end to end (payload/hash tamper, and the hash-verifies-but-action-differs bypass). agent_lifecycle.py needed editing (Rule 3, not pre-authorized) to thread Step-0 into the real responder path. Full suite 1218 passed / 1 pre-existing timing flake (unrelated, passes in isolation), 96.24% coverage, ruff/line-limit/no-llm-in-strategy all clean, state_machine.py untouched. Knowledge graph NOT yet refreshed (06-96 still pending). NEXT -- execute 06-04 (GATE-6 measurement + docs: measure_gate6.py should drive run_agent directly, the tamper proof is already committed, GATE-6-MEASUREMENT.md, docs/PRD_commit_reveal.md, graph refresh).
+last_updated: "2026-08-09T15:34:19.000Z"
+last_activity: 2026-08-09 -- Phase 06 plan 03 executed (06-03: Step-0 + Final-Reveal mutual audit, wave 3 of 4, depends on 06-02). Task 1 (54048e3): uv add psutil; step0_collect.py's collect_declaration gathers the full book Sec5.5 field set (OS/CPU/RAM via platform+psutil, GPU best-effort via nvidia-smi subprocess with an honest not-detected on any failure, LLM name/code version/team code/games-played-so-far, exact git commit hash via subprocess, raising loudly on failure) plus read_games_played/record_game_played over durable_write's crash-safe pair (rule 37/38); step0_sign.py's digest_declaration/sign_declaration/verify_declaration (D-62 -- digest always, HMAC only when a shared secret exists, explicit signed:false never silently verified). Task 2 (7bb130b): HandshakeKey.STEP0_DIGEST/GAME_ID extend build_offer's payload the same omit-dont-null way SCENT_DIGEST does; HandshakeOutcome.STEP0_MISMATCH aborts before move 1 via the SAME State.ERROR seam (state_machine.py untouched); HandshakeResult.peer_game_id read unconditionally (D-61). A REAL DESIGN CORRECTION (Rule 1) made here: the plan's own literal text specified comparing local vs remote step0 digest for EQUALITY via compare_named_digest, mirroring SCENT_DIGEST -- but a Step-0 declaration is inherently per-agent (digests role among other fields), so two different roles' declarations can never hash equal; implementing this literally would abort EVERY real two-role game the instant both sides opt in. Fixed: _step0_present() checks PRESENCE only, matching rule 24's actual failure mode (Step-0 never ran on the peer's side). test_handshake_step0.py's own load-bearing D-61 test uses deliberately different local_game_id values on both sides, proving negotiation genuinely resolves to the initiator's value. Task 3 (ed48ee4): audit.py's audit_peer_records/AuditRecord/all_matched -- three ordered checks per turn (observed commit present, re-hash matches H_commit, revealed action equals what THIS side actually saw played in-game); TechnicalWinReason.AUDIT_HASH_MISMATCH and EventType.AUDIT_VERDICT added (both additive). Unit tests prove BOTH D-67 tamper classes distinctly: a flipped payload field fails the hash check, and -- the D-67 case itself -- hash/payload left completely untouched (independently confirmed still verifies) but the claimed action differs from what was actually played, caught by check 3 alone. Task 4 (be75519): agent_audit_wiring.py (declare_step0/write_declaration/run_final_audit) + agent_audit_exchange.py (a THIRD sibling, pre-authorized: FINAL_REVEAL push/receive via the existing call_with_retry ladder, observed-history extraction from the wire log, verdict recording reusing the EXISTING TechnicalWin dataclass, never a parallel verdict type) wired into agent_entrypoint.run_agent's three new call sites -- stays a thin caller. agent_lifecycle.py ALSO needed editing (Rule 3, not pre-authorized in this plan's files list): default_context had to thread local_step0_digest/local_game_id into make_handshake_responder, the SAME seam local_scent_digest already uses, or Step-0 would never reach the real inbound responder path. tests/unit/test_agent_entrypoint.py fixed for the new call-site fallout (Rule 3). games_played.json gitignored (mutable per-role runtime counter, not fixed config). Full real two-peer integration proof: declaration files land on both sides sharing the game_id BEFORE any move content is logged, a clean game's audit_verdict record shows matched:true on both sides, and BOTH D-67 tamper classes are caught live -- corrupting police's own ledger payload makes thief's audit fail (AND police's own self-audit also fails, symmetric honesty proven, not just asserted) while corrupting only what thief itself observed played in-game (ledger/hash left genuinely untouched, independently confirmed) fails via check 3 specifically, proving the hash-only bypass is genuinely closed. Rule-2 coverage-closing tests added for every new module's untested branch (agent_audit_exchange.py/agent_audit_wiring.py/step0_collect.py all reach 100%). All 4 tasks committed atomically, pre-commit hook passing every time, never bypassed. 06-03-SUMMARY.md written carrying the declaration filename convention, HandshakeResult.peer_game_id contract, and the AuditRecord shape verbatim for 06-04. Self-check PASSED (all 13 files + 4 commit hashes verified present). NOTHING TICKED anywhere -- ROADMAP.md Phase 6 checkboxes left unchecked, docs/phases/phase-6/TODO.md not yet created. Knowledge graph refresh (06-96) still pending -- not run this plan. handshake_evaluate.py (149/150) and agent_wiring.py (146/150) now have essentially no line-count margin left, flagged for 06-04.
 progress:
   total_phases: 8
   completed_phases: 3
@@ -25,19 +25,20 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 06 (security-and-cryptography) — EXECUTING (2 of 4 plans code+test
-  complete: 06-01, 06-02. See
-  .planning/phases/06-security-and-cryptography/06-02-SUMMARY.md.
-  06-02 wires the D-58 both-locked Commit-Ack-Reveal exchange live into
-  the turn loop (both roles) and closes D-66/SEC-07 (barrier placement
-  over the wire). A real measured deadlock in the plan's own literal
-  await_and_respond spec was found and fixed (Rule 1) -- see SUMMARY for
-  the full trace. NEXT: execute 06-03 (Step-0 + final audit -- uv add
-  psutil, step0 collect/sign, handshake third digest + game_id adoption
-  D-61, FINAL_REVEAL exchange, audit verdicts through the TechnicalWin
-  pathway, games-played counter), which depends on 06-02's shipped
-  turn_commit.py signatures and ledger convention.)
-Plan: 2 of 4 (06-01, 06-02 done; 06-03, 06-04 remain)
+Phase: 06 (security-and-cryptography) — EXECUTING (3 of 4 plans code+test
+  complete: 06-01, 06-02, 06-03. See
+  .planning/phases/06-security-and-cryptography/06-03-SUMMARY.md.
+  06-03 delivers Step-0 (auto-collected declaration, digest-always/HMAC-
+  when-secret signing, verified for PRESENCE at handshake -- a corrected,
+  documented departure from a literal SCENT_DIGEST-style equality read)
+  and the D-67 Final-Reveal mutual audit, both wired live into
+  agent_entrypoint.run_agent. Both D-67 tamper classes proven end to end.
+  NEXT: execute 06-04 (GATE-6 measurement + docs -- measure_gate6.py can
+  drive run_agent directly since 06-03 already wired the full flow; the
+  tamper-harness proof is already committed; GATE-6-MEASUREMENT.md,
+  docs/PRD_commit_reveal.md, graph refresh), which depends on 06-03's
+  shipped agent_audit_wiring.py contracts.)
+Plan: 3 of 4 (06-01, 06-02, 06-03 done; 06-04 remains)
 
 Phase 05 (cloud-exposure-and-tunneling) status carried forward unchanged:
   EXECUTED, NOT VERIFIED (all 3 plans code+test complete). GATE-5 (book
@@ -74,6 +75,52 @@ Phase 05 (cloud-exposure-and-tunneling) status carried forward unchanged:
   Knowledge graph refreshed (6035 nodes/10756 edges/384 communities). Nothing
   ticked anywhere. Purely additive -- zero wiring into turn_actions.py,
   handshake, or any existing network file (that is 06-02/06-03's scope).
+
+06-03 delivered: Step-0 declaration auto-collect+sign (D-63/D-62) and the
+  D-67 Final-Reveal mutual audit, both wired live into run_agent.
+  src/pursuit/security/step0_collect.py (collect_declaration -- full book
+  Sec5.5 field set, platform+psutil for OS/CPU/RAM, best-effort nvidia-smi
+  for GPU with an honest not-detected on any failure, git rev-parse HEAD
+  for the commit hash raising loudly on failure; read_games_played/
+  record_game_played over durable_write's crash-safe pair, rule 37/38) +
+  step0_sign.py (digest_declaration/sign_declaration/verify_declaration --
+  digest always, HMAC only when a shared secret exists, explicit
+  signed:false never silently verified). src/pursuit/security/audit.py
+  (audit_peer_records/AuditRecord/all_matched -- D-67's three ordered
+  checks: observed commit present, re-hash matches H_commit, revealed
+  action equals what THIS side actually saw played in-game; the SAME
+  function also runs as the symmetric self-check). Handshake gains a third
+  digest slot (HandshakeKey.STEP0_DIGEST/GAME_ID, HandshakeOutcome.
+  STEP0_MISMATCH, HandshakeResult.peer_game_id) -- state_machine.py
+  untouched. A REAL DESIGN CORRECTION found and fixed (Rule 1): the plan's
+  own literal text specified an EQUALITY comparison for step0 (mirroring
+  SCENT_DIGEST), which would abort every real two-role game the instant
+  both sides opt in, since a Step-0 declaration is inherently per-agent
+  (digests role among other fields) -- corrected to a PRESENCE check,
+  documented prominently in source and the SUMMARY. src/pursuit/network/
+  agent_audit_wiring.py (declare_step0/write_declaration/run_final_audit)
+  + agent_audit_exchange.py (a THIRD sibling, pre-authorized: FINAL_REVEAL
+  push/receive, observed-history extraction, verdict recording reusing the
+  EXISTING TechnicalWin dataclass) wired into agent_entrypoint.run_agent's
+  three new call sites -- stays a thin caller. agent_lifecycle.py ALSO
+  needed editing (Rule 3, not pre-authorized in this plan's files list):
+  default_context threads local_step0_digest/local_game_id into
+  make_handshake_responder, the same seam local_scent_digest already uses.
+  Full real two-peer integration proof: declaration files land on both
+  sides sharing the game_id BEFORE any move content is logged, a clean
+  game's audit_verdict shows matched:true on both sides, and BOTH D-67
+  tamper classes are caught live (a corrupted ledger payload fails the
+  OTHER side's audit AND the tampering side's own self-audit; corrupting
+  only what the other side actually observed played in-game -- ledger/hash
+  independently confirmed still verifying -- fails via check 3 alone,
+  proving the hash-only bypass is genuinely closed). Rule-2 coverage-
+  closing tests close every new module to 100%. Full suite 1218 passed
+  (+34 vs the 1184 baseline), 1 pre-existing timing flake (unrelated,
+  confirmed passes in isolation), 96.24% coverage (+0.17pp), ruff/line-
+  limit/no-llm-in-strategy all clean. Knowledge graph refresh (06-96)
+  still pending -- not run this plan. Nothing ticked anywhere.
+  handshake_evaluate.py (149/150) and agent_wiring.py (146/150) now have
+  essentially no remaining line-count margin, flagged for 06-04.
 
 06-02 delivered: the D-58 both-locked Commit-Ack-Reveal exchange, wired
   live into the turn loop for both roles, plus D-66/SEC-07's barrier-over-
@@ -450,6 +497,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 05-cloud-exposure-and-tunneling P02 | ~30min | 3 tasks | 11 files |
 | Phase 05-cloud-exposure-and-tunneling P03 | ~35min | 3 tasks | 7 files |
 | Phase 06 P02 | 100min | 4 tasks | 33 files |
+| Phase 06 P03 | 50min | 4 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -746,6 +794,7 @@ Recent decisions affecting current work:
 - [Phase 06-02]: D-58 role branch (Rule 1 bug fix, measured): await_and_respond checks ctx.role -- the fixed first-mover already committed+revealed this turn, so it only waits for the opponent's REVEAL, never decides again (a naive unconditional reading hung a real game 136s before a false technical loss)
 - [Phase 06-02]: D-66/SEC-07 closed: barrier placement travels over the wire inside the committed composite {move,barrier} action dict for the first time; toggle-off (security.commit_reveal=false) proven byte-equivalent to pre-Phase-6 by a dedicated integration test
 - [Phase 06-02]: turn_commit.py needed a third sibling (turn_commit_send.py) beyond the plan's two pre-authorized files -- mirrors the already-cited handshake.py/handshake_wire.py/handshake_evaluate.py 3-file precedent
+- [Phase 06]: D-62 corrected: Step-0's handshake digest is a presence check, never equality -- a literal SCENT_DIGEST-style comparison would abort every real two-role game
 
 ### Pending Todos
 
