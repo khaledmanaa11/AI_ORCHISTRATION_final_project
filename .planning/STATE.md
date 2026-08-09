@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-13 (docs -- rules-resolution note, three per-mechanism PRDs, phase triplet, graph refresh). Phase 4 wave 7 (04-13) is now fully done. Wave 8 (04-14, GATE-4 measurement) is next and is the phase's last plan.
-last_updated: "2026-08-09T03:24:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 7 completed (04-13 documentation: RULES-RESOLUTION-LANG.md quoting both sides of the Sec5.3.2/Sec6.4 contradiction with book+PDF pages verified directly against the PDF, three per-mechanism PRDs, the phase-4 doc triplet, STRATEGY.md's three Phase-4 TBDs filled, ROADMAP.md's real 14-plan list, and a programmatically-verified knowledge-graph layering check -- zero source code touched, zero boxes ticked, ticking deferred to verify-work after 04-14)
+stopped_at: Completed 04-14 (GATE-4 measurement script + mocked run + frozen CI test). Phase 4 is now 14/14 plans code+docs+test complete. GATE-4's three Sec10.4 criteria are MEASURED and PASSING in --mocked mode; the plan's own D-32 live-API requirement is PENDING, blocked on ANTHROPIC_API_KEY absent on this machine. Do NOT run /gsd:verify-work 4 until a human reruns --live and updates GATE-4-MEASUREMENT.md's Live status section.
+last_updated: "2026-08-09T04:20:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 8 completed (04-14 GATE-4 measurement: scripts/measure_gate4.py -- seeded two-peer runner reusing 04-12's play_two_peer_game, --mocked (recorded-response provider, no key) and --live (real AnthropicProvider, refuses to attempt anything when the key is absent) modes; docs/phases/phase-4/GATE-4-MEASUREMENT.md quotes all three Sec10.4 criteria verbatim from ROADMAP.md with a measured number, method and verdict each, all PASS in mocked mode, belief-on/off comparison reported honestly including a methodological caveat rather than smoothed over; tests/integration/test_gate4.py freezes the structural absolutes (hint every turn, zero outgoing coordinates, intent-before-text, handshake digest match) as a mocked, no-key, no-network CI test, empirically verified via a throwaway probe to actually catch a hint-removal regression. Zero boxes ticked anywhere. Full suite 1051 passed, 95.21% coverage, ruff/line-limit/no-llm-in-strategy all clean)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 36
+  completed_plans: 37
   percent: 32
 ---
 
@@ -25,13 +25,66 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 04 (language-and-scent) — EXECUTING
-Plan: 13 of 14 (waves 1–7 done: 04-01..04-13; wave 7 now FULLY COMPLETE —
-  see .planning/phases/04-language-and-scent/04-13-SUMMARY.md.
-  Next: 04-14 (GATE-4 measurement against the live API), starting wave 8 --
-  the phase's last plan. Do not run /gsd:verify-work 4 before 04-14 lands.
-  Resume point: .planning/phases/04-language-and-scent/RESUME.md, not yet
-  updated by 04-13 -- read this STATE.md entry as authoritative until it is)
+Phase: 04 (language-and-scent) — EXECUTING (all 14 plans code+docs+test
+  complete; GATE-4 MOCKED-measured and PASSING; NOT YET VERIFIED)
+Plan: 14 of 14 (all 8 waves done: 04-01..04-14; wave 8 (04-14, GATE-4
+  measurement) now COMPLETE — see
+  .planning/phases/04-language-and-scent/04-14-SUMMARY.md.
+  docs/phases/phase-4/GATE-4-MEASUREMENT.md measures all three Sec10.4
+  criteria in --mocked mode: all PASS. The plan's own D-32 requirement (a
+  real API game) is PENDING, blocked on ANTHROPIC_API_KEY absent on every
+  machine this phase has run on so far. Per rule 38 and 04-14's own
+  must_haves: **do not run /gsd:verify-work 4** until a human reruns
+  `ANTHROPIC_API_KEY=... uv run python scripts/measure_gate4.py --live`
+  and updates GATE-4-MEASUREMENT.md's Live status section from that real
+  run — mocked numbers must never be presented as live ones.
+  Resume point: .planning/phases/04-language-and-scent/RESUME.md, updated
+  by this session)
+
+04-14 delivered: scripts/measure_gate4.py + 7 helper modules (gate4_games,
+  gate4_beliefspy, gate4_scent, gate4_mockprovider, gate4_fixtures,
+  gate4_report, gate4_runner) -- a seeded two-peer GATE-4 runner reusing
+  04-12's tests/integration/two_peer_game.play_two_peer_game (RESUME.md
+  carry-over W) rather than hand-rolling a second harness. --mocked (the
+  default, no key, reproducible: two runs with GATE4_SEEDS = (30260801,
+  30260802, 30260803) produce byte-identical criterion numbers, verified
+  by diff) feeds tests/fixtures/hints_{en,he}.json's own recorded
+  responses through a provider that never touches a network; --live
+  refuses to attempt ANYTHING when ANTHROPIC_API_KEY is absent, verified
+  by actually invoking it and confirming zero network calls plus a clean
+  PENDING JSON. Criterion 1 (hint -> inference) is measured by spying
+  BeliefAdapter.decide -- the real, UNMODIFIED method -- reading
+  self.belief.posterior() before/after each call (22/136 turns carried
+  evidence, mean L1 posterior shift 1.171 on exactly those turns).
+  Criterion 2 (scent decay, locked) drives the shipped ScentField/scent.py
+  with the loaded scent.json directly (max deviation 1.11e-16 from the
+  closed form over 12 turns) since 04-12 never logs a per-turn scent
+  snapshot to the JSONL, plus a real scent_digest() comparison (both
+  peers hash to c0e6322..., matching 04-01/RESUME.md's own wave-1 record).
+  Criterion 3 (hint every turn) reads the police-side JSONL directly:
+  68/68 turns carried a hint, max 11 words (limit 15), both intents
+  occurred (55 lie / 13 truth), zero outgoing coordinate leaks across
+  hint text AND move payloads, intent-before-text proven STRUCTURALLY
+  (compose_outgoing requires plan.intent as a positional argument, so no
+  call can exist without it) rather than by a log timestamp the JSONL
+  does not carry. docs/phases/phase-4/GATE-4-MEASUREMENT.md quotes all
+  three ROADMAP.md criteria verbatim with these numbers and PASS
+  verdicts, reports decode-fixture accuracy 1.0/1.0 EN/HE (explicitly
+  labelled a re-validation-logic check, not a live-model proof), and
+  reports the belief-on/off comparison HONESTLY: measured 1.0 vs 0.0 cop
+  win rate does NOT match Outline Sec1's "no gain" prediction, and the
+  doc explains why rather than smoothing it over -- belief.enabled=false's
+  own fallback path (turn_language.py, pre-dating D-48/D-43) hands the
+  raw brain the omniscient TRUE opponent cell, not a blind one, so the
+  comparison is confounded and the honesty clause's actual claim was not
+  cleanly tested. tests/integration/test_gate4.py freezes the structural
+  absolutes (handshake digest match, hint every turn + zero coordinates,
+  intent-before-text via a live call-order spy) as 3 mocked, no-key,
+  no-network tests; empirically verified via a throwaway (discarded)
+  probe that silencing one side's hint channel trips the exact assertion
+  this suite makes. NOTHING TICKED anywhere. Full suite 1051 passed
+  (1048 + 3), 95.21% coverage, ruff/line-limit/no-llm-in-strategy all
+  clean.
 
 04-13 delivered: docs/phases/phase-4/RULES-RESOLUTION-LANG.md (both sides of
   the Sec5.3.2 per-turn-Reveal vs Sec6.4 blindness contradiction, quoted with
@@ -451,6 +504,30 @@ Recent decisions affecting current work:
   node/edge data, not by reading the rendered GRAPH_REPORT.md: zero violations
   either direction
 
+- [Phase 04-14]: GATE-4 measured mocked, PASSING on all three Sec10.4
+  criteria; live confirmation PENDING (no ANTHROPIC_API_KEY on this
+  machine). The scent decay law (criterion 2) is verified by driving the
+  shipped ScentField/scent.py directly with the locked config, NOT mined
+  from the network JSONL -- 04-12 never logs a per-turn scent snapshot,
+  only belief entropy/argmax/reliability, so "extracted from the event
+  log" for this one criterion means "the same production objects a real
+  game mutates", not literally a JSONL field. "Intent committed before
+  text" (criterion 3) is likewise a STRUCTURAL proof (compose_outgoing
+  requires the already-decided DeceptionPlan as a positional argument),
+  not a timestamp diff, since the JSONL fuses text+intent into one record
+  once both exist. Both deviations from a literal "read it off the JSONL"
+  reading are documented in GATE-4-MEASUREMENT.md and are stronger
+  guarantees than a log-timestamp comparison would give, not weaker ones.
+  The belief-on/off comparison surfaced a genuine, unplanned finding:
+  network/turn_language.py's belief.enabled=false fallback (pre-dating
+  D-48/D-43) hands the raw brain the TRUE current opponent cell, not a
+  blind one -- so it measures "belief vs omniscience", not "belief vs
+  blindness", and the measured 1.0/0.0 win-rate gap is reported with that
+  caveat rather than read as evidence about the belief layer's value.
+  Anthropic's published Haiku 4.5 rate ($1/$5 per MTok input/output,
+  scripts/gate4_report.py) is cited, not sourced from PARAMETERS.md --
+  flagged for reconfirmation before Phase 7's league spend email.
+
 ### Pending Todos
 
 - 03-13..03-16 in `docs/phases/phase-3/TODO.md` (pre-flight assertions, cycle-based eval +
@@ -468,6 +545,10 @@ Recent decisions affecting current work:
 - ~~Team code (SUB-06)~~ **Decided: `khm-mn17`** (08-CONTEXT.md); per-game config naming still a league prerequisite
 - Reporting (REPORT-01) is submission-critical: a missing/contradictory report zeroes both teams
 - League opponents must be contacted early (this week) — scored games realistically Aug 11–12 post-exam
+- **GATE-4 live confirmation (D-32) is blocked on `ANTHROPIC_API_KEY`** — not set on any machine
+  this phase has run on. Phase 4 cannot be declared fully measured, and `/gsd:verify-work 4` must
+  not run, until a human sets the key and runs `uv run python scripts/measure_gate4.py --live`,
+  then updates `docs/phases/phase-4/GATE-4-MEASUREMENT.md`'s Live status section from that run.
 
 ## Deferred Items
 
