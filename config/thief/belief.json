@@ -5,5 +5,12 @@
     "epsilon": 0.05,
     "age_cap": 5,
     "freshness_decay": 0.75
+  },
+  "reliability": {
+    "prior": 0.5,
+    "r_min": 0.05,
+    "r_max": 0.95,
+    "contradiction_step": 0.3,
+    "recovery_rate": 0.05
   }
 }
