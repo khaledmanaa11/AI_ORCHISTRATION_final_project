@@ -102,6 +102,55 @@ async def test_tamper_b_the_d67_case_hash_verifies_but_action_differs(tmp_path, 
     assert final_a is not Outcome.TECHNICAL_LOSS
 
 
+async def test_tamper_e_a_skewed_reveal_turn_stamp_no_longer_hides_a_d67_forgery(
+    tmp_path, monkeypatch,
+):
+    """06-05 Gap 1, at the integration level: tamper (b)'s forgery PLUS the
+    turn-skew that used to hide it.
+
+    Before 06-05 the audit keyed its evidence on the peer's own declared
+    `envelope.turn`, so relabelling the REVEAL envelope sent the entry down
+    audit.py's trailing-commit exemption and the D-67 check never ran. The
+    record's own turn is ours, so the forgery must still be caught."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    cfg_a, cfg_b = load_agent_config("config/police"), load_agent_config("config/thief")
+    outcome_a, outcome_b, ctx_a, ctx_b = await _play_to_turn_loop_end(
+        cfg_a, cfg_b, game_uid="step0-audit-tamper-e", log_dir=tmp_path,
+    )
+
+    genuine = json.loads(_ledger_path(ctx_a).read_text(encoding="utf-8").splitlines()[0])
+    assert commit_pack.verify_reveal(genuine["h_commit"], **genuine["payload"]) is True
+
+    b_events = _events(ctx_b.log_path)
+    # Located by the RECORD's own turn -- B's local truth -- precisely
+    # because the envelope's turn is about to become a lie.
+    reveal_index = next(
+        i for i, e in enumerate(b_events)
+        if e["event"] == "message_received"
+        and e.get("envelope", {}).get("type") == "reveal"
+        and e["turn"] == genuine["turn"]
+    )
+    move = b_events[reveal_index]["envelope"]["payload"]["move"]
+    other_direction = "south" if move["direction"] != "south" else "north"
+    b_events[reveal_index]["envelope"]["payload"] = {
+        **b_events[reveal_index]["envelope"]["payload"],
+        "move": {**move, "direction": other_direction},
+    }
+    # The skew itself: A claims this reveal belonged to a turn far away.
+    b_events[reveal_index]["envelope"]["turn"] = 1001
+    _write_events(ctx_b.log_path, b_events)
+
+    final_a, final_b = await _run_audit_and_merge(outcome_a, outcome_b, ctx_a, ctx_b)
+
+    assert final_b is Outcome.TECHNICAL_LOSS
+    verdict_b = [e for e in _events(ctx_b.log_path) if e["event"] == "audit_verdict"][-1]
+    mismatches = [r for r in verdict_b["peer_audit"] if not r["matched"]]
+    assert mismatches and any("D-67" in r["detail"] for r in mismatches), (
+        f"the skew hid the forgery: {[r['detail'] for r in verdict_b['peer_audit']]}"
+    )
+    assert final_a is not Outcome.TECHNICAL_LOSS
+
+
 async def test_tamper_d_truncated_final_reveal_records_fail_the_coverage_check(
     tmp_path, monkeypatch,
 ):
