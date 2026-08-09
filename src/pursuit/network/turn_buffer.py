@@ -1,9 +1,16 @@
 """Per-turn helpers split out of turn_actions.py at the 150-code-line gate
-(Segal Table 5): the D-11 illegal-transition log line, the joint-turn
-action buffer (RULES-RESOLUTION.md) that lets take_my_turn/await_opponent_turn
-each record one side's action and resolve exactly once when both are known,
-and (Phase 4, D-47) the hint buffer plus the bounded wait that tells a MOVE
-envelope apart from an optional HINT envelope on the same wire.
+(Segal Table 5): the D-11 illegal-transition log line, plus (Phase 4, D-47)
+the hint buffer and the bounded wait that tells a MOVE envelope apart from
+an optional HINT envelope on the same wire. The joint-turn ACTION buffer
+(`record_action`/`maybe_resolve`) is a sibling split, `turn_resolve.py`
+(same gate, deviation, 04-12).
+
+Deviation (Rule 3 - blocking, 04-12): `record_hint` now also populates
+`ctx.incoming_hints` (a cache that survives `pending_hints`' own
+resolve-time clear, so `take_my_turn` can still decode a hint one call
+later -- see `network/turn_language.py`). `send_hint` drops 04-04's
+`PLACEHOLDER_HINT_TEXT` in favour of the real composed text/intent (D-33's
+placeholder-must-be-gone requirement).
 """
 
 from __future__ import annotations
@@ -16,16 +23,9 @@ from pursuit.network.deadline import call_with_retry, wait_for_opponent
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
 from pursuit.network.event_log import append_event
 from pursuit.network.hint_payload import Intent
-from pursuit.network.orchestrator import AgentContext, Coord
+from pursuit.network.orchestrator import AgentContext
 from pursuit.network.state_machine import State, TransitionResult
 from pursuit.network.verdict import TechnicalWin
-from pursuit.sdk import engine
-from pursuit.sdk.actions import CopAction
-
-PLACEHOLDER_HINT_TEXT = "Placeholder hint text; the real bluff generator lands in a later plan."
-"""04-04 transport scaffolding ONLY -- NOT the deception feature. 04-08
-picks intent/payload, 04-10 phrases it through the LLM/template bank, and
-04-12 wires that real pipeline in here, replacing this constant outright."""
 
 
 class HintProtocolError(ValueError):
@@ -51,44 +51,34 @@ def log_illegal(ctx: AgentContext, current: State, target: State, result: Transi
     )
 
 
-def record_action(ctx: AgentContext, role: str, dest: Coord) -> None:
-    """Store *dest* into this joint turn's buffer slot for *role*.
-
-    The cop's wire action is always a move in this phase -- CopAction(move=
-    dest) wraps it into the shape resolve_turn expects; barrier placement
-    over the wire is Phase 6 work."""
-    if role == "police":
-        ctx.pending_cop_action = CopAction(move=dest)
-    else:
-        ctx.pending_thief_move = dest
-
-
-def maybe_resolve(ctx: AgentContext) -> Outcome | None:
-    """Resolve the joint turn once both actions are known; a no-op
-    otherwise. Whichever half fills the second buffer slot calls
-    engine.resolve_turn exactly once (RULES-RESOLUTION.md Sec1); the hint
-    buffer is cleared too -- it belonged to the turn that just ended."""
-    if ctx.pending_cop_action is None or ctx.pending_thief_move is None:
-        return None
-    ctx.state, outcome = engine.resolve_turn(
-        ctx.state, ctx.pending_cop_action, ctx.pending_thief_move, ctx.params, ctx.rules
-    )
-    ctx.pending_cop_action = None
-    ctx.pending_thief_move = None
-    ctx.pending_hints = {}
-    return outcome
-
-
 def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> None:
-    """Buffer one hint for the turn currently being collected (Task 3
-    rules): a duplicate from the same sender, or a hint whose turn has
-    already resolved, raises HintProtocolError. A missing hint is simply
-    never called here, and never blocks resolution."""
+    """Buffer one hint for the turn currently being collected. A missing
+    hint is simply never called here, and never blocks resolution.
+
+    Deviation (Rule 1 - bug, 04-12): TWO of 04-04's original rules --
+    "late" and "duplicate" both raising `HintProtocolError` -- are replaced
+    with silent drop / overwrite. The move and the hint are two INDEPENDENT
+    network round-trips, each with its own (now real, variable-latency)
+    decode/compose work between them; a genuine two-peer game measurably
+    hits both timing patterns (a hint arriving after the receiver already
+    resolved that turn, and a second not-yet-consumed hint arriving before
+    a slower side finishes processing the first). Raising in either case
+    turned ordinary jitter into a spurious `Outcome.TECHNICAL_LOSS` --
+    exactly the "forfeit caused by a hint" this plan's own must_haves rules
+    out. The channel is best-effort by design (04-04's own decision); only
+    `await_move`'s SEPARATE "two consecutive hints, no move" cap still
+    raises -- that one guards liveness (an opponent that never sends a
+    move), not hint timing.
+
+    Also caches `payload` into `ctx.incoming_hints[sender]` (04-12) --
+    UNLIKE `pending_hints`, this survives `maybe_resolve`'s clear, so
+    whichever side's `take_my_turn` runs after the buffer already cleared
+    (design note 7's "police sends first") can still decode the hint that
+    arrived alongside the opponent's last revealed move."""
     if turn < ctx.state.turn:
-        raise HintProtocolError(f"hint for turn {turn} arrived after turn {ctx.state.turn} started")
-    if sender in ctx.pending_hints:
-        raise HintProtocolError(f"duplicate hint from {sender} for turn {turn}")
+        return
     ctx.pending_hints[sender] = payload
+    ctx.incoming_hints[sender] = payload
 
 
 def reject_peer_payload(ctx: AgentContext, reason: str) -> Outcome:
@@ -147,12 +137,15 @@ def drain_trailing_hint(ctx: AgentContext) -> None:
     record_hint(ctx, envelope.sender, envelope.turn, envelope.payload)
 
 
-async def send_hint(ctx: AgentContext, turn: int) -> None:
-    """Best-effort placeholder-hint push for *turn* (D-47). A failed push
-    never ends the game: the move is the authoritative, required channel
-    (rules 13/14); a hint is optional even on our OWN send side, mirroring
-    "a peer that sends no hints must still be playable"."""
-    hint_envelope = hint_payload.build_hint(PLACEHOLDER_HINT_TEXT, Intent.TRUTH, turn, ctx.role)
+async def send_hint(ctx: AgentContext, turn: int, *, text: str, intent: Intent) -> None:
+    """Best-effort hint push for *turn* (D-47). `text`/`intent` are the
+    REAL composed deception channel (04-12, replacing 04-04's
+    `PLACEHOLDER_HINT_TEXT` outright) -- this function only owns the
+    push-and-log mechanics, never the content. A failed push never ends the
+    game: the move is the authoritative, required channel (rules 13/14); a
+    hint is optional even on our OWN send side, mirroring "a peer that
+    sends no hints must still be playable"."""
+    hint_envelope = hint_payload.build_hint(text, intent, turn, ctx.role)
     args = {k: v for k, v in hint_envelope.to_dict().items() if k != EnvelopeKey.TYPE}
 
     async def _push() -> object:

@@ -27,25 +27,31 @@ def test_record_hint_buffers_by_sender(tmp_path, default_params, network_params)
     assert ctx.pending_hints == {"thief": {"text": "hi"}}
 
 
-def test_record_hint_rejects_a_duplicate_for_the_same_turn(tmp_path, default_params, network_params):
-    ctx = make_ctx(tmp_path, default_params, network_params, label="rh-dup")
-    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "first"})
-    try:
-        turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "second"})
-    except turn_buffer.HintProtocolError:
-        return
-    raise AssertionError("expected a duplicate hint to raise HintProtocolError")
-
-
-def test_record_hint_rejects_a_hint_for_an_already_resolved_turn(
+def test_record_hint_overwrites_a_second_hint_from_the_same_sender(
     tmp_path, default_params, network_params
 ):
+    """04-12 (Rule 1 - bug fix): a second not-yet-consumed hint from the
+    same sender is ordinary timing (each hint is an independent
+    round-trip), never a protocol violation -- the freshest one wins,
+    matching `ctx.incoming_hints`' own overwrite semantics, and neither
+    call may raise."""
+    ctx = make_ctx(tmp_path, default_params, network_params, label="rh-dup")
+    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "first"})
+    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "second"})  # must not raise
+    assert ctx.pending_hints == {"thief": {"text": "second"}}
+
+
+def test_record_hint_silently_drops_a_hint_for_an_already_resolved_turn(
+    tmp_path, default_params, network_params
+):
+    """04-12 (Rule 1 - bug fix): a late hint is ordinary network jitter
+    (the move and the hint are independent round-trips), never a protocol
+    violation -- it must never raise or end the game, and must never enter
+    either buffer."""
     ctx = make_ctx(tmp_path, default_params, network_params, label="rh-late")
-    try:
-        turn_buffer.record_hint(ctx, "thief", ctx.state.turn - 1, {"text": "late"})
-    except turn_buffer.HintProtocolError:
-        return
-    raise AssertionError("expected a late hint to raise HintProtocolError")
+    turn_buffer.record_hint(ctx, "thief", ctx.state.turn - 1, {"text": "late"})  # must not raise
+    assert ctx.pending_hints == {}
+    assert ctx.incoming_hints == {}
 
 
 def test_reject_peer_payload_logs_and_ends_the_game(tmp_path, default_params, network_params):
@@ -131,7 +137,7 @@ def test_drain_trailing_hint_puts_back_a_non_hint_item(tmp_path, default_params,
 
 async def test_send_hint_pushes_and_logs_on_success(tmp_path, default_params, network_params):
     ctx = make_ctx(tmp_path, default_params, network_params, label="send-hint-ok")
-    await turn_buffer.send_hint(ctx, ctx.state.turn)
+    await turn_buffer.send_hint(ctx, ctx.state.turn, text="heading uptown", intent=Intent.TRUTH)
     name, _args = ctx.runtime.client().calls[0]
     assert name == "receive_hint"
     lines = ctx.log_path.read_text(encoding="utf-8").splitlines()
@@ -143,5 +149,7 @@ async def test_send_hint_never_raises_when_the_push_fails(tmp_path, default_para
         tmp_path, default_params, network_params, label="send-hint-fail",
         client=FakeClient(fail=True),
     )
-    await turn_buffer.send_hint(ctx, ctx.state.turn)  # must not raise
+    # 04-12: text/intent are the REAL composed channel now (send_hint owns
+    # only push-and-log mechanics); must not raise.
+    await turn_buffer.send_hint(ctx, ctx.state.turn, text="heading uptown", intent=Intent.TRUTH)
     assert ctx.machine.state is not State.ERROR

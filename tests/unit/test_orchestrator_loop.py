@@ -64,11 +64,12 @@ async def test_take_my_turn_proceeds_when_the_machine_is_already_at_my_turn(
     assert outcome is None  # no capture on the first legal move
     assert ctx.reporter.calls == []  # no illegal-transition report of any kind
     assert ctx.machine.state is State.WAIT_OPPONENT  # the move really happened
-    # Phase 4 (D-47): the move push plus the placeholder-hint push -- both
-    # calls really happened, the move first.
-    assert len(ctx.runtime.client().calls) == 2
+    # 04-12: hint-sending is conditional on `ctx.language` (unset here,
+    # make_ctx builds a bare fake context) -- move only, matching pre-04-04
+    # mechanics; a real game always wires `ctx.language` (see
+    # tests/integration/test_language_pipeline.py for the 2-call case).
+    assert len(ctx.runtime.client().calls) == 1
     assert ctx.runtime.client().calls[0][0] == "receive_move"
-    assert ctx.runtime.client().calls[1][0] == "receive_hint"
 
 
 async def test_silent_opponent_produces_a_technical_win(tmp_path, default_params, network_params):
@@ -84,11 +85,11 @@ async def test_silent_opponent_produces_a_technical_win(tmp_path, default_params
     assert len(wins) == 1
     assert wins[0]["retries_attempted"] == ctx.net.retry_count + 1
     assert wins[0]["timeout_seconds"] == ctx.net.response_timeout
-    # Phase 4 (D-47): take_my_turn's move push AND its placeholder-hint push
-    # both succeed against the (non-failing) FakeClient; only the SUBSEQUENT
-    # await_opponent_turn wait on an empty queue times out -- never asked to
-    # keep playing beyond that.
-    assert len(ctx.runtime.client().calls) == 2
+    # 04-12: take_my_turn's move push succeeds against the (non-failing)
+    # FakeClient; no `ctx.language` here means no hint push is attempted;
+    # only the SUBSEQUENT await_opponent_turn wait on an empty queue times
+    # out -- never asked to keep playing beyond that.
+    assert len(ctx.runtime.client().calls) == 1
 
 
 async def test_await_opponent_turn_rejects_an_illegal_move_as_a_technical_loss(

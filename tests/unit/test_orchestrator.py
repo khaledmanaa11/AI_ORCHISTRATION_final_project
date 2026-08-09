@@ -99,9 +99,12 @@ async def test_full_turn_cycle(tmp_path, default_params, network_params):
     await orchestrator.await_opponent_turn(ctx)
     assert ctx.machine.state is State.MY_TURN
 
-    # Phase 4 (D-47): the move push plus the placeholder-hint push for the
-    # same turn -- both calls really happened, the move first.
-    assert len(ctx.runtime.client().calls) == 2
+    # 04-12: hint-sending is conditional on real language wiring
+    # (`ctx.language`) -- `make_ctx` never sets it, so this fake-driven
+    # context sends the move only, matching pre-04-04 mechanics. A real
+    # game (agent_lifecycle.default_context) always wires `ctx.language`
+    # and sends both every turn (LANG-01); see test_language_pipeline.py.
+    assert len(ctx.runtime.client().calls) == 1
     name, args = ctx.runtime.client().calls[0]
     assert name == "receive_move"
     # receive_move's real wire signature carries no `type` key (the tool name
@@ -117,9 +120,6 @@ async def test_full_turn_cycle(tmp_path, default_params, network_params):
     cop_dest = engine.legal_moves(engine.make_state(default_params), "cop", default_params)[0]
     assert sent.payload == move_payload.encode(cop_start, cop_dest, move_payload.ActionKind.MOVE)
     assert "x" not in sent.payload and "y" not in sent.payload
-
-    hint_name, _hint_args = ctx.runtime.client().calls[1]
-    assert hint_name == "receive_hint"
 
     assert ctx.state.thief == thief_dest
     assert ctx.watchdog.touches >= 2
