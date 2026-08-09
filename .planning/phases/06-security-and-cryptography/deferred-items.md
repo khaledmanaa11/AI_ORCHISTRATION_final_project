@@ -1,4 +1,9 @@
-# Deferred items — Phase 6 (found during 06-04 and 06-05, out of scope)
+# Deferred items — Phase 6 (found during 06-04 and 06-05)
+
+**Status: items 3 and 4 CLOSED by plan 06-06. Items 1 and 2 remain open by design** — item 1
+is a logging-granularity gap with equivalent evidence already available via the `audit_verdict`
+record; item 2 is the games-played counter's correct rule-37 behaviour, flagged only so a
+reader is not surprised the count moves. Neither affects a §10.4 criterion.
 
 Per the execute-plan SCOPE BOUNDARY rule: logged, not fixed. Neither item blocks any GATE-6
 criterion (both are documented, with the actual evidence used instead, in
@@ -47,7 +52,15 @@ to `record_game_played`) — a real design decision, not something to invent her
 
 ---
 
-## 3. An uncaught `ToolError` kills the agent mid-game, before it publishes its nonces
+## 3. ~~An uncaught `ToolError` kills the agent mid-game~~ — **CLOSED by 06-06** (`877f617`)
+
+> **Resolved 2026-08-09.** `run_turn_loop` and the Final-Reveal audit boundary now catch
+> `ToolError` and route it into the existing technical-loss pathway
+> (`TechnicalWinReason.PEER_PROTOCOL_ERROR`), so the game ends on its terminal path — which
+> writes `game_over` and still runs the audit that publishes our ledger. `deadline.py` was NOT
+> changed: its no-retry contract is correct; the defect was the missing catch. The premise was
+> proven with a real FastMCP round trip against a hostile tool body before the fix was written.
+> See `06-06-SUMMARY.md`. Original finding preserved below.
 
 **Found during:** the 5-lens adversarial audit run at `/gsd:verify-work 6` (completeness
 critic). **Verified directly** during 06-05: `deadline.py:128` holds `except ToolError: raise`
@@ -73,7 +86,15 @@ deserves its own decision about which exceptions become a technical loss rather 
 `TechnicalWin`/technical-loss pathway, so the game ends through the normal terminal path — one
 that already publishes the ledger.
 
-## 4. `_accept` never checks that an inbound envelope's `sender` is the opponent's role
+## 4. ~~`_accept` never checks an inbound envelope's `sender`~~ — **CLOSED by 06-06** (`78ebb8c`)
+
+> **Resolved 2026-08-09.** Every game-message handler now rejects a `sender` that is not the
+> opponent's role, using the same descriptive `ToolError` a malformed envelope gets, and
+> enqueues nothing. `expected_sender` threads from `agent_lifecycle` (the one place that knows
+> `cfg.role`) and defaults to None, so no existing caller or test changed behaviour. The
+> `handshake` tool is deliberately exempt — it NEGOTIATES the peer's role — and that exemption
+> has its own test. Measured: full suite 1251/1251 with the check live, GATE-6 still PASS on
+> all three criteria. See `06-06-SUMMARY.md`. Original finding preserved below.
 
 **Found during:** the same audit. **Verified directly:** `tools.py::_accept` builds the
 `Envelope` with `EnvelopeKey.SENDER: sender` straight from the tool argument, with no check

@@ -121,6 +121,7 @@ afterwards, still PASS.**
 | 06-97 Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` | P1 | ☑ | Khaled | Phase triplet exists and matches the plan set (created 2026-08-09; all rows closed at verify-work) |
 | 06-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 | 06-05 **GAP CLOSURE** — bind the mutual audit to local turn truth; make a caught mismatch durable | P0 | ☑ | Khaled | Turn-skew can no longer convert a forgery into a "trailing commit" nor empty the rule-36 coverage set; regression test with disagreeing observed dicts still mismatches; caught mismatch yields a corrected `game_over` + non-zero exit (SEC-05/08) |
+| 06-06 **GAP CLOSURE** — contain a peer `ToolError`; validate the inbound `sender` | P1 | ☑ | Khaled | A peer fault ends the game on the terminal path (so the audit still publishes our nonces, rule 36) instead of killing the process; a spoofed `sender` is rejected and never enqueued, handshake exempt by design (SEC-05/08) |
 
 ---
 

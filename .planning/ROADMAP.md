@@ -192,6 +192,7 @@ closed by plan 06-05; gate re-measured afterwards, still PASS):
 - [x] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [x] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 - [x] 06-05 / 06-98: **GAP CLOSURE** — the mutual audit is bound to locally-authoritative turn state instead of the peer's declared `envelope.turn`, and a caught mismatch is durable (corrected `game_over` + non-zero exit). See `06-05-SUMMARY.md`; proven by `tests/unit/test_audit_turn_binding.py` + tamper (e).
+- [x] 06-06: **GAP CLOSURE** — a peer `ToolError` ends the game through the technical-loss path instead of killing us after the ledger append and before FINAL_REVEAL (rule 36); every game-message handler rejects a non-opponent `sender` (handshake exempt by design). See `06-06-SUMMARY.md`.
 
 ### Phase 7: Reporting and Visualization Shell
 

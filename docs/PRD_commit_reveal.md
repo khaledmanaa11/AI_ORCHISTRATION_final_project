@@ -206,7 +206,37 @@ added: keying on local truth already closes both paths, and rejecting on a turn-
 disagreement risks a false accusation — the same trap as comparing two roles' Step-0 digests
 for equality (§2.5), and a rules-16/22 hazard.
 
-#### 2.6.2 A caught mismatch is durable
+#### 2.6.2 A peer fault ends the game; it does not kill the agent
+
+`deadline.call_with_retry` re-raises `fastmcp.ToolError` without retrying, on purpose: an
+application-level rejection by the opponent's tool body is not a transport failure. Nothing
+above it used to catch that exception, so a peer whose handler raised killed this process by
+traceback — **after** `commit_own_action` had written `{state, move, intent, nonce}` to our
+ledger and **before** any FINAL_REVEAL was sent, making *us* the side that published no nonces
+(rule 36) because of one line in their code. Since `tools.py` itself raises `ToolError` at the
+peer for a malformed envelope, two honest copies of this codebase would also have killed each
+other on the first envelope either rejected.
+
+The turn loop and the Final-Reveal audit boundary now catch `ToolError` and route it into the
+existing technical-loss pathway (`TechnicalWinReason.PEER_PROTOCOL_ERROR`, additive — a peer
+that rejects promptly is *not* `OPPONENT_UNRESPONSIVE`). The game therefore ends on its normal
+terminal path, which writes `game_over` and still runs the audit that publishes our ledger.
+`deadline.py` is unchanged: the defect was the missing catch, not the no-retry contract.
+
+#### 2.6.3 Only the opponent may send
+
+A game message's `sender` field arrives from the wire, and it feeds `engine_agent()` and
+`record_action()`. A peer stamping *our* role would land in our own half of the turn buffer,
+where `maybe_resolve` can never fire — a silent stall rather than a rejected message. Every
+game-message handler now rejects a `sender` that is not the opponent's role, with the same
+descriptive `ToolError` a malformed envelope gets, and enqueues nothing.
+
+The `handshake` tool is deliberately exempt: the peer's role is what the handshake negotiates,
+and `respond_to_handshake` evaluates it there. Note the two fixes compose — a peer that
+receives this rejection sees a `ToolError` and, per §2.6.2, ends its own game cleanly instead
+of crashing.
+
+#### 2.6.4 A caught mismatch is durable
 
 `run_turn_loop` writes the game's `game_over` record — the only event carrying an `outcome`
 field — *before* the audit runs. On a mismatch, `record_audit_verdict` therefore appends a

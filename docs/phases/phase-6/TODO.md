@@ -18,6 +18,7 @@ the 2 security gaps `/gsd:verify-work 6` found were closed by plan 06-05, gate r
 | 06-97 Create/refresh docs/phases/phase-6/{PRD,PLAN,TODO}.md at plan-phase | P1 | ☑ | Khaled | This triplet exists and matches the plan set (created at plan-phase 2026-08-09; all rows closed at verify-work) |
 | 06-99 On verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☑ | Khaled | Phase gate met on measured evidence; all TODOs checked (DOC-01) — see [06-UAT.md](../../../.planning/phases/06-security-and-cryptography/06-UAT.md), **9/11 pass, 2 gaps open** |
 | 06-05 **GAP CLOSURE** — audit join key + verdict durability | P0 | ☑ | Khaled | Audit keyed on local turn truth, so turn-skew can no longer convert a forgery into a "trailing commit" nor empty the coverage set; `test_audit_turn_binding.py`'s two observed dicts DISAGREE and still mismatch (non-vacuous: 4/5 fail against pre-fix code); caught mismatch produces a corrected `game_over` + non-zero exit (SEC-05, SEC-08) |
+| 06-06 **GAP CLOSURE** — peer-fault containment + sender validation | P1 | ☑ | Khaled | A peer `ToolError` ends the game through the technical-loss path instead of killing us before FINAL_REVEAL (rule 36); every game-message handler rejects a non-opponent `sender` (handshake deliberately exempt, tested); measured with both live — suite 1251/1251, GATE-6 all three PASS (SEC-05, SEC-08) |
 
 ## Phase gate (§10.4)
 - [x] A move is committed (SHA-256) and then revealed with a valid nonce; the four phases run
@@ -57,7 +58,9 @@ local turn truth, and a caught mismatch appends a corrected `game_over` and exit
 attacker-controlled keys. GATE-6 re-measured after the fix: all three criteria still PASS.
 Detail, exploit paths, controls, and resolutions: `06-UAT.md` Gaps and `06-05-SUMMARY.md`.
 
-Two further findings from the same audit are logged, verified but **not fixed**, in
-`deferred-items.md` #3-#4 (an uncaught `ToolError` can kill the agent mid-game before it
-publishes its nonces; `_accept` never checks an envelope's `sender` against the opponent's
-role). Neither is a §10.4 criterion; both want their own decision before league play.
+Two further findings from the same audit — an uncaught `ToolError` killing the agent mid-game
+before it publishes its nonces, and `_accept` never checking an envelope's `sender` — were
+**also closed**, by plan **06-06** (`877f617`, `78ebb8c`). Measured with both fixes live: full
+suite 1251/1251, GATE-6 all three criteria PASS. `deferred-items.md` #1-#2 remain open by
+design (a logging-granularity gap with equivalent evidence, and the counter's correct rule-37
+behaviour); neither affects a §10.4 criterion.
