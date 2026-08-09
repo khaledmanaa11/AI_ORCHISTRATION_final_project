@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-11 (BeliefAdapter). Phase 4 wave 5 (04-11) is now fully done. Wave 6 (04-12) is next.
-last_updated: "2026-08-09T04:55:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 5 completed (04-11 BeliefAdapter: Figure-7 belief order, Option A believed-state substitution, registry belief.enabled wiring)
+stopped_at: Completed 04-12 (turn-pipeline integration). Phase 4 wave 6 (04-12) is now fully done. Wave 7 (04-13) is next.
+last_updated: "2026-08-09T05:57:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 6 completed (04-12 turn-pipeline integration: Figure-7 wired live into take_my_turn/await_opponent_turn, agent_lifecycle now builds a real brain+ScentField+LanguageRuntime, a real two-peer concurrency bug found and fixed)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 35
-  percent: 31
+  completed_plans: 36
+  percent: 32
 ---
 
 # Project State
@@ -26,10 +26,42 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 11 of 14 (waves 1–5 done: 04-01..04-11; wave 5 now FULLY COMPLETE —
-  see .planning/phases/04-language-and-scent/04-11-SUMMARY.md.
-  Next: 04-12 (turn-pipeline integration), starting wave 6. Resume point:
-  .planning/phases/04-language-and-scent/RESUME.md)
+Plan: 12 of 14 (waves 1–6 done: 04-01..04-12; wave 6 now FULLY COMPLETE —
+  see .planning/phases/04-language-and-scent/04-12-SUMMARY.md.
+  Next: 04-13 (docs + RULES-RESOLUTION-LANG.md + phase triplet), starting
+  wave 7. Resume point: .planning/phases/04-language-and-scent/RESUME.md)
+
+04-12 delivered: the real Figure-7 pipeline (book Sec6.2) wired live into
+  network/turn_actions.py's take_my_turn/await_opponent_turn -- decode the
+  opponent's last-revealed hint -> choose the move (BeliefAdapter.decide()
+  when belief.enabled, else the raw brain, else first_legal_move) ->
+  buffer + resolve -> send the direction-token move -> plan the claim
+  AFTER the move (so it can reference what was actually committed to) ->
+  compose -> send the hint; 04-04's PLACEHOLDER_HINT_TEXT is gone (grep
+  confirms). agent_lifecycle.default_context now builds a REAL registry
+  brain (BeliefAdapter-wrapped when enabled), one ScentField per role, and
+  one LanguageRuntime (gatekeeper + provider + HintBank + deception RNG)
+  per process/game -- the first plan in the project that wires Phase 3's
+  strategy and Phase 4's language layer into the actual live two-process
+  turn loop (every prior phase only exercised them via direct engine
+  calls or single-sided injected tests). D-48's regime decision
+  (known_opponent_cell) lives in one place, logged per turn via new
+  turn_events.language_turn_record (regime, belief entropy/argmax,
+  reliability, token spend, incoming/outgoing hint). The live handshake
+  now sends a real local_scent_digest (closes 04-02's carry-over 1).
+  [Rule 1 - Bug] A real two-peer CONCURRENT game (tests/integration/
+  two_peer_game.py, never run before this plan) found 04-04's own
+  "late hint"/"duplicate hint" HintProtocolError checks turning ordinary
+  network/processing jitter into a spurious TECHNICAL_LOSS -- fixed: a
+  late hint drops silently, a duplicate overwrites, only await_move's
+  separate two-hints-no-move liveness cap still raises. Four full
+  two-peer degradation games (no key, all calls failing, budget
+  exhausted, silent peer) all finish correctly scored; measured per-turn
+  wall time 37ms/turn language-ON vs 18ms/turn OFF against a 60s
+  watchdog_threshold. Full gates green: 1048 passed, 95.21% coverage,
+  ruff/line-limit/no-llm-in-strategy all clean. Knowledge graph refreshed
+  (5221 nodes / 9687 edges / 336 communities; graph.html skipped this
+  pass, over graphify's 5000-node HTML limit).
 
 04-11 delivered: strategy/beliefadapter.py (BeliefAdapter -- Figure 7's
   per-turn order: observe -> predict -> update(scent) -> update(hint) ->
@@ -186,6 +218,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P11 (run-2 wave 1) | ~25min | 3 tasks + 1 coverage-gap fix | 8 files |
 | Phase 03 P13 | 45min | 3 tasks | 12 files |
 | Phase 04 P11 | ~65min | 3 tasks | 13 files |
+| Phase 04 P12 | ~110min | 4 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -348,6 +381,26 @@ Recent decisions affecting current work:
   cannot be read off GameState alone since state always carries the
   engine's true joint position (needed by resolve_turn regardless of
   blindness), so the regime has to be told to the adapter, not inferred
+
+- [Phase 04-12]: Hint-sending is now CONDITIONAL on AgentContext.language
+  (None -> move-only, matching pre-04-04 mechanics) rather than 04-04's
+  unconditional placeholder -- every real game (agent_lifecycle.
+  default_context) always wires it, so LANG-01 holds for actual play;
+  bare test fixtures that never opt in are unaffected in behaviour except
+  the hint call itself. [Rule 1 - Bug] record_hint's "late"/"duplicate"
+  hint checks (04-04's own design) both raised HintProtocolError and
+  ended the game as a spurious TECHNICAL_LOSS -- found only by running a
+  TRUE two-peer concurrent game for the first time in this project
+  (tests/integration/two_peer_game.py); fixed to silently drop/overwrite,
+  since the move and the hint are independent, variable-latency
+  round-trips and neither timing pattern is a real protocol violation.
+  D-48's regime decision (known_opponent_cell) is computed ONCE, before
+  record_action/maybe_resolve can mutate the state it reads, and threaded
+  explicitly rather than recomputed. agent_lifecycle.default_context is
+  now the first place in the whole project that constructs a REAL
+  registry brain + ScentField + LanguageRuntime for the LIVE network
+  turn loop (every prior phase/plan only exercised strategy/language code
+  via direct engine calls or single-sided injected tests)
 
 ### Pending Todos
 
