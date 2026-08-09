@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 5 PLAN 02 EXECUTED (b21cf9a, 2026-08-09) -- SharedSecretMiddleware (ASGI boundary, secrets.compare_digest, 403 before MCP dispatch) + PeerRuntime shared_secret wiring (server middleware + client explicit StreamableHttpTransport headers) + secret_wiring.resolve_shared_secret + real-socket end-to-end proof. 1105 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy all clean. NEXT -- 05-03 (Gate 5: smoke script, GATE-5-MEASUREMENT.md, Localtonet runbook, D-57 documentation, graph refresh). Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it.
-last_updated: "2026-08-09T05:26:00.000Z"
-last_activity: 2026-08-09 -- Phase 05 plan 02 executed (05-02: src/pursuit/network/secret_guard.py -- SharedSecretMiddleware, a pure ASGI callable rejecting with 403 before any FastMCP session/tool dispatch via secrets.compare_digest, rejection logged by fact only never the value; plus build_middleware()/client_headers() factories. PeerRuntime gains an optional shared_secret=(header_name, value) kwarg: _run_http() passes middleware=build_middleware(...) into the SAME run_async() call that already passes sockets= (D-57 comment on host_origin_protection staying off sits at that call site); client() now ALWAYS builds an explicit StreamableHttpTransport (never a bare URL string, which silently drops headers) carrying ngrok-skip-browser-warning unconditionally plus the secret header when configured. src/pursuit/network/secret_wiring.py (new) -- resolve_shared_secret(config_dir) reads tunnel.json's secret_header + os.environ[secret_env], wired into agent_lifecycle.default_context's one PeerRuntime(...) call, matching make_handshake_responder's factory-function injection style (landed in a NEW module rather than agent_wiring.py, which was already at 135/150 code lines -- Rule 3 deviation, same 150-line-gate reasoning 05-01 already used for tunnel_wiring.py/agent_entrypoint.py). tests/integration/test_secret_channel.py proves all three cases over REAL loopback sockets (not the in-memory transport two_peer_game.py uses, which bypasses the ASGI layer entirely): correct secret succeeds, missing header gets a plain-text 403 "Forbidden" body (proof it never reached MCP routing) and is logged, wrong secret fails on two independent attempts (httpx.HTTPStatusError). .env-example gains NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET (dummy values). .gitignore gained explicit negations for four D-56 test files whose NAMES matched the broad *_secret*/*-secret* rule-4 guard (test_secret_guard.py, test_secret_wiring.py, test_peer_runtime_secret.py, test_secret_channel.py) -- none holds a real secret value. Full suite 1105 passed (+18 vs the 1087 baseline), 95.70% coverage (+0.06pp), ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md Phase 5 row updated by hand to 2/3 plans, In Progress (gsd-tools roadmap update-plan-progress reported updated:true but wrote no actual diff to the Plans-Complete table row -- same documented no-op pattern as gsd phase-complete; verified via git diff before/after))
+stopped_at: PHASE 5 PLAN 03 EXECUTED (2d3cbcd, 2026-08-09) -- scripts/gate5_tunnel_smoke.py (the scriptable half of GATE-5, driving the real TunnelManager/SharedSecretMiddleware through a public ngrok URL) + GATE-5-MEASUREMENT.md (both Sec10.4 criteria PENDING, honestly, with exact rerun/remote-round procedures) + LOCALTONET-FALLBACK.md (D-57, zero code) + graph refresh. 1116 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy all clean. Phase 5's three plans are all CODE+TEST COMPLETE; the phase itself is NOT verified -- GATE-5 needs a human to run the smoke script (env vars absent on this machine) AND the genuine remote round (needs a second machine). NEXT -- plan Phase 6 (Security and Cryptography), or run the two pending Phase-5/Phase-4 human gate items first. Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it. /gsd:verify-work 5 stays blocked the same way until GATE-5's two PENDING items close.
+last_updated: "2026-08-09T05:45:00.000Z"
+last_activity: 2026-08-09 -- Phase 05 plan 03 executed (05-03: scripts/gate5_tunnel_smoke.py -- one command, env-gated on NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, starts one real PeerRuntime + the real TunnelManager (05-01) + SharedSecretMiddleware (05-02, zero parallel reimplementation of either), brings the tunnel up, makes an authorized round trip through the PUBLIC url (secret header, expects the five D-05 tool names) and an unauthorized one (no header, expects 403 THROUGH THE TUNNEL not just loopback), tears both down, writes JSON evidence into docs/phases/phase-5/. scripts/gate5_smoke_checks.py (new) -- missing_env_vars/check_public_url/build_evidence/write_evidence, the offline-testable core the must_haves demanded, split at the gate4_* helper-module precedent; preflight() (inside gate5_tunnel_smoke.py) raises SystemExit naming every missing env var before touching pyngrok/PeerRuntime/network at all. 11 new offline tests (test_gate5_smoke_checks.py, test_gate5_tunnel_smoke_preflight.py) import scripts/ via the same sys.path-bootstrap idiom measure_gate4.py already established -- the first time this project writes offline tests importing FROM scripts/. docs/phases/phase-5/GATE-5-MEASUREMENT.md quotes both Sec10.4 criteria verbatim and marks BOTH PENDING (not one mocked/one live like GATE-4 -- nothing in Phase 5 can run without a real ngrok account this machine lacks, so no numbers were fabricated for criterion 1 either): criterion 1 states field-by-field what a PASS verdict in the evidence JSON must show plus the exact rerun command; criterion 2 (CLOUD-02, the genuine remote round) carries the full seven-step human procedure (start agent, read the exchange block, deliver URL+secret out-of-band, remote PURSUIT_OPPONENT_URL paste via the Phase-2 seam, play one full round, retain both event logs + verdicts, note the machine/network pair) plus an explicit paragraph on why this criterion cannot be scripted from this repo alone. docs/phases/phase-5/LOCALTONET-FALLBACK.md -- the D-57 rule-10 fallback runbook (install, --authtoken, dashboard port mapping to 127.0.0.1:<agent's local port>, --install-service/--start-service, the 30-minute free-tier timeout stated as the reason ngrok is primary, league-day re-establish-per-window note including the URL changing on every restart); states explicitly no Localtonet code path exists anywhere and why that satisfies rule 10 without doubling the engineering surface. Knowledge graph refreshed (graphify update .: 5806 nodes/10476 edges/367 communities; graph.html skipped, over the 5000-node HTML viz limit same as 04-12's own pass); TunnelManager and SharedSecretMiddleware both confirmed present in the committed GRAPH_REPORT.md. Full suite 1116 passed (+11 vs the 1105 baseline), 95.70% coverage unchanged (scripts/ is outside [tool.coverage.run] source = ["src", "training"], matching the gate4_* precedent), ruff/line-limit/no-llm-in-strategy all clean. NOTHING TICKED anywhere -- ROADMAP.md Phase 5 row updated by hand to 3/3 plans, status left "In Progress (GATE-5 both criteria PENDING)" rather than "Complete" (gsd-tools roadmap update-plan-progress again reported updated:true but wrote no diff -- same documented no-op; verified via git status before/after))
 progress:
   total_phases: 8
   completed_phases: 3
@@ -25,13 +25,30 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 05 (cloud-exposure-and-tunneling) — EXECUTING (plan 2 of 3 done;
-  05-01, 05-02 code+test complete. See
-  .planning/phases/05-cloud-exposure-and-tunneling/05-02-SUMMARY.md.
-  NEXT: 05-03, Gate 5 -- smoke script, in-process integration proof,
-  GATE-5-MEASUREMENT.md, Localtonet runbook, graph refresh -- depends on
-  both 05-01 (TunnelManager) and 05-02 (SharedSecretMiddleware).)
-Plan: 2 of 3 (05-01, 05-02 done; 05-03 remains)
+Phase: 05 (cloud-exposure-and-tunneling) — EXECUTED, NOT VERIFIED (all 3
+  plans code+test complete: 05-01, 05-02, 05-03. See
+  .planning/phases/05-cloud-exposure-and-tunneling/05-03-SUMMARY.md.
+  GATE-5 (book Sec10.4 milestone 5) has TWO human-pending items before
+  /gsd:verify-work 5 can run: (1) the smoke run
+  (`uv run python scripts/gate5_tunnel_smoke.py`, needs NGROK_AUTHTOKEN/
+  PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET, absent on this machine) and
+  (2) the genuine remote round (CLOUD-02, needs a second machine on a
+  different network -- full procedure in
+  docs/phases/phase-5/GATE-5-MEASUREMENT.md). NEXT: either run those two
+  human items, or begin planning Phase 6 (Security and Cryptography) --
+  Phase 6 depends on Phase 5's shipped CODE, not on GATE-5's own
+  measurement being closed.)
+Plan: 3 of 3 (05-01, 05-02, 05-03 all done; phase gate measurement PENDING)
+
+05-03 delivered: scripts/gate5_tunnel_smoke.py (env-gated smoke script
+  driving the REAL TunnelManager/SharedSecretMiddleware through a public
+  ngrok URL, JSON evidence writer) + scripts/gate5_smoke_checks.py (the
+  offline-testable core) + docs/phases/phase-5/GATE-5-MEASUREMENT.md (both
+  Sec10.4 criteria PENDING, honestly, with exact procedures) +
+  docs/phases/phase-5/LOCALTONET-FALLBACK.md (D-57, zero code) + graph
+  refresh (05-96). See frontmatter last_activity for the full account.
+  Full suite 1116 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy
+  all clean. Nothing ticked anywhere.
 
 05-02 delivered: src/pursuit/network/secret_guard.py
   (SharedSecretMiddleware -- pure ASGI callable, secrets.compare_digest,
@@ -351,6 +368,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 04 P13 | ~35min | 4 tasks | 10 files |
 | Phase 05-cloud-exposure-and-tunneling P01 | ~50min | 3 tasks | 11 files |
 | Phase 05-cloud-exposure-and-tunneling P02 | ~30min | 3 tasks | 11 files |
+| Phase 05-cloud-exposure-and-tunneling P03 | ~35min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -612,6 +630,23 @@ Recent decisions affecting current work:
   explicit negations, same precedent as the existing !.env-example line;
   none of the four holds a real secret value.
 
+- [Phase 05-03]: GATE-5-MEASUREMENT.md records BOTH Sec10.4 criteria
+  PENDING, not one mocked/one live like GATE-4 -- nothing in Phase 5 can
+  execute without a real ngrok account this machine lacks, so criterion 1
+  has no numbers to report either; stated honestly rather than filled with
+  a description of what would happen. D-57 (Localtonet) stays
+  documentation-only: a second TunnelManager-equivalent integration would
+  double the engineering surface for a path whose only job is standing by
+  if ngrok is unusable on league day; LOCALTONET-FALLBACK.md satisfies
+  rule 10 with zero lines of code. The smoke script's env preflight
+  (`preflight()`) is deliberately split into its own synchronous,
+  dependency-free function so a test can assert the refusal message
+  without faking pyngrok/sockets/asyncio at all -- the live network path
+  (`run_smoke()`) stays reviewed-logic-only, per the must_haves' own
+  stated split. First time this project writes offline tests importing
+  FROM scripts/ (gate5_smoke_checks.py, gate5_tunnel_smoke.py's preflight),
+  closing a gap the gate4_* precedent itself left open.
+
 ### Pending Todos
 
 - 03-13..03-16 in `docs/phases/phase-3/TODO.md` (pre-flight assertions, cycle-based eval +
@@ -633,6 +668,16 @@ Recent decisions affecting current work:
   this phase has run on. Phase 4 cannot be declared fully measured, and `/gsd:verify-work 4` must
   not run, until a human sets the key and runs `uv run python scripts/measure_gate4.py --live`,
   then updates `docs/phases/phase-4/GATE-4-MEASUREMENT.md`'s Live status section from that run.
+- **GATE-5 (book Sec10.4 milestone 5) has TWO human-pending items, neither closeable from this
+  machine** — Phase 5's code (05-01/05-02/05-03) is fully executed and tested, but
+  `/gsd:verify-work 5` must not run until both close:
+  1. **The smoke run** — `NGROK_AUTHTOKEN` / `PURSUIT_NGROK_DOMAIN` / `PURSUIT_TUNNEL_SECRET`
+     are unset on every machine this phase has run on; a human with a real ngrok account runs
+     `uv run python scripts/gate5_tunnel_smoke.py` and updates criterion 1 in
+     `docs/phases/phase-5/GATE-5-MEASUREMENT.md` from the resulting evidence JSON.
+  2. **The genuine remote round (CLOUD-02)** — inherently needs a second machine on a different
+     network and a human operator; the full seven-step procedure is already written in
+     `docs/phases/phase-5/GATE-5-MEASUREMENT.md`'s criterion 2 section.
 
 ## Deferred Items
 
