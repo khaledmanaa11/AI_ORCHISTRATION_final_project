@@ -23,7 +23,7 @@ completion.
 - [x] **Phase 3: Blind Strategy Module** - The decision engine. Delivered as a matrix-game mover over a learned 15-weight evaluation, NOT Q-learning; see docs/phases/phase-3/PRD.md §2.
 - [ ] **Phase 4: Language and Scent** - Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
 - [ ] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
-- [ ] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration. *(All three §10.4 gate criteria measured PASS; verify-work found 2 open security gaps beyond the gate — see 06-UAT.md Gaps.)*
+- [x] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration. *(All three §10.4 criteria measured PASS; the 2 security gaps verify-work found beyond the gate were closed by 06-05 and the gate re-measured.)*
 - [ ] **Phase 7: Reporting and Visualization Shell** - Gmail API reporting via OAuth 2.0, live GUI, replay viewer application.
 - [ ] **Phase 8: Submission and League Operations** - Two public repos, academic README, Git tag, league games.
 
@@ -176,13 +176,13 @@ Plans:
 
 **Plans**: 4 (waves 1-4; see `.planning/phases/06-security-and-cryptography/06-PLAN-OUTLINE.md`)
 
-Plans (all 4 executed; `/gsd:verify-work 6` run 2026-08-09 — all three §10.4 criteria
-measured PASS at `HEAD=b3655348`, see `docs/phases/phase-6/GATE-6-MEASUREMENT.md`.
-**UAT 9/11 pass, 2 blocker/major gaps open** — an adversarial audit found that the mutual
-audit's join key is the peer's own declared `envelope.turn`, which nothing validates, so
-both the D-67 forgery check and the rule-36 coverage check are bypassable by turn-skew;
-and that a caught mismatch never reaches a durable outcome record. Reproduced with paired
-controls. See `06-UAT.md` Gaps. **Phase 6 is not closed until 06-98 lands.**):
+Plans (all 5 executed and verified; `/gsd:verify-work 6` run 2026-08-09 — all three §10.4
+criteria measured PASS, see `docs/phases/phase-6/GATE-6-MEASUREMENT.md`. UAT 11/11.
+An adversarial audit during verify-work found 2 real gaps beyond the gate's own criteria —
+the mutual audit's join key was the peer's own declared `envelope.turn`, making both the
+D-67 forgery check and the rule-36 coverage check bypassable by turn-skew, and a caught
+mismatch never reached a durable outcome record. Both reproduced with paired controls and
+closed by plan 06-05; gate re-measured afterwards, still PASS):
 
 - [x] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair
 - [x] 06-02: Four-phase wire protocol — 4 message kinds, the both-locked Commit→Ack→Reveal exchange (D-58), barrier placement inside the committed action (D-66, SEC-07), toggle-off byte-equivalence
@@ -191,7 +191,7 @@ controls. See `06-UAT.md` Gaps. **Phase 6 is not closed until 06-98 lands.**):
 - [x] 06-96: Refresh the graphify graph at plan-phase and after execute — final refresh 6577 nodes / 11972 edges / 413 communities
 - [x] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [x] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
-- [ ] 06-98: **GAP CLOSURE (blocker)** — bind the mutual audit to locally-authoritative turn state instead of the peer's declared `envelope.turn`, and make a caught mismatch durable (corrected `game_over` + non-zero exit). See `06-UAT.md` Gaps 1-2.
+- [x] 06-05 / 06-98: **GAP CLOSURE** — the mutual audit is bound to locally-authoritative turn state instead of the peer's declared `envelope.turn`, and a caught mismatch is durable (corrected `game_over` + non-zero exit). See `06-05-SUMMARY.md`; proven by `tests/unit/test_audit_turn_binding.py` + tamper (e).
 
 ### Phase 7: Reporting and Visualization Shell
 

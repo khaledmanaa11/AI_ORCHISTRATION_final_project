@@ -1,14 +1,15 @@
 ---
-status: diagnosed
+status: complete
 phase: 06-security-and-cryptography
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md]
 started: 2026-08-09T16:58:43Z
-updated: 2026-08-09T17:35:00Z
+updated: 2026-08-09T18:05:00Z
+gaps_closed_by: 06-05
 ---
 
 ## Current Test
 
-[testing complete — 9 pass, 2 issues, both diagnosed]
+[testing complete — 11/11 pass; the 2 issues found were diagnosed and closed by plan 06-05]
 
 ## Tests
 
@@ -81,10 +82,16 @@ measured: `docs/PRD_commit_reveal.md` 292 lines, every SEC-01…SEC-08 ID presen
 ## Summary
 
 total: 11
-passed: 9
-issues: 2
+passed: 11
+issues: 0
 pending: 0
 skipped: 0
+
+> Tests 8 and 9 were recorded as issues at first run and are now **pass**, closed by plan
+> 06-05 (`4012a18`, `e5ec5b5`, `eecd4be`, `65db6d9`). Their original findings are kept in
+> full below, and in the Gaps section, rather than edited away — the bypass was real, and the
+> record of it is worth more than a clean-looking table. Re-verified after the fix: full suite
+> 1238 passed / 99.38% coverage, GATE-6 re-measured with all three criteria still PASS.
 
 ## Gaps
 
@@ -94,7 +101,7 @@ skipped: 0
      code with paired controls before being recorded here. -->
 
 - truth: "A forged reveal, or a withheld set of nonces, is caught by the mutual audit and becomes a technical loss"
-  status: failed
+  status: CLOSED by 06-05 (commit 4012a18; proven by e5ec5b5)
   reason: "The audit's join key is attacker-controlled. `observed()` builds BOTH observed_commits and observed_reveals keyed on `envelope.get(EnvelopeKey.TURN)` — the peer's own declared turn number, taken verbatim off the wire. Nothing in src/ ever compares an inbound envelope's turn to ctx.state.turn (grep for `.turn ==` / `envelope.turn` returns only sites that CONSUME it as a key). So a peer that stamps its COMMIT and REVEAL envelopes with disjoint turn numbers makes `set(observed_commits) & set(observed_reveals)` empty, which (a) makes _missing_turns' rule-36 coverage check yield nothing, re-opening the empty-`{\"records\": []}` evasion, and (b) sends every entry down _audit_one's `turn not in observed_reveals` branch, which returns matched=True as a 'trailing commit'. The cheapest variant stamps every envelope turn=0, collapsing a whole game to one key: a single valid record then satisfies the audit of an N-turn game and N-1 nonces stay secret forever."
   severity: blocker
   test: 8, 9
@@ -114,9 +121,26 @@ skipped: 0
     - "Validate an inbound COMMIT/REVEAL envelope's turn against local turn state on the receive path, and reject/technical-loss on mismatch (the honest peer always knows the true turn number)"
     - "OR key observed_commits/observed_reveals on locally-authoritative turn state rather than the peer's declared value"
     - "A regression test whose observed_commits and observed_reveals keys DISAGREE, asserting the audit still reports a mismatch"
+  resolution: |
+    Closed by the SECOND option. `log_received` now takes a required `local_turn`;
+    `wait_for_opponent_commit` receives the responder's pre-resolve turn; `await_opponent_turn`
+    captures ctx.state.turn BEFORE maybe_resolve advances it; and `observed()` keys both dicts
+    on the record's own top-level turn. The nested envelope is stored unchanged, so the peer's
+    claimed turn survives as evidence. src/pursuit/security/audit.py was NOT modified — its
+    checks were correct and were being fed bad keys.
+
+    The FIRST option (in-game rejection) was deliberately declined: keying on local truth
+    already closes both exploit paths, and rejecting a disagreeing stamp risks a false
+    accusation (rules 16/22) — the same trap as 06-03's Step-0 digest-equality check. Recorded
+    in docs/PRD_commit_reveal.md §2.6.1.
+
+    Proven by tests/unit/test_audit_turn_binding.py (5 cases whose two observed dicts
+    deliberately disagree, incl. an honest-peer fairness control) and
+    test_step0_and_audit_tamper.py's tamper (e). Non-vacuous: reverting observed() to the
+    pre-fix key fails 4 of the 5, the 5th being the fairness control that should be insensitive.
 
 - truth: "Any mismatch is a technical loss (§10.4 criterion 2)"
-  status: failed
+  status: CLOSED by 06-05 (commit eecd4be)
   reason: "When the audit DOES catch a cheat, the verdict never reaches anything durable. `turn_events.game_over_record` has exactly one call site (orchestrator.py:105), inside run_turn_loop — so the JSONL's only outcome-bearing line is written with the BOARD outcome BEFORE run_final_audit runs (agent_entrypoint.py:73-77). run_final_audit's Outcome.TECHNICAL_LOSS is returned up to run_agent, and main.py then discards it: `asyncio.run(agent_lifecycle.run_agent(args.config_dir))` followed by an unconditional `return 0`. The result is an audit_verdict line appended after a game_over line that still records the cheater's win, and a zero exit code. Any Phase-7 reporter reading the outcome field reads the cheater's result."
   severity: major
   test: 8
@@ -129,6 +153,14 @@ skipped: 0
   missing:
     - "Write a corrected game_over (or an explicit outcome-superseding record) after the audit overrides the outcome"
     - "Propagate the final outcome to main.py's exit code"
+  resolution: |
+    Both done. `record_audit_verdict` appends a corrected `game_over` carrying technical_loss
+    after the technical-win record, so the LAST outcome-bearing record is the audited one; the
+    pre-audit record is left in place, because the log is append-only evidence and the board
+    result is a real fact about the game. `main.py` maps TECHNICAL_LOSS to a non-zero exit code
+    and stays a thin shell. Proven by tests/unit/test_outcome_durability.py, which also asserts
+    a CLEAN audit appends no game_over — the audit must not manufacture an outcome for an
+    honest game.
 
 ## Standing notes carried forward (not gaps)
 
