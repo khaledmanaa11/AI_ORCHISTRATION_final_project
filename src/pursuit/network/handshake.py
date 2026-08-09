@@ -61,6 +61,7 @@ async def perform_handshake(
     *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str,
     local_role: str, call_peer: HandshakeCaller, local_scent_digest: str | None = None,
     local_step0_digest: str | None = None, local_game_id: str | None = None,
+    local_step0_declaration: dict | None = None, shared_secret: str | None = None,
 ) -> HandshakeResult:
     """OUTBOUND handshake half. Exactly one attempt -- no retry, no timeout, no sleep."""
     machine.attempt(State.HANDSHAKE)
@@ -71,6 +72,7 @@ async def perform_handshake(
         offer = build_offer(
             local_digest, local_role, local_scent_digest=local_scent_digest,
             local_step0_digest=local_step0_digest, local_game_id=local_game_id,
+            local_step0_declaration=local_step0_declaration,
         )
         raw = await call_peer(offer)
     except McpError as exc:
@@ -79,18 +81,23 @@ async def perform_handshake(
                   severity=TransitionSeverity.RECOVERABLE, reason=detail)
         return build_result(HandshakeOutcome.UNREACHABLE, machine, local_digest, detail=detail)
 
-    return evaluate(machine, reporter, local_digest, local_scent_digest, local_step0_digest, raw)
+    return evaluate(
+        machine, reporter, local_digest, local_scent_digest, local_step0_digest,
+        shared_secret, raw,
+    )
 
 
 def respond_to_handshake(
     *, machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str,
     local_role: str, incoming: dict, local_scent_digest: str | None = None,
     local_step0_digest: str | None = None, local_game_id: str | None = None,
+    local_step0_declaration: dict | None = None, shared_secret: str | None = None,
 ) -> tuple[dict, HandshakeResult]:
     """INBOUND handshake half (NET-03 symmetry). Pure, synchronous, never raises."""
     reply = build_offer(
         local_digest, local_role, local_scent_digest=local_scent_digest,
         local_step0_digest=local_step0_digest, local_game_id=local_game_id,
+        local_step0_declaration=local_step0_declaration,
     ).to_dict()
 
     machine.attempt(State.HANDSHAKE)
@@ -98,5 +105,6 @@ def respond_to_handshake(
         return reply, not_attempted(machine, local_digest)
 
     return reply, evaluate(
-        machine, reporter, local_digest, local_scent_digest, local_step0_digest, incoming,
+        machine, reporter, local_digest, local_scent_digest, local_step0_digest,
+        shared_secret, incoming,
     )

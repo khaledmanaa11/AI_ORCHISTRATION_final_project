@@ -33,6 +33,7 @@ from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
 from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.orchestrator import run_turn_loop
+from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.tunnel_wiring import build_tunnel_manager, run_with_tunnel
 from pursuit.shared.scent_config import scent_digest
 
@@ -46,9 +47,12 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
     async def _play() -> Outcome | None:
         resolved_game_uid = game_uid or secrets.token_hex(8)
         step0_digest, declaration_envelope = await declare_step0(cfg)
+        shared_secret = resolve_shared_secret(cfg.config_dir)
+        shared_secret_value = shared_secret[1] if shared_secret is not None else None
         ctx = default_context(
             cfg, game_uid=resolved_game_uid,
             local_step0_digest=step0_digest, local_game_id=resolved_game_uid,
+            local_step0_declaration=declaration_envelope,
         )
         ctx.watchdog.start()
         await start_server(ctx)
@@ -61,6 +65,7 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                     local_role=ctx.role, call_peer=make_client_caller(client),
                     local_scent_digest=local_scent_digest,
                     local_step0_digest=step0_digest, local_game_id=resolved_game_uid,
+                    local_step0_declaration=declaration_envelope, shared_secret=shared_secret_value,
                 )
             if not result.agreed:
                 return None

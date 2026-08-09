@@ -60,7 +60,10 @@ def _patch_common(monkeypatch, *, agreed: bool, order: list[str], tunnel=None):
     monkeypatch.setattr(agent_entrypoint, "build_tunnel_manager", lambda config_dir, net: tunnel)
     monkeypatch.setattr(agent_entrypoint, "make_client_caller", lambda client: object())
 
-    def _default_context(cfg_arg, *, game_uid=None, local_step0_digest=None, local_game_id=None):
+    def _default_context(
+        cfg_arg, *, game_uid=None, local_step0_digest=None, local_game_id=None,
+        local_step0_declaration=None,
+    ):
         order.append("default_context")
         return _FakeCtx()
 

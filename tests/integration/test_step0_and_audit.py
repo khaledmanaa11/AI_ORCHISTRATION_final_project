@@ -56,10 +56,12 @@ async def _play_to_turn_loop_end(cfg_a, cfg_b, *, game_uid, log_dir):
     ctx_a = agent_lifecycle.default_context(
         cfg_a, game_uid=game_uid, log_path=log_dir / "police" / "a.jsonl",
         local_step0_digest=step0_digest_a, local_game_id=game_uid,
+        local_step0_declaration=decl_a,
     )
     ctx_b = agent_lifecycle.default_context(
         cfg_b, game_uid=game_uid, log_path=log_dir / "thief" / "b.jsonl",
         local_step0_digest=step0_digest_b, local_game_id=game_uid,
+        local_step0_declaration=decl_b,
     )
     ctx_a.runtime.client = lambda: Client(ctx_b.runtime.server)
     ctx_b.runtime.client = lambda: Client(ctx_a.runtime.server)
@@ -67,18 +69,24 @@ async def _play_to_turn_loop_end(cfg_a, cfg_b, *, game_uid, log_dir):
     local_digest = config_digest(cfg_a.config_dir / "game_params.json")
     local_scent_digest = scent_digest(cfg_a.scent)
 
-    async def _handshake(ctx, step0_digest):
+    async def _handshake(ctx, step0_digest, declaration):
         async with ctx.runtime.client() as client:
             return await perform_handshake(
                 machine=ctx.machine, reporter=ctx.reporter, local_digest=local_digest,
                 local_role=ctx.role, call_peer=make_client_caller(client),
                 local_scent_digest=local_scent_digest,
                 local_step0_digest=step0_digest, local_game_id=game_uid,
+                local_step0_declaration=declaration,
             )
 
-    result_a = await _handshake(ctx_a, step0_digest_a)
-    result_b = await _handshake(ctx_b, step0_digest_b)
+    result_a = await _handshake(ctx_a, step0_digest_a, decl_a)
+    result_b = await _handshake(ctx_b, step0_digest_b, decl_b)
     assert result_a.agreed and result_b.agreed, f"{result_a}; {result_b}"
+    # The FULL declaration content now travels the wire and is verified
+    # against its own claimed digest before AGREED is ever returned (D-62
+    # follow-up) -- not just a bare digest exchange.
+    assert result_a.peer_step0_declaration == decl_b
+    assert result_b.peer_step0_declaration == decl_a
 
     for log_path in (ctx_a.log_path, ctx_b.log_path):
         assert _has_no_move_content_yet(log_path)
@@ -131,6 +139,13 @@ async def test_declaration_files_share_the_game_id_before_any_move(tmp_path, mon
     assert police_decl["declaration"]["team_code"] == thief_decl["declaration"]["team_code"]
     assert police_decl["declaration"]["role"] == "police"
     assert thief_decl["declaration"]["role"] == "thief"
+
+    # D-62 follow-up: the PEER's own declaration is ALSO persisted (audit
+    # trail, Phase 7), named "_peer" beside our own.
+    peer_of_a = json.loads((decl_a_path.parent / f"declaration_{game_uid}_peer.json").read_text())
+    peer_of_b = json.loads((decl_b_path.parent / f"declaration_{game_uid}_peer.json").read_text())
+    assert peer_of_a["declaration"]["role"] == "thief"
+    assert peer_of_b["declaration"]["role"] == "police"
 
 
 async def test_a_clean_game_audits_with_no_mismatch(tmp_path, monkeypatch):

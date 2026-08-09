@@ -1,11 +1,14 @@
-"""D-62 Step-0 presence suite + D-61 game_id negotiation for the D-08
-handshake -- mirrors test_handshake_scent.py's own structure and shared
-fakes, with a LOCAL envelope builder (never extending test_handshake.py's
-own `peer_reply` a second time for this phase).
+"""D-62 Step-0 digest-presence suite + D-61 game_id negotiation for the
+D-08 handshake -- mirrors test_handshake_scent.py's own structure and
+shared fakes, with a LOCAL envelope builder (never extending
+test_handshake.py's own `peer_reply` a second time for this phase).
 
-D-62 note (see handshake_evaluate.py's own docstring): Step-0 is checked
-for PRESENCE, not equality -- unlike SCENT_DIGEST, a Step-0 declaration is
-inherently per-agent, so two roles' digests are NEVER expected to match.
+D-62 note (see handshake_evaluate.py's own docstring): the digest itself
+is checked for PRESENCE, not equality against ours -- unlike SCENT_DIGEST,
+a Step-0 declaration is inherently per-agent, so two roles' digests are
+NEVER expected to match. Declaration CONTENT verification (the peer's
+declaration hashing to its own claimed digest) is the sibling
+test_handshake_step0_declaration.py, split out at the same gate.
 """
 
 from __future__ import annotations

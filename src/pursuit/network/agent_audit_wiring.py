@@ -76,12 +76,21 @@ def write_declaration(
     """Persist THIS side's own signed Step-0 declaration beside the log,
     named by the negotiated game_id (D-61) -- ONLY after a successful
     handshake -- then record this game against the per-role counter
-    exactly once (rule 37/38)."""
+    exactly once (rule 37/38). ALSO persists the PEER's own declaration
+    (D-62 follow-up), when they sent one, so the content this side
+    verified at handshake stays auditable after the fact (Phase 7);
+    skipped entirely for a digest-only peer -- there is no content to save."""
     declared_game_id = _declared_game_id(ctx, result)
     path = ctx.log_path.parent / f"declaration_{declared_game_id}.json"
     durable_write_json(
         path, declaration_envelope, retries=_DECLARE_RETRIES, backoff=_DECLARE_BACKOFF_SECONDS,
     )
+    if result.peer_step0_declaration is not None:
+        peer_path = ctx.log_path.parent / f"declaration_{declared_game_id}_peer.json"
+        durable_write_json(
+            peer_path, result.peer_step0_declaration,
+            retries=_DECLARE_RETRIES, backoff=_DECLARE_BACKOFF_SECONDS,
+        )
     step0_collect.record_game_played(cfg.config_dir / _COUNTER_FILENAME)
 
 

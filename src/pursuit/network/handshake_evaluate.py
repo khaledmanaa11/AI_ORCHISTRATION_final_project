@@ -1,20 +1,13 @@
 """Decode-then-compare-then-abort machinery for the D-08 handshake (D-15, D-46, rule 11/23).
 
-Split from handshake.py at the 150-code-line gate (Segal Table 5), the same way
-handshake_wire.py already split out envelope/transport concerns: this module holds
-HandshakeOutcome/HandshakeResult and every internal step that decodes a peer's reply,
-compares it against what we sent, and escalates the state machine on a mismatch.
-handshake.py owns only the two PUBLIC entry points (perform_handshake,
-respond_to_handshake) and imports everything here back, so external callers keep doing
-`from pursuit.network.handshake import HandshakeOutcome` unchanged (QUAL-02: one shape,
-reused, never duplicated). No import of handshake.py itself, so handshake.py can import
-from here with no circular import -- the same one-directional shape handshake_wire.py uses.
-
-D-61/D-62 (06-03): unlike CONFIG/SCENT (digests of files kept byte-identical across both
-config dirs -- equality is correct there), a Step-0 declaration is inherently PER-AGENT;
-two roles' digests are NEVER expected to match. `_step0_present` checks PRESENCE only, not
-equality (see its own docstring) -- a literal equality check would abort every real game.
-`peer_game_id` is read UNCONDITIONALLY so an abort report still names the peer's proposal.
+Split from handshake.py at the 150-code-line gate: this module holds HandshakeOutcome/
+HandshakeResult and every step that decodes a peer's reply, compares it, and escalates the
+state machine on a mismatch. handshake.py owns only the two public entry points and imports
+everything here back (QUAL-02). Step-0 content verification itself (`_step0_verified`) lives
+in the sibling handshake_step0.py, split out at the SAME gate -- it checks the PEER's
+declaration CONTENT against ITS OWN claimed digest, never a local-vs-remote equality (a
+Step-0 declaration is inherently per-agent). `peer_game_id`/`peer_step0_declaration` are read
+UNCONDITIONALLY -- evidence, not just success.
 """
 
 from __future__ import annotations
@@ -24,6 +17,7 @@ from enum import Enum
 
 from pursuit.network.config_hash import compare_named_digest
 from pursuit.network.envelope import Envelope, MessageType
+from pursuit.network.handshake_step0 import _step0_verified
 from pursuit.network.handshake_wire import HandshakeKey
 from pursuit.network.state_machine import (
     State,
@@ -58,6 +52,9 @@ class HandshakeResult:
     peer_game_id: str | None = None
     """D-61: the game_id the PEER proposed, read unconditionally from the
     envelope (present even on a mismatch -- evidence, not just success)."""
+    peer_step0_declaration: dict | None = None
+    """D-62 follow-up: the PEER's full signed declaration envelope (dict),
+    read unconditionally when they sent one -- None for a digest-only peer."""
 
     @property
     def agreed(self) -> bool:
@@ -73,14 +70,15 @@ class HandshakeResult:
 def build_result(
     outcome: HandshakeOutcome, machine: TurnStateMachine, local_digest: str, *,
     remote_digest: str | None = None, peer_role: str | None = None,
-    peer_game_id: str | None = None, detail: str = "",
+    peer_game_id: str | None = None, peer_step0_declaration: dict | None = None,
+    detail: str = "",
 ) -> HandshakeResult:
     """Shared HandshakeResult constructor -- one shape, reused by every return path (QUAL-02),
     including handshake.py's own UNREACHABLE branch."""
     return HandshakeResult(
         outcome=outcome, state=machine.state, local_digest=local_digest,
         remote_digest=remote_digest, peer_role=peer_role, peer_game_id=peer_game_id,
-        detail=detail,
+        peer_step0_declaration=peer_step0_declaration, detail=detail,
     )
 
 
@@ -96,7 +94,7 @@ def not_attempted(machine: TurnStateMachine, local_digest: str) -> HandshakeResu
 def _abort(
     machine: TurnStateMachine, reporter: TransitionReporter, *, outcome: HandshakeOutcome,
     local_digest: str, remote_digest: str | None, peer_role: str | None,
-    peer_game_id: str | None = None, detail: str,
+    peer_game_id: str | None = None, peer_step0_declaration: dict | None = None, detail: str,
 ) -> HandshakeResult:
     """Escalate to State.ERROR and emit the D-15 evidence report. A legal HANDSHAKE -> ERROR
     transition is silent in 02-03 (its design note 4) -- this is the one place the abort
@@ -105,23 +103,18 @@ def _abort(
               severity=TransitionSeverity.PROTOCOL_VIOLATION, reason=detail)
     machine.attempt(State.ERROR)
     return build_result(outcome, machine, local_digest, remote_digest=remote_digest,
-                         peer_role=peer_role, peer_game_id=peer_game_id, detail=detail)
-
-
-def _step0_present(envelope: Envelope) -> tuple[bool, str]:
-    """D-62, presence-only (see module docstring)."""
-    if envelope.payload.get(HandshakeKey.STEP0_DIGEST) is None:
-        return False, "step0 digest absent from peer payload"
-    return True, "step0 digest present"
+                         peer_role=peer_role, peer_game_id=peer_game_id,
+                         peer_step0_declaration=peer_step0_declaration, detail=detail)
 
 
 def _compare_offer(
     local_digest: str, local_scent_digest: str | None, local_step0_digest: str | None,
-    envelope: Envelope, remote_digest: str,
+    shared_secret: str | None, envelope: Envelope, remote_digest: str,
 ) -> tuple[HandshakeOutcome, bool, str]:
     """Compare config, then -- only for each lock THIS call site opted into -- scent (D-46,
-    equality) and step0 (D-62, presence). `local_*_digest is None` skips that check entirely;
-    a REMOTE peer can never opt itself out this way, only skip its OWN local check."""
+    equality) and step0 (D-62, content-verified when sent, else presence-only). `local_*_digest
+    is None` skips that check entirely; a REMOTE peer can never opt itself out this way, only
+    skip its OWN local check."""
     config_ok, config_detail = compare_named_digest("config", local_digest, remote_digest)
     if not config_ok:
         return HandshakeOutcome.CONFIG_MISMATCH, False, config_detail
@@ -135,7 +128,7 @@ def _compare_offer(
         detail = f"{detail}; {scent_detail}"
 
     if local_step0_digest is not None:
-        step0_ok, step0_detail = _step0_present(envelope)
+        step0_ok, step0_detail = _step0_verified(shared_secret, envelope)
         if not step0_ok:
             return HandshakeOutcome.STEP0_MISMATCH, False, step0_detail
         detail = f"{detail}; {step0_detail}"
@@ -145,13 +138,15 @@ def _compare_offer(
 
 def evaluate(
     machine: TurnStateMachine, reporter: TransitionReporter, local_digest: str,
-    local_scent_digest: str | None, local_step0_digest: str | None, raw: dict,
+    local_scent_digest: str | None, local_step0_digest: str | None,
+    shared_secret: str | None, raw: dict,
 ) -> HandshakeResult:
     """Shared decode-then-compare step for BOTH directions (QUAL-02): decode the
     counterpart's envelope via 02-02's Envelope.from_dict (never a hand-rolled key check),
     then AGREE or abort via _compare_offer. One call site, so the two directions cannot
-    diverge in evidence or escalation policy. `peer_game_id` (D-61) is read UNCONDITIONALLY,
-    best-effort, whenever the envelope decoded far enough to have a payload at all."""
+    diverge in evidence or escalation policy. `peer_game_id`/`peer_step0_declaration` (D-61/
+    D-62) are read UNCONDITIONALLY, best-effort, whenever the envelope decoded far enough to
+    have a payload at all."""
     envelope: Envelope | None = None
     try:
         envelope = Envelope.from_dict(raw)
@@ -165,14 +160,17 @@ def evaluate(
                        peer_game_id=peer_game_id, detail=f"malformed handshake reply: {exc}")
 
     peer_game_id = envelope.payload.get(HandshakeKey.GAME_ID)
+    peer_step0_declaration = envelope.payload.get(HandshakeKey.STEP0_DECLARATION)
     outcome, ok, detail = _compare_offer(
-        local_digest, local_scent_digest, local_step0_digest, envelope, remote_digest,
+        local_digest, local_scent_digest, local_step0_digest, shared_secret,
+        envelope, remote_digest,
     )
     if ok:
         return build_result(HandshakeOutcome.AGREED, machine, local_digest,
                              remote_digest=remote_digest, peer_role=envelope.sender,
-                             peer_game_id=peer_game_id, detail=detail)
+                             peer_game_id=peer_game_id,
+                             peer_step0_declaration=peer_step0_declaration, detail=detail)
     return _abort(machine, reporter, outcome=outcome, local_digest=local_digest,
                   remote_digest=remote_digest, peer_role=envelope.sender,
-                  peer_game_id=peer_game_id,
+                  peer_game_id=peer_game_id, peer_step0_declaration=peer_step0_declaration,
                   detail=f"{detail}; aborting before move 1 (rule 11/23, D-15/D-46/D-61/D-62)")

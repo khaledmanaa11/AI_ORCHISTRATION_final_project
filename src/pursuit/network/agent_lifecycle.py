@@ -64,6 +64,7 @@ from pursuit.shared.scent_config import scent_digest
 def default_context(
     cfg: AgentConfig, *, game_uid: str | None = None, log_path: Path | None = None,
     local_step0_digest: str | None = None, local_game_id: str | None = None,
+    local_step0_declaration: dict | None = None,
 ) -> AgentContext:
     """Build the REAL collaborators. THE ORDER IS LOAD-BEARING (design
     note 12): the reporter and machine must exist before the responder
@@ -71,10 +72,14 @@ def default_context(
     CONSTRUCTION -- there is no later injection point. 04-12: also builds
     the real mover, scent field and `LanguageRuntime` -- every real game
     plays the full Figure-7 pipeline; only bespoke fixtures skip this.
-    06-03 (D-61/D-62): `local_step0_digest`/`local_game_id` thread into the
-    responder the SAME way `local_scent_digest` already does -- both
-    default None so every pre-existing caller stays byte-unmodified;
-    `agent_entrypoint.run_agent` is the one real caller that supplies both."""
+    06-03 (D-61/D-62): `local_step0_digest`/`local_game_id`/
+    `local_step0_declaration` thread into the responder the SAME way
+    `local_scent_digest` already does -- default None so every pre-existing
+    caller stays byte-unmodified; `agent_entrypoint.run_agent` is the one
+    real caller that supplies all three. The SAME resolved shared-secret
+    tuple this function already builds for `PeerRuntime` (D-56) is reused
+    for the responder's OWN Step-0 content verification -- one resolution,
+    two consumers, never a second `resolve_shared_secret` call here."""
     game_uid = game_uid or secrets.token_hex(8)
     if log_path is None:
         log_path = Path("logs") / cfg.role / f"{game_uid}.jsonl"
@@ -84,15 +89,18 @@ def default_context(
     machine = TurnStateMachine(reporter)
     local_digest = config_digest(cfg.config_dir / "game_params.json")
     local_scent_digest = scent_digest(cfg.scent)
+    shared_secret_pair = resolve_shared_secret(cfg.config_dir)
+    shared_secret_value = shared_secret_pair[1] if shared_secret_pair is not None else None
     responder = make_handshake_responder(
         machine=machine, reporter=reporter, local_digest=local_digest, local_role=cfg.role,
         local_scent_digest=local_scent_digest,
         local_step0_digest=local_step0_digest, local_game_id=local_game_id,
+        local_step0_declaration=local_step0_declaration, shared_secret=shared_secret_value,
     )
     # D-56: shared_secret resolved from THIS agent's config_dir (tunnel.json's
     # secret_header + os.environ[secret_env]) -- None (every existing
     # test/dev flow) installs no middleware and sends no header.
-    runtime = PeerRuntime(cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder, shared_secret=resolve_shared_secret(cfg.config_dir))
+    runtime = PeerRuntime(cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder, shared_secret=shared_secret_pair)
     watchdog = Watchdog(
         threshold_seconds=cfg.net.watchdog_threshold,
         poll_seconds=cfg.net.watchdog_poll_seconds,
