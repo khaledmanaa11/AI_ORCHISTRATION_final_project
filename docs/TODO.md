@@ -106,10 +106,12 @@ Gate: move committed then revealed with valid nonce; Step-0 verified.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 06-01 Canonical-JSON hashing + nonce gen/verify | P0 | ☐ | Khaled | `sort_keys`/`separators` exact; `secrets` used (SEC-03/04) |
-| 06-02 Four-phase commit-reveal in orchestrator | P0 | ☐ | Khaled | Commit→Ack→Reveal→Audit; mismatch=loss (SEC-01/02/05) |
-| 06-03 Step-0 declaration + end-game mutual audit | P0 | ☐ | Khaled | Signed HW+commit-hash pre-game; audit runs (SEC-06/07/08) |
-| 06-04 Write `docs/PRD_commit_reveal.md` | P1 | ☐ | Khaled | Full per-mechanism PRD committed (DOC-02) |
+| 06-01 Crypto core — canonical-JSON hashing, nonce gen/verify, state record, durable ledger, `security.json` | P0 | ☐ | Khaled | `sort_keys`/`separators` exact; `secrets` used; round-trip + tamper proven in one test (SEC-01/03/04) |
+| 06-02 Four-phase commit-reveal on the wire + barriers inside the committed action | P0 | ☐ | Khaled | Commit→Ack→Reveal, no reveal before the opponent's commit; barrier round-trips; nonce never on the wire log (SEC-01/02/04/07) |
+| 06-03 Step-0 declaration + end-game mutual audit | P0 | ☐ | Khaled | Signed HW+commit-hash verified pre-game; audit catches both tamper classes → technical loss (SEC-05/06/07/08) |
+| 06-04 Gate 6 measurement + `docs/PRD_commit_reveal.md` | P1 | ☐ | Khaled | One command, zero env vars, honest PASS/FAIL evidence; full per-mechanism PRD committed (DOC-02) |
+| 06-96 Refresh the graphify graph (plan-phase + after execute) | P2 | ◐ | Khaled | GRAPH_REPORT.md current with `security/` and the new network modules |
+| 06-97 Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` | P1 | ◐ | Khaled | Phase triplet exists and matches the plan set (created 2026-08-09) |
 | 06-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
 
 ---

@@ -174,14 +174,14 @@ Plans:
   2. The hash covers canonical-JSON `{state, move, intent, nonce}`; the nonce (`secrets.token_hex(16)`) stays secret until game end; any mismatch is a technical loss
   3. The Step-0 hardware declaration (incl. exact commit hash) is verified before the first move
 
-**Plans**: TBD
+**Plans**: 4 (waves 1-4; see `.planning/phases/06-security-and-cryptography/06-PLAN-OUTLINE.md`)
 
 Plans:
 
-- [ ] 06-01: Canonical-JSON hashing + nonce generation/verification
-- [ ] 06-02: Four-phase commit-reveal protocol wired into the orchestrator
-- [ ] 06-03: Step-0 hardware declaration + end-game mutual log audit
-- [ ] 06-04: Write `docs/PRD_commit_reveal.md` (the cryptographic protocol)
+- [ ] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair
+- [ ] 06-02: Four-phase wire protocol — 4 message kinds, the both-locked Commit→Ack→Reveal exchange (D-58), barrier placement inside the committed action (D-66, SEC-07), toggle-off byte-equivalence
+- [ ] 06-03: Step-0 hardware declaration (verified at handshake, D-62/D-63) + negotiated `game_id` (D-61) + end-game mutual log audit with the revealed-vs-played cross-check (D-67)
+- [ ] 06-04: GATE-6 measurement (localhost, zero env vars) + `docs/PRD_commit_reveal.md` (the cryptographic protocol)
 - [ ] 06-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -252,6 +252,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 13/14 | In Progress | - |
 | 5. Cloud Exposure and Tunneling | 3/3 | In Progress (GATE-5 both criteria PENDING -- human smoke run + remote round) | - |
-| 6. Security and Cryptography | 0/5 | Not started | - |
+| 6. Security and Cryptography | 0/4 | Planned (4 plans, 4 waves) | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |
