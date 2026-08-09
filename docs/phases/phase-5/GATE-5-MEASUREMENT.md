@@ -1,8 +1,9 @@
 # GATE-5 measurement — Phase 5, book §10.4 milestone 5
 
-**Status:** Criterion 1 **PENDING** (the smoke script has not yet been run — this machine has
-none of `NGROK_AUTHTOKEN` / `PURSUIT_NGROK_DOMAIN` / `PURSUIT_TUNNEL_SECRET` set). Criterion 2
-**PENDING** (the genuine remote round needs a second machine and a human operator; see
+**Status:** Criterion 1 **PASS** — measured 2026-08-09T09:41:20Z against the reserved domain
+`perdurable-mireille-nonzoologically.ngrok-free.dev`; evidence in
+[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** (the genuine
+remote round needs a second machine and a human operator; see
 [Criterion 2](#criterion-2--the-genuine-remote-round-cloud-02) below).
 **Date:** 2026-08-09 · **Plan:** 05-03 · **Method:** `scripts/gate5_tunnel_smoke.py` for
 criterion 1; a human-run procedure, recorded here, for criterion 2.
@@ -10,7 +11,7 @@ criterion 1; a human-run procedure, recorded here, for criterion 2.
 Per rule 38 and this plan's own must_haves: **the phase is not fully measured while either
 row above reads PENDING.** `/gsd:verify-work 5` must not tick GATE-5 until both criteria carry
 real evidence — mirroring `docs/phases/phase-4/GATE-4-MEASUREMENT.md`'s own live-PENDING
-discipline, applied here to both criteria rather than one.
+discipline. Criterion 1 now carries a real run; criterion 2 remains the one open item.
 
 ---
 
@@ -55,8 +56,8 @@ It refuses to run — naming every missing variable — if any of the three abov
 preflight uses (`tests/unit/test_gate5_tunnel_smoke_preflight.py`).
 
 **What a PASS looks like.** The script writes
-[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json) (does not exist yet — no run has
-happened on this machine) with these fields, all of which must hold for `"verdict": "PASS"`:
+[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json) with these fields, all of which must
+hold for `"verdict": "PASS"`:
 
 | Field | Must be |
 |---|---|
@@ -65,9 +66,29 @@ happened on this machine) with these fields, all of which must hold for `"verdic
 | `unauthorized_request_rejected_403` | `true` — the no-header request got a 403 through the tunnel, not loopback |
 | `round_trip_seconds` | a real, non-zero number (informational — no §10.4 latency bound exists for this criterion) |
 
-**Current evidence.** None — `gate5_smoke_evidence.json` has not been generated on this
-machine. **Rerun command:** the command block above. Once run, replace this paragraph with the
-three field values and the resulting verdict; do not summarize a run that did not happen.
+**Current evidence — measured run, 2026-08-09T09:41:20Z.** `verdict: PASS`.
+
+| Field | Measured |
+|---|---|
+| `public_url` | `https://perdurable-mireille-nonzoologically.ngrok-free.dev` |
+| `url_is_https_and_matches_domain` | `true` — host matched `PURSUIT_NGROK_DOMAIN` exactly |
+| `authorized_request_reached_mcp` | `true` — the five D-05 tool names returned through the tunnel (`POST /mcp` → `200 OK`) |
+| `unauthorized_request_rejected_403` | `true` — `SharedSecretMiddleware` logged the rejection and returned `403 Forbidden` through the public URL |
+| `round_trip_seconds` | `1.859` (informational — §10.4 sets no latency bound for this criterion) |
+
+Two observations from the run, recorded rather than smoothed:
+
+1. **The reserved domain is a `.ngrok-free.dev`, not `.ngrok-free.app`.** ngrok issues both
+   suffixes; `check_public_url` matches `https://<configured host>` generically and hardcodes
+   no suffix, so this needed no code change. The command block above still shows `.app` as the
+   illustrative shape — read it as "your claimed domain, whatever suffix ngrok gave it".
+2. **Windows asyncio emits `OSError [WinError 995]` and a `CancelledError` during teardown**,
+   after both assertions have passed and the tunnel has stopped. This is uvicorn/proactor
+   socket-close noise on shutdown, not a failure of either assertion — the script had already
+   computed `verdict: PASS` and exited 0. Noted so a future reader does not mistake the
+   traceback for a broken gate.
+
+**Rerun command:** the command block above.
 
 ---
 
