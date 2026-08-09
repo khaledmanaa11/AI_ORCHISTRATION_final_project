@@ -13,13 +13,13 @@
       "police": {
         "own_declaration_exists": true,
         "peer_declaration_exists": true,
-        "predates_detail": "declaration mtime=1786294787.4016879 <= first move-content ts=1786294787.471101",
+        "predates_detail": "declaration mtime=1786297874.267697 <= first move-content ts=1786297874.313851",
         "predates_first_move_content": true
       },
       "thief": {
         "own_declaration_exists": true,
         "peer_declaration_exists": true,
-        "predates_detail": "declaration mtime=1786294787.4264133 <= first move-content ts=1786294787.454909",
+        "predates_detail": "declaration mtime=1786297874.2836893 <= first move-content ts=1786297874.311571",
         "predates_first_move_content": true
       }
     },
@@ -99,5 +99,5 @@
   },
   "env_vars_required": [],
   "gate": "GATE-6 (book Sec10.4 milestone 6)",
-  "generated_at": "2026-08-09T16:59:49.041962+00:00"
+  "generated_at": "2026-08-09T17:51:15.731521+00:00"
 }

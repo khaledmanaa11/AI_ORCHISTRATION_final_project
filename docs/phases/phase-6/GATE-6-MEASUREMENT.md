@@ -1,8 +1,15 @@
 # GATE-6 measurement — Phase 6, book §10.4 milestone 6
 
-**Status:** All three criteria **PASS** — measured 2026-08-09T16:29:05Z on localhost, zero
+**Status:** All three criteria **PASS** — re-measured 2026-08-09 on localhost, zero
 environment variables set; evidence in
 [`gate6_measurement_evidence.json`](gate6_measurement_evidence.json).
+
+> **Re-measured after 06-05.** This gate first passed at 06-04. A later adversarial audit run
+> during `/gsd:verify-work 6` found two security gaps the gate's own criteria do not cover —
+> the audit's join key was attacker-controlled, and a caught mismatch never reached a durable
+> outcome record (see `06-UAT.md` Gaps, closed by 06-05). Both are fixed, and the gate was
+> re-run afterwards: **all three criteria still PASS.** The findings are recorded here rather
+> than quietly folded in, because a gate that passes is not the same as a property that holds.
 **Date:** 2026-08-09 · **Plan:** 06-04 · **Method:** `scripts/measure_gate6.py`, one command,
 driving the real, shipped `config/police` + `config/thief` through the whole commit-reveal
 lifecycle (a clean game, the D-67 tamper harness twice, and a live Step-0 mismatch) — never a
@@ -99,6 +106,19 @@ covering canonical-JSON `{state,move,intent,nonce}` is the SAME `build_commit_pa
 | (b) | `.mismatch_names_d67` (check 3, the D-67 cross-check) | `true` | `true` |
 | (b) | `.police_self_audit_stayed_clean` (only the tampered side fails) | `true` | `true` |
 | both | `nonce_absent_from_wire_log.{police,thief}` | `true` | `true`, `true` |
+
+**The audit's join key (06-05, added after this gate first passed).** All three checks join the
+peer's claims to our observed history *by turn number*, and that number is now **ours** — the
+turn this side stamped on the log record — never the inbound envelope's own `turn` field, which
+the peer chooses. While it was the peer's, an opponent could stamp its COMMIT and REVEAL
+envelopes with disjoint turns and thereby empty the coverage check's intersection *and* route
+every entry into the trailing-turn exemption, disabling both case (b) above and the rule-36
+check with one relabelled integer. Found by an adversarial audit at `/gsd:verify-work 6`,
+reproduced with paired controls, fixed in 06-05, and now proven by
+`tests/unit/test_audit_turn_binding.py` (five cases whose two observed dicts deliberately
+disagree, including an honest-peer fairness control) plus `test_step0_and_audit_tamper.py`'s
+tamper (e), which combines case (b)'s forgery with the skew that used to hide it. This gate was
+re-measured after that fix: all three criteria still PASS.
 
 Case (a) proves a corrupted `H_commit`/`payload` pair is caught by the re-hash check (check 2)
 alone. Case (b) is the D-67 case itself — the ledger and hash are left completely untouched

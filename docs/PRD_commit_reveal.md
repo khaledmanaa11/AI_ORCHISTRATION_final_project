@@ -178,6 +178,43 @@ SAME function also audits this side's own ledger against what it actually sent �
 honesty: a self-mismatch is reported with the identical label as an opponent mismatch, never
 suppressed.
 
+#### 2.6.1 The audit's evidence is keyed on local turn truth, never the peer's claim
+
+Every check above joins the peer's claimed entries to this side's observed history **by turn
+number**, so where that number comes from is itself a security property. It is **this side's
+own turn**, stamped by `turn_commit_send.log_received` (`local_turn`) and by
+`turn_actions.await_opponent_turn` (its pre-resolve `observed_turn`, captured before
+`maybe_resolve` advances the counter) — never the inbound envelope's own `turn` field, which
+the peer chooses.
+
+That distinction is load-bearing. While the audit keyed on the peer's declared turn, an
+opponent could stamp its COMMIT and REVEAL envelopes with **disjoint** turn numbers and thereby
+(1) empty the coverage check's "fully exchanged" intersection, so `{"records": []}` passed
+vacuously once more, and (2) route every claimed entry into the trailing-turn exemption, so
+check 3 never ran at all. One relabelled integer disabled both defences; the cheapest variant
+stamped every envelope `turn=0`, so a single valid record satisfied an entire game's audit and
+every other nonce stayed secret.
+
+The peer's claimed turn is still stored verbatim inside the logged envelope — the fix removes
+the adversary from the join key without discarding what the adversary said. This also fails
+closed in the other direction: a peer publishing its FINAL_REVEAL records under skewed turn
+numbers finds them absent from `observed_commits` (check 1 fails) while the real turns go
+unreported (the coverage check names them).
+
+An in-game *rejection* of a disagreeing turn stamp was considered and deliberately **not**
+added: keying on local truth already closes both paths, and rejecting on a turn-stamp
+disagreement risks a false accusation — the same trap as comparing two roles' Step-0 digests
+for equality (§2.5), and a rules-16/22 hazard.
+
+#### 2.6.2 A caught mismatch is durable
+
+`run_turn_loop` writes the game's `game_over` record — the only event carrying an `outcome`
+field — *before* the audit runs. On a mismatch, `record_audit_verdict` therefore appends a
+**corrected** `game_over` carrying `technical_loss`, so the last outcome-bearing record is the
+audited one; the earlier record is left in place, because the log is append-only evidence and
+the pre-audit board result is a real fact about the game. The process exit code follows the
+same outcome, so a caught cheat is visible without reading the JSONL at all.
+
 ## 3. Interfaces
 
 Copied verbatim from the shipping SUMMARY files (06-01/06-02/06-03), not re-derived:
