@@ -12,7 +12,7 @@ requires:
     provides: "MessageType.FINAL_REVEAL wire type + stub tool handler, CommitLedger filename convention (<log-stem>.ledger.jsonl), AgentContext.security"
 provides:
   - "src/pursuit/security/step0_collect.py + step0_sign.py: full Sec5.5 declaration auto-collect (D-63), digest-always/HMAC-when-secret signing (D-62)"
-  - "src/pursuit/security/audit.py: audit_peer_records/AuditRecord/all_matched -- the D-67 three-check re-hash + revealed-action cross-check"
+  - "src/pursuit/security/audit.py: audit_peer_records/AuditRecord/all_matched -- the D-67 three-check re-hash + revealed-action cross-check, PLUS a rule-36 coverage check closing the empty-FINAL_REVEAL evasion (coordinator-directed follow-up)"
   - "Handshake's third digest slot (STEP0_DIGEST, presence-required) PLUS a fifth key (STEP0_DECLARATION) carrying the full published content, content-verified against its own claimed digest via step0_sign.verify_declaration when sent -- + D-61 game_id negotiation (HandshakeResult.peer_game_id/peer_step0_declaration)"
   - "src/pursuit/network/agent_audit_wiring.py + agent_audit_exchange.py: declare_step0/write_declaration/run_final_audit wired live into run_agent"
 affects: [06-04-gate-and-docs]
@@ -27,6 +27,7 @@ tech-stack:
     - "AUDIT_HASH_MISMATCH reuses the EXISTING TechnicalWin dataclass/technical_win event shape -- never a second, parallel verdict type; attempts=1/timeout=0.0/backoff=0.0 are structural (no retry ladder governs an audit mismatch), elapsed_seconds is genuinely measured"
     - "games_played.json: mutable per-role runtime counter persisted BESIDE config/{police,thief}/ by design (rule 37), gitignored like *.qtable/nonces/ -- not version-controlled config"
     - "The shared secret used to verify a PEER's HMAC is OUR OWN resolved value (resolve_shared_secret), never a second peer-specific secret -- correct because D-62's 'pre-supplied key' is ONE value both match participants configure identically (config/police/tunnel.json and config/thief/tunnel.json share the same secret_env name by design); agent_lifecycle.py resolves it once and reuses the SAME tuple for both PeerRuntime's middleware and the responder's Step-0 verification"
+    - "Rule-36 coverage check (coordinator-directed follow-up): auditing only entries the PEER chose to include is itself bypassable -- all_matched([]) is vacuously True, so an opponent sending FINAL_REVEAL {\"records\": []} (publishing no nonces at all) would otherwise pass. audit_peer_records now ALSO requires every turn observed FULLY exchanged (present in BOTH observed_commits AND observed_reveals) to appear in peer_records; a missing one is a named mismatch. The SAME change fixes a real false-accusation bug in the other direction: a turn with an observed COMMIT but no observed REVEAL is a legitimately TRAILING turn (CommitLedger.append precedes the REVEAL send) and is now matched=True once its commit+hash check out, never misbranded as a forgery."
 
 key-files:
   created:
@@ -39,6 +40,7 @@ key-files:
     - tests/unit/test_step0_collect.py
     - tests/unit/test_step0_sign.py
     - tests/unit/test_audit.py
+    - tests/unit/test_audit_coverage.py
     - tests/unit/test_handshake_step0.py
     - tests/unit/test_handshake_step0_declaration.py
     - tests/unit/test_agent_audit_exchange.py
@@ -81,9 +83,9 @@ completed: 2026-08-09
 
 ## Performance
 
-- **Duration:** ~65 min (includes a coordinator-directed follow-up closing a content-verification gap)
-- **Tasks:** 4 + 1 follow-up
-- **Files created:** 15 (6 source, 9 test)
+- **Duration:** ~80 min (includes two coordinator-directed follow-ups: Step-0 content verification, then the rule-36 audit coverage check)
+- **Tasks:** 4 + 2 follow-ups
+- **Files created:** 16 (6 source, 10 test)
 - **Files modified:** 12
 
 ## Accomplishments
@@ -93,8 +95,9 @@ completed: 2026-08-09
 - **D-62 CORRECTED, not literally implemented: Step-0's handshake digest is a presence check, never equality.** The plan's own literal text ("the same opt-in step0 comparison SCENT_DIGEST already has... via compare_named_digest") would have made `_compare_offer` reject EVERY real two-role game the instant both sides opted in, because a Step-0 declaration is inherently per-agent (role/hardware/identity) -- two roles' digests are never expected to match, unlike CONFIG_DIGEST/SCENT_DIGEST (digests of files deliberately kept byte-identical across both config dirs). `HandshakeOutcome.STEP0_MISMATCH` fires exactly when the digest is absent (rule 24's actual failure mode -- Step-0 never ran on the peer's side), never when it merely differs from ours. Documented prominently in both `handshake_evaluate.py`'s module docstring and this SUMMARY, per the critical-honesty requirement that this interpretation choice never be silently reinterpreted.
 - **D-62 FOLLOW-UP, coordinator-directed: the digest-only design left `verify_declaration` with zero production callers and no real verification.** Digest-presence alone means a peer sending ANY 64-char string passes -- the content was never checked against anything. Fixed: `HandshakeKey.STEP0_DECLARATION` carries the FULL declaration content (book §5.5: the declaration is meant to be **published** -- OS/CPU/RAM/GPU/model/code-version/commit-hash carry no secrecy reason to be withheld, so sending it is strictly more faithful to the book than a bare digest). `handshake_step0.py` (new sibling -- `handshake_evaluate.py` was already AT its 150-line ceiling) verifies, when the peer sends one, that the declaration's content hashes to its own claimed `STEP0_DIGEST` (plus the HMAC, when both sides hold the shared secret) via `step0_sign.verify_declaration` -- now genuinely wired into production, not a dead API. A digest-only peer (an opponent team we cannot force to publish content) still agrees, logged as digest-only. A declaration mutated AFTER its digest was computed fails before move 1, with a report that names the fact ("does not hash to its own claimed digest") without accusing language, mirroring `test_handshake_abort.py`'s own house style.
 - **D-61 game_id negotiation.** `HandshakeResult.peer_game_id` is read UNCONDITIONALLY from the peer's envelope (present even on a mismatch -- evidence, not just success). The LOAD-BEARING proof is `test_handshake_step0.py::test_game_id_negotiation_resolves_to_the_initiators_value`, which constructs the two sides with DELIBERATELY DIFFERENT `local_game_id` values ("police-uid-aaa" vs "thief-uid-bbb") and confirms the responder's own `peer_game_id` resolves to the INITIATOR's value, not its own -- a harness sharing one `game_uid` by construction (as the integration test does) could pass even with negotiation entirely broken, so that assertion is corroboration only.
-- **D-67's hash-only bypass is genuinely closed, proven with both tamper classes distinctly.** `audit_peer_records()` runs three checks in order per turn: (1) an observed commit exists for that turn, (2) the re-hash matches the `H_commit` observed at Commit time, (3) the revealed composite action dict equals what THIS side actually saw played in that turn's in-game REVEAL. `tests/unit/test_audit.py` proves case (a) -- a flipped payload field fails check 2 -- and separately proves case (b) -- the D-67 case itself: hash and payload left completely untouched (still verifies against `verify_reveal` directly, asserted explicitly), but the claimed action differs from what was actually played, failing check 3 alone. The SAME function also runs as a symmetric self-check (this side's own ledger against what it actually sent) -- a self-mismatch is reported with the identical `AUDIT_HASH_MISMATCH` label, never suppressed.
-- **The whole flow proven live, at the real two-peer integration level.** `tests/integration/test_step0_and_audit.py` plays a full real game (both sides' own outbound `perform_handshake` calls, matching true production symmetry) and shows `declaration_<game_id>.json` written on BOTH sides before any move/commit/hint content is logged, and a clean game's `audit_verdict` record showing `matched: true` on both sides. `test_step0_and_audit_tamper.py` proves both D-67 tamper classes end-to-end: (a) corrupting one entry's payload in police's own ledger makes THIEF's audit of police's claims report `AUDIT_HASH_MISMATCH` and return `Outcome.TECHNICAL_LOSS` (and, as a genuine consequence of the same symmetric-honesty design, police's OWN self-audit also catches its now-corrupted ledger); (b) leaving the ledger entirely untouched (independently confirmed still hash-verifies) but corrupting only what thief actually observed played in-game for that turn makes thief's audit fail via check 3 specifically -- the exact bypass D-67 exists to close.
+- **D-67's hash-only bypass is genuinely closed, proven with both tamper classes distinctly.** `audit_peer_records()` runs three per-entry checks in order per turn: (1) an observed commit exists for that turn, (2) the re-hash matches the `H_commit` observed at Commit time, (3) the revealed composite action dict equals what THIS side actually saw played in that turn's in-game REVEAL (or, when no reveal was ever observed, the turn is a legitimately TRAILING commit and is `matched=True` -- see the next bullet). `tests/unit/test_audit.py` proves case (a) -- a flipped payload field fails check 2 -- and separately proves case (b) -- the D-67 case itself: hash and payload left completely untouched (still verifies against `verify_reveal` directly, asserted explicitly), but the claimed action differs from what was actually played, failing check 3 alone. The SAME function also runs as a symmetric self-check (this side's own ledger against what it actually sent) -- a self-mismatch is reported with the identical `AUDIT_HASH_MISMATCH` label, never suppressed.
+- **Rule-36 coverage check + a false-accusation fix (coordinator-directed follow-up).** Auditing only entries the peer CHOSE to include is itself bypassable: `all_matched([])` is vacuously `True`, so an opponent sending `FINAL_REVEAL {"records": []}` -- the cheapest possible rule-36 evasion, publishing no nonces at all -- previously passed the mutual audit and kept its board outcome. `audit_peer_records()` now ALSO requires every turn observed FULLY exchanged (present in BOTH `observed_commits` AND `observed_reveals` -- we watched them commit it and reveal it in-game) to appear in `peer_records` at all; a missing turn is `AuditRecord(matched=False, "...absent from final reveal")`, closing the evasion with one mismatch per omitted turn. The SAME change corrects a genuine false-accusation bug the earlier check-3 wording had: a turn with an observed COMMIT but NO observed REVEAL is a legitimately TRAILING turn (`CommitLedger.append` runs BEFORE the REVEAL send, so an honest peer's own final reveal can contain a committed-never-revealed entry from an abnormal ending) -- now `matched=True` once commit+hash check out, never misbranded as a forger (a rules-16/22/38-grade error in the OTHER direction). A genuinely turn-less game (nothing exchanged, nothing claimed) stays vacuously matched, correctly. No caller-side change was needed -- `agent_audit_exchange.py` already iterates whatever `audit_peer_records` returns, and the self-audit direction gets the identical semantics automatically (confirmed by test).
+- **The whole flow proven live, at the real two-peer integration level.** `tests/integration/test_step0_and_audit.py` plays a full real game (both sides' own outbound `perform_handshake` calls, matching true production symmetry) and shows `declaration_<game_id>.json` written on BOTH sides before any move/commit/hint content is logged, and a clean game's `audit_verdict` record showing `matched: true` on both sides. `test_step0_and_audit_tamper.py` proves three tamper classes end-to-end: (a) corrupting one entry's payload in police's own ledger makes THIEF's audit of police's claims report `AUDIT_HASH_MISMATCH` and return `Outcome.TECHNICAL_LOSS` (and, as a genuine consequence of the same symmetric-honesty design, police's OWN self-audit also catches its now-corrupted ledger); (b) leaving the ledger entirely untouched (independently confirmed still hash-verifies) but corrupting only what thief actually observed played in-game for that turn makes thief's audit fail via check 3 specifically -- the exact bypass D-67 exists to close; (d) truncating one turn out of police's own ledger before the Final-Reveal exchange makes thief's audit fail via the NEW coverage check (naming the missing turn), and police's own self-audit catches its now-incomplete ledger too.
 - **`agent_entrypoint.run_agent` stays a thin caller.** Three new call sites (`declare_step0` before the handshake, `write_declaration` after agreement, `run_final_audit` after `run_turn_loop`, gated on `security.commit_reveal`) -- all logic lives behind `agent_audit_wiring.py`/`agent_audit_exchange.py`. `git diff -- src/pursuit/network/state_machine.py` is empty: the Step-0 abort reuses the existing `HandshakeOutcome`/`State.ERROR` seam, no new State member, no new transition row (D-58 still holds).
 - **`step0_sign.verify_declaration` now has a real, confirmed production caller.** `grep -rn "verify_declaration(" src/` returns exactly one non-definition call site: `handshake_step0.py`, reached from real `perform_handshake`/`respond_to_handshake` calls (proven by tests that call those functions directly, not mocks). The peer's own full declaration is ALSO persisted (`declaration_<game_id>_peer.json`), when sent, for Phase-7 auditability.
 
@@ -106,7 +109,8 @@ Each task was committed atomically:
 2. **Task 2: the handshake's third digest and game_id** - `7bb130b` (feat)
 3. **Task 3: the Final-Reveal audit function** - `ed48ee4` (feat)
 4. **Task 4: agent_audit_wiring.py + agent_audit_exchange.py, run_agent as thin caller** - `be75519` (feat)
-5. **Follow-up: exchange and verify Step-0 declaration CONTENT, not just its digest** - `10f3a26` (feat, coordinator-directed)
+5. **Follow-up 1: exchange and verify Step-0 declaration CONTENT, not just its digest** - `10f3a26` (feat, coordinator-directed)
+6. **Follow-up 2: rule-36 coverage check closes the empty-FINAL_REVEAL evasion** - `4ac475a` (feat, coordinator-directed)
 
 **Plan metadata:** (this commit, appended after STATE.md/graph update)
 
@@ -114,7 +118,7 @@ Each task was committed atomically:
 
 - `src/pursuit/security/step0_collect.py` - `collect_declaration`/`read_games_played`/`record_game_played`, the full §5.5 field set + rule 37/38 counter
 - `src/pursuit/security/step0_sign.py` - `digest_declaration`/`sign_declaration`/`verify_declaration` (D-62)
-- `src/pursuit/security/audit.py` - `AuditRecord`/`audit_peer_records`/`all_matched` (D-67)
+- `src/pursuit/security/audit.py` - `AuditRecord`/`audit_peer_records`/`all_matched` (D-67 + the rule-36 coverage check + the trailing-commit fairness fix)
 - `src/pursuit/network/handshake_wire.py` - `HandshakeKey.STEP0_DIGEST`/`GAME_ID`/`STEP0_DECLARATION`, `build_offer`'s three new optional params
 - `src/pursuit/network/handshake_evaluate.py` - `HandshakeOutcome.STEP0_MISMATCH`, `HandshakeResult.peer_game_id`/`peer_step0_declaration`, `evaluate()`/`_compare_offer` thread `shared_secret`, both read unconditionally
 - `src/pursuit/network/handshake_step0.py` (new) - `_step0_verified` (digest presence + opt-in content verification via `step0_sign.verify_declaration`)
@@ -127,7 +131,7 @@ Each task was committed atomically:
 - `src/pursuit/network/verdict.py` - `TechnicalWinReason.AUDIT_HASH_MISMATCH` (additive)
 - `src/pursuit/network/event_log.py` - `EventType.AUDIT_VERDICT` (additive)
 - `.gitignore` - `config/*/games_played*.json` (mutable runtime state, not config)
-- 15 test files (see frontmatter `key-files`) - 59 new tests total across unit + integration (55 from Tasks 1-4, +4 from the follow-up's `test_handshake_step0_declaration.py`)
+- 16 test files (see frontmatter `key-files`) - 64 new tests total across unit + integration (55 from Tasks 1-4, +4 from follow-up 1's `test_handshake_step0_declaration.py`, +5 from follow-up 2's `test_audit_coverage.py` + `test_audit.py` additions + one new `test_step0_and_audit_tamper.py` case)
 
 ## Exact Contracts for 06-04 (verbatim, do not re-derive)
 
@@ -148,6 +152,11 @@ class AuditRecord:
 def audit_peer_records(
     observed_commits: dict[int, str], observed_reveals: dict[int, dict], peer_records: list[dict],
 ) -> list[AuditRecord]: ...
+    # ALSO returns one matched=False AuditRecord per turn present in BOTH
+    # observed_commits AND observed_reveals but ABSENT from peer_records
+    # (rule-36 coverage check -- closes the empty-{"records": []} evasion).
+    # A turn with an observed commit but no observed reveal is a
+    # legitimately trailing turn -- matched=True once commit+hash check out.
 def all_matched(records: list[AuditRecord]) -> bool: ...
 
 # src/pursuit/network/handshake_evaluate.py
@@ -190,7 +199,7 @@ async def run_final_audit(ctx: AgentContext) -> Outcome | None: ...  # None = cl
 
 ## Decisions Made
 
-See frontmatter `key-decisions` for the full list with rationale. The single most consequential one: **D-62's presence-only Step-0 comparison**, a genuine, reasoned correction to what the plan's own literal text specified (a `compare_named_digest` equality check mirroring `SCENT_DIGEST` verbatim). Implementing it literally would have aborted every real two-role game the instant both sides opted in -- verified by direct reasoning about `digest_declaration`'s inputs (the `role` field alone guarantees two different roles' declarations, and therefore their digests, are never equal), not assumed.
+See frontmatter `key-decisions` for the full list with rationale. Three consequential ones, in the order they were found: **D-62's presence-only Step-0 digest comparison** (a genuine, reasoned correction to the plan's own literal text -- a `compare_named_digest` equality check mirroring `SCENT_DIGEST` verbatim would have aborted every real two-role game); **D-62's follow-up content-exchange-and-verify** (closing the resulting gap where `verify_declaration` had zero production callers); and the **rule-36 audit coverage check** (closing the empty-`FINAL_REVEAL` evasion `all_matched([])`'s vacuous truth otherwise permitted, while simultaneously fixing a real false-accusation bug the original check-3 wording had for legitimately trailing commits). None of the three was assumed -- each was verified by direct reasoning about the actual data shapes involved and reversed only what needed reversing.
 
 ## Deviations from Plan
 
@@ -244,10 +253,18 @@ See frontmatter `key-decisions` for the full list with rationale. The single mos
 - **Verification:** 4 new unit tests (content-matches-digest agrees; content-tampered-after-digest aborts before move 1 with a non-accusing report, mirroring `test_handshake_abort.py`'s house style; digest-only peer still agrees; HMAC mismatch on a wrong local secret also aborts) + the full integration suite now asserts `result.peer_step0_declaration` is the genuine peer envelope and that `declaration_<id>_peer.json` is persisted. `grep -rn "verify_declaration(" src/` confirms exactly one non-definition call site. Full suite re-run: 1222 passed, 96.26% coverage.
 - **Committed in:** `10f3a26`
 
+**7. [Coordinator-directed follow-up, not a Rule 1-4 auto-fix -- an explicit external review finding] Rule-36 audit coverage check closes the empty-FINAL_REVEAL evasion, and fixes a false-accusation bug in the same change**
+- **Found during:** post-follow-up-1 review (coordinator inspected `run_final_audit` directly and confirmed no coverage check existed anywhere; `all_matched([])` is vacuously `True`)
+- **Issue:** `audit_peer_records` only ever audited entries the PEER chose to include. An opponent sending `FINAL_REVEAL {"records": []}` -- publishing no nonces at all, the cheapest possible rule-36 evasion -- passed the mutual audit and kept its board outcome, since there was nothing to iterate and reject. Separately, the existing check 3 treated a turn with an observed COMMIT but no observed REVEAL as `matched=False` ("no observed reveal") -- but `CommitLedger.append` runs BEFORE the REVEAL send (turn_commit_wait.py), so an HONEST peer's own final reveal can legitimately contain such a trailing entry from an abnormal ending; the old wording misbranded that peer a forger, a rules-16/22/38-grade error in the OTHER direction.
+- **Fix:** `audit_peer_records` now ALSO requires every turn present in BOTH `observed_commits` AND `observed_reveals` (fully exchanged -- we watched it committed AND revealed in-game) to appear in `peer_records`; a missing one is `AuditRecord(matched=False, "...absent from final reveal")`. The SAME function change fixes the trailing-turn case: `turn not in observed_reveals` (after checks 1-2 already passed) is now `matched=True` with a `"trailing commit... hash verified"` detail. A genuinely turn-less game (nothing exchanged, nothing claimed) stays vacuously matched. No caller-side change was needed in `agent_audit_exchange.py`; `handshake_evaluate.py` was not touched (confirmed via `git diff`, per the coordinator's own constraint).
+- **Files modified:** `src/pursuit/security/audit.py`, `tests/unit/test_audit.py` (one case renamed/narrowed to the missing-commit half, one new trailing-fairness case), `tests/unit/test_audit_coverage.py` (new sibling, split at the 150-line gate), `tests/integration/test_step0_and_audit_tamper.py` (new tamper (d) case)
+- **Verification:** unit tests prove (a) omitting one fully-exchanged turn mismatches exactly that turn, named; (b) sending empty records while N turns were observed produces N mismatches (the evasion closed); (c) an honest trailing commit-without-reveal is now `matched=True` (the false-accusation case fixed); a real two-peer integration test (d) truncates one turn out of police's own ledger before the Final-Reveal exchange and confirms thief's audit reports the coverage mismatch and returns `Outcome.TECHNICAL_LOSS` (and police's own self-audit catches its now-incomplete ledger too). `audit.py` independently confirmed at 100% coverage. Full suite re-run: 1227 passed, 96.27% coverage.
+- **Committed in:** `4ac475a`
+
 ---
 
-**Total deviations:** 6 (5 auto-fixed under Rules 1-3 during the plan's own 4 tasks, plus 1 coordinator-directed follow-up closing a genuine design gap the presence-only fix left open)
-**Impact on plan:** All six were necessary for correctness or the standing gates. The two Step-0 comparison decisions (deviations #1 and #6) together are the substantive design story: #1 established that digest EQUALITY is wrong for a per-agent value; #6 closed the resulting gap by verifying CONTENT instead, restoring genuine verification without reintroducing the equality bug. Neither was assumed -- both reasoned from the actual data (declarations digest `role`, so equality can never hold; content-hashing is possible and was simply never wired) and reversed only what needed reversing.
+**Total deviations:** 7 (5 auto-fixed under Rules 1-3 during the plan's own 4 tasks, plus 2 coordinator-directed follow-ups closing genuine design gaps the earlier fixes left open)
+**Impact on plan:** All seven were necessary for correctness or the standing gates. The Step-0 comparison decisions (#1 and #6) and the audit coverage decision (#7) together are the substantive design story of this plan: #1 established that digest EQUALITY is wrong for a per-agent value; #6 closed the resulting verification gap by checking CONTENT instead; #7 closed a parallel gap in the OTHER audit function -- auditing only what the peer chose to submit is bypassable the same way presence-only digest-checking was -- while simultaneously correcting a genuine false-accusation risk in the opposite direction. None was assumed -- each reasoned from the actual data shapes involved (declarations digest `role`, so equality can never hold; `CommitLedger.append` precedes the REVEAL send, so a trailing entry is not evidence of anything) and reversed only what needed reversing.
 
 ## Issues Encountered
 
@@ -259,11 +276,12 @@ None. Every primitive is stdlib (`hashlib`/`hmac`/`secrets`/`subprocess`) plus `
 
 ## Next Phase Readiness
 
-- `run_agent` (agent_entrypoint.py) now drives the COMPLETE Phase-6 flow end to end: Step-0 declare -> sign -> handshake (digest presence required, content verified against its own digest when sent) -> declare ours + the peer's to disk -> commit-reveal turn loop -> Final-Reveal mutual audit -> outcome (possibly overridden to `TECHNICAL_LOSS`). 06-04's `measure_gate6.py` needs no new wiring, only to call `run_agent` (or mirror `test_step0_and_audit.py`'s harness) and report the real numbers.
-- Both required tamper-harness proofs for GATE-6's own milestone text are ALREADY committed and passing: `test_step0_and_audit_tamper.py` (D-67, commit-reveal) and `test_handshake_step0_declaration.py` (Step-0 declaration content), ready for 06-04 to cite directly.
-- `handshake_evaluate.py` is now EXACTLY at 150/150 lines -- zero margin, flagged explicitly for 06-04. `agent_wiring.py` (148/150) is similarly tight.
+- `run_agent` (agent_entrypoint.py) now drives the COMPLETE Phase-6 flow end to end: Step-0 declare -> sign -> handshake (digest presence required, content verified against its own digest when sent) -> declare ours + the peer's to disk -> commit-reveal turn loop -> Final-Reveal mutual audit (now with the rule-36 coverage check closing the empty-records evasion) -> outcome (possibly overridden to `TECHNICAL_LOSS`). 06-04's `measure_gate6.py` needs no new wiring, only to call `run_agent` (or mirror `test_step0_and_audit.py`'s harness) and report the real numbers.
+- Three tamper-harness proofs for GATE-6's own milestone text are ALREADY committed and passing: `test_step0_and_audit_tamper.py` (D-67 commit-reveal tamper, PLUS the new rule-36 coverage-truncation case), and `test_handshake_step0_declaration.py` (Step-0 declaration content tamper) -- ready for 06-04 to cite directly.
+- `handshake_evaluate.py` is now EXACTLY at 150/150 lines -- zero margin, flagged explicitly for 06-04 (confirmed untouched by the rule-36 follow-up, per the coordinator's own constraint). `agent_wiring.py` (148/150) is similarly tight.
 - `verify_declaration` (step0_sign.py) is confirmed wired to production (one real call site, `handshake_step0.py`) -- no longer a dead, unit-tested-only API.
-- Full repo gates green: 1222 passed (+38 net new vs the 1184 baseline; pre-existing timing flake independently re-confirmed passing in isolation, unrelated to this plan), 96.26% coverage, `ruff check .` 0 violations, `scripts/check_line_limit.sh` clean, `scripts/check_no_llm_in_strategy.py` OK, `git diff -- src/pursuit/network/state_machine.py` empty.
+- `audit_peer_records` now closes BOTH the hash-only bypass (D-67) AND the peer-omits-turns evasion (rule 36) -- an opponent can neither forge a played action nor simply decline to publish it.
+- Full repo gates green: 1227 passed (+43 net new vs the 1184 baseline; pre-existing timing flake independently re-confirmed passing in isolation, unrelated to this plan), 96.27% coverage, `ruff check .` 0 violations, `scripts/check_line_limit.sh` clean, `scripts/check_no_llm_in_strategy.py` OK, `git diff -- src/pursuit/network/state_machine.py` empty, `git diff -- src/pursuit/network/handshake_evaluate.py` empty (this follow-up).
 - Knowledge graph NOT refreshed this plan (06-96 still pending, same as 06-02 left it) -- flagged for 06-04 or a dedicated pass before `/gsd:verify-work 6`.
 - No blockers for 06-04.
 
@@ -273,13 +291,14 @@ None. Every primitive is stdlib (`hashlib`/`hmac`/`secrets`/`subprocess`) plus `
 
 ## Self-Check: PASSED
 
-All 15 created files verified present on disk; all 5 commits
-(`54048e3`, `7bb130b`, `ed48ee4`, `be75519`, `10f3a26`) verified present in
-`git log --oneline --all`. Full gate suite independently re-confirmed:
-1222 passed, 96.26% coverage, `ruff check .` 0 violations,
+All 16 created files verified present on disk; all 6 commits
+(`54048e3`, `7bb130b`, `ed48ee4`, `be75519`, `10f3a26`, `4ac475a`) verified
+present in `git log --oneline --all`. Full gate suite independently
+re-confirmed: 1227 passed, 96.27% coverage, `ruff check .` 0 violations,
 `scripts/check_line_limit.sh` clean, `scripts/check_no_llm_in_strategy.py`
-OK, `git diff -- src/pursuit/network/state_machine.py` empty. Pre-existing
-timing flake (`test_belief_enabled_completes_within_the_per_turn_time_budget`)
+OK, `git diff -- src/pursuit/network/state_machine.py` empty, `git diff --
+src/pursuit/network/handshake_evaluate.py` empty. Pre-existing timing flake
+(`test_belief_enabled_completes_within_the_per_turn_time_budget`)
 re-confirmed passing in isolation, unrelated to this plan.
 `grep -rn "verify_declaration(" src/` confirms exactly one non-definition
 production call site (`handshake_step0.py`), closing the coordinator's own
