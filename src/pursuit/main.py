@@ -19,7 +19,14 @@ from __future__ import annotations
 import argparse
 import asyncio
 
+from pursuit.constants import Outcome
 from pursuit.network import agent_lifecycle
+
+# A technical loss -- including one the Final-Reveal mutual audit declared
+# after catching a forged or withheld reveal -- must be visible to whatever
+# started this process, not just buried in the JSONL (06-05, Gap 2).
+# Structural: a conventional non-zero exit status, not a PARAMETERS.md value.
+EXIT_TECHNICAL_LOSS = 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -48,8 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"opponent_url={cfg.net.opponent_url}")
         return 0
 
-    asyncio.run(agent_lifecycle.run_agent(args.config_dir))
-    return 0
+    outcome = asyncio.run(agent_lifecycle.run_agent(args.config_dir))
+    return EXIT_TECHNICAL_LOSS if outcome is Outcome.TECHNICAL_LOSS else 0
 
 
 if __name__ == "__main__":

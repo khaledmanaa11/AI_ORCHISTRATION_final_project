@@ -2,28 +2,39 @@
 agent_audit_wiring.py at the 150-code-line gate (pre-authorized: this
 plan's own must_haves anticipated agent_audit_wiring.py needing further
 splitting, mirroring the handshake.py/turn_commit.py precedent). Holds
-"how to push/receive one FINAL_REVEAL envelope", "how to read this side's
-own observed commit/reveal history from its wire log", and "how to record
-an audit verdict" -- agent_audit_wiring.py keeps only the two public entry
-points and policy (declare_step0/write_declaration/run_final_audit).
+"how to push/receive one FINAL_REVEAL envelope" and "how to read this
+side's own observed commit/reveal history from its wire log" --
+agent_audit_wiring.py keeps only the two public entry points and policy
+(declare_step0/write_declaration/run_final_audit).
+
+"How to record an audit verdict" moved to the sibling
+`agent_audit_verdict.py` when 06-05's Gap-2 fix took this file to 159 code
+lines; both of its public names are re-exported below, so importers that
+already reach for them here are unaffected.
 """
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 
-from pursuit.constants import Outcome
+from pursuit.network.agent_audit_verdict import record_audit_verdict, record_technical_loss
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.deadline import call_with_retry
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
-from pursuit.network.event_log import EventField, EventType, append_event
+from pursuit.network.event_log import EventField
 from pursuit.network.turn_commit_wait import H_COMMIT_KEY, next_protocol_message
-from pursuit.network.verdict import TechnicalWin, TechnicalWinReason
-from pursuit.security.audit import AuditRecord, all_matched
+from pursuit.network.verdict import TechnicalWin
 
 _FINAL_REVEAL_TOOL = "receive_final_reveal"
 _RECORDS_KEY = "records"
+
+__all__ = [
+    "observed",
+    "push_final_reveal",
+    "receive_final_reveal",
+    "record_audit_verdict",
+    "record_technical_loss",
+]
 
 
 async def push_final_reveal(ctx: AgentContext, records: list[dict]) -> TechnicalWin | None:
@@ -102,67 +113,3 @@ def observed(ctx: AgentContext, *, direction: str) -> tuple[dict[int, str], dict
         elif envelope.get(EnvelopeKey.TYPE) == MessageType.REVEAL.value:
             reveals[turn] = payload
     return commits, reveals
-
-
-def record_technical_loss(ctx: AgentContext, verdict: TechnicalWin) -> Outcome:
-    """Mirrors turn_commit_send.technical_loss()'s log+return shape, MINUS
-    the machine.attempt(GAME_OVER) call -- ctx.machine is already terminal
-    here (RESEARCH: GAME_OVER has no outgoing edges)."""
-    append_event(
-        ctx.log_path,
-        _technical_win_record(ctx, verdict),
-    )
-    return Outcome.TECHNICAL_LOSS
-
-
-def _technical_win_record(ctx: AgentContext, verdict: TechnicalWin) -> dict:
-    return {
-        EventField.GAME_UID: ctx.game_uid,
-        EventField.TURN: ctx.state.turn,
-        EventField.EVENT: EventType.TECHNICAL_WIN.value,
-        EventField.SENDER: ctx.role,
-        EventField.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
-        "retries_attempted": verdict.attempts,
-        "timeout_seconds": verdict.timeout_seconds,
-        "reason": verdict.reason.value,
-    }
-
-
-def _record_to_dict(record: AuditRecord) -> dict:
-    return {"turn": record.turn, "matched": record.matched, "detail": record.detail}
-
-
-def record_audit_verdict(
-    ctx: AgentContext, *, peer_audit: list[AuditRecord], self_audit: list[AuditRecord],
-    elapsed_seconds: float,
-) -> Outcome | None:
-    """Append one AUDIT_VERDICT record (symmetric honesty, CONTEXT locked:
-    a self-mismatch is reported with the exact same label as an opponent
-    mismatch); on any mismatch, ALSO log a technical_win record via the
-    EXISTING TechnicalWin(reason=AUDIT_HASH_MISMATCH) pathway and return
-    Outcome.TECHNICAL_LOSS -- never a second, parallel verdict type."""
-    matched = all_matched(peer_audit) and all_matched(self_audit)
-    append_event(
-        ctx.log_path,
-        {
-            EventField.GAME_UID: ctx.game_uid,
-            EventField.TURN: ctx.state.turn,
-            EventField.EVENT: EventType.AUDIT_VERDICT.value,
-            EventField.SENDER: ctx.role,
-            EventField.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
-            "matched": matched,
-            "peer_audit": [_record_to_dict(r) for r in peer_audit],
-            "self_audit": [_record_to_dict(r) for r in self_audit],
-        },
-    )
-    if matched:
-        return None
-
-    mismatches = [r.detail for r in (*peer_audit, *self_audit) if not r.matched]
-    verdict = TechnicalWin(
-        reason=TechnicalWinReason.AUDIT_HASH_MISMATCH, attempts=1,
-        timeout_seconds=0.0, backoff_seconds=0.0, elapsed_seconds=elapsed_seconds,
-        last_error="; ".join(mismatches),
-    )
-    append_event(ctx.log_path, _technical_win_record(ctx, verdict))
-    return Outcome.TECHNICAL_LOSS
