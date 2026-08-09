@@ -1,6 +1,7 @@
 # Phase 4 — resume point
 
-**Updated:** 2026-08-08 · **Status:** waves 1–3 EXECUTED (8/14 plans). Waves 4–8 not started.
+**Updated:** 2026-08-09 · **Status:** waves 1–3 EXECUTED, wave 4 IN PROGRESS (9/14 plans:
+04-01..04-09). 04-10 (bluff generator) remains to finish wave 4. Waves 5–8 not started.
 
 Nothing is half-finished: every dispatched plan completed, merged, and passed the gates.
 
@@ -24,19 +25,20 @@ git checkout claude/gsd-parallelism-config-6b4aqp
 
 | 3 | 04-07 | Hint decoder — constrained JSON plus our own re-validation, EN **and** HE fixtures, a prompt-injection case, every failure path ⇒ `NO_EVIDENCE`, never raises | ✅ |
 | 3 | 04-08 | Deception planner — a `DeceptionPlan` whose constructor refuses a lying capture/barrier claim, thief danger-adaptive lying with a measured truth floor, cop herding scored with the Phase-3 evaluation | ✅ |
+| 4 | 04-09 | Belief fusion — `scent_check.contradicts()` (Sec4.4 lie detector, reproduces 0.9→0.81 exactly), `reliability.Reliability` (bounded adaptive coefficient, D-51), `belief_hint.hint_likelihood()` (D-40 mix, weighted below scent, never zeroes a cell) | ✅ |
 
-Gates on the merged tree after wave 3 — measured, not inherited from agent self-reports:
+Gates on the merged tree after wave 4's first plan (04-09) — measured, not inherited from agent
+self-reports:
 
 | Check | Result |
 |---|---|
-| `uv run pytest --cov` | **850 passed, 94.31%** (floor 85%) |
+| `uv run pytest --cov` | **903 passed, 94.55%** (floor 85%) |
 | `uv run ruff check .` | 0 violations |
 | `scripts/check_line_limit.sh` | clean repo-wide |
 | `scripts/check_no_llm_in_strategy.py` | clean — `strategy/` imports no `pursuit.services` |
-| Float literals in `strategy/deception*.py` | 0 (tokenize-checked, not by the naive regex) |
-| Seeded 200-turn × 2-seat deception replay | byte-identical |
+| End-to-end Sec4.4 reproduction | fully-lying opponent's reliability 0.5→0.2→0.05 within 2 turns; fully-truthful holds at 0.5 for 10 turns; fused-posterior argmax follows scent in both regimes (`tests/unit/strategy/test_belief_fusion_e2e.py`) |
 
-Remaining waves: `w4: 09 10` · `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
+Remaining waves: `w4: 10` · `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
 
 ## The next command
 
@@ -44,8 +46,8 @@ Remaining waves: `w4: 09 10` · `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
 /gsd:execute-phase 4 --wave 4
 ```
 
-`--wave 4` runs only wave 4 (04-09 belief fusion, 04-10 bluff generator). Drop the flag to run
-waves 4–8 straight through. Run it on a fresh context.
+This resumes wave 4 at its remaining plan, 04-10 (bluff generator) — 04-09 is done. Drop the
+`--wave` flag to run waves 4–8 straight through. Run it on a fresh context.
 
 **If you are resuming in a Claude-Code-on-the-web container, the slash command will not
 resolve** — the GSD plugin is not installed there (`.claude/` holds only `settings.json`, there
@@ -59,7 +61,30 @@ scaffold default, not a decision). Plans within a wave now execute concurrently.
 default for this key is `true`, and `execute-phase` still drops a wave back to sequential by
 itself if it detects two plans in it touching the same file.
 
-## Carry-overs from execution — read before wave 4
+## Carry-overs from execution — read before continuing wave 4 (04-10) and beyond
+
+**New in wave 4 (04-09) — 04-10/04-11/04-12 need these:**
+
+- **F. `Reliability` is per-opponent, per-game, and is never constructed by anything in this
+  plan's own scope.** `04-12` (turn-pipeline integration) is the intended owner of building one
+  `Reliability(config.reliability)` per opponent at handshake time and holding it for the game's
+  duration — never persisted, never shared across games (rule 52). Each incoming hint: call
+  `scent_check.contradicts(inference, opponent_field, model, config)` first, then
+  `reliability.observe(score)` — in that order, once per turn a hint arrives.
+- **G. `hint_likelihood.weight` (D-40's fixed mixing weight `w`) and `reliability.prior` (D-51's
+  adaptive coefficient's starting point) are TWO INDEPENDENT `belief.json` fields**, not the same
+  number reused twice. If a later plan's prose reads as if they should be unified, that is the
+  same ambiguity 04-09 resolved by keeping them separate — resolve it in the plan text first, not
+  by quietly merging the config fields.
+- **H. `hint_likelihood(inference, reliability, board_size, config)` takes `config: BeliefParams`
+  directly** (the full loaded object, not a sub-group) — same calling convention as
+  `belief_scent.scent_likelihood(..., config: BeliefParams)`. Both read their own group off the
+  same `BeliefParams` instance.
+- **I. A heading-only `Inference` (no region, no cells) produces NO shift in `hint_likelihood`** —
+  confirmed consistent with carry-over B (confidence 0 washes it out) and, independently, with
+  `hint_likelihood`'s own fallback for the case where a positive-confidence heading-only shape
+  reaches it anyway (a shape the real decoder never emits, but a defensive path exists and is
+  tested).
 
 **New in wave 3 (04-07 / 04-08) — a wave-4 executor needs all five:**
 

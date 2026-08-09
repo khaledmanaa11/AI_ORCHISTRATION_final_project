@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-07 and 04-08 (phase 4 wave 3). Next -- wave 4 (04-09, 04-10).
-last_updated: "2026-08-08T23:40:00.000Z"
-last_activity: 2026-08-08 -- Phase 04 wave 3 executed (04-07 hint decoder, 04-08 deception planner)
+stopped_at: Completed 04-09 (phase 4 wave 4, first plan). 04-10 (bluff generator) remains to finish wave 4.
+last_updated: "2026-08-09T00:39:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 4 partially executed (04-09 belief fusion: scent-contradiction test, adaptive reliability, D-40 hint likelihood)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 32
-  percent: 29
+  completed_plans: 33
+  percent: 30
 ---
 
 # Project State
@@ -26,9 +26,23 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 8 of 14 (waves 1–3 done: 04-01..04-08. Next: wave 4 = 04-09 belief fusion,
-  04-10 bluff generator. Authoritative resume point, incl. five wave-3 carry-overs:
-  .planning/phases/04-language-and-scent/RESUME.md)
+Plan: 9 of 14 (waves 1–3 done: 04-01..04-08; wave 4 in progress: 04-09 belief
+  fusion DONE — see .planning/phases/04-language-and-scent/04-09-SUMMARY.md.
+  Next: 04-10 bluff generator, finishing wave 4. Resume point (wave-3
+  carry-overs, still relevant to 04-10/04-12): .planning/phases/04-language-and-scent/RESUME.md)
+
+04-09 delivered: strategy/scent_check.py (contradicts(), the Sec4.4 lie
+  detector reproducing the book's 0.9 -> 0.81 worked example exactly),
+  strategy/reliability.py (Reliability, a bounded [r_min, r_max] adaptive
+  coefficient, D-51 — a disclosed revision of D-40's "fixed" framing),
+  strategy/belief_hint.py (hint_likelihood(), the D-40 Bayes mix weighted
+  well below scent and never zeroing a cell), plus two new belief.json
+  config groups (reliability, hint_likelihood). End-to-end Sec4.4
+  reproduction measured and committed: a fully-lying opponent's reliability
+  collapses 0.5 -> 0.2 -> 0.05 (r_min) within two turns; a fully-truthful
+  one holds at 0.5 for all ten; both regimes' fused-posterior argmax
+  tracks the real scent trail, not the claim. Full gates green: 903
+  passed, 94.55% coverage, ruff/line-limit/no-llm-in-strategy all clean.
 
 <!-- The narrative below this line is Phase 3 history, retained deliberately: it
      records why the run-2 architecture exists. It is NOT the current position. -->
@@ -264,6 +278,20 @@ Recent decisions affecting current work:
   and `training/harness.py`'s docstring both still reference the deleted `turn_bucket`
   by name -- left untouched deliberately (03-22's and 03-14's files respectively, per
   outline SS7 file-ownership), flagged for the owning plan to correct in passing
+
+- [Phase 04-09]: D-51 implemented as a literal DISCLOSED REVISION of D-40, not an
+  extension: `belief.json`'s `hint_likelihood.weight` (fixed, validated below
+  `scent_likelihood.weight` by name) and `reliability.prior` (the adaptive
+  coefficient's starting point) are two INDEPENDENT config fields, not the same
+  number reused twice -- resolves an ambiguous reading in 04-09-PLAN.md's own
+  prose, documented in 04-09-SUMMARY.md's Decisions Made for 04-13 to carry into
+  `PRD_belief_map.md`/`RULES-RESOLUTION-LANG.md`. `strategy/scent_check.py::contradicts()`
+  reproduces the book's Sec4.4 worked example (0.9 -> 0.81) exactly;
+  `strategy/reliability.py::Reliability.observe()` is measured to settle EXACTLY at
+  `r_min`/`prior` under 1000 extreme observations, not just bounded;
+  `strategy/belief_hint.py::hint_likelihood()` returns an all-zero grid at
+  confidence=0 specifically so `BeliefMap.update()`'s own zero-guard buys an EXACT
+  (not approx) no-op for `NO_EVIDENCE`, per the plan's own stricter verify wording
 
 ### Pending Todos
 
