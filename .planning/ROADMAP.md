@@ -152,12 +152,13 @@ below is ticked until `/gsd:verify-work 4` runs, after 04-14):
   1. Each peer is reachable on the public internet through ngrok/Localtonet
   2. An agent on a remote machine connects through the tunnel and plays a full round against the local agent
 
-**Plans**: TBD
+**Plans**: 3 (05-01..05-03, see `05-PLAN-OUTLINE.md`)
 
 Plans:
 
-- [ ] 05-01: Tunnel integration + public URL wiring into the peer config
-- [ ] 05-02: Remote end-to-end round validation
+- [ ] 05-01: Tunnel lifecycle -- pyngrok dep, tunnel.json + loader, TunnelManager (DI'd, reconnect bounded by Table 19), lifecycle wiring, URL/secret exchange printout (CODE+TEST COMPLETE, see 05-01-SUMMARY.md; not yet verified)
+- [ ] 05-02: Shared-secret channel -- ASGI middleware, client transport headers, env plumbing, `.env-example`
+- [ ] 05-03: Gate 5 -- smoke script, in-process integration proof, `GATE-5-MEASUREMENT.md`, Localtonet runbook, graph refresh
 - [ ] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -250,7 +251,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 13/14 | In Progress | - |
-| 5. Cloud Exposure and Tunneling | 0/3 | Not started | - |
+| 5. Cloud Exposure and Tunneling | 1/3 | In Progress | - |
 | 6. Security and Cryptography | 0/5 | Not started | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 5 PLANNED (d3eb540, 2026-08-09) -- outline + 05-01..05-03 + research + docs/phases/phase-5 triplet, plan-checker passed with 0 blockers (2 accuracy fixes applied inline). NEXT -- /gsd:execute-phase 5. Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it. PRIOR -- Completed 04-14 (GATE-4 measurement script + mocked run + frozen CI test). Phase 4 is now 14/14 plans code+docs+test complete. GATE-4's three Sec10.4 criteria are MEASURED and PASSING in --mocked mode; the plan's own D-32 live-API requirement is PENDING, blocked on ANTHROPIC_API_KEY absent on this machine. Do NOT run /gsd:verify-work 4 until a human reruns --live and updates GATE-4-MEASUREMENT.md's Live status section.
-last_updated: "2026-08-09T04:20:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 8 completed (04-14 GATE-4 measurement: scripts/measure_gate4.py -- seeded two-peer runner reusing 04-12's play_two_peer_game, --mocked (recorded-response provider, no key) and --live (real AnthropicProvider, refuses to attempt anything when the key is absent) modes; docs/phases/phase-4/GATE-4-MEASUREMENT.md quotes all three Sec10.4 criteria verbatim from ROADMAP.md with a measured number, method and verdict each, all PASS in mocked mode, belief-on/off comparison reported honestly including a methodological caveat rather than smoothed over; tests/integration/test_gate4.py freezes the structural absolutes (hint every turn, zero outgoing coordinates, intent-before-text, handshake digest match) as a mocked, no-key, no-network CI test, empirically verified via a throwaway probe to actually catch a hint-removal regression. Zero boxes ticked anywhere. Full suite 1051 passed, 95.21% coverage, ruff/line-limit/no-llm-in-strategy all clean)
+stopped_at: PHASE 5 PLAN 01 EXECUTED (7472bb2, 2026-08-09) -- pyngrok dependency + tunnel.json config block + TunnelManager (DI'd pyngrok lifecycle) + run_agent tunnel wiring/exchange printout. 1087 passed, 95.64% coverage, ruff/line-limit/no-llm-in-strategy all clean. NEXT -- 05-02 (shared-secret channel: ASGI middleware + client transport headers). Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it.
+last_updated: "2026-08-09T05:10:00.000Z"
+last_activity: 2026-08-09 -- Phase 05 plan 01 executed (05-01: pyngrok>=8.1.2 added via uv add (D-54, never ngrok-python -- requires-python >=3.12 vs this project's 3.11.9); config/{police,thief}/tunnel.json (byte-identical, five string fields, zero numeric leaf per D-55) + src/pursuit/shared/tunnel_config.py (TunnelKey/TunnelParams/load_tunnel_config/require_env); src/pursuit/network/tunnel_manager.py (TunnelManager -- start/healthy/ensure_connected/stop, every pyngrok call + sleep/clock injected, reconnect bounded by NetworkParams.retry_count/backoff_seconds reused from Table 19); src/pursuit/network/tunnel_wiring.py (build_tunnel_manager -- tunnel-off unless the domain env var is set, exchange_block, run_with_tunnel) + src/pursuit/network/agent_entrypoint.py (run_agent moved here from agent_lifecycle.py at the 150-code-line gate, wrapped in run_with_tunnel; agent_lifecycle.py resolves it back via a PEP 562 __getattr__, the same one-directional-dependency fix orchestrator.py/turn_actions.py already use). Existing lifecycle tests pass unmodified; tunnel-off stays the default for every test. Full suite 1087 passed (+36), 95.64% coverage (+0.43pp), ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md Phase 5 row updated (1/3 plans, In Progress) via gsd-tools roadmap update-plan-progress)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 37
-  percent: 32
+  completed_plans: 38
+  percent: 33
 ---
 
 # Project State
@@ -21,25 +21,48 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 04 — language-and-scent
+**Current focus:** Phase 05 — cloud-exposure-and-tunneling
 
 ## Current Position
 
-Phase: 04 (language-and-scent) — EXECUTING (all 14 plans code+docs+test
-  complete; GATE-4 MOCKED-measured and PASSING; NOT YET VERIFIED)
-Plan: 14 of 14 (all 8 waves done: 04-01..04-14; wave 8 (04-14, GATE-4
-  measurement) now COMPLETE — see
-  .planning/phases/04-language-and-scent/04-14-SUMMARY.md.
-  docs/phases/phase-4/GATE-4-MEASUREMENT.md measures all three Sec10.4
-  criteria in --mocked mode: all PASS. The plan's own D-32 requirement (a
-  real API game) is PENDING, blocked on ANTHROPIC_API_KEY absent on every
-  machine this phase has run on so far. Per rule 38 and 04-14's own
-  must_haves: **do not run /gsd:verify-work 4** until a human reruns
-  `ANTHROPIC_API_KEY=... uv run python scripts/measure_gate4.py --live`
-  and updates GATE-4-MEASUREMENT.md's Live status section from that real
-  run — mocked numbers must never be presented as live ones.
-  Resume point: .planning/phases/04-language-and-scent/RESUME.md, updated
-  by this session)
+Phase: 05 (cloud-exposure-and-tunneling) — EXECUTING (plan 1 of 3 done;
+  05-01 code+test complete. See
+  .planning/phases/05-cloud-exposure-and-tunneling/05-01-SUMMARY.md.
+  NEXT: 05-02, shared-secret channel -- ASGI middleware + client transport
+  headers -- depends on 05-01's TunnelParams.secret_header/secret_env.)
+Plan: 1 of 3 (05-01 done; 05-02, 05-03 remain)
+
+05-01 delivered: pyngrok>=8.1.2 (D-54, uv add, never ngrok-python --
+  requires-python >=3.12 vs this project's 3.11.9);
+  config/{police,thief}/tunnel.json (byte-identical, five string fields --
+  provider/secret_header/authtoken_env/domain_env/secret_env -- zero
+  numeric leaf, D-55) + src/pursuit/shared/tunnel_config.py
+  (TunnelKey/TunnelParams/load_tunnel_config/require_env, the Phase-4
+  *Key-beside-loader convention); src/pursuit/network/tunnel_manager.py
+  (TunnelManager -- start/healthy/ensure_connected/stop, every pyngrok
+  call (connect/disconnect/kill/get_process) plus sleep/clock injected,
+  real pyngrok defaults bound in one place, matching Gatekeeper/Watchdog's
+  DI style; reconnect to the SAME domain bounded by NetworkParams'
+  existing retry_count/backoff_seconds, zero new numbers);
+  src/pursuit/network/tunnel_wiring.py (build_tunnel_manager -- tunnel-off
+  unless the static-domain env var is set, the structural default every
+  existing test/dev flow relies on; exchange_block -- the paste-ready
+  URL+secret-env-NAME block, never a value; run_with_tunnel -- start
+  before/stop after, a start failure aborts before the wrapped body runs
+  at all) + src/pursuit/network/agent_entrypoint.py (run_agent moved out
+  of agent_lifecycle.py wholesale, wrapped in run_with_tunnel, once
+  wrapping it in place would have pushed agent_lifecycle.py -- already AT
+  its 150-code-line ceiling -- over the gate; agent_lifecycle.py resolves
+  run_agent back lazily via PEP 562 __getattr__, the same
+  one-directional-dependency fix orchestrator.py/turn_actions.py already
+  proved). Existing lifecycle tests (test_agent_lifecycle.py,
+  test_agent_lifecycle_resilience.py) pass byte-unmodified. Full suite
+  1087 passed (+36 vs the 1051 baseline), 95.64% coverage (+0.43pp),
+  ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md's Phase 5 row
+  updated programmatically (gsd-tools roadmap update-plan-progress: 1/3
+  plans, In Progress).
+
+<!-- The narrative below this line is Phase 4 history, retained deliberately. -->
 
 04-14 delivered: scripts/measure_gate4.py + 7 helper modules (gate4_games,
   gate4_beliefspy, gate4_scent, gate4_mockprovider, gate4_fixtures,
@@ -303,6 +326,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 04 P11 | ~65min | 3 tasks | 13 files |
 | Phase 04 P12 | ~110min | 4 tasks | 25 files |
 | Phase 04 P13 | ~35min | 4 tasks | 10 files |
+| Phase 05-cloud-exposure-and-tunneling P01 | ~50min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -527,6 +551,20 @@ Recent decisions affecting current work:
   Anthropic's published Haiku 4.5 rate ($1/$5 per MTok input/output,
   scripts/gate4_report.py) is cited, not sourced from PARAMETERS.md --
   flagged for reconfirmation before Phase 7's league spend email.
+
+- [Phase 05-01]: D-54: pyngrok (8.1.2), not ngrok-python -- ngrok-python
+  1.7.0 requires Python >=3.12, this project runs 3.11.9. D-55: zero new
+  numeric parameters -- tunnel.json is five strings only; reconnect
+  retry_count/backoff_seconds and the liveness cadence are reused straight
+  from NetworkParams (Table 19 + the D-18 precedent), never redeclared.
+  Tunnel-on/off is decided by the static-domain env var's PRESENCE, not a
+  tunnel.json boolean -- keeps D-55's "strings only" contract literal and
+  makes tunnel-off the structural default for every existing test. run_agent
+  moved out of agent_lifecycle.py entirely into a new agent_entrypoint.py
+  (re-exported via a PEP 562 __getattr__, the same one-directional-
+  dependency fix orchestrator.py/turn_actions.py already use) once
+  agent_lifecycle.py -- already at exactly 150 code lines -- had no room
+  left to absorb the tunnel wrapping in place.
 
 ### Pending Todos
 
