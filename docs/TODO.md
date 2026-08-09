@@ -103,16 +103,18 @@ Gate: remote agent plays a full round via tunnel.
 ## Phase 6 — Security and Cryptography  *(Milestone M6)*
 
 Gate: move committed then revealed with valid nonce; Step-0 verified.
+**Gate met — all three §10.4 criteria PASS on measured evidence
+([GATE-6-MEASUREMENT.md](phases/phase-6/GATE-6-MEASUREMENT.md)); UAT 11/11 pass 2026-08-09.**
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 06-01 Crypto core — canonical-JSON hashing, nonce gen/verify, state record, durable ledger, `security.json` | P0 | ☐ | Khaled | `sort_keys`/`separators` exact; `secrets` used; round-trip + tamper proven in one test (SEC-01/03/04) |
-| 06-02 Four-phase commit-reveal on the wire + barriers inside the committed action | P0 | ☐ | Khaled | Commit→Ack→Reveal, no reveal before the opponent's commit; barrier round-trips; nonce never on the wire log (SEC-01/02/04/07) |
-| 06-03 Step-0 declaration + end-game mutual audit | P0 | ☐ | Khaled | Signed HW+commit-hash verified pre-game; audit catches both tamper classes → technical loss (SEC-05/06/07/08) |
-| 06-04 Gate 6 measurement + `docs/PRD_commit_reveal.md` | P1 | ☐ | Khaled | One command, zero env vars, honest PASS/FAIL evidence; full per-mechanism PRD committed (DOC-02) |
-| 06-96 Refresh the graphify graph (plan-phase + after execute) | P2 | ◐ | Khaled | GRAPH_REPORT.md current with `security/` and the new network modules |
-| 06-97 Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` | P1 | ◐ | Khaled | Phase triplet exists and matches the plan set (created 2026-08-09) |
-| 06-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
+| 06-01 Crypto core — canonical-JSON hashing, nonce gen/verify, state record, durable ledger, `security.json` | P0 | ☑ | Khaled | `sort_keys`/`separators` exact; `secrets` used; round-trip + tamper proven in one test (SEC-01/03/04) |
+| 06-02 Four-phase commit-reveal on the wire + barriers inside the committed action | P0 | ☑ | Khaled | Commit→Ack→Reveal, no reveal before the opponent's commit; barrier round-trips; nonce never on the wire log (SEC-01/02/04/07) |
+| 06-03 Step-0 declaration + end-game mutual audit | P0 | ☑ | Khaled | Signed HW+commit-hash verified pre-game; audit catches both tamper classes → technical loss (SEC-05/06/07/08) |
+| 06-04 Gate 6 measurement + `docs/PRD_commit_reveal.md` | P1 | ☑ | Khaled | One command, zero env vars, honest PASS/FAIL evidence; full per-mechanism PRD committed (DOC-02) |
+| 06-96 Refresh the graphify graph (plan-phase + after execute) | P2 | ☑ | Khaled | GRAPH_REPORT.md current with `security/` and the new network modules — final refresh 6577 nodes / 11972 edges / 413 communities |
+| 06-97 Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` | P1 | ☑ | Khaled | Phase triplet exists and matches the plan set (created 2026-08-09; all rows closed at verify-work) |
+| 06-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 
 ---
 

@@ -23,7 +23,7 @@ completion.
 - [x] **Phase 3: Blind Strategy Module** - The decision engine. Delivered as a matrix-game mover over a learned 15-weight evaluation, NOT Q-learning; see docs/phases/phase-3/PRD.md §2.
 - [ ] **Phase 4: Language and Scent** - Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
 - [ ] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
-- [ ] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration.
+- [x] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration.
 - [ ] **Phase 7: Reporting and Visualization Shell** - Gmail API reporting via OAuth 2.0, live GUI, replay viewer application.
 - [ ] **Phase 8: Submission and League Operations** - Two public repos, academic README, Git tag, league games.
 
@@ -176,16 +176,17 @@ Plans:
 
 **Plans**: 4 (waves 1-4; see `.planning/phases/06-security-and-cryptography/06-PLAN-OUTLINE.md`)
 
-Plans (executed 06-01; 06-02..06-04 remain — nothing below is ticked until
-`/gsd:verify-work 6` runs, after GATE-6 measurement in 06-04):
+Plans (all 4 executed and verified; `/gsd:verify-work 6` run 2026-08-09 — UAT 11/11 pass, all
+three §10.4 criteria measured PASS at `HEAD=b3655348`, see
+`docs/phases/phase-6/GATE-6-MEASUREMENT.md`):
 
-- [ ] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair (CODE+TEST COMPLETE, see 06-01-SUMMARY.md; not yet verified)
-- [ ] 06-02: Four-phase wire protocol — 4 message kinds, the both-locked Commit→Ack→Reveal exchange (D-58), barrier placement inside the committed action (D-66, SEC-07), toggle-off byte-equivalence
-- [ ] 06-03: Step-0 hardware declaration (verified at handshake, D-62/D-63) + negotiated `game_id` (D-61) + end-game mutual log audit with the revealed-vs-played cross-check (D-67)
-- [ ] 06-04: GATE-6 measurement (localhost, zero env vars) + `docs/PRD_commit_reveal.md` (the cryptographic protocol)
-- [ ] 06-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
-- [ ] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
-- [ ] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
+- [x] 06-01: Crypto core — `pursuit.security` package (canonical commit/reveal hashing, state record, durable nonce ledger), `security_config.py`, the `security.json` pair
+- [x] 06-02: Four-phase wire protocol — 4 message kinds, the both-locked Commit→Ack→Reveal exchange (D-58), barrier placement inside the committed action (D-66, SEC-07), toggle-off byte-equivalence
+- [x] 06-03: Step-0 hardware declaration (verified at handshake, D-62/D-63) + negotiated `game_id` (D-61) + end-game mutual log audit with the revealed-vs-played cross-check (D-67)
+- [x] 06-04: GATE-6 measurement (localhost, zero env vars) + `docs/PRD_commit_reveal.md` (the cryptographic protocol)
+- [x] 06-96: Refresh the graphify graph at plan-phase and after execute — final refresh 6577 nodes / 11972 edges / 413 communities
+- [x] 06-97: Create/refresh `docs/phases/phase-6/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [x] 06-99: On verify-work, mark all Phase 6 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 7: Reporting and Visualization Shell
 
