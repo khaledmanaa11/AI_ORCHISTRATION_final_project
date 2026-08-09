@@ -53,7 +53,7 @@ from pursuit.network.agent_wiring import (
 )
 from pursuit.network.brain_wiring import build_turn_collaborators
 from pursuit.network.config_hash import config_digest
-from pursuit.network.orchestrator import engine_agent  # noqa: F401
+from pursuit.network.orchestrator import engine_agent, opponent_role  # noqa: F401
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.state_machine import TurnStateMachine
@@ -100,7 +100,14 @@ def default_context(
     # D-56: shared_secret resolved from THIS agent's config_dir (tunnel.json's
     # secret_header + os.environ[secret_env]) -- None (every existing
     # test/dev flow) installs no middleware and sends no header.
-    runtime = PeerRuntime(cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder, shared_secret=shared_secret_pair)
+    # expected_sender (06-06): in live play the only legitimate sender on a
+    # game message is the opponent's role. Supplied HERE because this is the
+    # one place that knows cfg.role for a real match; every other caller
+    # leaves it None and keeps the pre-06-06 accept-anything behaviour.
+    runtime = PeerRuntime(
+        cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder,
+        shared_secret=shared_secret_pair, expected_sender=opponent_role(cfg.role),
+    )
     watchdog = Watchdog(
         threshold_seconds=cfg.net.watchdog_threshold,
         poll_seconds=cfg.net.watchdog_poll_seconds,

@@ -47,7 +47,8 @@ HandshakeHandler = Callable[[int, str, dict], Awaitable[dict]]
 
 
 async def _accept(
-    queue: asyncio.Queue, message_type: MessageType, turn: int, sender: str, payload: dict
+    queue: asyncio.Queue, message_type: MessageType, turn: int, sender: str, payload: dict,
+    expected_sender: str | None = None,
 ) -> dict:
     """Decode into an Envelope, enqueue, and ack immediately (D-06, D-07).
 
@@ -57,7 +58,21 @@ async def _accept(
     as `ToolError` gives the opponent a descriptive protocol error instead
     of an opaque internal error. Nothing is enqueued before the decode
     succeeds — a half-decoded message must never reach the orchestrator.
+
+    `expected_sender` (06-06) is the opponent's role. When supplied, an
+    envelope claiming any other sender is rejected the SAME descriptive way
+    a malformed one is, and is never enqueued: a peer stamping OUR role
+    would otherwise land in our own half of the turn buffer, where
+    `maybe_resolve` can never fire — a silent stall rather than a rejected
+    message. It defaults to None (no check) so every pre-06-06 caller and
+    test is byte-unaffected; `agent_lifecycle` supplies the real value for
+    live play.
     """
+    if expected_sender is not None and sender != expected_sender:
+        raise ToolError(
+            f"unexpected sender {sender!r} on {message_type.value}: "
+            f"this peer only accepts envelopes from {expected_sender!r}"
+        )
     try:
         envelope = Envelope.from_dict(
             {
@@ -78,6 +93,7 @@ def register_tools(
     queue: asyncio.Queue,
     *,
     handshake_handler: HandshakeHandler | None = None,
+    expected_sender: str | None = None,
 ) -> None:
     """Attach the four D-05 handlers to `mcp`, closing over `queue`.
 
@@ -85,6 +101,12 @@ def register_tools(
     (NET-02). All four wire signatures are identical on purpose: one
     envelope shape for every message kind (D-06). Later phases fill in
     bodies; they never reshape this signature or add a second tool.
+
+    `expected_sender` (06-06) is the opponent's role, forwarded to every
+    GAME-message handler. The `handshake` tool is deliberately EXCLUDED:
+    the peer's role is precisely what the handshake negotiates, and
+    `respond_to_handshake` already evaluates it there — checking it here
+    would reject the message that establishes the fact.
     """
 
     @mcp.tool
@@ -103,17 +125,17 @@ def register_tools(
     @mcp.tool
     async def receive_move(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's move envelope; payload carries {x, y} in Phase 2 (D-06)."""
-        return await _accept(queue, MessageType.MOVE, turn, sender, payload)
+        return await _accept(queue, MessageType.MOVE, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_barrier(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's barrier declaration. Phase 2: stub."""
-        return await _accept(queue, MessageType.BARRIER, turn, sender, payload)
+        return await _accept(queue, MessageType.BARRIER, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def game_over(turn: int, sender: str, payload: dict) -> dict:
         """End-of-game notification. Phase 2: stub."""
-        return await _accept(queue, MessageType.GAME_OVER, turn, sender, payload)
+        return await _accept(queue, MessageType.GAME_OVER, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_hint(turn: int, sender: str, payload: dict) -> dict:
@@ -121,31 +143,31 @@ def register_tools(
         (D-47). Semantic judgement of the hint belongs to the strategy
         layer, never here -- decode, enqueue, ack, exactly like the other
         four, never blocking on the game loop."""
-        return await _accept(queue, MessageType.HINT, turn, sender, payload)
+        return await _accept(queue, MessageType.HINT, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_commit(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's Commit-phase hash-only envelope; payload carries
         {h_commit} (D-58, D-59). No hash/legality validation at this layer
         -- decode, enqueue, ack, exactly like every other handler."""
-        return await _accept(queue, MessageType.COMMIT, turn, sender, payload)
+        return await _accept(queue, MessageType.COMMIT, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_ack(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's Acknowledge-phase envelope; payload carries
         {h_commit}, naming which commit is being acknowledged (D-58)."""
-        return await _accept(queue, MessageType.ACK, turn, sender, payload)
+        return await _accept(queue, MessageType.ACK, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_reveal(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's Reveal-phase envelope; payload carries the D-59/D-66
         composite action dict {move, barrier}. The nonce never rides this
         message (SEC-04, rule 18) -- it stays local until FINAL_REVEAL."""
-        return await _accept(queue, MessageType.REVEAL, turn, sender, payload)
+        return await _accept(queue, MessageType.REVEAL, turn, sender, payload, expected_sender)
 
     @mcp.tool
     async def receive_final_reveal(turn: int, sender: str, payload: dict) -> dict:
         """Opponent's end-of-game Final-Reveal/Audit envelope (D-67, 06-03's
         job to populate/consume). Registered now so the wire surface is
         complete for this phase's gate; the audit body lands in 06-03."""
-        return await _accept(queue, MessageType.FINAL_REVEAL, turn, sender, payload)
+        return await _accept(queue, MessageType.FINAL_REVEAL, turn, sender, payload, expected_sender)

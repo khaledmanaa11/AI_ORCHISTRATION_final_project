@@ -56,6 +56,7 @@ def build_server(
     server_name: str,
     *,
     handshake_handler: HandshakeHandler | None = None,
+    expected_sender: str | None = None,
 ) -> FastMCP:
     """Construct this agent's server and attach the D-05 tool surface.
 
@@ -68,7 +69,9 @@ def build_server(
     `respond_to_handshake` through here.
     """
     mcp = FastMCP(server_name)
-    register_tools(mcp, queue, handshake_handler=handshake_handler)
+    register_tools(
+        mcp, queue, handshake_handler=handshake_handler, expected_sender=expected_sender,
+    )
     return mcp
 
 
@@ -83,11 +86,15 @@ class PeerRuntime:
         serve: ServeCallable | None = None,
         handshake_handler: HandshakeHandler | None = None,
         shared_secret: tuple[str, str] | None = None,
+        expected_sender: str | None = None,
     ) -> None:
         self._params = params
         self._queue: asyncio.Queue = asyncio.Queue()
+        # expected_sender (06-06): the opponent's role. None = accept any
+        # sender, the pre-06-06 behaviour every existing test relies on.
         self._mcp = build_server(
-            self._queue, server_name, handshake_handler=handshake_handler
+            self._queue, server_name, handshake_handler=handshake_handler,
+            expected_sender=expected_sender,
         )
         self._serve: ServeCallable = serve or self._run_http
         self._server_task: asyncio.Task | None = None
