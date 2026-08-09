@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-12 (turn-pipeline integration). Phase 4 wave 6 (04-12) is now fully done. Wave 7 (04-13) is next.
-last_updated: "2026-08-09T05:57:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 6 completed (04-12 turn-pipeline integration: Figure-7 wired live into take_my_turn/await_opponent_turn, agent_lifecycle now builds a real brain+ScentField+LanguageRuntime, a real two-peer concurrency bug found and fixed)
+stopped_at: Completed 04-13 (docs -- rules-resolution note, three per-mechanism PRDs, phase triplet, graph refresh). Phase 4 wave 7 (04-13) is now fully done. Wave 8 (04-14, GATE-4 measurement) is next and is the phase's last plan.
+last_updated: "2026-08-09T03:24:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 7 completed (04-13 documentation: RULES-RESOLUTION-LANG.md quoting both sides of the Sec5.3.2/Sec6.4 contradiction with book+PDF pages verified directly against the PDF, three per-mechanism PRDs, the phase-4 doc triplet, STRATEGY.md's three Phase-4 TBDs filled, ROADMAP.md's real 14-plan list, and a programmatically-verified knowledge-graph layering check -- zero source code touched, zero boxes ticked, ticking deferred to verify-work after 04-14)
 progress:
   total_phases: 8
   completed_phases: 3
@@ -26,10 +26,40 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 12 of 14 (waves 1–6 done: 04-01..04-12; wave 6 now FULLY COMPLETE —
-  see .planning/phases/04-language-and-scent/04-12-SUMMARY.md.
-  Next: 04-13 (docs + RULES-RESOLUTION-LANG.md + phase triplet), starting
-  wave 7. Resume point: .planning/phases/04-language-and-scent/RESUME.md)
+Plan: 13 of 14 (waves 1–7 done: 04-01..04-13; wave 7 now FULLY COMPLETE —
+  see .planning/phases/04-language-and-scent/04-13-SUMMARY.md.
+  Next: 04-14 (GATE-4 measurement against the live API), starting wave 8 --
+  the phase's last plan. Do not run /gsd:verify-work 4 before 04-14 lands.
+  Resume point: .planning/phases/04-language-and-scent/RESUME.md, not yet
+  updated by 04-13 -- read this STATE.md entry as authoritative until it is)
+
+04-13 delivered: docs/phases/phase-4/RULES-RESOLUTION-LANG.md (both sides of
+  the Sec5.3.2 per-turn-Reveal vs Sec6.4 blindness contradiction, quoted with
+  book+PDF pages VERIFIED DIRECTLY against police_thief_p2p.pdf this session
+  -- pages 5/50-53/62-64 read via the Read tool, not re-copied from a prior
+  extract unchecked; D-48's four reasons, D-49's rule-23 argument, an 18-row
+  BOOK/NEGOTIATED/DERIVED table); docs/PRD_{scent_map,belief_map,deception}.md
+  (three per-mechanism PRDs, every number traced to a plan SUMMARY -- the
+  shipped scent digest verbatim, the reliability trajectory and Sec4.4
+  0.9->0.81 reproduction, both role lie-rate curves, the D-39 style guide
+  verbatim; PRD_belief_map.md states the Regime-A honesty clause in plain
+  words and records D-51 as a DISCLOSED REVISION of D-40, not an extension);
+  docs/phases/phase-4/{PRD,PLAN,TODO}.md (the phase triplet, PLAN.md
+  references 04-PLAN-OUTLINE.md Sec2 for D-32..D-53 rather than copying it,
+  TODO.md states its row-ID = plan-ID namespace convention explicitly);
+  docs/STRATEGY.md's three TBD - Phase 4 rows filled (TBD - Phase 3 rows
+  untouched); .planning/ROADMAP.md's Phase 4 plan list replaced with the
+  real fourteen (was four stale placeholder rows), plans-complete corrected
+  6/14 -> 13/14; knowledge graph refreshed (5320 nodes/9778 edges/333
+  communities) with a PROGRAMMATIC layering check against graph.json's raw
+  edges (not the rendered report): zero edges services/llm<->strategy in
+  either direction, corroborating scripts/check_no_llm_in_strategy.py
+  independently. Zero source/config/test files touched (docs-only plan);
+  full suite re-confirmed byte-identical: 1048 passed, 95.21% coverage,
+  ruff/line-limit/no-llm-in-strategy all clean. NOTHING TICKED anywhere --
+  every ROADMAP checkbox and every phase-4 TODO status stayed unticked
+  (half-circle for executed-not-verified work, empty box for 04-14/04-99);
+  /gsd:verify-work 4 ticks, after 04-14 measures GATE-4.
 
 04-12 delivered: the real Figure-7 pipeline (book Sec6.2) wired live into
   network/turn_actions.py's take_my_turn/await_opponent_turn -- decode the
@@ -219,6 +249,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 03 P13 | 45min | 3 tasks | 12 files |
 | Phase 04 P11 | ~65min | 3 tasks | 13 files |
 | Phase 04 P12 | ~110min | 4 tasks | 25 files |
+| Phase 04 P13 | ~35min | 4 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -401,6 +432,24 @@ Recent decisions affecting current work:
   registry brain + ScentField + LanguageRuntime for the LIVE network
   turn loop (every prior phase/plan only exercised strategy/language code
   via direct engine calls or single-sided injected tests)
+
+- [Phase 04-13]: Documentation-only plan, zero source/config/test files touched.
+  D-51 recorded, in both PRD_belief_map.md and RULES-RESOLUTION-LANG.md, as a
+  DISCLOSED REVISION of D-40 -- not an extension -- per 04-09's own carry-over
+  instruction. Every book+PDF page pair quoted in RULES-RESOLUTION-LANG.md was
+  verified directly against police_thief_p2p.pdf this session (pages 5, 50-53,
+  62-64), not re-copied from 04-PLAN-OUTLINE.md Sec1 without checking; the
+  preface's PDF page (5, roman-numbered front matter) had never been cited
+  anywhere in this repo before. ROADMAP.md's Phase 4 "Plans:" checkboxes were
+  left unticked for ALL fourteen real plans, including the twelve
+  (04-01..04-12) with real SUMMARY.md files already on disk -- read broadly,
+  this plan's "TICK NOTHING" environment rule applies to every tick mark in
+  every touched file, not narrowly to the sq/half-circle/checkmark TODO.md
+  convention alone. The Plans-Complete NUMERIC count was still corrected to
+  13/14, since a plain number is not a tick. Knowledge-graph layering check
+  (services/llm <-> strategy) run programmatically against graph.json's raw
+  node/edge data, not by reading the rendered GRAPH_REPORT.md: zero violations
+  either direction
 
 ### Pending Todos
 
