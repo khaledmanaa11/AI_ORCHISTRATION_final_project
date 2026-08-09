@@ -39,6 +39,7 @@ class EventType(Enum):
     ILLEGAL_TRANSITION = "illegal_transition"
     TECHNICAL_WIN = "technical_win"
     WATCHDOG_INCIDENT = "watchdog_incident"
+    AUDIT_VERDICT = "audit_verdict"
 
 
 class EventField:

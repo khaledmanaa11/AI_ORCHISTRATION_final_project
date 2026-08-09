@@ -13,14 +13,16 @@ from enum import Enum
 
 
 class TechnicalWinReason(Enum):
-    """Why a technical win was declared (NET-06).
+    """Why a technical win was declared (NET-06, D-67/SEC-05).
 
-    One member today -- the enum exists so the reason is never a magic
-    string (QUAL-11) and so later phases can add audit-driven reasons
-    without reshaping TechnicalWin.
+    The enum exists so the reason is never a magic string (QUAL-11).
+    AUDIT_HASH_MISMATCH (06-03) is additive -- TechnicalWin/CallOutcome are
+    unchanged; the Final-Reveal audit reuses this SAME dataclass, never a
+    second, parallel verdict type.
     """
 
     OPPONENT_UNRESPONSIVE = "opponent_unresponsive"
+    AUDIT_HASH_MISMATCH = "audit_hash_mismatch"
 
 
 @dataclass(frozen=True)
