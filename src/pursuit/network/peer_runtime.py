@@ -24,6 +24,14 @@ listening socket here, ourselves, via the documented `sockets=` parameter
 of `run_async`/`run_http_async` ("pre-bound sockets to pass to Uvicorn"),
 so `stop()` can close the real OS socket directly without needing
 cooperation from uvicorn's internals.
+
+D-56 (CLOUD-01, Phase 5 plan 02): `shared_secret`, when supplied, wires
+`SharedSecretMiddleware` into the SAME `run_async` call that already passes
+`sockets=` -- the ASGI boundary, before any MCP session/tool machinery runs
+-- and adds the matching header to every outgoing `client()` call. `None`
+(the default, and every existing caller/test) installs no middleware and
+sends no secret header: loopback dev and CI never notice the feature
+exists.
 """
 
 from __future__ import annotations
@@ -34,7 +42,9 @@ import socket
 from collections.abc import Awaitable, Callable
 
 from fastmcp import Client, FastMCP
+from fastmcp.client.transports import StreamableHttpTransport
 
+from pursuit.network.secret_guard import build_middleware, client_headers
 from pursuit.network.tools import HandshakeHandler, register_tools
 from pursuit.shared.network_config import NetworkParams
 
@@ -72,6 +82,7 @@ class PeerRuntime:
         *,
         serve: ServeCallable | None = None,
         handshake_handler: HandshakeHandler | None = None,
+        shared_secret: tuple[str, str] | None = None,
     ) -> None:
         self._params = params
         self._queue: asyncio.Queue = asyncio.Queue()
@@ -81,6 +92,9 @@ class PeerRuntime:
         self._serve: ServeCallable = serve or self._run_http
         self._server_task: asyncio.Task | None = None
         self._listen_socket: socket.socket | None = None
+        # D-56: (header_name, secret_value) or None -- the tunnel-off default
+        # every existing caller/test uses unchanged.
+        self._shared_secret = shared_secret
 
     @property
     def server(self) -> FastMCP:
@@ -103,6 +117,14 @@ class PeerRuntime:
         Binds the listening socket ourselves and hands it to `run_async`
         via `sockets=` so `stop()` can close the real OS socket directly
         (RESEARCH Open Question 2 — see module docstring).
+
+        D-57: `host_origin_protection` is left at its fastmcp default (off)
+        deliberately -- every peer here binds loopback, so `"auto"` mode
+        would 421-reject every real request arriving through the tunnel
+        with the ngrok hostname as its `Host:` header, before
+        `SharedSecretMiddleware` even runs (RESEARCH Pitfall 2). If a later
+        phase turns it on, `allowed_hosts` MUST carry both peers' ngrok
+        hostnames from config, never a literal.
         """
         self._listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._listen_socket.bind((self._params.host, self._params.port))
@@ -112,6 +134,7 @@ class PeerRuntime:
             host=self._params.host,
             port=self._params.port,
             sockets=[self._listen_socket],
+            middleware=build_middleware(self._shared_secret),
         )
 
     def client(self) -> Client:
@@ -119,8 +142,16 @@ class PeerRuntime:
 
         The caller owns the async-context-manager lifetime; the runtime
         never holds an open client of its own.
+
+        D-56 / Pitfall 1: a bare `Client(url_string)` infers a transport
+        with NO headers at all (fastmcp 3.4.5's own `inference.py`) -- so
+        the transport is ALWAYS constructed explicitly here, never by
+        handing a plain string to `Client(...)`, or the shared secret and
+        the ngrok bypass header would silently stop being sent.
         """
-        return Client(self._params.opponent_url, timeout=self._params.response_timeout)
+        headers = client_headers(self._shared_secret)
+        transport = StreamableHttpTransport(self._params.opponent_url, headers=headers)
+        return Client(transport, timeout=self._params.response_timeout)
 
     async def start(self) -> None:
         """Background the server on THIS event loop (Pitfall 3 — never the blocking run())."""

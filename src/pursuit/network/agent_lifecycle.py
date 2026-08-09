@@ -54,6 +54,7 @@ from pursuit.network.orchestrator import (
     engine_agent,  # noqa: F401
 )
 from pursuit.network.peer_runtime import PeerRuntime
+from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
 from pursuit.network.watchdog import Watchdog
 from pursuit.sdk import engine
@@ -122,7 +123,10 @@ def default_context(
         machine=machine, reporter=reporter, local_digest=local_digest, local_role=cfg.role,
         local_scent_digest=local_scent_digest,
     )
-    runtime = PeerRuntime(cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder)
+    # D-56: shared_secret resolved from THIS agent's config_dir (tunnel.json's
+    # secret_header + os.environ[secret_env]) -- None (every existing
+    # test/dev flow) installs no middleware and sends no header.
+    runtime = PeerRuntime(cfg.net, f"pursuit-{cfg.role}", handshake_handler=responder, shared_secret=resolve_shared_secret(cfg.config_dir))
     watchdog = Watchdog(
         threshold_seconds=cfg.net.watchdog_threshold,
         poll_seconds=cfg.net.watchdog_poll_seconds,

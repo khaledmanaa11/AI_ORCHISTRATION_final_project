@@ -6,6 +6,10 @@ D-05's tool surface itself is covered by test_tools.py/test_tools_dispatch.py;
 this file is NET-02 (no shared runtime state) and NET-03 (server + client in
 one process) plus PeerRuntime's own start/stop lifecycle. No test here opens
 a socket, spawns a subprocess, or contacts the opponent.
+
+D-56's `shared_secret` seam (client headers + the `middleware=` kwarg to
+`run_async`) is covered separately in test_peer_runtime_secret.py, split
+out at the 150-code-line gate.
 """
 
 import ast

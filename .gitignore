@@ -26,11 +26,13 @@ secrets/
 *_secret*
 *-secret*
 
-# These two test files legitimately have "secret" in the NAME (they test
-# the D-56 shared-secret guard) but hold no real secret value -- only
+# These test files legitimately have "secret" in the NAME (they test the
+# D-56 shared-secret guard) but hold no real secret value -- only
 # placeholder literals local to the test. Explicit negations, same
 # precedent as .env-example above.
 !tests/unit/test_secret_guard.py
+!tests/unit/test_secret_wiring.py
+!tests/unit/test_peer_runtime_secret.py
 !tests/integration/test_secret_channel.py
 
 # Nonces must stay secret until end of game (rule 18) — never commit live ones
