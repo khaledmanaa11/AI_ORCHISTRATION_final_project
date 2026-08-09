@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 5 PLAN 01 EXECUTED (7472bb2, 2026-08-09) -- pyngrok dependency + tunnel.json config block + TunnelManager (DI'd pyngrok lifecycle) + run_agent tunnel wiring/exchange printout. 1087 passed, 95.64% coverage, ruff/line-limit/no-llm-in-strategy all clean. NEXT -- 05-02 (shared-secret channel: ASGI middleware + client transport headers). Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it.
-last_updated: "2026-08-09T05:10:00.000Z"
-last_activity: 2026-08-09 -- Phase 05 plan 01 executed (05-01: pyngrok>=8.1.2 added via uv add (D-54, never ngrok-python -- requires-python >=3.12 vs this project's 3.11.9); config/{police,thief}/tunnel.json (byte-identical, five string fields, zero numeric leaf per D-55) + src/pursuit/shared/tunnel_config.py (TunnelKey/TunnelParams/load_tunnel_config/require_env); src/pursuit/network/tunnel_manager.py (TunnelManager -- start/healthy/ensure_connected/stop, every pyngrok call + sleep/clock injected, reconnect bounded by NetworkParams.retry_count/backoff_seconds reused from Table 19); src/pursuit/network/tunnel_wiring.py (build_tunnel_manager -- tunnel-off unless the domain env var is set, exchange_block, run_with_tunnel) + src/pursuit/network/agent_entrypoint.py (run_agent moved here from agent_lifecycle.py at the 150-code-line gate, wrapped in run_with_tunnel; agent_lifecycle.py resolves it back via a PEP 562 __getattr__, the same one-directional-dependency fix orchestrator.py/turn_actions.py already use). Existing lifecycle tests pass unmodified; tunnel-off stays the default for every test. Full suite 1087 passed (+36), 95.64% coverage (+0.43pp), ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md Phase 5 row updated (1/3 plans, In Progress) via gsd-tools roadmap update-plan-progress)
+stopped_at: PHASE 5 PLAN 02 EXECUTED (b21cf9a, 2026-08-09) -- SharedSecretMiddleware (ASGI boundary, secrets.compare_digest, 403 before MCP dispatch) + PeerRuntime shared_secret wiring (server middleware + client explicit StreamableHttpTransport headers) + secret_wiring.resolve_shared_secret + real-socket end-to-end proof. 1105 passed, 95.70% coverage, ruff/line-limit/no-llm-in-strategy all clean. NEXT -- 05-03 (Gate 5: smoke script, GATE-5-MEASUREMENT.md, Localtonet runbook, D-57 documentation, graph refresh). Phase 4 remains 14/14 executed with VERIFICATION.md status human_needed: the live GATE-4 API run is still PENDING on ANTHROPIC_API_KEY; /gsd:verify-work 4 stays blocked until a human runs it.
+last_updated: "2026-08-09T05:26:00.000Z"
+last_activity: 2026-08-09 -- Phase 05 plan 02 executed (05-02: src/pursuit/network/secret_guard.py -- SharedSecretMiddleware, a pure ASGI callable rejecting with 403 before any FastMCP session/tool dispatch via secrets.compare_digest, rejection logged by fact only never the value; plus build_middleware()/client_headers() factories. PeerRuntime gains an optional shared_secret=(header_name, value) kwarg: _run_http() passes middleware=build_middleware(...) into the SAME run_async() call that already passes sockets= (D-57 comment on host_origin_protection staying off sits at that call site); client() now ALWAYS builds an explicit StreamableHttpTransport (never a bare URL string, which silently drops headers) carrying ngrok-skip-browser-warning unconditionally plus the secret header when configured. src/pursuit/network/secret_wiring.py (new) -- resolve_shared_secret(config_dir) reads tunnel.json's secret_header + os.environ[secret_env], wired into agent_lifecycle.default_context's one PeerRuntime(...) call, matching make_handshake_responder's factory-function injection style (landed in a NEW module rather than agent_wiring.py, which was already at 135/150 code lines -- Rule 3 deviation, same 150-line-gate reasoning 05-01 already used for tunnel_wiring.py/agent_entrypoint.py). tests/integration/test_secret_channel.py proves all three cases over REAL loopback sockets (not the in-memory transport two_peer_game.py uses, which bypasses the ASGI layer entirely): correct secret succeeds, missing header gets a plain-text 403 "Forbidden" body (proof it never reached MCP routing) and is logged, wrong secret fails on two independent attempts (httpx.HTTPStatusError). .env-example gains NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET (dummy values). .gitignore gained explicit negations for four D-56 test files whose NAMES matched the broad *_secret*/*-secret* rule-4 guard (test_secret_guard.py, test_secret_wiring.py, test_peer_runtime_secret.py, test_secret_channel.py) -- none holds a real secret value. Full suite 1105 passed (+18 vs the 1087 baseline), 95.70% coverage (+0.06pp), ruff/line-limit/no-llm-in-strategy all clean. ROADMAP.md Phase 5 row updated by hand to 2/3 plans, In Progress (gsd-tools roadmap update-plan-progress reported updated:true but wrote no actual diff to the Plans-Complete table row -- same documented no-op pattern as gsd phase-complete; verified via git diff before/after))
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 38
+  completed_plans: 39
   percent: 33
 ---
 
@@ -25,12 +25,35 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 05 (cloud-exposure-and-tunneling) — EXECUTING (plan 1 of 3 done;
-  05-01 code+test complete. See
-  .planning/phases/05-cloud-exposure-and-tunneling/05-01-SUMMARY.md.
-  NEXT: 05-02, shared-secret channel -- ASGI middleware + client transport
-  headers -- depends on 05-01's TunnelParams.secret_header/secret_env.)
-Plan: 1 of 3 (05-01 done; 05-02, 05-03 remain)
+Phase: 05 (cloud-exposure-and-tunneling) — EXECUTING (plan 2 of 3 done;
+  05-01, 05-02 code+test complete. See
+  .planning/phases/05-cloud-exposure-and-tunneling/05-02-SUMMARY.md.
+  NEXT: 05-03, Gate 5 -- smoke script, in-process integration proof,
+  GATE-5-MEASUREMENT.md, Localtonet runbook, graph refresh -- depends on
+  both 05-01 (TunnelManager) and 05-02 (SharedSecretMiddleware).)
+Plan: 2 of 3 (05-01, 05-02 done; 05-03 remains)
+
+05-02 delivered: src/pursuit/network/secret_guard.py
+  (SharedSecretMiddleware -- pure ASGI callable, secrets.compare_digest,
+  403 before any FastMCP session/tool dispatch, rejection logged by fact
+  only never the value; build_middleware()/client_headers() factories);
+  PeerRuntime gains shared_secret=(header_name, value) -- _run_http() wires
+  middleware=build_middleware(...) into the SAME run_async() call that
+  already passes sockets= (D-57 comment on host_origin_protection staying
+  off sits there), client() ALWAYS builds an explicit
+  StreamableHttpTransport (never a bare URL string) carrying
+  ngrok-skip-browser-warning unconditionally plus the secret header when
+  configured; src/pursuit/network/secret_wiring.py (new) --
+  resolve_shared_secret(config_dir), the factory-function seam
+  agent_lifecycle.default_context calls (landed in a new module, not
+  agent_wiring.py -- Rule 3 deviation, agent_wiring.py had no room at
+  135/150 lines); tests/integration/test_secret_channel.py proves all
+  three cases over REAL loopback sockets (correct secret succeeds, missing
+  header gets a plain-text 403 proving it never reached MCP routing, wrong
+  secret fails on two independent attempts). .env-example gains
+  NGROK_AUTHTOKEN/PURSUIT_NGROK_DOMAIN/PURSUIT_TUNNEL_SECRET.
+  Full suite 1105 passed (+18), 95.70% coverage (+0.06pp),
+  ruff/line-limit/no-llm-in-strategy all clean.
 
 05-01 delivered: pyngrok>=8.1.2 (D-54, uv add, never ngrok-python --
   requires-python >=3.12 vs this project's 3.11.9);
@@ -327,6 +350,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 04 P12 | ~110min | 4 tasks | 25 files |
 | Phase 04 P13 | ~35min | 4 tasks | 10 files |
 | Phase 05-cloud-exposure-and-tunneling P01 | ~50min | 3 tasks | 11 files |
+| Phase 05-cloud-exposure-and-tunneling P02 | ~30min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -565,6 +589,28 @@ Recent decisions affecting current work:
   dependency fix orchestrator.py/turn_actions.py already use) once
   agent_lifecycle.py -- already at exactly 150 code lines -- had no room
   left to absorb the tunnel wrapping in place.
+
+- [Phase 05-02]: D-56 implemented exactly as 05-PLAN-OUTLINE.md/
+  05-RESEARCH.md specified: SharedSecretMiddleware as a pure ASGI callable
+  wired via run_async(middleware=[...]) -- the SAME call that already
+  passes sockets= -- never a check inside an @mcp.tool handler; client()
+  always builds an explicit StreamableHttpTransport (a bare Client(url)
+  string infers headers={}, verified by direct probe against the installed
+  fastmcp 3.4.5 source); secrets.compare_digest for the comparison, the
+  same idiom config_hash.digests_match already established. D-57: verified
+  by reading fastmcp.settings.http_host_origin_protection directly --
+  already False/off by default, so no code change was needed, only the
+  comment at the run_async call site. Two Rule-3 (blocking) file-location
+  deviations from the plan's literal file list, both forced by the
+  150-code-line gate: resolve_shared_secret landed in a new
+  secret_wiring.py (not agent_wiring.py, which was already at 135/150) and
+  build_middleware()/client_headers() landed in secret_guard.py (not
+  inlined in peer_runtime.py, which had no room left). .gitignore's broad
+  *_secret*/*-secret* rule-4 guard silently dropped every D-56 test file
+  by NAME (test_secret_guard.py, test_secret_wiring.py,
+  test_peer_runtime_secret.py, test_secret_channel.py) -- fixed with four
+  explicit negations, same precedent as the existing !.env-example line;
+  none of the four holds a real secret value.
 
 ### Pending Todos
 
