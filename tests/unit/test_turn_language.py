@@ -2,13 +2,28 @@
 focused on the branches the belief-enabled integration tests never exercise:
 no `choose_move`/`brain` at all, and a RAW (non-`BeliefAdapter`) brain."""
 
+from pursuit.constants import MoveSource
 from pursuit.network import turn_language
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.language_wiring import build_language_runtime
 from pursuit.shared.inference import NO_EVIDENCE
+from pursuit.strategy.base import Decision
 from pursuit.strategy.naive import ChaserCop
 from pursuit.strategy.scentfield import ScentField
 from tests.unit._fakes_agent import make_ctx
+
+
+class _FakeBarrierBrain:
+    """A raw (non-`BeliefAdapter`) brain whose `_decide_move` always
+    returns a barrier `Decision` -- scripts D-66's barrier-over-the-wire
+    path without a real strategy implementation."""
+
+    def __init__(self, own_cell, barrier_cell):
+        self._own_cell = own_cell
+        self._barrier_cell = barrier_cell
+
+    def _decide_move(self, obs, state):  # noqa: ARG002 -- BrainBase's own seam
+        return Decision(move=self._own_cell, source=MoveSource.HEURISTIC, barrier=self._barrier_cell)
 
 
 def _language(default_params, seed=1):
@@ -65,6 +80,29 @@ def test_belief_snapshot_returns_all_none_without_a_belief_adapter(
     ctx = make_ctx(tmp_path, default_params, network_params, label="raw-snapshot")
     ctx.brain = ChaserCop(role="cop", game_params=default_params)
     assert turn_language.belief_snapshot(ctx) == (None, None, None)
+
+
+def test_choose_destination_stashes_a_barrier_from_a_raw_brain_and_resets_it(
+    tmp_path, default_params, network_params,
+):
+    """D-66: choose_destination stays a bare-Coord return, but stashes the
+    full Decision's barrier onto ctx.commit_state.chosen_barrier as a side
+    effect -- set when the brain places one, reset to None on the very
+    next call when it does not (never left stale across turns)."""
+    ctx = make_ctx(tmp_path, default_params, network_params, label="barrier-choice")
+    own_cell = ctx.state.cop
+    barrier_cell = own_cell  # the cop's own cell is always a legal barrier target
+    ctx.brain = _FakeBarrierBrain(own_cell, barrier_cell)
+    known = turn_language.known_opponent_cell(ctx, "cop")
+
+    dest = turn_language.choose_destination(ctx, "cop", NO_EVIDENCE, known)
+
+    assert dest == own_cell
+    assert ctx.commit_state.chosen_barrier == barrier_cell
+
+    ctx.brain = None  # a barrier-less branch on the very next call
+    turn_language.choose_destination(ctx, "cop", NO_EVIDENCE, known)
+    assert ctx.commit_state.chosen_barrier is None
 
 
 def _load_scent(default_params):

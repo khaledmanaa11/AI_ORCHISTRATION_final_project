@@ -1,10 +1,22 @@
-"""The two AWAITED language stages of a turn -- split out of
-turn_actions.py at the 150-code-line gate (Segal Table 5, deviation, 04-12).
+"""The AWAITED language stages of a turn -- split out of turn_actions.py at
+the 150-code-line gate (Segal Table 5, deviation, 04-12).
 
-`decode_turn_hint` is Figure 7 stage 1 (in `_decode_turn_hint`'s own former
-name); `send_turn_hint` is stages 3-5 (plan -> compose -> send -> log).
-Both are guarded by `services/language_turn.py`'s timeout policy -- neither
-can stall a turn past the configured budget (Task 1).
+`decode_turn_hint` is Figure 7 stage 1. `plan_turn_deception` (06-02) is
+stage 3 alone -- a thin wrapper calling the BARE `build_deception_plan`
+name from THIS module's own namespace (never a direct
+`turn_language.build_deception_plan(...)` reference), so a test that
+monkeypatches `turn_language_io.build_deception_plan` (GATE-4's own spy
+technique) keeps intercepting it regardless of which outer function
+(`turn_actions.take_my_turn`, or `turn_commit`'s responder decide-now
+step) calls this wrapper -- bare names resolve through the enclosing
+MODULE's globals at call time, not at def time. `compose_and_send_hint`
+(06-02, replacing `send_turn_hint`) is stages 4-5 (compose -> send -> log)
+ALONE -- planning is split out because D-58 needs the responder to plan
+BEFORE it commits, but only compose the actual TEXT after the reveal
+round trip (a real network gap now sits between the two, where before
+they were back-to-back sync calls). Both stages are guarded by
+`services/language_turn.py`'s timeout policy -- neither can stall a turn
+past the configured budget (Task 1).
 """
 
 from __future__ import annotations
@@ -27,6 +39,7 @@ from pursuit.services.language_turn import (
     compose_outgoing,
     decode_incoming,
 )
+from pursuit.shared.deception_types import DeceptionPlan
 from pursuit.shared.inference import NO_EVIDENCE, Inference
 
 
@@ -57,14 +70,20 @@ async def decode_turn_hint(
     return inference, {"text": text, "outcome": outcome, "reason": reason}
 
 
-async def send_turn_hint(
-    ctx: AgentContext, agent: str, pre_turn_state, dest, turn: int,
+def plan_turn_deception(ctx: AgentContext, agent: str, pre_turn_state, dest) -> DeceptionPlan:
+    """Stage 3 alone (06-02 split -- see module docstring): calls the bare
+    `build_deception_plan` name from this module's own globals."""
+    return build_deception_plan(ctx, agent, pre_turn_state, dest)
+
+
+async def compose_and_send_hint(
+    ctx: AgentContext, plan: DeceptionPlan, turn: int,
     started: float, budget: float, regime: str, incoming_log: dict,
 ) -> None:
-    """Stages 3-5: plan -> compose -> send -> log. `dataclasses.replace`
-    refreshes `BluffContext.degrade_level` from the gatekeeper's OWN budget
-    (04-10 carry-over K) -- the only field that goes stale mid-game."""
-    plan = build_deception_plan(ctx, agent, pre_turn_state, dest)
+    """Stages 4-5: compose -> send -> log (`plan` already decided by the
+    caller, per D-58). `dataclasses.replace` refreshes
+    `BluffContext.degrade_level` from the gatekeeper's OWN budget (04-10
+    carry-over K) -- the only field that goes stale mid-game."""
     remaining = max(0.0, budget - (time.monotonic() - started))
     bluff_context = dataclasses.replace(
         ctx.language.bluff_context, degrade_level=ctx.language.gatekeeper.budget.level

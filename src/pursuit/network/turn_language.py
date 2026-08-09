@@ -43,11 +43,17 @@ def known_opponent_cell(ctx: AgentContext, agent: str) -> Coord | None:
     LAST revealed move (folded in by `turn_resolve.maybe_resolve` in cop's
     own prior `await_opponent_turn`) -- Regime A, one turn behind (D-48) --
     except turn 0, where nothing has been revealed yet at all (Regime B,
-    honestly, for exactly that one turn). Thief moves second: its own
-    `await_opponent_turn` already recorded cop's THIS-turn move into
-    `pending_cop_action` before `take_my_turn` runs, and joint resolution
-    cannot have fired yet (thief's own slot is still empty) -- so that is
-    the genuinely-revealed cell to use, never `ctx.state.cop` itself."""
+    honestly, for exactly that one turn).
+
+    Thief (06-02, D-58 revision): the responder now decides its own move
+    the MOMENT the initiator's commit hash arrives -- before the
+    initiator's current-turn action is ever revealed, only the hash has
+    been seen. `ctx.pending_cop_action` is therefore still None at this
+    decide-now point on EVERY turn, not just turn 0: Regime A no longer
+    holds for the thief at all under commit-reveal. This closes a real
+    blindness leak that pre-Phase-6 code had (the thief's decide step used
+    to run only after a full prior `await_opponent_turn` had already
+    filled `ctx.pending_cop_action`), rather than being a regression."""
     if agent == "cop":
         return ctx.state.thief if ctx.state.turn > 0 else None
     return ctx.pending_cop_action.move if ctx.pending_cop_action is not None else None
@@ -62,23 +68,34 @@ def choose_destination(
     SAME regime value the caller already computed via `known_opponent_cell`
     (Task 2: "the decision lives in one place") -- never recomputed here,
     since `record_action`/`maybe_resolve` may run between this call and a
-    later one and change what `known_opponent_cell` would answer."""
+    later one and change what `known_opponent_cell` would answer.
+
+    D-66: every branch that CAN produce a barrier (BeliefAdapter, or a raw
+    brain's own `_decide_move`) has its full `Decision` inspected before
+    only `.move` is returned -- `ctx.commit_state.chosen_barrier` is set
+    unconditionally on every call (None on the override/placeholder
+    branches, which never carry a barrier by construction), so a later
+    caller in the SAME turn can read it. Never left stale across turns."""
     pre_cell = ctx.state.cop if agent == "cop" else ctx.state.thief
     if ctx.choose_move is not None:
+        ctx.commit_state.chosen_barrier = None
         return ctx.choose_move(ctx.state, agent, ctx.params)
     if ctx.brain is None:
+        ctx.commit_state.chosen_barrier = None
         return first_legal_move(ctx.state, agent, ctx.params)
     if isinstance(ctx.brain, BeliefAdapter):
         decision = ctx.brain.decide(
             ctx.state, inference, ctx.scent_field, ctx.rules, known_cell=known_cell
         )
-        return decision.move
-    opponent_cell = ctx.state.thief if agent == "cop" else ctx.state.cop
-    obs = Observation(
-        own_cell=pre_cell, target_cell=opponent_cell, blocked_mask=0,
-        barriers_used=ctx.state.barriers_placed, turn_index=ctx.state.turn,
-    )
-    return ctx.brain._decide_move(obs, ctx.state).move  # noqa: SLF001 (BrainBase's own seam)
+    else:
+        opponent_cell = ctx.state.thief if agent == "cop" else ctx.state.cop
+        obs = Observation(
+            own_cell=pre_cell, target_cell=opponent_cell, blocked_mask=0,
+            barriers_used=ctx.state.barriers_placed, turn_index=ctx.state.turn,
+        )
+        decision = ctx.brain._decide_move(obs, ctx.state)  # noqa: SLF001 (BrainBase's own seam)
+    ctx.commit_state.chosen_barrier = decision.barrier
+    return decision.move
 
 
 def build_deception_plan(

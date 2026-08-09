@@ -40,6 +40,15 @@ async def test_full_lifecycle_init_to_game_over(agent_log_paths, network_params)
     cfg_b = agent_lifecycle.load_agent_config("config/thief")
     ctx_a = agent_lifecycle.default_context(cfg_a, game_uid="gate3-full", log_path=log_a)
     ctx_b = agent_lifecycle.default_context(cfg_b, game_uid="gate3-full", log_path=log_b)
+    # 06-02: this module's own LIMITATION note (top of file) predates Phase 6
+    # -- peer B is never driven by a real run_turn_loop, so it can never
+    # answer a real D-58 COMMIT/ACK exchange (its queue is only ever read by
+    # the raw tool calls this test injects). GATE-3's concern here is state-
+    # machine/turn-order, orthogonal to Phase 6's protocol (covered by
+    # test_commit_reveal_protocol.py); toggle off to keep testing exactly
+    # that, unaffected by security.json's real commit_reveal=True default.
+    ctx_a.security = dataclasses.replace(ctx_a.security, commit_reveal=False)
+    ctx_b.security = dataclasses.replace(ctx_b.security, commit_reveal=False)
 
     # In-memory transport only (RESEARCH Pattern 5): aim A's outgoing client at
     # B's real server object -- never a socket, never a URL.
