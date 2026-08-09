@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-09 (phase 4 wave 4, first plan). 04-10 (bluff generator) remains to finish wave 4.
-last_updated: "2026-08-09T00:39:00.000Z"
-last_activity: 2026-08-09 -- Phase 04 wave 4 partially executed (04-09 belief fusion: scent-contradiction test, adaptive reliability, D-40 hint likelihood)
+stopped_at: Completed 04-10 (bluff generator). Phase 4 wave 4 (04-09 + 04-10) is now fully done. Wave 5 (04-11) is next.
+last_updated: "2026-08-09T01:12:00.000Z"
+last_activity: 2026-08-09 -- Phase 04 wave 4 completed (04-10 bluff generator: wordcount.py, hintbank.py/hintbank_templates.py, bluff.py/bluff_prompt.py, compose() total by construction)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 33
+  completed_plans: 34
   percent: 30
 ---
 
@@ -26,10 +26,28 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 ## Current Position
 
 Phase: 04 (language-and-scent) — EXECUTING
-Plan: 9 of 14 (waves 1–3 done: 04-01..04-08; wave 4 in progress: 04-09 belief
-  fusion DONE — see .planning/phases/04-language-and-scent/04-09-SUMMARY.md.
-  Next: 04-10 bluff generator, finishing wave 4. Resume point (wave-3
-  carry-overs, still relevant to 04-10/04-12): .planning/phases/04-language-and-scent/RESUME.md)
+Plan: 10 of 14 (waves 1–4 done: 04-01..04-10; wave 4 now FULLY COMPLETE —
+  see .planning/phases/04-language-and-scent/04-10-SUMMARY.md.
+  Next: 04-11 (BeliefAdapter), starting wave 5. Resume point (carry-overs
+  J-N are new from 04-10, still relevant to 04-12):
+  .planning/phases/04-language-and-scent/RESUME.md)
+
+04-10 delivered: services/llm/wordcount.py (count()/truncate(), one
+  whitespace-splitting rule), services/llm/hintbank.py +
+  hintbank_templates.py (HintBank, a seeded per-game template bank keyed
+  by ClaimKind/Intent, import-time validated against the REAL shipped
+  language.json word limit), services/llm/bluff.py + bluff_prompt.py
+  (BluffContext + compose(), the total 5-step hint composer: one call,
+  one retry on overflow, truncate, assert_no_coordinates, bank fallback
+  on every failure path; D-39's style guide never reveals `intent` to the
+  model, D-36). Deviation: the word limit's config home is language.json's
+  model group (not deception.json as the plan's files_modified listed) --
+  reasoning in 04-10-SUMMARY.md, RESUME.md carry-over A closed / J opened.
+  assert_no_coordinates moved network/hint_payload.py -> new
+  shared/hint_guard.py (re-exported), matching 04-08's Intent precedent.
+  Full gates green: 1001 passed, 94.81% coverage, ruff/line-limit/
+  no-llm-in-strategy all clean. Knowledge graph refreshed this session
+  (4917 nodes / 8593 edges / 311 communities).
 
 04-09 delivered: strategy/scent_check.py (contradicts(), the Sec4.4 lie
   detector reproducing the book's 0.9 -> 0.81 worked example exactly),

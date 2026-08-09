@@ -1,7 +1,7 @@
 # Phase 4 — resume point
 
-**Updated:** 2026-08-09 · **Status:** waves 1–3 EXECUTED, wave 4 IN PROGRESS (9/14 plans:
-04-01..04-09). 04-10 (bluff generator) remains to finish wave 4. Waves 5–8 not started.
+**Updated:** 2026-08-09 · **Status:** waves 1–4 EXECUTED (10/14 plans: 04-01..04-10). Wave 4 is
+now COMPLETE (04-09 + 04-10). Waves 5–8 not started.
 
 Nothing is half-finished: every dispatched plan completed, merged, and passed the gates.
 
@@ -26,28 +26,31 @@ git checkout claude/gsd-parallelism-config-6b4aqp
 | 3 | 04-07 | Hint decoder — constrained JSON plus our own re-validation, EN **and** HE fixtures, a prompt-injection case, every failure path ⇒ `NO_EVIDENCE`, never raises | ✅ |
 | 3 | 04-08 | Deception planner — a `DeceptionPlan` whose constructor refuses a lying capture/barrier claim, thief danger-adaptive lying with a measured truth floor, cop herding scored with the Phase-3 evaluation | ✅ |
 | 4 | 04-09 | Belief fusion — `scent_check.contradicts()` (Sec4.4 lie detector, reproduces 0.9→0.81 exactly), `reliability.Reliability` (bounded adaptive coefficient, D-51), `belief_hint.hint_likelihood()` (D-40 mix, weighted below scent, never zeroes a cell) | ✅ |
+| 4 | 04-10 | Bluff generator — `compose()`, the three-layer word limit (D-45): one call, one retry on overflow, truncate, `assert_no_coordinates`, total fallback to a seeded `HintBank` on every failure path; `bluff_prompt.py`'s style guide (D-39) never reveals `intent` to the model (D-36) | ✅ |
 
-Gates on the merged tree after wave 4's first plan (04-09) — measured, not inherited from agent
+Gates on the merged tree after wave 4 (04-09 + 04-10) — measured, not inherited from agent
 self-reports:
 
 | Check | Result |
 |---|---|
-| `uv run pytest --cov` | **903 passed, 94.55%** (floor 85%) |
+| `uv run pytest --cov` | **1001 passed, 94.81%** (floor 85%) |
 | `uv run ruff check .` | 0 violations |
 | `scripts/check_line_limit.sh` | clean repo-wide |
 | `scripts/check_no_llm_in_strategy.py` | clean — `strategy/` imports no `pursuit.services` |
 | End-to-end Sec4.4 reproduction | fully-lying opponent's reliability 0.5→0.2→0.05 within 2 turns; fully-truthful holds at 0.5 for 10 turns; fused-posterior argmax follows scent in both regimes (`tests/unit/strategy/test_belief_fusion_e2e.py`) |
+| `grep -nE "\b15\b" src/pursuit/services/llm/` | no match — the word limit is config-only everywhere |
+| `compose()` adversarial property test | 300 iterations, always non-empty/in-limit/coordinate-free, never raises (`tests/unit/services/test_bluff_property.py`) |
 
-Remaining waves: `w4: 10` · `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
+Remaining waves: `w5: 11` · `w6: 12` · `w7: 13` · `w8: 14`.
 
 ## The next command
 
 ```
-/gsd:execute-phase 4 --wave 4
+/gsd:execute-phase 4 --wave 5
 ```
 
-This resumes wave 4 at its remaining plan, 04-10 (bluff generator) — 04-09 is done. Drop the
-`--wave` flag to run waves 4–8 straight through. Run it on a fresh context.
+This starts wave 5 at 04-11 (`BeliefAdapter`) — wave 4 (04-09 + 04-10) is fully done. Drop the
+`--wave` flag to run waves 5–8 straight through. Run it on a fresh context.
 
 **If you are resuming in a Claude-Code-on-the-web container, the slash command will not
 resolve** — the GSD plugin is not installed there (`.claude/` holds only `settings.json`, there
@@ -61,7 +64,54 @@ scaffold default, not a decision). Plans within a wave now execute concurrently.
 default for this key is `true`, and `execute-phase` still drops a wave back to sequential by
 itself if it detects two plans in it touching the same file.
 
-## Carry-overs from execution — read before continuing wave 4 (04-10) and beyond
+## Carry-overs from execution — read before continuing wave 5 (04-11) and beyond
+
+**New in wave 4 (04-10) — 04-11/04-12 need these:**
+
+- **J. The word limit's config home is `language.json`'s `model` group
+  (`hint_word_limit`, `ModelKey.HINT_WORD_LIMIT`, validated by
+  `shared/language_model_config.py`), NOT `deception.json`/
+  `deception_config.py` as 04-10-PLAN.md's own `files_modified` listed.**
+  Reasoning: the limit governs the LLM CHANNEL (shared by `bluff.py`'s
+  emission side and `DecodeContext.word_limit` on the decode side, both
+  already reading `language.json`'s `model` group for `game_arena`), not
+  the deception POLICY (`deception.json`'s lie-probability/herding knobs,
+  which decide WHAT is claimed, never how many words phrase it).
+  **04-12 must read `language_params.model["hint_word_limit"]` ONCE and
+  pass the SAME int into both `DecodeContext.word_limit` (closes
+  wave-3 carry-over A) and `BluffContext.word_limit`** — one negotiated
+  number, one config field, read on both sides.
+- **K. `BluffContext` has one field that goes stale mid-game:
+  `degrade_level`.** `provider`/`arena`/`word_limit`/`hint_bank` are
+  stable for the whole game and should be set up once; `degrade_level`
+  must be re-read from `gatekeeper.budget.level` and refreshed before
+  EVERY turn's `compose()` call (unlike `DecodeContext`, which has no
+  degrade-sensitive field at all). **04-12 should construct exactly one
+  `HintBank(rng=...)` per game** (same ownership pattern as 04-09's
+  `Reliability`: built once at wiring time, held for the game's duration,
+  seeded so a replay reproduces byte-identically) **and reuse that same
+  instance across every turn's `BluffContext`** — a fresh `HintBank` each
+  turn would reset the no-repeat rotation and defeat D-39's
+  signature-avoidance goal.
+- **L. `compose()` never calls `TemplateProvider.complete()`, even when
+  the configured provider name is `"template"` or the budget is
+  `TEMPLATE_ONLY`.** It goes straight to `HintBank.select()` instead — the
+  bank is `DeceptionPlan`-aware (kind/intent/arena-flavoured); a generic
+  `TemplateProvider(phrases=[...])` has no way to know what claim it's
+  supposed to be phrasing. `TemplateProvider` remains the registered
+  `"template"` provider for the DECODE side (04-07) and for provider-name
+  validation (`get_provider_class`), just not for the bluff fallback path.
+- **M. `assert_no_coordinates` now lives in `shared/hint_guard.py`**
+  (moved out of `network/hint_payload.py`, which re-exports it unchanged
+  — same precedent 04-08 set for `Intent`/`DirectionWord`). Any new code
+  needing this guard (04-12 included) should import it from
+  `pursuit.shared.hint_guard`, not from the network re-export.
+- **N. `compose()`'s retry-failure behaviour, for anyone re-reading the
+  code:** if the ONE retry attempt itself comes back as an `LlmFailure`
+  (or an empty completion), `compose()` truncates the ORIGINAL
+  over-length completion rather than falling back to the bank — the bank
+  is reserved for "no usable model text at all", and a verbose-but-real
+  response is still worth truncating rather than discarding.
 
 **New in wave 4 (04-09) — 04-10/04-11/04-12 need these:**
 
@@ -88,11 +138,10 @@ itself if it detects two plans in it touching the same file.
 
 **New in wave 3 (04-07 / 04-08) — a wave-4 executor needs all five:**
 
-- **A. `DecodeContext.word_limit` has no default and no config key yet.** 04-07 owns no config
-  file, so the Table 14 row 2 word limit is passed in by the caller. **04-10 should add
-  `hint_word_limit` to `language.json`'s `model` group** (it owns the emission side of the same
-  negotiated number) and **04-12 must pass it into `DecodeContext`.** Nothing is broken today —
-  every call site supplies it explicitly — but the number currently lives only in test code.
+- ~~**A. `DecodeContext.word_limit` has no default and no config key yet.**~~ **CLOSED by 04-10**:
+  `hint_word_limit` now lives in `language.json`'s `model` group (see wave-4 carry-over J above).
+  04-12 still must pass `language_params.model["hint_word_limit"]` into `DecodeContext` — that
+  half of the original carry-over is unchanged and still open.
 - **B. A heading-only hint decodes at confidence 0, so it is NOT positional evidence.**
   04-07-PLAN.md Task 1 says reject when region and cells are both absent while confidence is
   above zero; taken literally that would discard `direction` for the one case where a heading is
@@ -127,13 +176,12 @@ itself if it detects two plans in it touching the same file.
    ("the provider never calls the API directly", no carve-out) is stricter than its own task text;
    the executor obeyed the stricter one. If a later plan wants exact counts, that tension must be
    resolved in the plan first, not in the code.
-3. **The knowledge graph is STILL STALE** — built at `da345dd8`, now ~40 commits behind.
-   Re-confirmed during wave 3: `which graphify` finds nothing in the cloud container, so this
-   must be refreshed locally (CLAUDE.md requires it for phases ≥ 3 after code lands). Wave 3
-   added 11 source modules, so the gap is now material:
-   ```
-   graphify update . && cp graphify-out/{graph.json,graph.html,GRAPH_REPORT.md} .planning/graphs/
-   ```
+3. ~~The knowledge graph is STALE~~ **REFRESHED by 04-10** (this session ran locally, not in the
+   cloud container where `graphify` is unavailable): `graphify update .` → 4917 nodes / 8593
+   edges / 311 communities, `GRAPH_REPORT.md` copied to `.planning/graphs/` and committed;
+   `graph.json`/`graph.html` regenerated but stay gitignored build artifacts as designed. If a
+   later wave runs in the cloud container again, `which graphify` will find nothing there and
+   this step must move back to a local session, same as wave 3 noted.
 4. **Phase-4 code currently shares a branch with a GSD toolchain change** (enabling parallelization
    and adding `scripts/ensure_gsd.sh`). If you want the phase reviewed on its own, split it before
    opening a phase PR.
