@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 6 PLAN 01 EXECUTED (c85b302, 2026-08-09) -- src/pursuit/security/ package (commit_pack.py: build_commit_payload/commit/verify_reveal, D-59; state_record.py: build_state_record, D-60; ledger.py: CommitLedger, D-64), src/pursuit/shared/security_config.py (11th per-agent config block), config/{police,thief}/security.json (byte-identical, D-65). 100% coverage on the new security/ package (77/77 statements), 34 new tests, full suite 1150 passed / 1 pre-existing timing flake (unrelated, passes in isolation), 95.81% coverage, ruff/line-limit/no-llm-in-strategy all clean. This plan is purely additive -- nothing wired into the turn loop, handshake, or any existing network file yet; that is 06-02/06-03's job. Knowledge graph refreshed (6035 nodes/10756 edges/384 communities). NEXT -- execute 06-02 (four-phase wire protocol: MessageType members, tool handlers, turn_commit.py's D-58 both-locked exchange, barrier-over-the-wire D-66).
-last_updated: "2026-08-09T16:20:00.000Z"
-last_activity: 2026-08-09 -- Phase 06 plan 01 executed (06-01: the standalone crypto core, wave 1 of 4, no dependencies). Task 1 (ca84968): security_config.py + config/{police,thief}/security.json -- SecurityKey/SecurityParams/load_security_config following the *Key-beside-loader convention (TunnelKey/ScentKey precedent), commit_reveal=true + team_code=khm-mn17 byte-identical across both agent dirs (D-65), 11 tests incl. byte-identity + 8-char team_code check. Task 2 (cdcc39c): commit_pack.py + state_record.py -- the ONE build_commit_payload() function (D-59) that commit()/verify_reveal() both call, never rebuilt ad hoc; nonce via secrets.token_hex(16) inside commit() only; hashing via config_hash.canonical_json (the one documented, plan-pre-authorized exception to security/'s own sdk/shared-only boundary) + digests_match (secrets.compare_digest); move stays completely shape-opaque (isinstance(move, dict) only, no move_payload import) so 06-02's composite {move,barrier} action dict passes through untouched -- round-trip test proven with BOTH a move-only and a barrier-bearing example, including a nested-barrier-key-only tamper test; build_state_record returns exactly D-60's five fields with a local non-bool-int guard (4-line duplicate of envelope.py's own, matching the existing 3-site precedent rather than a cross-package import). Task 3 (c85b302): ledger.py -- CommitLedger.append/.read_all, validate->serialize->write->flush->os.fsync mirroring event_log.append_event's exact durability order; missing-file read_all() returns [] (not an error); malformed line raises json.JSONDecodeError (fail-loud). Verification step 3 confirmed by grep: exactly one real json.dumps call in security/ (ledger.py's storage line), commit_pack.py contains zero. All 3 tasks committed atomically, pre-commit hook passing every time, never bypassed. 06-01-SUMMARY.md written carrying every exact signature 06-02 needs verbatim. Self-check PASSED (all 11 files + 3 commit hashes verified present). NOTHING TICKED anywhere -- ROADMAP.md Phase 6 checkboxes left unchecked, docs/phases/phase-6/TODO.md not yet created (06-97's job, still pending for this phase).
+stopped_at: PHASE 6 PLAN 02 EXECUTED (bf5d6ff, 2026-08-09) -- turn_commit.py's D-58 both-locked Commit-Ack-Reveal exchange wired live into the turn loop (both roles), D-66/SEC-07 barrier-over-the-wire closed, MessageType.COMMIT/ACK/REVEAL/FINAL_REVEAL + tool handlers, AgentContext.security/commit_state. A real measured deadlock found and fixed (Rule 1): the plan's own literal unconditional await_and_respond reading hung a two-peer game 136s before a false technical loss; fixed with a ctx.role branch, now 1.15s. turn_commit.py needed a THIRD sibling (turn_commit_send.py) beyond the plan's two pre-authorized files. Toggle-off proven byte-equivalent; forced-barrier round-trip proven identical on both engines; jitter (duplicate ACK) proven tolerated. Full suite 1184 passed / 1 pre-existing timing flake (unrelated, passes in isolation), 96.07% coverage, ruff/line-limit/no-llm-in-strategy all clean. Knowledge graph NOT yet refreshed this plan (06-96 still pending). NEXT -- execute 06-03 (Step-0 + final audit: uv add psutil, step0 collect/sign, handshake third digest + game_id adoption D-61, FINAL_REVEAL exchange, audit verdicts, games-played counter).
+last_updated: "2026-08-09T17:40:00.000Z"
+last_activity: 2026-08-09 -- Phase 06 plan 02 executed (06-02: the D-58 wire protocol, wave 2 of 4, depends on 06-01). Task 1 (0711829): MessageType gains COMMIT/ACK/REVEAL/FINAL_REVEAL (nine members); tools.py gains the four matching handlers mirroring receive_hint's _accept pattern. Task 2 (fb7d46a): agent_context.py + commit_state.py split out of orchestrator.py/agent_lifecycle.py (both were AT the 150-line ceiling) -- AgentContext gains security: SecurityParams (required, no default) and commit_state: CommitTurnState (defaulted); agent_wiring.py's AgentConfig gains security, load_agent_config loads security.json; _fakes_agent.py's make_ctx gains an optional security= param defaulting commit_reveal=False so every pre-existing fake-driven test stays byte-equivalent with zero edits; three stale hardcoded 5-tool-name sets (test_peer_runtime.py, test_secret_channel.py, gate5_tunnel_smoke.py) fixed as Task-1 fallout caught by the full suite. Task 3 (22c75fc): turn_commit.py/turn_commit_wait.py/turn_commit_send.py (a THIRD sibling forced by the 150-line gate, mirroring the handshake.py/handshake_wire.py/handshake_evaluate.py precedent) -- initiate/await_and_respond/reveal_pending, the three D-58 entry points; turn_language.py's choose_destination now stashes Decision.barrier onto ctx.commit_state.chosen_barrier (D-66); turn_resolve.py's record_action gains an optional barrier (move XOR barrier) plus a new decode_revealed_action shape-aware receive-side helper; turn_actions.py rewired to branch take_my_turn on ctx.commit_state.pending_action. A REAL MEASURED DEADLOCK found and fixed here: await_and_respond needed a ctx.role branch (police already committed+revealed via initiate() by the time its own await_opponent_turn runs) -- the plan's own literal unconditional reading hung a real two-peer game 136.00s before a false technical loss; fixed, re-measured 1.15s. test_turn_lifecycle.py's GATE-3 single-sided harness opted out via security.commit_reveal=False (its own pre-existing LIMITATION note: peer B's turn loop never runs, structurally incompatible with a real D-58 handshake). Task 4 (bf5d6ff): test_commit_reveal_protocol.py (+_barrier +_jitter, split at the 150-line gate) proves the full protocol on a REAL two-peer game -- commit/ack/reveal types present, zero move-typed envelopes, zero nonce text in the wire log, a matching ledger record count, the both-locked-gate ordering (REVEAL sent strictly after opponent's COMMIT received, every turn), a forced one-shot barrier round-tripping identically on both engines, toggle-off byte-equivalence, and duplicate-ACK jitter tolerance (hand-rolled two-peer wiring since play_two_peer_game's wire= hook runs before runtime.client is assigned). test_gate4.py's _moves()/intent-order test and test_language_pipeline.py's inline check/_replay_from_log fixed exactly per critical_correctness_3 (split into test_language_pipeline_replay.py at the 150-line gate); the identity-based intent-before-text check verified via a throwaway probe to still catch a real violation before being left in place. Rule-2 coverage-closing tests added for every new technical-loss branch (test_turn_commit_initiate_failures.py, test_turn_commit_respond_failures.py, test_turn_resolve.py) plus a shared FailAfterClient fake. All 4 tasks committed atomically, pre-commit hook passing every time, never bypassed. 06-02-SUMMARY.md written carrying turn_commit.py's exact signatures, PendingAction/CommitTurnState's shape, the composite action dict shape, and the ledger filename convention verbatim for 06-03. Self-check PASSED (all 15 files + 4 commit hashes verified present). NOTHING TICKED anywhere -- ROADMAP.md Phase 6 checkboxes left unchecked, docs/phases/phase-6/TODO.md not yet created (06-97's job, still pending for this phase). Knowledge graph refresh (06-96) still pending -- not run this plan.
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 56
-  completed_plans: 40
+  completed_plans: 41
   percent: 33
 ---
 
@@ -25,16 +25,19 @@ See: .planning/PROJECT.md (updated 2026-07-27)
 
 ## Current Position
 
-Phase: 06 (security-and-cryptography) — EXECUTING (1 of 4 plans code+test
-  complete: 06-01. See
-  .planning/phases/06-security-and-cryptography/06-01-SUMMARY.md.
-  06-01 is the standalone crypto core (src/pursuit/security/ package +
-  security_config.py + the security.json pair) -- purely additive, wave 1,
-  no dependencies. Nothing wired into the turn loop/handshake yet. NEXT:
-  execute 06-02 (four-phase wire protocol -- MessageType members, tool
-  handlers, turn_commit.py's D-58 both-locked exchange, barrier-over-the-
-  wire D-66), which depends on 06-01's shipped signatures.)
-Plan: 1 of 4 (06-01 done; 06-02, 06-03, 06-04 remain)
+Phase: 06 (security-and-cryptography) — EXECUTING (2 of 4 plans code+test
+  complete: 06-01, 06-02. See
+  .planning/phases/06-security-and-cryptography/06-02-SUMMARY.md.
+  06-02 wires the D-58 both-locked Commit-Ack-Reveal exchange live into
+  the turn loop (both roles) and closes D-66/SEC-07 (barrier placement
+  over the wire). A real measured deadlock in the plan's own literal
+  await_and_respond spec was found and fixed (Rule 1) -- see SUMMARY for
+  the full trace. NEXT: execute 06-03 (Step-0 + final audit -- uv add
+  psutil, step0 collect/sign, handshake third digest + game_id adoption
+  D-61, FINAL_REVEAL exchange, audit verdicts through the TechnicalWin
+  pathway, games-played counter), which depends on 06-02's shipped
+  turn_commit.py signatures and ledger convention.)
+Plan: 2 of 4 (06-01, 06-02 done; 06-03, 06-04 remain)
 
 Phase 05 (cloud-exposure-and-tunneling) status carried forward unchanged:
   EXECUTED, NOT VERIFIED (all 3 plans code+test complete). GATE-5 (book
@@ -71,6 +74,51 @@ Phase 05 (cloud-exposure-and-tunneling) status carried forward unchanged:
   Knowledge graph refreshed (6035 nodes/10756 edges/384 communities). Nothing
   ticked anywhere. Purely additive -- zero wiring into turn_actions.py,
   handshake, or any existing network file (that is 06-02/06-03's scope).
+
+06-02 delivered: the D-58 both-locked Commit-Ack-Reveal exchange, wired
+  live into the turn loop for both roles, plus D-66/SEC-07's barrier-over-
+  the-wire. src/pursuit/network/envelope.py (MessageType gains COMMIT/ACK/
+  REVEAL/FINAL_REVEAL, nine members) + tools.py (four matching handlers).
+  agent_context.py (new, split from orchestrator.py/agent_lifecycle.py at
+  the 150-line gate) + commit_state.py (new, PendingAction/CommitTurnState)
+  -- AgentContext.security: SecurityParams (required) + commit_state:
+  CommitTurnState (defaulted). turn_commit.py + turn_commit_wait.py +
+  turn_commit_send.py (a THIRD sibling forced by the line count, mirroring
+  handshake.py's own 3-file split) -- initiate/await_and_respond/
+  reveal_pending, the three D-58 entry points; turn_language.py's
+  choose_destination stashes Decision.barrier; turn_resolve.py's
+  record_action gains an optional barrier plus a new shape-aware
+  decode_revealed_action. A REAL MEASURED DEADLOCK found and fixed (Rule 1):
+  the plan's own literal unconditional await_and_respond spec hung a real
+  two-peer game 136.00s (retry-ladder exhaustion into a false technical
+  loss) before a ctx.role branch fixed it -- police (the fixed first-mover,
+  design note 7) already committed+revealed its own action inside
+  initiate() by the time its own await_opponent_turn runs, so it must only
+  WAIT for the opponent's REVEAL, never decide again; re-measured 1.15s.
+  PendingAction carries 3 fields beyond the plan's literal 5-field sketch
+  (action_payload, h_commit, turn) since ctx.state advances past
+  resolve_turn before reveal_pending runs. Proven end to end on REAL
+  two-peer games (test_commit_reveal_protocol.py + _barrier + _jitter,
+  split at the 150-line gate): commit/ack/reveal types present, zero
+  move-typed envelopes, zero nonce text in the wire log, a matching ledger
+  record count, the both-locked-gate ordering itself, a forced barrier
+  round-tripping identically on both engines (quota respected), toggle-off
+  byte-equivalence, duplicate-ACK jitter tolerance. test_gate4.py's
+  _moves()/intent-order check and test_language_pipeline.py's inline
+  check/_replay_from_log fixed exactly per the plan's own
+  critical_correctness_3 spec (split into test_language_pipeline_replay.py);
+  the identity-based intent-before-text check verified via a throwaway
+  probe to still catch a real violation. Rule-2 coverage-closing tests for
+  every new technical-loss branch this plan's source introduced
+  (test_turn_commit_initiate_failures.py, test_turn_commit_respond_
+  failures.py, test_turn_resolve.py) plus a shared FailAfterClient test
+  fake. Full suite 1184 passed, 1 pre-existing timing flake (isolated
+  re-run confirms it passes; unrelated, not touched), 96.07% coverage
+  (+0.26pp over the pre-plan baseline), ruff/line-limit/no-llm-in-strategy
+  all clean. Knowledge graph refresh (06-96) still pending -- not run this
+  plan. Nothing ticked anywhere. game_id/game_uid reconciliation (D-61)
+  still open, flagged for 06-03; FINAL_REVEAL's wire type/tool handler
+  exist but carry no body yet (06-03's job).
 
 05-03 delivered: scripts/gate5_tunnel_smoke.py (env-gated smoke script
   driving the REAL TunnelManager/SharedSecretMiddleware through a public
@@ -401,6 +449,7 @@ Progress: [█░░░░░░░░░] 13%  (1 of 8 phases; Phase 2 code com
 | Phase 05-cloud-exposure-and-tunneling P01 | ~50min | 3 tasks | 11 files |
 | Phase 05-cloud-exposure-and-tunneling P02 | ~30min | 3 tasks | 11 files |
 | Phase 05-cloud-exposure-and-tunneling P03 | ~35min | 3 tasks | 7 files |
+| Phase 06 P02 | 100min | 4 tasks | 33 files |
 
 ## Accumulated Context
 
@@ -622,7 +671,9 @@ Recent decisions affecting current work:
   blind one -- so it measures "belief vs omniscience", not "belief vs
   blindness", and the measured 1.0/0.0 win-rate gap is reported with that
   caveat rather than read as evidence about the belief layer's value.
-  Anthropic's published Haiku 4.5 rate ($1/$5 per MTok input/output,
+  Anthropic's published Haiku 4.5 rate (### Decisions
+
+/$5 per MTok input/output,
   scripts/gate4_report.py) is cited, not sourced from PARAMETERS.md --
   flagged for reconfirmation before Phase 7's league spend email.
 
@@ -692,6 +743,9 @@ Recent decisions affecting current work:
   shape however turn_commit.py needs. state_record.py's non-bool-int guard
   is a local 4-line duplicate of envelope.py's own (Pitfall 3's existing
   3-site precedent), not a cross-package import.
+- [Phase 06-02]: D-58 role branch (Rule 1 bug fix, measured): await_and_respond checks ctx.role -- the fixed first-mover already committed+revealed this turn, so it only waits for the opponent's REVEAL, never decides again (a naive unconditional reading hung a real game 136s before a false technical loss)
+- [Phase 06-02]: D-66/SEC-07 closed: barrier placement travels over the wire inside the committed composite {move,barrier} action dict for the first time; toggle-off (security.commit_reveal=false) proven byte-equivalent to pre-Phase-6 by a dedicated integration test
+- [Phase 06-02]: turn_commit.py needed a third sibling (turn_commit_send.py) beyond the plan's two pre-authorized files -- mirrors the already-cited handshake.py/handshake_wire.py/handshake_evaluate.py 3-file precedent
 
 ### Pending Todos
 
