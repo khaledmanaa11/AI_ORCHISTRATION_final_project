@@ -19,8 +19,16 @@ from mcp.types import ErrorData
 from pursuit.network import orchestrator
 from pursuit.network.state_machine import State, TurnStateMachine
 from pursuit.sdk import engine
+from pursuit.shared.security_config import SecurityParams
 
 _FAST_TIMEOUT = 0.05  # test scaffolding only; NOT a PARAMETERS.md value
+
+_DEFAULT_SECURITY = SecurityParams(version="1.00", commit_reveal=False, team_code="khm-mn17")
+"""06-02: every pre-existing fake-driven test predates the commit-reveal
+exchange -- commit_reveal=False keeps `make_ctx`'s callers byte-equivalent
+to pre-Phase-6 (a single MOVE envelope via FakeClient's generic ack), never
+requiring a fake COMMIT/ACK/REVEAL round trip. A test exercising the D-58
+exchange itself overrides via `security=` (see test_turn_commit.py)."""
 
 
 class FakeReporter:
@@ -102,6 +110,7 @@ def make_ctx(
     initial_state=State.HANDSHAKE,
     client=None,
     net_overrides=None,
+    security=None,
 ):
     """Assemble a fully-independent AgentContext from fakes plus a REAL
     TurnStateMachine (02-03) and a REAL engine.make_state (Phase 1). Nothing
@@ -139,5 +148,6 @@ def make_ctx(
         log_path=tmp_path / f"{label}.jsonl",
         game_uid=f"test-{label}",
         state=engine.make_state(default_params),
+        security=security or _DEFAULT_SECURITY,
         choose_move=None,
     )

@@ -34,6 +34,7 @@ from pursuit.shared.language_config import LanguageParams, load_language_config
 from pursuit.shared.network_config import NetworkParams, load_network_config
 from pursuit.shared.resolution import RESOLUTION_SOURCE, ResolutionRules, load_resolution_rules
 from pursuit.shared.scent_config import ScentModel, load_scent_model
+from pursuit.shared.security_config import SecurityParams, load_security_config
 from pursuit.shared.strategy_config import StrategyParams, load_strategy_config
 
 
@@ -57,10 +58,11 @@ def load_role(config_dir: Path | str) -> str:
 
 @dataclass(frozen=True)
 class AgentConfig:
-    """The nine per-agent config files, loaded once and handed to
+    """The ten per-agent config files, loaded once and handed to
     build_context. Phase 4 adds five negotiated blocks (strategy, language,
     belief, scent, deception) so the live turn loop can build a real mover
-    and a real language pipeline instead of the Phase-2/3 placeholders."""
+    and a real language pipeline instead of the Phase-2/3 placeholders.
+    Phase 6 adds `security` (commit_reveal toggle + team_code, D-65)."""
 
     config_dir: Path
     role: str
@@ -72,14 +74,15 @@ class AgentConfig:
     belief: BeliefParams
     scent: ScentModel
     deception: DeceptionParams
+    security: SecurityParams
 
 
 def load_agent_config(config_dir: Path | str) -> AgentConfig:
     """Load role.json + network.json + game_params.json + the optional
     negotiated resolution.json, plus strategy/language/belief/scent/
-    deception.json, from ONE per-agent directory -- the only source for
-    this process's identity (NET-01). A missing resolution.json is not an
-    error: it degrades to BOOK_ONLY (RULES-RESOLUTION.md Sec5)."""
+    deception/security.json, from ONE per-agent directory -- the only
+    source for this process's identity (NET-01). A missing resolution.json
+    is not an error: it degrades to BOOK_ONLY (RULES-RESOLUTION.md Sec5)."""
     directory = Path(config_dir)
     role = load_role(directory)
     net = load_network_config(directory / "network.json")
@@ -90,9 +93,11 @@ def load_agent_config(config_dir: Path | str) -> AgentConfig:
     belief = load_belief_config(directory / "belief.json")
     scent = load_scent_model(directory / "scent.json")
     deception = load_deception_config(directory / "deception.json")
+    security = load_security_config(directory / "security.json")
     return AgentConfig(
         config_dir=directory, role=role, params=params, net=net, rules=rules,
         strategy=strategy, language=language, belief=belief, scent=scent, deception=deception,
+        security=security,
     )
 
 

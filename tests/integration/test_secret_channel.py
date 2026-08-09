@@ -83,6 +83,7 @@ async def test_correct_secret_completes_a_real_call(guarded_pair):
         tools = await client.list_tools()
     assert {t.name for t in tools} == {
         "handshake", "receive_move", "receive_barrier", "game_over", "receive_hint",
+        "receive_commit", "receive_ack", "receive_reveal", "receive_final_reveal",
     }
 
 

@@ -28,85 +28,26 @@ imported back below so this module still exports the full surface callers
 expect. `turn_actions.py` imports the AgentContext shape FROM this module,
 never the reverse; the import is deferred to call time so that
 one-directional dependency holds regardless of import order.
+
+`Coord`/`ChooseMove`/`AgentContext` themselves live in `agent_context.py`
+(06-02, 150-line-gate room-making split -- this module was AT its ceiling)
+and are re-exported below UNCHANGED so every existing
+`from pursuit.network.orchestrator import AgentContext` call site keeps
+working with zero edits.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from pathlib import Path
-
 from pursuit.constants import Outcome
 from pursuit.network import turn_events
+from pursuit.network.agent_context import AgentContext, ChooseMove, Coord
 from pursuit.network.event_log import append_event
-from pursuit.network.language_wiring import LanguageRuntime
-from pursuit.network.peer_runtime import PeerRuntime
-from pursuit.network.state_machine import (
-    TERMINAL_STATES,
-    State,
-    TransitionReporter,
-    TurnStateMachine,
-)
-from pursuit.network.watchdog import Watchdog
+from pursuit.network.state_machine import TERMINAL_STATES, State
 from pursuit.sdk import engine
-from pursuit.sdk.actions import CopAction
 from pursuit.shared.config import GameParams
-from pursuit.shared.network_config import NetworkParams
-from pursuit.shared.resolution import BOOK_ONLY, ResolutionRules
 from pursuit.shared.state import GameState
-from pursuit.strategy.base import BrainBase
-from pursuit.strategy.beliefadapter import BeliefAdapter
-from pursuit.strategy.scentfield import ScentField
 
-Coord = tuple[int, int]
-
-ChooseMove = Callable[[GameState, str, GameParams], Coord]
-"""The Phase-3 replacement point (design note 5): a plain algorithm, never an
-LLM (rule 25). Defaults to `first_legal_move` when unset on the context."""
-
-
-@dataclass
-class AgentContext:
-    """Everything one process's turn loop needs -- an INSTANCE, never a
-    module-level global (NET-02). Two contexts built in the same interpreter
-    share no field: build a fresh one per process.
-
-    `rules` are the negotiated terminal predicates (RULES-RESOLUTION.md
-    Sec5); BOOK_ONLY is the safe default until agent_lifecycle.py loads a
-    real per-agent resolution.json onto a live context.
-    `pending_cop_action`/`pending_thief_move` buffer this turn's actions
-    until both are known (turn_actions.py), then resolve_turn runs exactly
-    once and both slots are cleared. `pending_hints` (Phase 4, D-47)
-    buffers this turn's hint(s) by sender the same way, cleared alongside
-    the action slots when the turn resolves (turn_buffer.py).
-
-    Phase 4 (04-12) adds four OPTIONAL fields, defaulting to None/empty so
-    a pre-existing fixture that never sets them is unaffected: `brain` (the
-    registry-built mover), `scent_field` (this role's trail, held for the
-    game), `language` (the gatekeeper/provider/hint-bank runtime), and
-    `incoming_hints` (the LAST hint per sender -- unlike `pending_hints`,
-    NOT cleared at resolve, so `take_my_turn` decodes it one call later;
-    see turn_language.py)."""
-
-    role: str
-    params: GameParams
-    net: NetworkParams
-    machine: TurnStateMachine
-    runtime: PeerRuntime
-    watchdog: Watchdog
-    reporter: TransitionReporter
-    log_path: Path
-    game_uid: str
-    state: GameState
-    choose_move: ChooseMove | None = None
-    rules: ResolutionRules = BOOK_ONLY
-    pending_cop_action: CopAction | None = None
-    pending_thief_move: Coord | None = None
-    pending_hints: dict[str, dict] = field(default_factory=dict)
-    brain: BrainBase | BeliefAdapter | None = None
-    scent_field: ScentField | None = None
-    language: LanguageRuntime | None = None
-    incoming_hints: dict[str, dict] = field(default_factory=dict)
+__all__ = ("AgentContext", "ChooseMove", "Coord", "engine_agent", "first_legal_move", "run_turn_loop")
 
 
 def engine_agent(role: str) -> str:

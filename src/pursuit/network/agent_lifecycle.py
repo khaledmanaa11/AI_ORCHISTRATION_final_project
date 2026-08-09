@@ -26,6 +26,11 @@ The inbound handshake responder is bound at CONSTRUCTION time (design note
 runs -- there is no later injection point. Skipping this is not a missing
 nicety: the unwired tool answers with a generic ack that cannot decode
 through `Envelope.from_dict`, aborting every real handshake before move 1.
+
+`build_context` itself now lives in `agent_context.py` (06-02, 150-line-gate
+room-making split -- this module was AT its ceiling) and is re-exported
+below verbatim, so `agent_lifecycle.build_context` keeps working for every
+caller (including the tests) exactly as if it were still defined here.
 """
 
 from __future__ import annotations
@@ -37,6 +42,7 @@ from pathlib import Path
 # make_handshake_responder/make_transition_reporter/engine_agent are
 # re-exported verbatim so `agent_lifecycle.<name>` keeps working for every
 # caller -- noqa: F401 on the re-export-only names.
+from pursuit.network.agent_context import AgentContext, build_context  # noqa: F401
 from pursuit.network.agent_wiring import (
     AgentConfig,  # noqa: F401
     load_agent_config,  # noqa: F401
@@ -47,58 +53,12 @@ from pursuit.network.agent_wiring import (
 )
 from pursuit.network.brain_wiring import build_turn_collaborators
 from pursuit.network.config_hash import config_digest
-from pursuit.network.language_wiring import LanguageRuntime
-from pursuit.network.orchestrator import (
-    AgentContext,
-    ChooseMove,
-    engine_agent,  # noqa: F401
-)
+from pursuit.network.orchestrator import engine_agent  # noqa: F401
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.secret_wiring import resolve_shared_secret
-from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
+from pursuit.network.state_machine import TurnStateMachine
 from pursuit.network.watchdog import Watchdog
-from pursuit.sdk import engine
 from pursuit.shared.scent_config import scent_digest
-from pursuit.strategy.base import BrainBase
-from pursuit.strategy.beliefadapter import BeliefAdapter
-from pursuit.strategy.scentfield import ScentField
-
-
-def build_context(
-    cfg: AgentConfig,
-    *,
-    game_uid: str,
-    log_path: Path,
-    runtime: PeerRuntime,
-    watchdog: Watchdog,
-    reporter: TransitionReporter,
-    machine: TurnStateMachine | None = None,
-    choose_move: ChooseMove | None = None,
-    brain: BrainBase | BeliefAdapter | None = None,
-    scent_field: ScentField | None = None,
-    language: LanguageRuntime | None = None,
-) -> AgentContext:
-    """PURE WIRING: every collaborator is injected, nothing is constructed
-    implicitly. The seam the NET-02 isolation tests and every fake-driven
-    test use. `brain`/`scent_field`/`language` are the Phase-4 (04-12)
-    additions, all optional so every pre-existing caller is unaffected."""
-    return AgentContext(
-        role=cfg.role,
-        params=cfg.params,
-        net=cfg.net,
-        machine=machine or TurnStateMachine(reporter),
-        runtime=runtime,
-        watchdog=watchdog,
-        reporter=reporter,
-        log_path=log_path,
-        game_uid=game_uid,
-        state=engine.make_state(cfg.params),
-        choose_move=choose_move,
-        rules=cfg.rules,
-        brain=brain,
-        scent_field=scent_field,
-        language=language,
-    )
 
 
 def default_context(

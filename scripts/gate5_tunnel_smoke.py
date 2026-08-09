@@ -58,9 +58,12 @@ from pursuit.network.tunnel_manager import TunnelManager  # noqa: E402
 from pursuit.shared.network_config import load_network_config  # noqa: E402
 from pursuit.shared.tunnel_config import TunnelParams, load_tunnel_config  # noqa: E402
 
-#: The five D-05 tool names (tools.py) -- the "valid MCP-shaped response"
-#: this script asserts arrived through the public tunnel.
-EXPECTED_TOOL_NAMES = {"handshake", "receive_move", "receive_barrier", "game_over", "receive_hint"}
+#: The nine D-05/D-58 tool names (tools.py) -- the "valid MCP-shaped
+#: response" this script asserts arrived through the public tunnel.
+EXPECTED_TOOL_NAMES = {
+    "handshake", "receive_move", "receive_barrier", "game_over", "receive_hint",
+    "receive_commit", "receive_ack", "receive_reveal", "receive_final_reveal",
+}
 _EVIDENCE_PATH = Path("docs/phases/phase-5/gate5_smoke_evidence.json")
 _DEFAULT_CONFIG_DIR = Path("config/police")
 
