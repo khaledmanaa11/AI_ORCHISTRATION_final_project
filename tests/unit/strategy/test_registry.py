@@ -60,6 +60,17 @@ def test_build_brain_never_falls_back_to_a_default(default_params: GameParams) -
         registry.build_brain("cop", _fake_params(""), default_params)
 
 
+def test_resolve_belief_seed_returns_the_given_seed_unchanged() -> None:
+    assert registry._resolve_belief_seed(12345) == 12345
+
+
+def test_resolve_belief_seed_derives_and_logs_when_seed_is_null(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level("WARNING"):
+        derived = registry._resolve_belief_seed(None)
+    assert derived == registry._FALLBACK_BELIEF_SEED
+    assert "belief.seed" in caplog.text
+
+
 def test_registry_module_calls_no_eval_or_exec() -> None:
     """Structural, not string-matched: walks Call nodes for the two names."""
     tree = ast.parse(pathlib.Path("src/pursuit/strategy/registry.py").read_text(encoding="utf-8"))

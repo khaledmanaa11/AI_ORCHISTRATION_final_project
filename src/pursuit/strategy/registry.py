@@ -25,9 +25,15 @@ that by injecting it once, at construction, rather than changing the frozen
 `_pick_move`/`_decide_move` ABC signature.
 """
 
+import logging
+import random
+
+from pursuit.shared.belief_config import BeliefParams
 from pursuit.shared.config import GameParams
+from pursuit.shared.scent_config import ScentModel
 from pursuit.shared.strategy_config import StrategyParams
 from pursuit.strategy.base import BrainBase
+from pursuit.strategy.beliefadapter import BeliefAdapter
 from pursuit.strategy.naive import CHASER_COP_NAME, GREEDY_EVADER_NAME, ChaserCop, GreedyEvader
 from pursuit.strategy.valuebrain import VALUE_SEARCH_BRAIN_NAME, ValueSearchBrain
 
@@ -38,8 +44,22 @@ _BRAIN_REGISTRY: dict[str, type[BrainBase]] = {
     GREEDY_EVADER_NAME: GreedyEvader,
 }
 
+#: Deterministic fallback for `belief.json`'s `belief.seed` when it is left
+#: `null` -- a missing seed is never silently non-deterministic (rule 20's
+#: replay viewer must still reproduce the game); this constant is logged
+#: whenever it is actually used. An engineering default, not a PARAMETERS.md
+#: value, matching valuebrain.py's own DEFAULT_SEED precedent.
+_FALLBACK_BELIEF_SEED = 20260809
 
-def build_brain(role: str, params: StrategyParams, game_params: GameParams) -> BrainBase:
+
+def build_brain(
+    role: str,
+    params: StrategyParams,
+    game_params: GameParams,
+    *,
+    belief_config: BeliefParams | None = None,
+    scent_model: ScentModel | None = None,
+) -> BrainBase | BeliefAdapter:
     """Construct the BrainBase named by params.brain_class for role.
 
     Parameters
@@ -54,6 +74,14 @@ def build_brain(role: str, params: StrategyParams, game_params: GameParams) -> B
         The board/rules GameParams (game_params.json) every brain needs for
         legal-move generation and BFS distance -- never resolved internally
         from a role-guessed path (see module docstring).
+    belief_config, scent_model:
+        Optional (D-43, Task 3): when both are supplied AND
+        `belief_config.belief.enabled`, the constructed brain is wrapped in
+        a `BeliefAdapter` before being returned. Omitting either (the
+        default) returns the raw brain unwrapped -- existing 3-positional-
+        argument callers (e.g. `tests/integration/test_strategy_pluggable.py`)
+        are unaffected, and the belief layer stays switchable per D-PLAN
+        outline Sec5 without a second construction path.
 
     Raises
     ------
@@ -68,4 +96,27 @@ def build_brain(role: str, params: StrategyParams, game_params: GameParams) -> B
         known = sorted(_BRAIN_REGISTRY)
         raise ValueError(f"Unknown brain class {name!r}; known classes: {known}")
     brain_cls = _BRAIN_REGISTRY[name]
-    return brain_cls(role=role, params=params, game_params=game_params)
+    brain = brain_cls(role=role, params=params, game_params=game_params)
+    if belief_config is None or scent_model is None or not belief_config.belief.enabled:
+        return brain
+    rng = random.Random(_resolve_belief_seed(belief_config.belief.seed))
+    return BeliefAdapter(
+        brain=brain,
+        role=role,
+        game_params=game_params,
+        belief_config=belief_config,
+        scent_model=scent_model,
+        rng=rng,
+    )
+
+
+def _resolve_belief_seed(seed: int | None) -> int:
+    """Return `seed`, or a logged deterministic fallback when it is `None`."""
+    if seed is not None:
+        return seed
+    logging.getLogger(__name__).warning(
+        "belief.json: 'belief.seed' is null; deriving fallback seed %d "
+        "(set an explicit seed for a league game's own replay log)",
+        _FALLBACK_BELIEF_SEED,
+    )
+    return _FALLBACK_BELIEF_SEED

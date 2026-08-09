@@ -54,6 +54,11 @@ def _cop_brain(params):
     return ValueSearchBrain(role="cop", game_params=params, rules=PREFERRED)
 
 
+def test_invalid_role_raises(params, belief_cfg, model):
+    with pytest.raises(ValueError, match="role must be"):
+        BeliefAdapter(_cop_brain(params), "referee", params, belief_cfg, model, random.Random(0))
+
+
 def _open_state(thief=(3, 3), turn=0):
     return GameState(cop=(0, 0), thief=thief, barriers=frozenset(), barriers_placed=0, turn=turn)
 

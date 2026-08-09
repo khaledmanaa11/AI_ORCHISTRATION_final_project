@@ -15,5 +15,9 @@
   },
   "hint_likelihood": {
     "weight": 0.3
+  },
+  "belief": {
+    "enabled": true,
+    "seed": 20260809
   }
 }
