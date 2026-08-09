@@ -115,3 +115,8 @@ def test_params_type_annotation_matches_dataclass() -> None:
     """Sanity: the loader's declared return type is the dataclass it constructs."""
     params = load_tunnel_config(POLICE_TUNNEL)
     assert isinstance(params, TunnelParams)
+
+
+def test_tunnel_key_str_returns_the_bare_field_name() -> None:
+    """__str__ makes json.dumps({TunnelKey.PROVIDER: ...}) emit 'provider'."""
+    assert str(TunnelKey.PROVIDER) == "provider"
