@@ -1,10 +1,11 @@
 """Tool-surface tests: registration, wire signatures, coroutine-function guard.
 
-D-05 pins the five-tool surface (D-47 adds receive_hint); NET-08 needs typed
-envelope fields on the wire. Split from test_tools_dispatch.py (enqueue/ack/
-seam/malformed-payload behavior) to stay within the 150-code-line limit —
-same module under test, same in-memory Client(mcp) transport, no socket in
-either file.
+D-05 pins the five-tool surface (D-47 adds receive_hint, D-58/Phase 6 adds
+receive_commit/receive_ack/receive_reveal/receive_final_reveal); NET-08
+needs typed envelope fields on the wire. Split from test_tools_dispatch.py
+(enqueue/ack/seam/malformed-payload behavior) to stay within the
+150-code-line limit — same module under test, same in-memory Client(mcp)
+transport, no socket in either file.
 """
 
 import asyncio
@@ -14,7 +15,17 @@ from fastmcp import Client, FastMCP
 from pursuit.network.envelope import MessageType
 from pursuit.network.tools import register_tools
 
-_TOOL_NAMES = {"handshake", "receive_move", "receive_barrier", "game_over", "receive_hint"}
+_TOOL_NAMES = {
+    "handshake",
+    "receive_move",
+    "receive_barrier",
+    "game_over",
+    "receive_hint",
+    "receive_commit",
+    "receive_ack",
+    "receive_reveal",
+    "receive_final_reveal",
+}
 
 
 def _server_with_queue() -> tuple[FastMCP, asyncio.Queue]:
@@ -25,8 +36,8 @@ def _server_with_queue() -> tuple[FastMCP, asyncio.Queue]:
     return mcp, queue
 
 
-async def test_all_five_tools_registered():
-    """D-05, D-47: exactly the five named tools registered — not a subset, not a superset."""
+async def test_all_nine_tools_registered():
+    """D-05, D-47, D-58: exactly the nine named tools registered — not a subset, not a superset."""
     mcp, _ = _server_with_queue()
     async with Client(mcp) as client:
         names = {t.name for t in await client.list_tools()}
@@ -72,3 +83,27 @@ async def test_receive_hint_acknowledges_without_awaiting_the_game_loop():
     envelope = queue.get_nowait()
     assert envelope.type is MessageType.HINT
     assert envelope.payload == payload
+
+
+async def test_commit_reveal_handlers_enqueue_the_right_message_type():
+    """D-58: receive_commit/receive_ack/receive_reveal/receive_final_reveal
+    each decode into the matching MessageType, exactly like receive_hint."""
+    mcp, queue = _server_with_queue()
+    cases = (
+        ("receive_commit", MessageType.COMMIT, {"h_commit": "a" * 64}),
+        ("receive_ack", MessageType.ACK, {"h_commit": "a" * 64}),
+        ("receive_reveal", MessageType.REVEAL, {"move": {"kind": "move", "direction": "north"}, "barrier": None}),
+        ("receive_final_reveal", MessageType.FINAL_REVEAL, {"records": []}),
+    )
+    async with Client(mcp) as client:
+        for turn, (tool_name, _message_type, payload) in enumerate(cases):
+            result = await client.call_tool(
+                tool_name, {"turn": turn, "sender": "police", "payload": payload}
+            )
+            assert result.data["status"] == "ack"
+    assert queue.qsize() == len(cases)
+    for turn, (_tool_name, message_type, payload) in enumerate(cases):
+        envelope = queue.get_nowait()
+        assert envelope.type is message_type
+        assert envelope.turn == turn
+        assert envelope.payload == payload

@@ -13,18 +13,27 @@ def _valid_dict():
 
 
 def test_message_type_members():
-    """MessageType pins the four Phase-2 kinds plus Phase-4's HINT (D-06, D-47)."""
+    """MessageType pins the four Phase-2 kinds, Phase-4's HINT (D-06, D-47),
+    and Phase-6's four commit-reveal kinds (D-58)."""
     assert MessageType.HANDSHAKE.value == "handshake"
     assert MessageType.MOVE.value == "move"
     assert MessageType.BARRIER.value == "barrier"
     assert MessageType.GAME_OVER.value == "game_over"
     assert MessageType.HINT.value == "hint"
+    assert MessageType.COMMIT.value == "commit"
+    assert MessageType.ACK.value == "ack"
+    assert MessageType.REVEAL.value == "reveal"
+    assert MessageType.FINAL_REVEAL.value == "final_reveal"
     assert {m.value for m in MessageType} == {
         "handshake",
         "move",
         "barrier",
         "game_over",
         "hint",
+        "commit",
+        "ack",
+        "reveal",
+        "final_reveal",
     }
 
 

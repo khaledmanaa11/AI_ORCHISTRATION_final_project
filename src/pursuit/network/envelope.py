@@ -18,11 +18,12 @@ from enum import Enum
 
 
 class MessageType(Enum):
-    """The five message kinds on the wire (D-05, D-47).
+    """The nine message kinds on the wire (D-05, D-47, D-58).
 
-    Phase-4 adds HINT as a NEW MEMBER of this same enum — never a second
-    envelope shape (see module docstring). A later phase adds the
-    commit-reveal kinds the same way.
+    Phase-4 added HINT as a NEW MEMBER of this same enum — never a second
+    envelope shape (see module docstring). Phase-6 adds the four
+    commit-reveal kinds (COMMIT, ACK, REVEAL, FINAL_REVEAL) the same way:
+    additive members only, the four-key Envelope shape never changes.
     """
 
     HANDSHAKE = "handshake"
@@ -30,6 +31,10 @@ class MessageType(Enum):
     BARRIER = "barrier"
     GAME_OVER = "game_over"
     HINT = "hint"
+    COMMIT = "commit"
+    ACK = "ack"
+    REVEAL = "reveal"
+    FINAL_REVEAL = "final_reveal"
 
 
 class EnvelopeKey:

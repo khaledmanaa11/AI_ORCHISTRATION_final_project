@@ -1,8 +1,9 @@
 """D-05 tool surface: real signatures, stub bodies, later phases fill behavior.
 
-Five `@mcp.tool` handlers — `handshake`, `receive_move`, `receive_barrier`,
-`game_over`, `receive_hint` (D-47) — attach to a server via
-`register_tools(mcp, queue)`. Every handler is `async def` deliberately (RESEARCH Pitfall 2): FastMCP 3.4.5
+Nine `@mcp.tool` handlers — `handshake`, `receive_move`, `receive_barrier`,
+`game_over`, `receive_hint` (D-47), `receive_commit`, `receive_ack`,
+`receive_reveal`, `receive_final_reveal` (D-58, Phase 6) — attach to a
+server via `register_tools(mcp, queue)`. Every handler is `async def` deliberately (RESEARCH Pitfall 2): FastMCP 3.4.5
 dispatches a plain `def` tool body to a worker threadpool via
 `call_sync_fn_in_threadpool`, which cannot safely touch a main-loop
 `asyncio.Queue`. Every handler enqueues and returns immediately (D-07): a
@@ -121,3 +122,30 @@ def register_tools(
         layer, never here -- decode, enqueue, ack, exactly like the other
         four, never blocking on the game loop."""
         return await _accept(queue, MessageType.HINT, turn, sender, payload)
+
+    @mcp.tool
+    async def receive_commit(turn: int, sender: str, payload: dict) -> dict:
+        """Opponent's Commit-phase hash-only envelope; payload carries
+        {h_commit} (D-58, D-59). No hash/legality validation at this layer
+        -- decode, enqueue, ack, exactly like every other handler."""
+        return await _accept(queue, MessageType.COMMIT, turn, sender, payload)
+
+    @mcp.tool
+    async def receive_ack(turn: int, sender: str, payload: dict) -> dict:
+        """Opponent's Acknowledge-phase envelope; payload carries
+        {h_commit}, naming which commit is being acknowledged (D-58)."""
+        return await _accept(queue, MessageType.ACK, turn, sender, payload)
+
+    @mcp.tool
+    async def receive_reveal(turn: int, sender: str, payload: dict) -> dict:
+        """Opponent's Reveal-phase envelope; payload carries the D-59/D-66
+        composite action dict {move, barrier}. The nonce never rides this
+        message (SEC-04, rule 18) -- it stays local until FINAL_REVEAL."""
+        return await _accept(queue, MessageType.REVEAL, turn, sender, payload)
+
+    @mcp.tool
+    async def receive_final_reveal(turn: int, sender: str, payload: dict) -> dict:
+        """Opponent's end-of-game Final-Reveal/Audit envelope (D-67, 06-03's
+        job to populate/consume). Registered now so the wire surface is
+        complete for this phase's gate; the audit body lands in 06-03."""
+        return await _accept(queue, MessageType.FINAL_REVEAL, turn, sender, payload)
