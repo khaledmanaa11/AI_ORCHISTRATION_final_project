@@ -1,6 +1,6 @@
 # Phase 5 PRD — Cloud Exposure and Tunneling
 
-**Version:** 1.00 · **Status:** ◐ approved · **Updated:** 2026-08-09
+**Version:** 1.01 · **Status:** ◐ approved · **Updated:** 2026-08-13 (gap-closure set 05-04..05-08 added)
 
 > Phase-scoped PRD. Inherits the project [PRD.md](../../PRD.md); do not restate it — capture
 > only what is specific to this phase. Numbers come from [PARAMETERS.md](../../PARAMETERS.md).
@@ -19,6 +19,26 @@ Expose the local FastMCP server publicly via ngrok or Localtonet (ROADMAP Phase 
    the local agent. *(Inherently needs a second machine + human — recorded as the phase's
    human-pending evidence item in
    [GATE-5-MEASUREMENT.md](GATE-5-MEASUREMENT.md) once 05-03 creates it.)*
+
+## Gap closure — what attempt 1 of criterion 2 exposed (2026-08-13)
+A genuine remote round ran across two machines on two networks and played a full 5-turn game
+to a real capture — the tunnel and shared-secret transport did their job end to end. It did
+**not** close criterion 2: the two sides' final verdicts disagreed, the two logs carried
+different game UIDs, and the round exposed that a responder never receives hints at all.
+Five gaps were diagnosed over the retained evidence (`05-UAT.md`, all CONFIRMED at high
+confidence) and are closed by plans 05-04..05-08:
+
+| Gap | What was wrong | Plan |
+|---|---|---|
+| G1 | A side's own failed final-reveal SEND was recorded as the PEER being unresponsive — a false accusation (rules 16/22) against a peer whose records that side had already audited; teardown cancelled the server with zero grace while the peer was mid-exchange | 05-04 (+ the 17.4 s responder tail, in 05-06) |
+| G2 | The handshake-negotiated game id governed only a declaration FILENAME; log, ledger and every committed `state.game_id` kept a process-local random id, and the audit never read the state record at all | 05-05 |
+| G3 | HINT was the only message type logged on send and not on receive — no durable record that hints crossed the wire (rule 20) | 05-06 |
+| G4 | The receive-side drop window was structurally unsatisfiable for a responder, so the thief decoded 0 of 5 hints in every game, loopback included | 05-06 |
+| G5 | A keyless run fell back to the template bank silently and still declared the configured model name (rule 38) | 05-07 |
+
+**Criterion 2 stays PENDING until a clean re-run** (05-08) produces two agreeing verdicts and
+one shared game UID across all four artifacts. Attempt 1's evidence is retained permanently
+at `remote-round-2026-08-13/` and is not rewritten.
 
 ## In scope / Out of scope (this phase)
 - **In:** launcher-managed ngrok tunnel (`pyngrok`, free-tier static domain), a tenth config

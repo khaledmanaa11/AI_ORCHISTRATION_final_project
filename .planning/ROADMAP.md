@@ -152,13 +152,19 @@ below is ticked until `/gsd:verify-work 4` runs, after 04-14):
   1. Each peer is reachable on the public internet through ngrok/Localtonet
   2. An agent on a remote machine connects through the tunnel and plays a full round against the local agent
 
-**Plans**: 3 (05-01..05-03, see `05-PLAN-OUTLINE.md`)
+**Plans**: 8 (05-01..05-03 executed; 05-04..05-08 close the five gaps the 2026-08-13
+remote round exposed — see `05-UAT.md` Gaps)
 
 Plans:
 
 - [ ] 05-01: Tunnel lifecycle -- pyngrok dep, tunnel.json + loader, TunnelManager (DI'd, reconnect bounded by Table 19), lifecycle wiring, URL/secret exchange printout (CODE+TEST COMPLETE, see 05-01-SUMMARY.md; not yet verified)
 - [ ] 05-02: Shared-secret channel -- ASGI middleware, client transport headers, env plumbing, `.env-example` (CODE+TEST COMPLETE, see 05-02-SUMMARY.md; not yet verified)
 - [ ] 05-03: Gate 5 -- smoke script, in-process integration proof, `GATE-5-MEASUREMENT.md`, Localtonet runbook, graph refresh
+- [ ] 05-04: G1 — verdict honesty + bounded teardown grace (a failed OWN final-reveal send stops accusing the peer; corrected `game_over`; `linger_for_peer` on Table 19 values, zero new numbers)
+- [ ] 05-05: G2 — one negotiated game id across log/ledger/declaration/committed `state.game_id`, and an audit that validates the peer's committed role/turn (game_id when negotiated)
+- [ ] 05-06: G3+G4 — inbound HINTs on the wire log; relaxed receive window AND responder `pending.turn` stamp together; no hint composed for an already-resolved turn
+- [ ] 05-07: G5 — keyless LLM made legible (startup WARNING, honest declared `llm_name`, first-person compose prompt); fallback behaviour unchanged
+- [ ] 05-08: Remote round attempt 2 — HUMAN-RUN on two machines/networks; closes GATE-5 criterion 2 or records honestly why not
 - [ ] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
