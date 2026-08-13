@@ -101,7 +101,9 @@ same-machine-via-public-URL (criterion 1's smoke test, above) is never a substit
 mirroring `GATE-4-MEASUREMENT.md`'s own live-run precedent: state the exact steps, then wait for
 a real run rather than softening the PENDING status.
 
-**Procedure:**
+**Procedure.** The operator-facing expansion of the seven steps below — machine-B setup,
+the two tunnel paths for the second machine, the digests to verify, and the evidence to
+retain — is [`REMOTE-ROUND-RUNBOOK.md`](REMOTE-ROUND-RUNBOOK.md). The canonical steps:
 
 1. **Start the local agent** on machine A with the tunnel and shared secret configured:
    ```
