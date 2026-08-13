@@ -2,9 +2,11 @@
 
 **Status:** Criterion 1 **PASS** — measured 2026-08-09T09:41:20Z against the reserved domain
 `perdurable-mireille-nonzoologically.ngrok-free.dev`; evidence in
-[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** (the genuine
-remote round needs a second machine and a human operator; see
-[Criterion 2](#criterion-2--the-genuine-remote-round-cloud-02) below).
+[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** — a genuine
+remote round WAS run 2026-08-13 (attempt 1: full capture across two machines/networks, but
+the two sides' final verdicts disagree and the logs carry different game UIDs, so it cannot
+close the criterion; see
+[Attempt 1](#attempt-1--2026-08-13-completed-round-criterion-not-yet-closed) below).
 **Date:** 2026-08-09 · **Plan:** 05-03 · **Method:** `scripts/gate5_tunnel_smoke.py` for
 criterion 1; a human-run procedure, recorded here, for criterion 2.
 
@@ -132,8 +134,36 @@ retain — is [`REMOTE-ROUND-RUNBOOK.md`](REMOTE-ROUND-RUNBOOK.md). The canonica
 
 **What closes this section.** Both retained JSONLs (paths filled in here), both final
 verdicts (must agree — rule 38's own honesty requirement applies to this round like any
-other), and the machine/network note from step 7. None of that exists yet on this
-repository's history; this procedure is what the next human-operator session runs.
+other), and the machine/network note from step 7.
+
+### Attempt 1 — 2026-08-13, completed round, criterion NOT yet closed
+
+A genuine remote round ran 2026-08-13 ≈13:43 UTC: machine A (this box, police, 12-core,
+**on a phone hotspot**, ngrok domain `perdurable-mireille-nonzoologically.ngrok-free.dev`)
+vs machine B (remote Windows 11 laptop, thief, 20-core, **on wired ethernet — a different
+network**, its own tunnel at `corny-ocelot-dominion.ngrok-free.dev`, which also passed its
+own criterion-1 smoke — evidence retained). Both sides ran commit `384da44`. The step-7
+machine/network note is therefore satisfied: hotspot ↔ wired ethernet is a real network
+boundary, crossed in both directions through the two tunnels. The round played **all 5 turns to a real capture**, commit → ack → reveal on
+every turn, Step-0 declarations exchanged and HMAC-signed, and the police-side final audit
+**matched on both self and peer** — the tunnel + shared-secret transport did its job
+end-to-end. Evidence: [`remote-round-2026-08-13/`](remote-round-2026-08-13/) (both event
+logs, both ledgers, both declaration pairs, machine B's smoke evidence).
+
+**Why this does not close criterion 2 (rule 38):** the two sides' final verdicts
+**disagree**. Machine A recorded `capture` with a clean `audit_verdict`; machine B recorded
+`capture` and then a spurious `technical_win {reason: opponent_unresponsive}`. Diagnosed
+(6-agent pass, 2026-08-13): machine A completed its own **matched** audit — its `peer_audit`
+carries machine B's five ledger hashes byte-for-byte, so B's final-reveal push attempt 1 WAS
+delivered and processed — then hard-cancelled its server and killed its ngrok tunnel with
+zero grace while B's exchange was still in flight; B's remaining attempts died in ~0.65 s
+each against the closed listener, and B converted its own failed SEND into an accusation
+against a peer that had just answered it. The round also surfaced protocol/evidence bugs (the two logs
+carry **different game UIDs** — `074fc2b16888899e` on A vs `d50ceb00be724b93` on B — inbound
+hints are never wire-logged, and the responder never receives hints at all), diagnosed and
+tracked as gaps in `.planning/phases/05-cloud-exposure-and-tunneling/05-UAT.md`. The
+criterion stays **PENDING** until a re-run after those fixes produces two logs, one shared
+game UID, and two agreeing verdicts.
 
 ---
 

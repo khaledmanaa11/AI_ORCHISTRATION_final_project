@@ -1,0 +1,10 @@
+{
+  "authorized_request_reached_mcp": true,
+  "expected_domain": "corny-ocelot-dominion.ngrok-free.dev",
+  "generated_at": "2026-08-13T13:08:12.208719+00:00",
+  "public_url": "https://corny-ocelot-dominion.ngrok-free.dev",
+  "round_trip_seconds": 2.382966699999997,
+  "unauthorized_request_rejected_403": true,
+  "url_is_https_and_matches_domain": true,
+  "verdict": "PASS"
+}
