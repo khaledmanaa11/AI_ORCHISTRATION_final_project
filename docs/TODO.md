@@ -94,7 +94,7 @@ Gate: remote agent plays a full round via tunnel.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 05-01 Tunnel integration + public URL in config | P0 | ☐ | Khaled | Peer reachable publicly via ngrok/Localtonet (CLOUD-01) |
+| 05-01 Tunnel integration + public URL in config | P0 | ☑ | Khaled | Peer reachable publicly via ngrok/Localtonet (CLOUD-01) |
 | 05-02 Remote end-to-end round validation | P0 | ☐ | Khaled | Remote agent completes a full round (CLOUD-02) |
 | 05-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
 
