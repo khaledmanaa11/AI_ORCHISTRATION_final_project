@@ -13,7 +13,7 @@
 | Tunnel lifecycle | `network/tunnel_manager.py`, `shared/tunnel_config.py`, `config/{police,thief}/tunnel.json`, `agent_lifecycle.py` wiring | 05-01 |
 | Shared-secret channel | `network/secret_guard.py` (ASGI middleware), `peer_runtime.py` (middleware + explicit client transport), `.env-example` | 05-02 |
 | Gate 5 evidence | `scripts/gate5_tunnel_smoke.py`, `docs/phases/phase-5/GATE-5-MEASUREMENT.md`, `LOCALTONET-FALLBACK.md` | 05-03 |
-| Verdict honesty + teardown grace | `network/agent_teardown.py` (new), `agent_audit_wiring.py`, `agent_audit_verdict.py`, `agent_entrypoint.py`, `event_log.py` | 05-04 |
+| Verdict honesty + teardown grace | `network/agent_teardown.py` (new), `agent_audit_wiring.py`, `agent_audit_verdict.py`, `agent_entrypoint.py`, `agent_lifecycle.py`, `event_log.py` | 05-04 |
 | One negotiated game id | `network/game_identity.py` (new), `agent_wiring.py`, `agent_context.py`, `agent_lifecycle.py`, `agent_entrypoint.py`, `security/audit.py` | 05-05 |
 | Hint channel: logged and delivering | `network/turn_hint_buffer.py` (new), `turn_buffer.py`, `turn_actions.py` | 05-06 |
 | LLM legibility | `services/llm/client.py`, `bluff.py`, `bluff_prompt.py`, `network/language_wiring.py`, `agent_audit_wiring.py` | 05-07 |
@@ -42,17 +42,19 @@ w2: 05-02  (secret channel — header name lives in 05-01's tunnel.json)
 w3: 05-03  (gate evidence + runbook + graph refresh)
 ```
 
-Gap closure, after the 2026-08-13 remote round (attempt 1) exposed five gaps — file-disjoint
-plans run in parallel; every arrow below is a genuine shared-file or correctness dependency:
+Gap closure, after the 2026-08-13 remote round (attempt 1) exposed five gaps. Every arrow is
+a genuine shared-file or correctness dependency; wave 2's two plans are file-disjoint from
+each other and run in parallel:
 
 ```
-w1: 05-04  (G1 — verdict honesty + linger)   05-06  (G3+G4 — hint log, delivery, no terminal hint)
-      |                                            |
-      |  shares agent_entrypoint.py                |
-      |  and agent_audit_wiring.py                 |
-w2: 05-05  (G2 — negotiated game id + audit state validation)
+w1: 05-04  (G1 — verdict honesty wired into run_agent, linger, NET-07, sequenced proof)
       |
-      |  shares agent_audit_wiring.py
+      |  05-05 shares agent_entrypoint.py + agent_audit_wiring.py
+      |  05-06 IMPORTS tests/integration/test_step0_and_audit.py, which 05-04 edits
+      |
+w2: 05-05  (G2 — negotiated game id + audit state validation)   05-06  (G3+G4 — hint log,
+      |                                                                    delivery, no
+      |  shares agent_audit_wiring.py                                      terminal hint)
 w3: 05-07  (G5 — LLM legibility)
       |
 w4: 05-08  (remote round attempt 2 — HUMAN-RUN, blocking checkpoint)
