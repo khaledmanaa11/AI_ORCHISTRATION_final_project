@@ -45,6 +45,7 @@ from pathlib import Path
 from pursuit.network.agent_context import AgentContext, build_context  # noqa: F401
 from pursuit.network.agent_wiring import (
     AgentConfig,  # noqa: F401
+    GameIdentity,
     load_agent_config,  # noqa: F401
     load_role,  # noqa: F401
     make_freeze_handler,
@@ -85,7 +86,12 @@ def default_context(
         log_path = Path("logs") / cfg.role / f"{game_uid}.jsonl"
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    reporter = make_transition_reporter(log_path, game_uid=game_uid, role=cfg.role)
+    # 05-05 (D-61): ONE GameIdentity, shared by both JSONL sinks below AND
+    # the returned context, so `adopt_negotiated_game_id`'s one-off rename
+    # rebinds all three at once. The sinks are bound HERE, at construction
+    # (design note 12), and cannot read a context that does not exist yet.
+    identity = GameIdentity(game_uid=game_uid, log_path=log_path)
+    reporter = make_transition_reporter(log_path, game_uid=game_uid, role=cfg.role, identity=identity)
     machine = TurnStateMachine(reporter)
     local_digest = config_digest(cfg.config_dir / "game_params.json")
     local_scent_digest = scent_digest(cfg.scent)
@@ -113,14 +119,16 @@ def default_context(
         poll_seconds=cfg.net.watchdog_poll_seconds,
         on_freeze=make_freeze_handler(
             log_path, game_uid=game_uid, role=cfg.role,
-            threshold_seconds=cfg.net.watchdog_threshold,
+            threshold_seconds=cfg.net.watchdog_threshold, identity=identity,
         ),
     )
     brain, scent_field, language = build_turn_collaborators(cfg)
-    return build_context(
+    ctx = build_context(
         cfg, game_uid=game_uid, log_path=log_path, runtime=runtime, watchdog=watchdog,
         reporter=reporter, machine=machine, brain=brain, scent_field=scent_field, language=language,
     )
+    ctx.identity = identity
+    return ctx
 
 
 async def start_server(ctx: AgentContext) -> None:

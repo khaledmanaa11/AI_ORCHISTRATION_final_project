@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pursuit.network.commit_state import CommitTurnState, Coord, PendingAction  # noqa: F401
+from pursuit.network.game_identity import GameIdentity
 from pursuit.network.language_wiring import LanguageRuntime
 from pursuit.network.peer_runtime import PeerRuntime
 from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
@@ -74,7 +75,24 @@ class AgentContext:
     Phase 6 (06-02) adds `security` (SecurityParams, REQUIRED -- no
     default, so every construction site must be explicit about the
     commit-reveal toggle) and `commit_state` (CommitTurnState, D-58/D-66
-    scratch state, defaulted so no pre-existing fixture needs an edit)."""
+    scratch state, defaulted so no pre-existing fixture needs an edit).
+
+    05-05 (D-61, 05-UAT.md G2) adds three OPTIONAL fields, all defaulted so
+    no pre-existing fixture needs an edit:
+      - `identity`: the mutable `GameIdentity` the two JSONL sinks read at
+        call time, so `game_identity.adopt_negotiated_game_id`'s one-off
+        rename moves them too;
+      - `negotiated_game_id`: the id the PEER published at handshake, or
+        None when it published none -- a None is never coerced to a string,
+        because "no id" and "some id" are different facts to the audit;
+      - `candidate_game_ids`: the ids that were on the table at handshake,
+        captured INSIDE `adopt_negotiated_game_id` BEFORE it rebinds
+        `game_uid`. `security/audit.py`'s game_id check reads THIS field and
+        must never rebuild the set from `game_uid`/`negotiated_game_id`,
+        which post-adoption are the SAME string on the thief. It is
+        legitimately a SINGLE-element set when our minted id and the peer's
+        published id happen to be equal, so nothing may assert `len == 2`
+        on it; None when the peer published no id at all."""
 
     role: str
     params: GameParams
@@ -97,6 +115,9 @@ class AgentContext:
     language: LanguageRuntime | None = None
     incoming_hints: dict[str, dict] = field(default_factory=dict)
     commit_state: CommitTurnState = field(default_factory=CommitTurnState)
+    identity: GameIdentity | None = None
+    negotiated_game_id: str | None = None
+    candidate_game_ids: set[str] | None = None
 
 
 def build_context(

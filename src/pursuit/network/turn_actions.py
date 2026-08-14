@@ -77,11 +77,19 @@ async def take_my_turn(ctx: AgentContext) -> Outcome | None:
         result = await turn_commit.reveal_pending(ctx)
         if result is not None:
             return result
-        if ctx.language is not None:
+        # 05-06 (G1/G4). `outcome is None`: a resolved turn is over -- the
+        # opponent will never play another, and composing costs an LLM
+        # round trip (17.4 s of the 18 s inter-side divergence in the
+        # 2026-08-13 round, measured within machine B's own clock).
+        # `pending.turn`: the turn this action was actually committed and
+        # REVEALED under. ctx.state.turn is wrong here -- maybe_resolve
+        # above already advanced it N->N+1, which stamped every responder
+        # hint one turn into the future.
+        if ctx.language is not None and outcome is None:
             fresh_started = time.monotonic()
             budget_fresh = turn_budget_seconds(ctx.net)
             await compose_and_send_hint(
-                ctx, pending.plan, ctx.state.turn, fresh_started, budget_fresh,
+                ctx, pending.plan, pending.turn, fresh_started, budget_fresh,
                 pending.regime, pending.incoming_log,
             )
         ctx.commit_state.pending_action = None
@@ -110,7 +118,13 @@ async def take_my_turn(ctx: AgentContext) -> Outcome | None:
     if result is not None:
         return result
 
-    if ctx.language is not None:
+    # Same `outcome is None` guard as the responder branch above. Here the
+    # initiator's own maybe_resolve is a no-op (the opponent's slot is
+    # still empty at this point), so outcome is always None and this is
+    # behaviour-neutral -- stated so the two branches read as one rule,
+    # not as an asymmetry someone later "tidies away". ctx.state.turn IS
+    # the turn being played on this branch, for the same reason.
+    if ctx.language is not None and outcome is None:
         await compose_and_send_hint(ctx, plan, ctx.state.turn, started, budget, regime, incoming_log)
     ctx.machine.attempt(State.WAIT_OPPONENT)
     return outcome

@@ -23,6 +23,78 @@ from __future__ import annotations
 from pursuit.network import turn_commit_send
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.envelope import Envelope, MessageType
+from pursuit.network.hint_payload import HintKey
+
+# How many turns of lookback the receive window keeps (05-06, G4).
+#
+# Derivation, not a tuning knob: a side emits its hint for turn N at the
+# TAIL of turn N -- after REVEAL(N) has been sent AND an LLM compose has
+# run -- so the hint is first pulled off the receiver's queue once that
+# receiver's own `maybe_resolve` has already advanced it to N + 1. With
+# zero lookback the guard `turn < ctx.state.turn` is therefore
+# structurally UNSATISFIABLE for a responder: every correctly stamped
+# inbound hint is discarded before it reaches `ctx.incoming_hints`. The
+# thief decoded 0 of 5 in every game of the 2026-08-13 round, loopback
+# included, with `token_spend.calls = 0` -- decode was skipped, not
+# key-starved.
+#
+# ONE turn is the MINIMUM that makes the channel deliverable at all. It
+# is a structural constant of the protocol's own timing, in the same
+# class as `agent_audit_wiring`'s `_DECLARE_RETRIES` -- deliberately NOT
+# a PARAMETERS.md value and NOT a config key (CLAUDE.md rule 1). A hint
+# older than the window is genuinely stale and still drops, so the drop
+# rule keeps real content.
+_HINT_LOOKBACK_TURNS = 1
+
+
+def _usable_stamp(buffer: dict, sender: str) -> int | None:
+    """The turn stamp on the payload already buffered for *sender*, or
+    None when there is no usable one (nothing buffered, or a stamp we
+    refuse to trust).
+
+    This reads PEER DATA and must never raise. `validate_hint_payload`
+    runs only inside `build_hint`, on the SEND path -- `grep -rn
+    validate_hint_payload src/` returns that one call site. The inbound
+    path is `tools.receive_hint` -> `_accept` -> `Envelope.from_dict`,
+    which validates the payload as nothing more than `isinstance(payload,
+    dict)` on what its own docstring calls an attacker-controlled wire
+    dict. So the stamp may be missing, None, `"3"`, a float, a list or a
+    bool, and a bare `turn >= stored[...]` would raise `TypeError` inside
+    `record_hint` -- caught by NO call site (`await_opponent_turn` catches
+    only `HintProtocolError`), so it escapes `run_turn_loop` and ends the
+    game. That is exactly the forfeit-caused-by-a-hint failure 04-12's
+    deviation exists to prevent.
+
+    Anything that is not a plain int is therefore "no usable stamp",
+    bool included -- mirroring `envelope._require_non_bool_int`."""
+    stored = buffer.get(sender)
+    if not isinstance(stored, dict):
+        return None
+    stamp = stored.get(HintKey.TURN.value)
+    if isinstance(stamp, bool) or not isinstance(stamp, int):
+        return None
+    return stamp
+
+
+def _buffer_if_not_older(buffer: dict, sender: str, turn: int, payload: dict) -> None:
+    """Overwrite only with a hint at least as new as the one already
+    buffered for this sender. Unconditional overwrite was safe only while
+    at most ONE turn was ever admissible; with lookback in play two hints
+    from the same sender can both pass the window, and an out-of-order
+    OLDER one would clobber a fresher one -- silently feeding stale
+    evidence to the belief update.
+
+    A payload with no usable stamp is simply replaced, so the existing
+    same-turn-overwrite semantics (`{"text": ...}` with no turn key) are
+    unchanged.
+
+    Consequence, stated rather than discovered later: the stamp is
+    peer-controlled, so a peer can make its own hint sticky by stamping a
+    huge turn. Self-inflicted on a best-effort channel whose content is a
+    CLAIM anyway, and the lookback window still expires it."""
+    stamp = _usable_stamp(buffer, sender)
+    if stamp is None or turn >= stamp:
+        buffer[sender] = payload
 
 
 def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> None:
@@ -66,7 +138,12 @@ def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> Non
     hint record must never become an attacker-controllable audit join key
     (06-UAT.md Gap 1). Receiving a hint changes no state, so `state_from`
     and `state_to` are both the current one -- said explicitly rather
-    than left implied."""
+    than left implied.
+
+    05-06 (G4): the drop window carries `_HINT_LOOKBACK_TURNS` of
+    lookback -- see that constant for the derivation -- and the buffers
+    keep the freshest hint per sender rather than the last one to
+    arrive."""
     turn_commit_send.log_received(
         ctx,
         Envelope(type=MessageType.HINT, turn=turn, sender=sender, payload=payload),
@@ -74,7 +151,7 @@ def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> Non
         state_to=ctx.machine.state,
         local_turn=ctx.state.turn,
     )
-    if turn < ctx.state.turn:
+    if turn < ctx.state.turn - _HINT_LOOKBACK_TURNS:
         return
-    ctx.pending_hints[sender] = payload
-    ctx.incoming_hints[sender] = payload
+    _buffer_if_not_older(ctx.pending_hints, sender, turn, payload)
+    _buffer_if_not_older(ctx.incoming_hints, sender, turn, payload)
