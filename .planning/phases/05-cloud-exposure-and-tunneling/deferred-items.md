@@ -108,3 +108,51 @@ of an exception.
 rather than raise. That is a security-module contract change, `commit_pack.py` is not
 in this plan's `files_modified`, and D-59 deliberately makes that module strict. The
 containment above means nothing is exposed today.
+
+---
+
+## 4. `test_late_peer_teardown.py`'s non-vacuity test is load-sensitive and flakes
+
+**Found:** 05-06 verification, running the full suite while the parallel 05-05 executor
+was also running pytest on the same box.
+**Not caused by 05-06** — measured below. **Severity:** minor (a flaky gate, not a
+product defect). **Owner:** whoever next touches `late_peer_harness.py` (05-04's file,
+outside 05-06's `files_modified`).
+
+### The failure
+
+```
+FAILED tests/integration/test_late_peer_teardown.py::test_without_the_linger_the_late_peers_own_push_is_cut_off
+E   AssertionError: the late peer's push succeeded WITHOUT a linger -- harness proves nothing
+```
+
+The test pins 05-04's non-vacuity probe: with `linger=False`, B's own FINAL_REVEAL push
+must NOT land. That is a genuine race — the harness starts B's audit `_LATE_SECONDS =
+0.3` after A's and then tears A down — so under enough CPU/socket contention B
+occasionally wins it and the premise stops holding.
+
+### Measured (attribution, not assumed)
+
+| Tree | Command | Runs | Result |
+|---|---|---|---|
+| `f5372e2` (pre-05-06 baseline, separate worktree) | the file alone | 6 | 6/6 pass |
+| `f5372e2` | whole `tests/integration` (49 tests) | 4 | 4/4 pass |
+| HEAD (05-06 landed) | the file alone | 1 | pass |
+| HEAD | whole `tests/integration` **minus** `test_hint_delivery.py` | 3 | 3/3 pass |
+| HEAD | whole `tests/integration` (55 tests) | 4 | 4/4 pass |
+| HEAD | full `tests/` re-run | 1 | 1293 passed |
+
+Both observed failures fell inside the window where a second pytest process (05-05's
+executor) was running concurrently; nothing reproduced once the box was quiet. A
+targeted probe that disabled 05-06's `outcome is None` compose guard and re-ran the
+audit-heavy integration files 4× was clean **with and without** the guard, so the
+production change is not the trigger either.
+
+### Suggested shape
+
+Make the premise deterministic instead of racy: have `late_peer_round(linger=False)`
+await A's `stop_runtime` before creating B's audit task, so B is unambiguously late
+rather than 0.3 s late. That STRENGTHENS the probe (B pushes into a demonstrably closed
+listener) instead of widening any assertion. Not done here: `late_peer_harness.py` is
+05-04's file and the `linger=True` path must keep B arriving DURING the grace window,
+so the two paths need designing together, by the plan that owns them.
