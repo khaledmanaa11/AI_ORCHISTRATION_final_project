@@ -11,6 +11,13 @@ resolve-time clear, so `take_my_turn` can still decode a hint one call
 later -- see `network/turn_language.py`). `send_hint` drops 04-04's
 `PLACEHOLDER_HINT_TEXT` in favour of the real composed text/intent (D-33's
 placeholder-must-be-gone requirement).
+
+05-06 (G3): `record_hint` itself moved to the sibling
+`turn_hint_buffer.py` -- this file had no room left (146/150) for the
+inbound receipt-logging it gained. It is re-exported below, so
+`turn_buffer.record_hint` still resolves for every caller and every
+monkeypatch, exactly as `turn_resolve.py`'s own split left this file's
+API unchanged.
 """
 
 from __future__ import annotations
@@ -25,7 +32,22 @@ from pursuit.network.event_log import append_event
 from pursuit.network.hint_payload import Intent
 from pursuit.network.orchestrator import AgentContext
 from pursuit.network.state_machine import State, TransitionResult
+from pursuit.network.turn_hint_buffer import record_hint
 from pursuit.network.verdict import TechnicalWin
+
+# Re-exported (05-06): `record_hint` moved to turn_hint_buffer.py at the
+# 150-line gate. Named here so `turn_buffer.record_hint` keeps resolving
+# for turn_commit_wait's own `turn_buffer.record_hint(...)` reference and
+# for every test that monkeypatches it at this module's namespace.
+__all__ = [
+    "HintProtocolError",
+    "await_move",
+    "drain_trailing_hint",
+    "log_illegal",
+    "record_hint",
+    "reject_peer_payload",
+    "send_hint",
+]
 
 
 class HintProtocolError(ValueError):
@@ -49,36 +71,6 @@ def log_illegal(ctx: AgentContext, current: State, target: State, result: Transi
             reason=f"illegal transition {current.value} -> {target.value}",
         ),
     )
-
-
-def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> None:
-    """Buffer one hint for the turn currently being collected. A missing
-    hint is simply never called here, and never blocks resolution.
-
-    Deviation (Rule 1 - bug, 04-12): TWO of 04-04's original rules --
-    "late" and "duplicate" both raising `HintProtocolError` -- are replaced
-    with silent drop / overwrite. The move and the hint are two INDEPENDENT
-    network round-trips, each with its own (now real, variable-latency)
-    decode/compose work between them; a genuine two-peer game measurably
-    hits both timing patterns (a hint arriving after the receiver already
-    resolved that turn, and a second not-yet-consumed hint arriving before
-    a slower side finishes processing the first). Raising in either case
-    turned ordinary jitter into a spurious `Outcome.TECHNICAL_LOSS` --
-    exactly the "forfeit caused by a hint" this plan's own must_haves rules
-    out. The channel is best-effort by design (04-04's own decision); only
-    `await_move`'s SEPARATE "two consecutive hints, no move" cap still
-    raises -- that one guards liveness (an opponent that never sends a
-    move), not hint timing.
-
-    Also caches `payload` into `ctx.incoming_hints[sender]` (04-12) --
-    UNLIKE `pending_hints`, this survives `maybe_resolve`'s clear, so
-    whichever side's `take_my_turn` runs after the buffer already cleared
-    (design note 7's "police sends first") can still decode the hint that
-    arrived alongside the opponent's last revealed move."""
-    if turn < ctx.state.turn:
-        return
-    ctx.pending_hints[sender] = payload
-    ctx.incoming_hints[sender] = payload
 
 
 def reject_peer_payload(ctx: AgentContext, reason: str) -> Outcome:
