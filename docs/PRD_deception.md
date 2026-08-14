@@ -183,6 +183,7 @@ often is too often."
 ### D-39 style guide — verbatim, from `services/llm/bluff_prompt.py::STYLE_GUIDE`
 
 ```
+- Write in the FIRST PERSON, as the player speaking about themselves: "I am ...", "I am heading ...". Never "the player", never any other third-person phrasing.
 - Be concrete, not vague. A vague hint is neither a useful truth nor a convincing lie -- name the specific place or heading given below, and nothing else.
 - Stay consistent with the claim you are given. Do not invent extra specific details (exact distances, other landmarks, cell numbers) beyond what the claim states -- an invented detail can contradict the board in ways you cannot see.
 - When a real-world setting is named below, use its genuine geography (real neighbourhoods, streets, landmarks) to make the hint feel grounded. When none is named, use plain directional language instead.

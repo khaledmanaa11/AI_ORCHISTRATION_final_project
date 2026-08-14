@@ -3,6 +3,8 @@
 No network I/O; these are pure string builders.
 """
 
+from pathlib import Path
+
 import pytest
 
 from pursuit.services.llm.bluff_prompt import (
@@ -39,6 +41,43 @@ def test_system_prompt_interpolates_the_configured_word_limit():
 def test_system_prompt_contains_the_style_guide_verbatim():
     prompt = build_system_prompt(arena="New York", word_limit=15)
     assert STYLE_GUIDE in prompt
+
+
+def test_the_system_prompt_pins_the_first_person():
+    """05-UAT G5: machine A's turn-4 hint drifted to "The player is
+    currently positioned..." -- a hint the player did not speak."""
+    lowered = build_system_prompt(arena="New York", word_limit=15).lower()
+    assert "first person" in lowered
+    assert 'never "the player"' in lowered
+
+
+def test_the_system_prompt_no_longer_asks_for_a_claim_written_for_a_player():
+    """The exact wording that caused the drift: asked to write FOR someone,
+    the model wrote ABOUT them."""
+    assert "for a player" not in build_system_prompt(arena="New York", word_limit=15).lower()
+
+
+_PRD_PATH = Path("docs/PRD_deception.md")
+_STYLE_GUIDE_HEADING = "### D-39 style guide"
+_FENCE = "```"
+
+
+def _prd_style_guide_block() -> str:
+    """The fenced block docs/PRD_deception.md Sec6 quotes from this module."""
+    lines = _PRD_PATH.read_text(encoding="utf-8").splitlines()
+    heading = next(i for i, line in enumerate(lines) if line.startswith(_STYLE_GUIDE_HEADING))
+    opening = next(i for i, line in enumerate(lines[heading:], heading) if line.startswith(_FENCE))
+    closing = next(
+        i for i, line in enumerate(lines[opening + 1:], opening + 1) if line.startswith(_FENCE)
+    )
+    return "\n".join(lines[opening + 1:closing])
+
+
+def test_the_prd_quotes_the_shipped_style_guide_verbatim():
+    """The PRD says "verbatim", so this is the assertion that keeps it
+    true -- the doc and the shipped string can never drift apart silently
+    (CLAUDE.md: documentation is not optional)."""
+    assert _prd_style_guide_block() == STYLE_GUIDE
 
 
 def test_style_guide_instructs_no_meta_commentary_about_honesty():

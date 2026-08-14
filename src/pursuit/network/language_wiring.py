@@ -46,7 +46,38 @@ _INERT_TEMPLATE_PHRASES = ("no additional information.",)
 #: number reused for two purposes.
 _FALLBACK_LANGUAGE_SEED = 20260810
 
+#: Rule 38 honesty, declared in Step-0 instead of the configured model_id
+#: whenever this process cannot actually reach a model -- see
+#: `declared_llm_name`. Plain words, because a human opponent reads it.
+LLM_NAME_TEMPLATE_FALLBACK = "template-fallback (no LLM calls)"
+
+#: Belt-and-braces only: `validate_model_group` already requires a
+#: non-empty `model_id` at config-load time, so this default is unreachable
+#: on any config that loaded.
+_LLM_NAME_UNKNOWN = "unspecified"
+
 _log = logging.getLogger(__name__)
+
+
+def declared_llm_name(model: dict) -> str:
+    """What this process can ACTUALLY do this game, for the Step-0
+    declaration -- not what `language.json` aspires to (rule 38).
+
+    Two configurations make ZERO model calls: a `template` provider, which
+    never touches a network, and a real provider with no key, which
+    degrades to the hint bank every turn (`bluff.compose` step 1). Both
+    declare the fallback marker. Otherwise the configured `model_id`,
+    exactly as before. It lives beside `_build_provider` because it is the
+    SAME question -- resolved provider CLASS, never the literal provider
+    string -- asked for a different audience, so provider identity stays
+    decided in one place (05-UAT G5: the 2026-08-13 remote round shipped
+    two byte-indistinguishable declarations while one box made eight calls
+    and the other made none).
+    """
+    provider_cls = get_provider_class(model[ModelKey.PROVIDER.value])
+    if provider_cls is TemplateProvider or not has_api_key():
+        return LLM_NAME_TEMPLATE_FALLBACK
+    return model.get(ModelKey.MODEL_ID.value, _LLM_NAME_UNKNOWN)
 
 
 @dataclass

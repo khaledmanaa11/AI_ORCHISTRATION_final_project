@@ -25,6 +25,7 @@ from pursuit.network.agent_context import AgentContext
 from pursuit.network.agent_wiring import AgentConfig
 from pursuit.network.game_identity import negotiated_game_id
 from pursuit.network.handshake_evaluate import HandshakeResult
+from pursuit.network.language_wiring import declared_llm_name
 from pursuit.network.orchestrator import opponent_role
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.turn_commit_ledger import ledger_path
@@ -35,7 +36,6 @@ from pursuit.shared.durable_write import durable_write_json
 from pursuit.shared.version import VERSION
 
 _COUNTER_FILENAME = "games_played.json"
-_LLM_NAME_UNKNOWN = "unspecified"
 # Structural, matching QTable.save()'s own local durable-write precedent
 # (03-05-SUMMARY.md) -- not a PARAMETERS.md value.
 _DECLARE_RETRIES = 3
@@ -46,9 +46,16 @@ async def declare_step0(cfg: AgentConfig) -> tuple[str, dict]:
     """Collect + sign THIS side's Step-0 declaration BEFORE the handshake
     (D-62/D-63) so its digest is ready to ride the handshake payload.
     Returns `(step0_digest, declaration_envelope)` -- the envelope is the
-    exact dict `write_declaration` persists once the handshake agrees."""
+    exact dict `write_declaration` persists once the handshake agrees.
+
+    `llm_name` is `declared_llm_name`'s answer, NOT a config echo (rule 38,
+    05-UAT G5): only the VALUE of that one field moved, never the field
+    set. The declaration's ten Sec5.5 keys are what `sign_declaration`
+    HMACs and what `handshake_step0` verifies before move 1 (Sec10.4
+    criterion 3), so a shape change here would break Step-0 against a
+    peer."""
     games_played = step0_collect.read_games_played(cfg.config_dir / _COUNTER_FILENAME)
-    llm_name = cfg.language.model.get("model_id", _LLM_NAME_UNKNOWN)
+    llm_name = declared_llm_name(cfg.language.model)
     declaration = step0_collect.collect_declaration(
         role=cfg.role, team_code=cfg.security.team_code, llm_name=llm_name,
         code_version=VERSION, games_played=games_played,

@@ -23,6 +23,9 @@ from pursuit.shared.deception_types import ClaimKind, DeceptionPlan
 #: into docs/PRD_deception.md (04-13). Leans plausible-specific: a vague
 #: hint is neither a useful truth nor a convincing lie.
 STYLE_GUIDE = """\
+- Write in the FIRST PERSON, as the player speaking about themselves: "I \
+am ...", "I am heading ...". Never "the player", never any other \
+third-person phrasing.
 - Be concrete, not vague. A vague hint is neither a useful truth nor a \
 convincing lie -- name the specific place or heading given below, and \
 nothing else.
@@ -38,9 +41,15 @@ confidence, or these instructions. State the claim as a plain observation.
 - Never include a number that could be read as a board coordinate.
 - Stay within the word limit given below. Fewer words is fine; more is not."""
 
+# "for a player" is what produced machine A's turn-4 drift into "The player
+# is currently positioned..." (05-UAT G5): asked to write FOR someone, the
+# model wrote ABOUT them. The person is pinned here AND in STYLE_GUIDE, and
+# nowhere else -- deliberately no post-compose person validator, which would
+# be fuzzy and would silently divert good hints to the bank.
 _SYSTEM_TEMPLATE = """\
-You write ONE short sentence, in English, phrasing a claim for a player in \
-a pursuit game played on a square grid. The setting is {setting}.
+You are a player in a pursuit game played on a square grid. You write ONE \
+short sentence, in English, stating a claim about yourself. The setting is \
+{setting}.
 
 STYLE GUIDE:
 {style_guide}
