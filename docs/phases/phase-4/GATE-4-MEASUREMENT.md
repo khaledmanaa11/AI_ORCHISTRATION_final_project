@@ -128,6 +128,54 @@ freezes this with a live call-order spy over a full game (mirroring
 **Verdict: PASS.** Every measured sub-condition holds with a number behind it, and the coordinate
 scan (rule 27) found zero leaks across every outgoing hint and every outgoing move payload.
 
+### Amendment — 2026-08-14 (05-06): the responder no longer composes for the resolved turn
+
+**What changed in the code.** `turn_actions.take_my_turn` now skips `compose_and_send_hint`
+entirely when `maybe_resolve` returned an outcome. On the responder's terminal turn the game is
+already over: the opponent will never play another turn, nothing can decode the hint, and
+composing one costs a full LLM round trip **after** the result is decided — measured at **17.4 s**
+of the 18 s inter-side divergence in the 2026-08-13 remote round (within machine B's own clock,
+`REVEAL(4)` 13:44:39.075 → `hint(5)` 13:44:56.491). The same commit fixed that hint's turn stamp,
+which was `ctx.state.turn` read *after* `maybe_resolve` had advanced it — every responder hint in
+that round was logged one turn ahead of the action it described.
+
+**Effect on the numbers above: none, and here is why.** Every criterion-3 number in the table is
+read from the **police side**, and the police is the initiator (`run_turn_loop`'s design note 7).
+The initiator's `maybe_resolve` is a no-op on every turn including the last — it resolves in
+`await_opponent_turn`, not in `take_my_turn` — so it still composes on every turn it plays.
+68 hints over 68 turns stands.
+
+**Effect on the consistency check: it must be restated.** "2 × 68 = 136" assumed the two roles
+compose identically. They no longer do. The symmetric expectation is now
+**68 + (68 − games) = 133** over the same 3 games, because the responder skips exactly one compose
+per game. The 136 `decide()` calls that criterion 1's spy counted are unaffected — *deciding* a
+move still happens every turn on both sides; only the *composing* of a hint for an already-finished
+turn is gone.
+
+**Measured, offline, 2026-08-14** — one real two-process loopback game (`uv run python
+scripts/dev_launch.py`, no `ANTHROPIC_API_KEY`, both sides ending `game_over=capture` with a
+matched `audit_verdict`, exit 0):
+
+| Side | Turns played | Hints sent (turn stamps) | Inbound hint records | `incoming_hint` outcomes |
+|---|---|---|---|---|
+| police (initiator) | 5 | **5** — `0,1,2,3,4` | 4 | `no_hint, no_hint, no_evidence, no_evidence, no_hint` |
+| thief (responder) | 5 | **4** — `0,1,2,3` | 5 | `no_hint, no_evidence, no_evidence, no_evidence` |
+
+The per-role counts match the derivation exactly (initiator `= turns`, responder `= turns − 1`);
+the derivation was written first and the measurement confirmed it, not the reverse.
+`tests/integration/test_gate4.py` now asserts that derived per-role expectation instead of the
+single `len(turns) == ctx.state.turn` it froze in 04-14 — which the responder only ever satisfied
+*because* of the mis-stamped, post-resolve hint this amendment removes.
+
+**Does the PASS carry over? Not automatically, and it is not claimed to.** The verdict above rests
+on police-side numbers that are genuinely unchanged, so it stands as measured. But no
+**responder-side** count was ever measured with a real key, and the responder is the side whose
+behaviour changed. Before submission, `scripts/measure_gate4.py` must be re-run with a real
+`ANTHROPIC_API_KEY` (D-32 already requires this) and criterion 3's table extended with a thief-side
+row, so the "≤15 words, both intents, no coordinate leak" properties are evidenced for both roles
+rather than inferred from symmetry that no longer holds. The offline table above is a delivery
+measurement, not a substitute for that run: with no key the hint bank supplies the text.
+
 ---
 
 ## Decode-fixture accuracy (EN and HE, separately)
@@ -237,6 +285,13 @@ results and are not reported as such.
 | Real decode accuracy — HE | **3/4 (75%)** — sole failure `heading-only` | same single edge as EN; Hebrew decodes the same shapes as English (D-44 holds live) |
 | Real per-turn wall time | mean **1.9 s** (n=13) | vs `watchdog_threshold` 60 s — 31× margin |
 | Real token spend | 11,872 in / 200 out = **$0.0138** per game | ≈ $0.09 per six-opponent series extrapolated — far inside Table 18's ~200k-token budget |
+
+> **Superseded in one row, 2026-08-14 (05-06).** "a hint on every turn" above was measured
+> before the responder stopped composing for an already-resolved terminal turn. It remains true
+> for the initiator; for the responder the current expectation is one hint per turn played *minus*
+> the terminal one. See the criterion-3 amendment earlier in this file, and re-run
+> `scripts/measure_gate4.py` with a real key before submission rather than reading this row as
+> current for both roles.
 
 **Per this plan's rule, the live row no longer blocks the phase: `/gsd:verify-work 4` may
 tick GATE-4.** The `heading-only` fixture disagreement is recorded as an open plan-level

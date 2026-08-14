@@ -3,7 +3,14 @@
 send_hint). The pre-existing action-buffer helpers (record_action,
 maybe_resolve, log_illegal) are exercised through test_orchestrator.py /
 test_orchestrator_loop.py, per that file's own house style (QUAL-02) --
-not re-tested here."""
+not re-tested here.
+
+`record_hint`'s own four cases moved to `test_hint_freshness.py` when
+05-06's re-specification took this file past the 150-code-line gate
+(Segal Table 5) -- they call it through `turn_buffer`'s re-export there,
+because that is the name all three production call sites use. See that
+file for the shared reason the `incoming_hints` assertions were added
+here too."""
 
 from pursuit.constants import Outcome
 from pursuit.network import turn_buffer
@@ -19,39 +26,6 @@ def _hint_envelope(turn: int, sender: str = "thief") -> Envelope:
         payload={HintKey.TEXT.value: "heading uptown", HintKey.INTENT.value: Intent.TRUTH.value,
                  HintKey.TURN.value: turn},
     )
-
-
-def test_record_hint_buffers_by_sender(tmp_path, default_params, network_params):
-    ctx = make_ctx(tmp_path, default_params, network_params, label="rh")
-    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "hi"})
-    assert ctx.pending_hints == {"thief": {"text": "hi"}}
-
-
-def test_record_hint_overwrites_a_second_hint_from_the_same_sender(
-    tmp_path, default_params, network_params
-):
-    """04-12 (Rule 1 - bug fix): a second not-yet-consumed hint from the
-    same sender is ordinary timing (each hint is an independent
-    round-trip), never a protocol violation -- the freshest one wins,
-    matching `ctx.incoming_hints`' own overwrite semantics, and neither
-    call may raise."""
-    ctx = make_ctx(tmp_path, default_params, network_params, label="rh-dup")
-    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "first"})
-    turn_buffer.record_hint(ctx, "thief", ctx.state.turn, {"text": "second"})  # must not raise
-    assert ctx.pending_hints == {"thief": {"text": "second"}}
-
-
-def test_record_hint_silently_drops_a_hint_for_an_already_resolved_turn(
-    tmp_path, default_params, network_params
-):
-    """04-12 (Rule 1 - bug fix): a late hint is ordinary network jitter
-    (the move and the hint are independent round-trips), never a protocol
-    violation -- it must never raise or end the game, and must never enter
-    either buffer."""
-    ctx = make_ctx(tmp_path, default_params, network_params, label="rh-late")
-    turn_buffer.record_hint(ctx, "thief", ctx.state.turn - 1, {"text": "late"})  # must not raise
-    assert ctx.pending_hints == {}
-    assert ctx.incoming_hints == {}
 
 
 def test_reject_peer_payload_logs_and_ends_the_game(tmp_path, default_params, network_params):
@@ -89,6 +63,8 @@ async def test_await_move_buffers_a_leading_hint_then_returns_the_move(
     assert verdict is None
     assert envelope == move
     assert "thief" in ctx.pending_hints
+    # Re-specified 05-06: the buffer decode actually reads (module docstring).
+    assert "thief" in ctx.incoming_hints
 
 
 async def test_await_move_raises_on_two_consecutive_hints(tmp_path, default_params, network_params):
@@ -116,6 +92,8 @@ def test_drain_trailing_hint_records_a_hint_present_on_the_queue(
     ctx.runtime.queue.put_nowait(_hint_envelope(0))
     turn_buffer.drain_trailing_hint(ctx)
     assert "thief" in ctx.pending_hints
+    # Re-specified 05-06: the buffer decode actually reads (module docstring).
+    assert "thief" in ctx.incoming_hints
     assert ctx.runtime.queue.qsize() == 0
 
 

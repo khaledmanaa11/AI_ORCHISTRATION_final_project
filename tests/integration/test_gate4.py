@@ -62,10 +62,32 @@ async def test_handshake_scent_digest_matches_before_any_move(tmp_path, monkeypa
 
 
 async def test_a_hint_rides_every_turn_with_no_outgoing_coordinate(tmp_path, monkeypatch):
-    """LANG-01/LANG-02, frozen: over a full game, both sides send exactly
-    one hint per turn played, every hint is within the legal length, both
-    `intent` values are representable, and no outgoing payload (hint OR
-    move) ever carries a numeric coordinate (rule 27)."""
+    """LANG-01/LANG-02, frozen: over a full game, both sides send one
+    hint per turn they play INTO, every hint is within the legal length,
+    both `intent` values are representable, and no outgoing payload (hint
+    OR move) ever carries a numeric coordinate (rule 27).
+
+    RE-SPECIFIED 05-06, not loosened: the count is now the DERIVED
+    per-role expectation, and the measurement confirms it rather than
+    defining it. Asserting whatever a run happens to produce is exactly
+    how the old `len(turns) == ctx.state.turn` came to certify the
+    responder's mis-stamped, post-resolve hint as correct.
+
+    The derivation. A hint rides every turn the agent plays INTO, and the
+    terminal turn resolves BEFORE the responder's compose stage -- a hint
+    for a finished game is evidence of nothing, and composing one costs a
+    real LLM round trip after the game is already over (17.4 s of the 18 s
+    inter-side divergence in the 2026-08-13 round). So:
+      * INITIATOR (police, design note 7): its `maybe_resolve` is a no-op
+        on every turn including the last, because the responder's action
+        slot is still empty when it fires -- the initiator resolves in
+        `await_opponent_turn` instead. It therefore composes on every turn
+        -> `len(turns) == ctx.state.turn`.
+      * RESPONDER (thief): its `maybe_resolve` completes the pair and
+        fires on the terminal turn, inside `take_my_turn`, before the
+        compose stage -> `len(turns) == ctx.state.turn - 1`.
+    The word-limit, both-intents and zero-coordinate assertions below are
+    untouched."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     cfg_a, cfg_b = load_agent_config(_CFG_A), load_agent_config(_CFG_B)
 
@@ -79,7 +101,13 @@ async def test_a_hint_rides_every_turn_with_no_outgoing_coordinate(tmp_path, mon
         records = _events(log_path)
         turns = _language_turns(records)
         assert turns, f"{ctx.role}: no language_turn records at all"
-        assert len(turns) == ctx.state.turn, f"{ctx.role}: hint count does not match turns played"
+        # Derived in the docstring above; measured here. `police` is the
+        # initiator (run_turn_loop's own design-note-7 ordering).
+        expected = ctx.state.turn if ctx.role == "police" else ctx.state.turn - 1
+        assert len(turns) == expected, (
+            f"{ctx.role}: composed {len(turns)} hints over {ctx.state.turn} turns, "
+            f"derived expectation {expected}"
+        )
         for record in turns:
             outgoing = record["outgoing_hint"]
             assert outgoing["text"], "a turn shipped with no hint text"
