@@ -21,14 +21,22 @@ _OTHER_MOVE = {"move": {"kind": "move", "direction": "south"}, "barrier": None}
 
 def _genuine_records(turns: list[int]) -> tuple[dict, dict, list[dict]]:
     """Build (observed_commits, observed_reveals, peer_records) via a REAL
-    `commit_pack.commit()` call per turn -- never a hand-rolled hash."""
+    `commit_pack.commit()` call per turn -- never a hand-rolled hash.
+
+    05-05: the state record is now built PER TURN (`dict(_STATE, turn=turn)`,
+    the shape `test_audit_turn_binding._honest_turn` already used). It
+    previously reused one turn-1 record for every turn, which no honest
+    ledger can produce -- `turn_commit_ledger.commit_own_action` passes ONE
+    `turn` to both `build_state_record` and `CommitLedger.append`. The
+    fixture was made faithful to production, not the check relaxed."""
     observed_commits: dict[int, str] = {}
     observed_reveals: dict[int, dict] = {}
     peer_records: list[dict] = []
     for turn in turns:
-        h_commit, nonce = commit_pack.commit(_STATE, _MOVE, "truth")
+        state = dict(_STATE, turn=turn)
+        h_commit, nonce = commit_pack.commit(state, _MOVE, "truth")
         payload = commit_pack.build_commit_payload(
-            state=_STATE, move=_MOVE, intent="truth", nonce=nonce,
+            state=state, move=_MOVE, intent="truth", nonce=nonce,
         )
         observed_commits[turn] = h_commit
         observed_reveals[turn] = _MOVE

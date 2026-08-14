@@ -25,6 +25,7 @@ from pursuit.network.agent_context import AgentContext
 from pursuit.network.agent_wiring import AgentConfig
 from pursuit.network.game_identity import negotiated_game_id
 from pursuit.network.handshake_evaluate import HandshakeResult
+from pursuit.network.orchestrator import opponent_role
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.turn_commit_ledger import ledger_path
 from pursuit.security import step0_collect, step0_sign
@@ -131,9 +132,25 @@ async def run_final_audit(
     sent_commits, sent_reveals = observed(ctx, direction="message_sent")
     received_commits, received_reveals = observed(ctx, direction="message_received")
 
+    # 05-05: the SAME candidate set serves both directions, passed THROUGH
+    # from `adopt_negotiated_game_id` (which built it before its rebind) and
+    # never reconstructed here -- post-adoption `ctx.game_uid` and
+    # `ctx.negotiated_game_id` are the SAME string on the thief, so a set
+    # rebuilt here would hold one element and degenerate to equality. Our own
+    # records always carry `ctx.game_uid`, which is in the set on both roles
+    # by construction, so the self direction cannot mis-fire. `forbidden_role`
+    # is the only per-direction difference: a PEER record claiming to have
+    # been written by US is a replay of our own commits (every FINAL_REVEAL
+    # makes them available), and symmetrically for our own ledger.
     started = time.monotonic()
-    peer_audit = audit_peer_records(received_commits, received_reveals, peer_records)
-    self_audit = audit_peer_records(sent_commits, sent_reveals, own_records)
+    peer_audit = audit_peer_records(
+        received_commits, received_reveals, peer_records,
+        candidate_game_ids=ctx.candidate_game_ids, forbidden_role=ctx.role,
+    )
+    self_audit = audit_peer_records(
+        sent_commits, sent_reveals, own_records,
+        candidate_game_ids=ctx.candidate_game_ids, forbidden_role=opponent_role(ctx.role),
+    )
     elapsed_seconds = time.monotonic() - started
 
     return record_audit_verdict(

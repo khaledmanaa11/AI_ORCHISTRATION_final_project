@@ -19,14 +19,19 @@ _MOVE = {"move": {"kind": "move", "direction": "north"}, "barrier": None}
 def _genuine_records(turns: list[int]) -> tuple[dict, dict, list[dict]]:
     """Same fixture shape as test_audit.py's own (not imported, to keep
     each split file self-contained -- both build via a REAL commit_pack.commit()
-    call, never a hand-rolled hash)."""
+    call, never a hand-rolled hash).
+
+    05-05: the state record is built PER TURN, for the reason spelled out in
+    test_audit.py's copy -- one turn-1 record reused across turns is a shape
+    no honest ledger can produce."""
     observed_commits: dict[int, str] = {}
     observed_reveals: dict[int, dict] = {}
     peer_records: list[dict] = []
     for turn in turns:
-        h_commit, nonce = commit_pack.commit(_STATE, _MOVE, "truth")
+        state = dict(_STATE, turn=turn)
+        h_commit, nonce = commit_pack.commit(state, _MOVE, "truth")
         payload = commit_pack.build_commit_payload(
-            state=_STATE, move=_MOVE, intent="truth", nonce=nonce,
+            state=state, move=_MOVE, intent="truth", nonce=nonce,
         )
         observed_commits[turn] = h_commit
         observed_reveals[turn] = _MOVE
