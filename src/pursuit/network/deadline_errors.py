@@ -9,7 +9,7 @@ NET-06 and now has one owner.
 
 THE RULE THIS MODULE ENCODES: a TRANSPORT failure is retried, an APPLICATION answer is raised,
 and a fault that is OURS AND DETERMINISTIC is raised. There is no catch-all anywhere in either
-module -- widening happens by naming a class, never by `except Exception`.
+module -- widening happens by naming a class, never by a bare catch-all clause.
 
 FAMILY 1 -- ``McpError`` (RESEARCH Pitfall 4, verified against the installed fastmcp 3.4.5 /
 mcp source): transport/protocol failure and client-side timeout, spelled mixed-case in this
@@ -62,6 +62,26 @@ RAISED, NEVER RETRIED -- ``RAISE_UNRETRIED_ERRORS``:
   on bad config is this codebase's house style (`load_network_config` already raises) --
   strictly better than ~135 s of futile retries ending in a false accusation.
 
+WRAPPED, NOT RE-CLASSIFIED -- ``unwraps_to_retryable``. Family 3 arrives in TWO shapes, and
+05-09 measured both before believing either. When the failure lands on an ALREADY-OPEN session
+(`client.call_tool`) it is the raw httpx exception, which the tuple above matches. When it
+lands on the CONNECT path (`async with ctx.runtime.client()`), fastmcp 3.4.5 catches it at
+`client/client.py:616-624` and re-raises ``RuntimeError(f"Client failed to connect: {exc}")
+from exc`` -- preserving only ``httpx.HTTPStatusError`` and ``McpError`` unwrapped. Measured
+against a real closed loopback port through the exact `PeerRuntime.client()` construction:
+``RuntimeError: Client failed to connect: All connection attempts failed`` with
+``__cause__`` = ``httpx.ConnectError``. The connect shape is the COMMON one -- it is what the
+`late_peer_round(linger=False)` harness reproduces -- so a widened tuple ALONE still let the
+2026-08-13 artifact through, which is why this predicate exists.
+
+It is deliberately NOT "retry RuntimeError". ``RuntimeError`` is one of the broadest classes in
+the language and our own bugs (a closed event loop, an exhausted generator) raise it; treating
+it as transient would be the catch-all this module forbids in all but name. The predicate
+therefore decides on the DIRECT CAUSE and on the same two named tuples as everything else: a
+wrapper whose cause is retryable is retried, and EVERYTHING ELSE -- no cause, an unrelated
+cause, or a cause in ``RAISE_UNRETRIED_ERRORS`` (so a scheme-less URL still fails loudly at the
+handshake even when fastmcp wraps it) -- is re-raised untouched.
+
 DELIBERATELY NOT USED -- ``httpx.HTTPError``. ``HTTPStatusError`` is a SIBLING under it (its
 MRO goes straight to ``HTTPError``, never through ``TransportError``), and a 403 from 05-02's
 ``SharedSecretMiddleware`` is an application-level answer about OUR OWN credentials -- never a
@@ -78,7 +98,13 @@ import httpx
 from fastmcp.exceptions import ToolError
 from mcp import McpError
 
-__all__ = ("RAISE_UNRETRIED_ERRORS", "RETRYABLE_TRANSPORT_ERRORS", "DeadlineExpired")
+__all__ = (
+    "RAISE_UNRETRIED_ERRORS",
+    "RETRYABLE_TRANSPORT_ERRORS",
+    "DeadlineExpired",
+    "error_evidence",
+    "unwraps_to_retryable",
+)
 
 
 class DeadlineExpired(Exception):  # noqa: N818 -- name fixed by the 02-07 interface contract
@@ -111,3 +137,32 @@ RAISE_UNRETRIED_ERRORS: tuple[type[Exception], ...] = (
 application-level rejection (``ToolError``) or a deterministic fault of our own
 (``LocalProtocolError``/``UnsupportedProtocol``). Naming them here keeps the subtraction
 greppable and testable; the except clause spells them out again at the point it fires."""
+
+
+def unwraps_to_retryable(exc: BaseException) -> bool:
+    """True when *exc* is a WRAPPER around a retryable transport failure.
+
+    The decision is made by the two named tuples above and by the DIRECT cause only -- see this
+    module's docstring for why "retry RuntimeError" would have been a catch-all in all but name.
+    No cause, an unrelated cause, or a cause that is itself raise-first: False, so the caller
+    re-raises the wrapper untouched.
+    """
+    cause = exc.__cause__
+    if cause is None or isinstance(cause, RAISE_UNRETRIED_ERRORS):
+        return False
+    return isinstance(cause, RETRYABLE_TRANSPORT_ERRORS)
+
+
+def error_evidence(exc: BaseException) -> str:
+    """The `last_error` text a TechnicalWin carries -- the ONE definition, used by both of
+    `call_with_retry`'s retryable clauses.
+
+    A grader reading the artifact sees the real fault ("ConnectError: All connection attempts
+    failed"), never a bare accusation. A wrapped failure additionally names its cause, so the
+    evidence distinguishes "the session dropped mid-call" from "we never connected at all".
+    """
+    text = f"{type(exc).__name__}: {exc}"
+    cause = exc.__cause__
+    if cause is not None and isinstance(cause, RETRYABLE_TRANSPORT_ERRORS):
+        text += f" (cause: {type(cause).__name__}: {cause})"
+    return text

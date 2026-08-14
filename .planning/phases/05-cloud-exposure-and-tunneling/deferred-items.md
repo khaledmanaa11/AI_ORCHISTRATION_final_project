@@ -7,6 +7,23 @@ rule (only auto-fix issues directly caused by the current task's changes).
 
 ## 1. `httpx.ConnectError` escapes `call_with_retry` and kills the process on the way out
 
+> **CLOSED by 05-09** (2026-08-14, commit `f31ece5` plus the Task-2 commit that carries this
+> file — a hash cannot be embedded in the object that defines it; both are listed in
+> 05-09-SUMMARY.md). Re-measured on the same
+> `late_peer_round(linger=False)` sequence that reproduced it: the late peer now ends
+> `game_over` → `audit_incomplete` → `message_received` → `audit_verdict{matched: true}`,
+> `peer_error is None`, and **zero `technical_win` records on either side**. `dev_launch.py`
+> still exits 0 with both sides on `audit_verdict matched=true`.
+>
+> One correction to the diagnosis below, found by measurement: the tuple widening this item
+> suggested is **necessary but not sufficient**. `httpx.ConnectError` is the raw shape only when
+> the fault lands on an ALREADY-OPEN session; on the CONNECT path — which is how every outgoing
+> envelope here starts — fastmcp 3.4.5 re-raises it as
+> `RuntimeError(f"Client failed to connect: {exc}") from exc` (`client/client.py:616-624`).
+> With the tuple alone the artifact still reproduced verbatim. See 05-09-SUMMARY.md deviation 3.
+>
+> Residual, examined and accepted: item **#5** below.
+
 **Found:** 05-04 Task 2, while measuring the no-linger baseline on plain loopback.
 **Not introduced by this plan** — present at `HEAD = 8f35721` and before.
 **Severity:** major. **Owner:** a follow-up plan; needs a decision on `deadline.py`'s
@@ -156,3 +173,92 @@ rather than 0.3 s late. That STRENGTHENS the probe (B pushes into a demonstrably
 listener) instead of widening any assertion. Not done here: `late_peer_harness.py` is
 05-04's file and the `linger=True` path must keep B arriving DURING the grace window,
 so the two paths need designing together, by the plan that owns them.
+
+**05-09 note:** re-run alone on a quiet box, 3/3 pass (26.4 s, then 33.3 s once the
+containment made the failing push walk the whole ladder instead of dying on attempt 1).
+Not reproduced; not relaxed.
+
+---
+
+## 5. An in-game ladder exhaustion accuses the peer even when the fault was OURS
+
+**Found:** 05-09 Task 2, while writing the two-boundary proof.
+**EXAMINED AND ACCEPTED — this is not a new defect.** Logged so a later reader does not
+rediscover it as one, and so the one honest way to narrow it is on record.
+
+### The residual
+
+`call_with_retry` cannot tell "the peer is down" from "we cannot reach the peer". If our
+own uplink drops, our ngrok agent dies, or DNS fails, all four attempts fail, the ladder
+exhausts, and `TechnicalWinReason.OPPONENT_UNRESPONSIVE` names the peer for a fault that
+was entirely ours. *Unreachable by us* is not *unresponsive*.
+
+### Why it is accepted rather than fixed
+
+- **It is PRE-EXISTING NET-06 policy, not something 05-09 invents.** `deadline.py`'s own
+  docstring has documented `McpError` as covering transport failure since 02-07, and 06-06
+  reviewed and affirmed that contract. `McpError` already carries the identical ambiguity:
+  a client-side timeout against our own dead uplink has always produced this accusation.
+  05-09 makes an accidental GAP consistent with that shipped policy — it does not widen the
+  policy's reach.
+- **The pre-05-09 alternative is strictly worse.** This failure did not become an accusation
+  before; it became a CRASH, which publishes no nonces at all and loses under rule 36 with
+  no verdict in our own log. A possibly-misattributed technical win beats a guaranteed
+  rule-36 sanction against us.
+- **Both non-accusatory boundaries are already correct.** At the audit boundary with a board
+  outcome standing, the same failure records `audit_incomplete` and accuses nobody (05-04);
+  and our own deterministic faults (`LocalProtocolError`/`UnsupportedProtocol`, wrapped or
+  not) are raised rather than laundered into an accusation (05-09).
+
+### The one honest narrowing, for whoever wants it
+
+`TunnelManager.ensure_connected` (05-01) is a LOCAL signal about our own side of the link.
+A future plan could consult it after the ladder exhausts and, when our own tunnel is down,
+record evidence about US — the existing `record_audit_incomplete` shape — instead of a
+technical win. Deliberately not done in 05-09: it is a new cross-module dependency from
+`deadline.py`'s pure, FastMCP-free retry ladder into tunnel state, and this plan's scope was
+the exception taxonomy.
+
+---
+
+## 6. A 5xx/429 from the peer or the tunnel is an uncaught `HTTPStatusError` mid-game
+
+**Found:** 05-09, while establishing the `TransportError`-not-`HTTPError` boundary.
+**Not introduced by this plan** — `HTTPStatusError` was uncaught before it too, and 05-09
+deliberately keeps it that way for the 403. **Severity:** major, but unmeasured on real
+hardware. **Owner:** a follow-up plan; needs a status-code policy decision.
+
+### The shape
+
+`mcp/client/streamable_http.py` calls `response.raise_for_status()` at five sites, so ANY
+non-2xx becomes `httpx.HTTPStatusError` — and fastmcp's connect path explicitly PRESERVES
+that class unwrapped (`client/client.py:620`). It is not under `TransportError`, matches no
+clause in `call_with_retry`, and is not caught by `agent_entrypoint`'s `except ToolError`, so
+it propagates out of `run_agent` and kills the process: the same rule-36 artifact 05-09 just
+closed for connection failures, arriving through a different door.
+
+For **403** that is correct and deliberate: a wrong shared secret is an application answer
+about our own credentials, it fires at the handshake before any game exists, and failing
+loudly on bad config is this codebase's house style.
+`test_secret_channel.py::test_wrong_secret_fails_every_call` pins that shape, and 05-09 added
+two more controls that would fail if it were swept into the ladder.
+
+For **429 / 500 / 502 / 503** it is not correct, and those ARE reachable mid-game: ngrok
+answers 502 when the upstream local server is momentarily down, and 429 when a free-tier rate
+limit trips. Those are transient, and a backoff is exactly the right answer.
+
+### Why it is not fixed here
+
+Splitting `HTTPStatusError` by `response.status_code` is a genuine policy decision (which
+codes are transient? does any 4xx other than 429 deserve a retry?), it would be the first
+place this codebase branches on an HTTP status at all, and 05-09's own constraints are
+explicit that the retryable class is `TransportError` and that `HTTPStatusError` must not be
+swept in wholesale. Doing it by status code needs its own plan and its own paired controls —
+the 403 control must stay green.
+
+### Suggested shape
+
+A named `RETRYABLE_STATUS_CODES` frozenset in `deadline_errors.py` (429, 500, 502, 503, 504),
+consulted by a predicate beside `unwraps_to_retryable`; everything else, 403 included, keeps
+propagating. Anchor it on a real socket the way `test_connect_failure_containment.py` does —
+a stub ASGI app returning 502 — never on a constructed exception alone.

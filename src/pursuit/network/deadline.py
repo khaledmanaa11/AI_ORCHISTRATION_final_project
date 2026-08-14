@@ -33,9 +33,12 @@ escape this ladder, and kill the process (rule 36 against us -- the 2026-08-13 a
 subtracted classes are OUR OWN deterministic faults, which would otherwise burn the full ladder
 and end in a false ``TechnicalWin`` against a peer that never received a valid request; and
 ``httpx.HTTPError`` is deliberately NOT the class used, because ``HTTPStatusError`` sits under it
-and a 403 from ``SharedSecretMiddleware`` is an answer about our own credentials. The FULL
-argument, member by member, lives with the two tuples in the sibling ``deadline_errors.py``
-(split at the 150-code-line gate); read it before changing either tuple.
+and a 403 from ``SharedSecretMiddleware`` is an answer about our own credentials. A widened tuple
+alone was measured INSUFFICIENT: on the CONNECT path fastmcp re-raises the httpx fault as
+``RuntimeError(...) from exc``, so the ladder also asks ``unwraps_to_retryable`` about a
+RuntimeError's direct CAUSE -- never about the RuntimeError class itself. The FULL argument,
+member by member and shape by shape, lives with the two tuples in the sibling
+``deadline_errors.py`` (split at the 150-code-line gate); read it before changing either tuple.
 """
 
 import asyncio
@@ -49,6 +52,8 @@ from pursuit.network.deadline_errors import (
     RAISE_UNRETRIED_ERRORS,
     RETRYABLE_TRANSPORT_ERRORS,
     DeadlineExpired,
+    error_evidence,
+    unwraps_to_retryable,
 )
 from pursuit.network.verdict import CallOutcome, TechnicalWin, TechnicalWinReason
 
@@ -141,11 +146,19 @@ async def call_with_retry(
         except (ToolError, httpx.LocalProtocolError, httpx.UnsupportedProtocol):
             raise
         except RETRYABLE_TRANSPORT_ERRORS as exc:
-            last_error = f"{type(exc).__name__}: {exc}"
-            if attempts < total_attempts:
-                await sleep(backoff)
-            continue
-        return CallOutcome(value=result, verdict=None, attempts=attempts)
+            last_error = error_evidence(exc)
+        # The SAME failure, wrapped: fastmcp re-raises a connect-path fault as
+        # `RuntimeError(f"Client failed to connect: {exc}") from exc`. Narrow by CAUSE, never
+        # by class -- `unwraps_to_retryable` re-raises anything whose cause is absent,
+        # unrelated, or itself raise-first, so this is not "retry RuntimeError".
+        except RuntimeError as exc:
+            if not unwraps_to_retryable(exc):
+                raise
+            last_error = error_evidence(exc)
+        else:
+            return CallOutcome(value=result, verdict=None, attempts=attempts)
+        if attempts < total_attempts:
+            await sleep(backoff)
 
     verdict = TechnicalWin(
         reason=TechnicalWinReason.OPPONENT_UNRESPONSIVE,
