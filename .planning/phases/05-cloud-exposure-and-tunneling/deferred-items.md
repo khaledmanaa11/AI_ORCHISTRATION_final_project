@@ -101,6 +101,24 @@ coherent seam — one module owning teardown — worth ~10 code lines, and every
 resolves unchanged. Not done here: it is outside this plan's `files_modified` and
 this plan's own instruction was to split only if a file landed OVER the limit.
 
+### 2026-08-14, 05-10: still open, and re-measured alongside three new splits
+
+`agent_lifecycle.py` is **unchanged at 148/150** — 05-10 did not touch it, and the suggested
+`agent_teardown.py` relocation above is still the move when the room is next needed.
+
+Recorded here because 05-10 hit the same wall three times in one plan and took the split each
+time rather than logging a fourth instance of this item. Measured after:
+
+| File | Before | After | Split taken |
+|---|---|---|---|
+| `security/audit.py` | 131 | **142** | `audit_record.py` (`AuditRecord`/`all_matched`, re-exported) — it landed at exactly 150/150 first, which is 148/150 one line worse |
+| `network/deadline_errors.py` | 141 | **140** | `deadline_status.py` took the status policy AND inherited the `httpx.HTTPError` paragraph, which is its subject matter |
+| `network/deadline.py` | 139 | **134** | `deadline_wait.py` (`bounded`/`wait_for_opponent`, re-exported) — it BREACHED at 152 first |
+
+The general lesson worth keeping: prose relocates to the module that owns the argument, code
+relocates behind a re-export, and neither is ever compressed to fit. A file left at exactly the
+limit is a worse outcome than this item describes, not a passing one.
+
 ---
 
 ## 3. `commit_pack.verify_reveal(h, **payload)` is shape-fragile against peer data
@@ -125,6 +143,34 @@ of an exception.
 rather than raise. That is a security-module contract change, `commit_pack.py` is not
 in this plan's `files_modified`, and D-59 deliberately makes that module strict. The
 containment above means nothing is exposed today.
+
+### CORRECTION, 2026-08-14 (05-10). The last sentence above was wrong.
+
+The original text is left standing verbatim -- this is an append-only record, not a
+rewrite -- but its closing claim, *"The containment above means nothing is exposed
+today"*, was an **over-claim**, and 05-VERIFICATION refuted it by probe. It was true of
+the `verify_reveal(...)` CALL and of nothing else. Three sites in the same module read
+peer structure **before** that try/except was ever reached, and all three raised:
+`entry["turn"]` in `_audit_one`, the `{entry["turn"] for entry in peer_records}`
+comprehension in `_missing_turns`, and the final numeric `records.sort(...)`.
+
+Two further facts the original note could not have known:
+
+- the containment was also **too narrow for the call it wrapped**.
+  `commit_pack.build_commit_payload` raises **`ValueError`** -- not `TypeError` -- for a
+  peer-controlled `intent` outside `{truth, lie}` and for an empty `nonce`, and
+  `except (TypeError, KeyError)` did not catch either. Measured:
+  `ValueError: build_commit_payload: intent must be one of ['lie', 'truth'], got 'maybe'`;
+- the note's framing ("the containment is local, not general") was the right instinct
+  and the right thing to record. What it got wrong was the confidence of the conclusion
+  drawn from it.
+
+**Status: CLOSED by 05-10.** `audit.py` is now total over peer input (see item 7), the
+catch is widened to `(TypeError, KeyError, ValueError)`, and the boundary rule is stated
+once in `audit.py`'s own source naming every instance found. The genuinely open part is
+unchanged and still deferred: whether `commit_pack` itself should validate-and-report
+rather than raise. D-59 deliberately makes that module strict, and no caller depends on
+it raising, so this stays a design question rather than a defect.
 
 ---
 
@@ -236,6 +282,32 @@ EXHAUSTION case is ambiguous, and the one honest narrowing named above applies t
 
 ## 6. A 5xx/429 from the peer or the tunnel is an uncaught `HTTPStatusError` mid-game
 
+> **CLOSED by 05-10** (2026-08-14, commit `49b58ac`). Implemented as the "suggested shape"
+> below almost verbatim: a named `RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503,
+> 504})` consulted by a `retryable_status` predicate, with everything else -- 403 included --
+> still propagating. It landed in a NEW sibling `deadline_status.py` rather than in
+> `deadline_errors.py`: that file was at 141/150 and this change needed ~20, so the status
+> policy took the split and inherited the `httpx.HTTPError`-is-not-the-class paragraph, which
+> is its subject matter. `deadline.py` then breached at 152 and was split in turn
+> (`deadline_wait.py`, `bounded`/`wait_for_opponent` re-exported), landing at 134.
+>
+> One correction to the suggested shape, found while writing it: the set must be **enumerated,
+> never "any 5xx or 429"**. A range sweeps in **501** and **505** -- deterministic refusals
+> that fail identically on all four attempts, burn `3 x backoff_seconds`, and end in a durable
+> `TechnicalWin(OPPONENT_UNRESPONSIVE)` against a peer that answered honestly (rules 16/22).
+> That is the mirror image of the `LocalProtocolError` shape 05-09 subtracted for the same
+> reason. `tests/unit/test_transport_status_containment.py` carries 501/505 as the control:
+> written against an any-5xx rule it FAILS (probe recorded in 05-10-SUMMARY.md).
+>
+> The suggestion to anchor on a real socket was NOT followed, deliberately. The exception is
+> built by driving httpx's own `Response.raise_for_status()`, so the class, the status and the
+> message text are all the library's own rather than invented -- and the paired 403/404 cases
+> then run through the same `call_with_retry` ladder the 502 does, which a stub ASGI app would
+> not have exercised any better. The live socket anchor already exists and still passes
+> unedited: `tests/integration/test_secret_channel.py`, 3/3.
+>
+> Residual, examined and accepted: the 429 half of item **#5** above.
+
 **Found:** 05-09, while establishing the `TransportError`-not-`HTTPError` boundary.
 **Not introduced by this plan** — `HTTPStatusError` was uncaught before it too, and 05-09
 deliberately keeps it that way for the 403. **Severity:** major, but unmeasured on real
@@ -275,3 +347,71 @@ A named `RETRYABLE_STATUS_CODES` frozenset in `deadline_errors.py` (429, 500, 50
 consulted by a predicate beside `unwraps_to_retryable`; everything else, 403 included, keeps
 propagating. Anchor it on a real socket the way `test_connect_failure_containment.py` does —
 a stub ASGI app returning 502 — never on a constructed exception alone.
+
+---
+
+## 7. `audit_peer_records` raises on a malformed peer FINAL_REVEAL
+
+> **CLOSED by 05-10** (2026-08-14, commit `ab4951b`). Written into this file for the first
+> time by that plan: 05-VERIFICATION recorded item 7 in its own frontmatter and in its
+> anti-patterns table, but never added it here, so a reader following the pointer found
+> nothing. It is recorded in full below, closure included, rather than left as a dangling
+> reference.
+
+**Found:** 05-VERIFICATION (2026-08-14), by probing the shipped function directly.
+**Not introduced by any plan** — present since the function existed. **Severity:** major, and
+a blocker for league day rather than for this phase's own gaps: it is not a false-accusation
+path and not one of G1–G5.
+
+### Measured, before
+
+```
+records-is-a-string   -> TypeError: string indices must be integers, not 'str'
+entry-is-a-string     -> TypeError: string indices must be integers, not 'str'
+entry-missing-turn    -> KeyError: 'turn'
+turn-is-a-string      -> TypeError: '<' not supported between instances of 'int' and 'str'
+turn-is-None          -> TypeError: '<' not supported between instances of 'int' and 'NoneType'
+turn-is-a-list        -> TypeError: unhashable type: 'list'
+mixed valid+malformed -> KeyError: 'turn'
+intent-is-'maybe'     -> ValueError: build_commit_payload: intent must be one of [...]
+nonce-is-''           -> ValueError: build_commit_payload: nonce must be a non-empty str
+```
+
+All of them sit OUTSIDE 05-05's `verify_reveal` try/except (item 3), or — the last two — inside
+it but outside the classes it named. `agent_entrypoint`'s guard is `except ToolError`, so each
+killed the process before any verdict was written: rule 36 against **us**, the exact artifact
+05-04 and 05-09 exist to prevent, through the last uncontained door in the same corridor. A
+foreign league implementation whose record shape merely DIFFERS was enough to trigger it.
+
+### Measured, after
+
+Every one of those shapes now returns a named `AuditRecord` mismatch and still LOSES; the
+honest peer is untouched. The full before/after table is in 05-10-SUMMARY.md.
+
+### The one thing that had to be got right
+
+The `turn` test is **join-key USABILITY**, never `isinstance(turn, int)`. An honest peer whose
+`turn` arrives as the float `3.0` was audited correctly and returned `matched` BEFORE the fix
+(measured: `0.0 in {0: h}` is True, `{0} - {0.0}` is empty, the sort is numeric), and JSON has
+no int/float distinction. A type check would have converted that honest peer into a technical
+loss — this phase's own recurring defect arriving through the FIX instead of the bug (rules
+16/22). Integral floats normalise via `int()` and proceed; a paired control pins it and FAILS
+against an isinstance rule.
+
+Equally: `_missing_turns` SKIPS an unparseable entry rather than bailing on the whole check. A
+bail would have let a peer append one garbage record and silently delete the rule-36 coverage
+check for every valid turn — the `{"records": []}` evasion re-opened through a side door.
+
+### The sixth instance, found while closing this one
+
+`handshake_step0._step0_verified` raised `AttributeError: 'str' object has no attribute 'get'`
+on a peer `step0_declaration` that was not an object — measured on str/list/int. `evaluate`'s
+try/except wraps the DECODE block only, and `respond_to_handshake`'s docstring claims it "never
+raises". On the outbound half it escaped `perform_handshake` into `run_agent` and killed us at
+the handshake, before move 1. Closed in the same commit, resolving to the EXISTING digest-only
+outcome (there is no content to verify, and a peer wanting that outcome can already have it by
+sending no declaration — so a hard abort would only add a false-accusation path).
+
+**Nothing is left open here.** The boundary rule now lives in `src/pursuit/security/audit.py`
+as a module comment naming all six instances, so a seventh is a review failure rather than a
+discovery.
