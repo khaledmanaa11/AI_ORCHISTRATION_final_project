@@ -48,6 +48,7 @@ from pursuit.network.agent_lifecycle import (
 from pursuit.network.agent_teardown import linger_for_peer
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
+from pursuit.network.game_identity import adopt_negotiated_game_id
 from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.orchestrator import run_turn_loop
 from pursuit.network.secret_wiring import resolve_shared_secret
@@ -87,6 +88,14 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                 )
             if not result.agreed:
                 return None
+            # 05-05 (D-61, 05-UAT.md G2) -- THE call-site ordering. It must
+            # sit after `result.agreed` (there is no negotiated id without an
+            # agreement) and BEFORE write_declaration/run_turn_loop: the turn
+            # loop's first ledger append derives the D-64 ledger name from
+            # ctx.log_path.stem and seals ctx.game_uid into every hashed
+            # commit. Move this call below either of them and the four
+            # criterion-2 artifacts stop joining again.
+            adopt_negotiated_game_id(ctx, result)
             write_declaration(ctx, cfg, result, declaration_envelope)
             outcome = await run_turn_loop(ctx)
             if ctx.security.commit_reveal:

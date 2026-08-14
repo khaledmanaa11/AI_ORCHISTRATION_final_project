@@ -100,6 +100,11 @@ def _patch_common(monkeypatch, *, agreed: bool, order: list[str], tunnel=None):
         order.append("declare_step0")
         return "fake-step0-digest", {"declaration": {}, "digest": "fake-step0-digest"}
 
+    # 05-05: adoption sits between the handshake and write_declaration --
+    # the D-64 ledger stem and every hashed commit derive from what it sets.
+    def _adopt_negotiated_game_id(ctx, result):
+        order.append("adopt_negotiated_game_id")
+
     def _write_declaration(ctx, cfg_arg, result, envelope):
         order.append("write_declaration")
 
@@ -114,6 +119,7 @@ def _patch_common(monkeypatch, *, agreed: bool, order: list[str], tunnel=None):
     monkeypatch.setattr(agent_entrypoint, "stop_watchdog", _stop_watchdog)
     monkeypatch.setattr(agent_entrypoint, "linger_for_peer", _linger_for_peer)
     monkeypatch.setattr(agent_entrypoint, "stop_runtime", _stop_runtime)
+    monkeypatch.setattr(agent_entrypoint, "adopt_negotiated_game_id", _adopt_negotiated_game_id)
     monkeypatch.setattr(agent_entrypoint, "declare_step0", _declare_step0)
     monkeypatch.setattr(agent_entrypoint, "write_declaration", _write_declaration)
     monkeypatch.setattr(agent_entrypoint, "run_final_audit", _run_final_audit)
@@ -128,7 +134,7 @@ async def test_run_agent_happy_path_returns_the_turn_loop_outcome(monkeypatch) -
     assert result == "OUTCOME"
     assert order == [
         "declare_step0", "default_context", "start_server", "perform_handshake",
-        "write_declaration", "run_turn_loop",
+        "adopt_negotiated_game_id", "write_declaration", "run_turn_loop",
         "stop_watchdog", "linger_for_peer", "stop_runtime",
     ]
 
@@ -165,7 +171,7 @@ async def test_run_agent_wraps_the_whole_play_in_the_tunnel(monkeypatch) -> None
     assert result == "OUTCOME"
     assert order == [
         "tunnel_start", "declare_step0", "default_context", "start_server", "perform_handshake",
-        "write_declaration", "run_turn_loop",
+        "adopt_negotiated_game_id", "write_declaration", "run_turn_loop",
         "stop_watchdog", "linger_for_peer", "stop_runtime", "tunnel_stop",
     ]
 

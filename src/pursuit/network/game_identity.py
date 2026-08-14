@@ -32,10 +32,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pursuit.network import turn_events
 from pursuit.network.event_log import append_event
 from pursuit.network.state_machine import State, TransitionReporter, TransitionSeverity
+
+if TYPE_CHECKING:  # typing only -- an eager import here would be a real cycle
+    from pursuit.network.agent_context import AgentContext
+    from pursuit.network.handshake_evaluate import HandshakeResult
 
 
 @dataclass
@@ -115,3 +120,50 @@ def make_freeze_handler(
         append_event(sink_path, record)
 
     return _on_freeze
+
+
+def adopt_negotiated_game_id(ctx: AgentContext, result: HandshakeResult) -> None:
+    """Make D-61's negotiated id the id THIS WHOLE GAME runs under.
+
+    Called from `agent_entrypoint.run_agent` immediately after
+    `if not result.agreed: return None` and BEFORE `write_declaration` /
+    `run_turn_loop`. That position is a dependency, not a preference:
+
+    - `turn_commit_ledger.ledger_path` derives the D-64 nonce ledger's name
+      from `ctx.log_path.stem`, and its first writer
+      (`turn_commit_ledger.commit_own_action`) runs INSIDE the turn loop --
+      after this point -- so renaming the log here moves the ledger with it
+      and there is no ledger file to rename. Reorder this call after
+      `run_turn_loop` and that stops being true, loudly;
+    - `commit_own_action` also seals `ctx.game_uid` into every hashed commit
+      (`build_state_record(game_id=ctx.game_uid)`), which is how the
+      2026-08-13 round ended up with the two sides committing DIFFERENT
+      game_ids in the same match;
+    - at this instant the log holds at most the benign symmetric-handshake
+      `illegal_transition` record, verified against the retained evidence.
+
+    Nothing here is an error case. The source file may not exist (no illegal
+    transition was logged) and the resolved id may equal the current one
+    (always true for police) -- both mean "no filesystem work", not a fault.
+    """
+    resolved = negotiated_game_id(ctx.role, ctx.game_uid, result.peer_game_id)
+    ctx.negotiated_game_id = result.peer_game_id
+    # ORDERING IS LOAD-BEARING -- see security/audit.py's own re-statement of
+    # it. Capture the two ids that were on the table BEFORE the rebind below.
+    # `ctx.game_uid` is about to become `resolved`, and on the thief that IS
+    # `result.peer_game_id`, so a set built after this point holds ONE element
+    # and the audit's membership check silently degenerates to equality --
+    # which then accuses an honest peer that merely swapped conventions.
+    ctx.candidate_game_ids = (
+        {ctx.game_uid, result.peer_game_id} if result.peer_game_id is not None else None
+    )
+    if resolved == ctx.game_uid:
+        return
+    target = ctx.log_path.parent / f"{resolved}{ctx.log_path.suffix}"
+    if ctx.log_path.exists() and ctx.log_path != target:
+        ctx.log_path.replace(target)
+    ctx.log_path = target
+    ctx.game_uid = resolved
+    if ctx.identity is not None:
+        ctx.identity.log_path = target
+        ctx.identity.game_uid = resolved

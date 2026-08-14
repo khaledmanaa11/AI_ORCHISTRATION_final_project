@@ -23,6 +23,7 @@ from pursuit.network.agent_audit_exchange import (
 )
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.agent_wiring import AgentConfig
+from pursuit.network.game_identity import negotiated_game_id
 from pursuit.network.handshake_evaluate import HandshakeResult
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.turn_commit_ledger import ledger_path
@@ -57,15 +58,6 @@ async def declare_step0(cfg: AgentConfig) -> tuple[str, dict]:
     return signature[step0_sign.SignKey.DIGEST], {"declaration": declaration, **signature}
 
 
-def _declared_game_id(ctx: AgentContext, result: HandshakeResult) -> str:
-    """D-61, scoped ONLY to the declaration filename: police keeps its own
-    game_uid; the thief adopts the initiator's peer_game_id (falling back
-    to its own game_uid if the peer never sent one)."""
-    if ctx.role == "police":
-        return ctx.game_uid
-    return result.peer_game_id or ctx.game_uid
-
-
 def write_declaration(
     ctx: AgentContext, cfg: AgentConfig, result: HandshakeResult, declaration_envelope: dict,
 ) -> None:
@@ -75,8 +67,16 @@ def write_declaration(
     exactly once (rule 37/38). ALSO persists the PEER's own declaration
     (D-62 follow-up), when they sent one, so the content this side
     verified at handshake stays auditable after the fact (Phase 7);
-    skipped entirely for a digest-only peer -- there is no content to save."""
-    declared_game_id = _declared_game_id(ctx, result)
+    skipped entirely for a digest-only peer -- there is no content to save.
+
+    05-05: the D-61 policy is no longer duplicated here -- the ONE definition
+    lives in `game_identity.negotiated_game_id`, which `run_agent` has
+    already applied to `ctx.game_uid` itself by the time this runs (so this
+    call is idempotent on the live path: `negotiated_game_id(role, P, P)` is
+    `P` for both roles). Calling it rather than reading `ctx.game_uid` keeps
+    a caller that has NOT adopted -- the integration harnesses -- on exactly
+    the pre-05-05 filename."""
+    declared_game_id = negotiated_game_id(ctx.role, ctx.game_uid, result.peer_game_id)
     path = ctx.log_path.parent / f"declaration_{declared_game_id}.json"
     durable_write_json(
         path, declaration_envelope, retries=_DECLARE_RETRIES, backoff=_DECLARE_BACKOFF_SECONDS,
