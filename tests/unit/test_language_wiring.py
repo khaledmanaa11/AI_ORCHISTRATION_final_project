@@ -4,6 +4,8 @@ language pipeline, built once (D-34, D-35, D-52)."""
 import dataclasses
 import logging
 
+import pytest
+
 from pursuit.network.language_wiring import (
     _FALLBACK_LANGUAGE_SEED,
     _build_provider,
@@ -11,10 +13,16 @@ from pursuit.network.language_wiring import (
     build_language_runtime,
 )
 from pursuit.services.llm.anthropic_provider import AnthropicProvider
+from pursuit.services.llm.client import API_KEY_ENV_VAR
 from pursuit.services.llm.gatekeeper import Gatekeeper
 from pursuit.services.llm.template_provider import TemplateProvider
 from pursuit.shared.deception_config import load_deception_config
 from pursuit.shared.language_config import load_language_config
+
+#: Fake, never a credential -- present so the assertions below can search
+#: for it and prove no log record ever carries the VALUE (CLAUDE.md rule 4).
+_SENTINEL_KEY = "not-a-real-key-05-07-sentinel"
+_WIRING_LOGGER = "pursuit.network.language_wiring"
 
 
 def _language_params():
@@ -46,6 +54,67 @@ def test_build_provider_returns_an_anthropic_provider_for_claude_api():
     language = _language_params()
     provider = _build_provider(language.model, Gatekeeper(params=language))
     assert isinstance(provider, AnthropicProvider)
+
+
+def _build(provider_name: str | None = None):
+    language = _language_params()
+    model = language.model if provider_name is None else {**language.model, "provider": provider_name}
+    return _build_provider(model, Gatekeeper(params=language))
+
+
+def _wiring_warnings(caplog):
+    return [
+        record for record in caplog.records
+        if record.name == _WIRING_LOGGER and record.levelno >= logging.WARNING
+    ]
+
+
+def test_a_real_provider_with_no_key_warns_exactly_once_naming_the_env_var(monkeypatch, caplog):
+    """UAT G5: the keyless run is legible now. The provider is still built,
+    unchanged -- the warning is the only new behaviour."""
+    monkeypatch.delenv(API_KEY_ENV_VAR, raising=False)
+    with caplog.at_level(logging.WARNING):
+        provider = _build()
+    warnings = _wiring_warnings(caplog)
+    assert len(warnings) == 1
+    assert API_KEY_ENV_VAR in warnings[0].getMessage()
+    assert isinstance(provider, AnthropicProvider)
+
+
+def test_a_real_provider_with_a_key_present_warns_about_nothing(monkeypatch, caplog):
+    monkeypatch.setenv(API_KEY_ENV_VAR, _SENTINEL_KEY)
+    with caplog.at_level(logging.DEBUG):
+        provider = _build()
+    assert _wiring_warnings(caplog) == []
+    assert isinstance(provider, AnthropicProvider)
+
+
+@pytest.mark.parametrize("key_present", [True, False])
+def test_the_template_provider_never_warns_whatever_the_key_says(monkeypatch, caplog, key_present):
+    """`template` makes no call by design, so a missing key tells the
+    operator nothing -- the warning keys off the resolved CLASS, not the
+    environment alone."""
+    if key_present:
+        monkeypatch.setenv(API_KEY_ENV_VAR, _SENTINEL_KEY)
+    else:
+        monkeypatch.delenv(API_KEY_ENV_VAR, raising=False)
+    with caplog.at_level(logging.WARNING):
+        provider = _build("template")
+    assert isinstance(provider, TemplateProvider)
+    assert _wiring_warnings(caplog) == []
+
+
+def test_the_keyless_warning_never_carries_a_key_shaped_value(monkeypatch, caplog):
+    """Control for CLAUDE.md rule 4: the sentinel is in the environment for
+    the first build and gone for the second, so ANY record that ever
+    interpolated the value (rather than the NAME) would surface here."""
+    monkeypatch.setenv(API_KEY_ENV_VAR, _SENTINEL_KEY)
+    with caplog.at_level(logging.DEBUG):
+        _build()
+        monkeypatch.delenv(API_KEY_ENV_VAR, raising=False)
+        _build()
+    assert any(API_KEY_ENV_VAR in record.getMessage() for record in caplog.records)
+    assert all(_SENTINEL_KEY not in record.getMessage() for record in caplog.records)
 
 
 def test_build_language_runtime_wires_matching_word_limit_and_arena():

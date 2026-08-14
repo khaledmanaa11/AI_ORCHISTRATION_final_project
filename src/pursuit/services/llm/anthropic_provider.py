@@ -23,7 +23,7 @@ import json
 
 import anthropic
 
-from pursuit.services.llm.client import build_client
+from pursuit.services.llm.client import API_KEY_ENV_VAR, build_client
 from pursuit.services.llm.gatekeeper import CallResult, Gatekeeper, GatekeeperOverflow
 from pursuit.services.llm.provider import (
     LlmFailure,
@@ -98,7 +98,7 @@ class AnthropicProvider:
         if self._client is None:
             self._client = build_client(timeout_seconds=self._timeout_seconds)
             if self._client is None:
-                return LlmFailure(LlmFailureReason.NO_KEY, "ANTHROPIC_API_KEY is not set")
+                return LlmFailure(LlmFailureReason.NO_KEY, f"{API_KEY_ENV_VAR} is not set")
         client = self._client
 
         request: dict = {

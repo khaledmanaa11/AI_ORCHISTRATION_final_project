@@ -20,6 +20,7 @@ from dataclasses import dataclass
 
 from pursuit.services.llm.bluff import BluffContext
 from pursuit.services.llm.budget import DegradeLevel
+from pursuit.services.llm.client import API_KEY_ENV_VAR, has_api_key
 from pursuit.services.llm.decode import DecodeContext
 from pursuit.services.llm.gatekeeper import Gatekeeper
 from pursuit.services.llm.hintbank import HintBank
@@ -79,10 +80,30 @@ def _resolve_seed(seed: int | None, *, label: str) -> int:
 def _build_provider(model: dict, gatekeeper: Gatekeeper) -> Provider:
     """The configured `model.provider`, constructed with whatever that
     class needs -- `get_provider_class` already validated the name at
-    config-load time (`shared/language_model_config.py`)."""
+    config-load time (`shared/language_model_config.py`).
+
+    A real provider with no key is NOT an error and is NOT rejected here:
+    Phase 4 sanctioned a keyless run and `bluff.compose` degrades to the
+    hint bank on every turn (`tests/integration/test_llm_degradation.py`).
+    It is only invisible, which is what the warning below fixes -- the
+    provider is then constructed exactly as it always was."""
     provider_cls = get_provider_class(model[ModelKey.PROVIDER.value])
     if provider_cls is TemplateProvider:
         return TemplateProvider(phrases=_INERT_TEMPLATE_PHRASES)
+    if not has_api_key():
+        # WARNING is load-bearing, not a taste call: this project installs no
+        # logging.basicConfig anywhere, so the root logger stays at its
+        # WARNING default and an INFO line would never reach the operator's
+        # stderr -- and this is the one thing about the run they cannot see
+        # otherwise. Presence only: has_api_key() returns a bool, and the
+        # value is never read here, so nothing key-shaped can reach a log
+        # record (CLAUDE.md rules 39-40).
+        _log.warning(
+            "%s is not set: %s cannot call the model, so EVERY hint this game "
+            "comes from the deterministic template bank and the Step-0 "
+            "declaration will say so. Set %s before the game for live hints.",
+            API_KEY_ENV_VAR, provider_cls.__name__, API_KEY_ENV_VAR,
+        )
     return provider_cls(
         gatekeeper=gatekeeper,
         model_id=model[ModelKey.MODEL_ID.value],

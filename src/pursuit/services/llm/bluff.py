@@ -75,6 +75,13 @@ async def compose(plan: DeceptionPlan, context: BluffContext) -> str:
 
     outcome = await _complete(plan, context)
     if isinstance(outcome, LlmFailure):
+        # DEBUG, deliberately not WARNING (matching `_complete`'s own line):
+        # on a keyless box this fires EVERY turn and would bury the single
+        # startup warning that actually tells the operator something
+        # (`network/language_wiring._build_provider`). The operator-facing
+        # signals are that warning and the Step-0 declaration, not per-turn
+        # noise on a path Phase 4 sanctioned.
+        _log.debug("bluff fell back to the hint bank: %s", outcome.reason.value)
         return context.hint_bank.select(plan, arena=context.arena)
 
     candidate = _usable_text(outcome)
