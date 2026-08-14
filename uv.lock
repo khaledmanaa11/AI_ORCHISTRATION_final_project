@@ -1872,6 +1872,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "fastmcp" },
+    { name = "httpx" },
     { name = "psutil" },
     { name = "pyngrok" },
 ]
@@ -1890,6 +1891,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.121.0" },
     { name = "fastmcp", specifier = ">=3.4.5" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "pyngrok", specifier = ">=8.1.2" },
 ]
