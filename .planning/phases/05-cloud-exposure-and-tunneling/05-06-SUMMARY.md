@@ -58,7 +58,7 @@ patterns-established:
   - "Attribution measured before blame: a flaky test was probed at a pre-change worktree, at HEAD, with and without the suspect guard, before being logged as not-ours"
 
 # Metrics
-duration: 65min
+duration: 75min
 completed: 2026-08-14
 ---
 
@@ -68,8 +68,8 @@ completed: 2026-08-14
 
 ## Performance
 
-- **Duration:** ~65 min
-- **Started:** 2026-08-14T12:44Z · **Completed:** 2026-08-14T13:49Z
+- **Duration:** ~75 min
+- **Started:** 2026-08-14T12:44Z · **Completed:** 2026-08-14T13:58Z
 - **Tasks:** 3 of 3
 - **Files created:** 5 · **Files modified:** 6
 
