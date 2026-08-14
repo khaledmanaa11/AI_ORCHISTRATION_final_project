@@ -82,27 +82,25 @@ wrapper whose cause is retryable is retried, and EVERYTHING ELSE -- no cause, an
 cause, or a cause in ``RAISE_UNRETRIED_ERRORS`` (so a scheme-less URL still fails loudly at the
 handshake even when fastmcp wraps it) -- is re-raised untouched.
 
-DELIBERATELY NOT USED -- ``httpx.HTTPError``. ``HTTPStatusError`` is a SIBLING under it (its
-MRO goes straight to ``HTTPError``, never through ``TransportError``), and a 403 from 05-02's
-``SharedSecretMiddleware`` is an application-level answer about OUR OWN credentials -- never a
-transport failure, and exactly as unretried and unaccused as ``ToolError``. That is empirically
-anchored, not an MRO argument:
-``tests/integration/test_secret_channel.py::test_wrong_secret_fails_every_call`` drives the
-real fastmcp client over a real socket and asserts
-``pytest.raises(httpx.HTTPStatusError, match="403")``, so using ``HTTPError`` here would
-demonstrably have swept the production 403 into the retry ladder and turned our own wrong
-secret into an accusation against the peer.
+DECIDED BY STATUS, NOT BY CLASS -- ``retryable_status`` (added 05-10), and with it the whole
+``httpx.HTTPError``-is-deliberately-not-used argument, moved to the sibling
+``deadline_status.py`` at this file's own 150-code-line gate. ``HTTPStatusError`` is the one
+class whose type cannot answer the question: a 502 from the peer's tunnel is transient, a 403
+about our own shared secret is not. Read that module before changing either decision.
 """
 
 import httpx
 from fastmcp.exceptions import ToolError
 from mcp import McpError
 
+from pursuit.network.deadline_status import retryable_status
+
 __all__ = (
     "RAISE_UNRETRIED_ERRORS",
     "RETRYABLE_TRANSPORT_ERRORS",
     "DeadlineExpired",
     "error_evidence",
+    "retryable_status",
     "unwraps_to_retryable",
 )
 
@@ -139,22 +137,30 @@ application-level rejection (``ToolError``) or a deterministic fault of our own
 greppable and testable; the except clause spells them out again at the point it fires."""
 
 
+# THE one retryability question, asked in exactly one place so the class test and the status
+# test can never drift apart. `retryable_status` is a PREDICATE, not a class, so a wrapped 502
+# would go unrecognised if the two were wired separately -- 05-10 joins them here rather than
+# leaving a second, silently narrower copy in `error_evidence`.
+def _is_retryable(exc: BaseException) -> bool:
+    return isinstance(exc, RETRYABLE_TRANSPORT_ERRORS) or retryable_status(exc)
+
+
 def unwraps_to_retryable(exc: BaseException) -> bool:
     """True when *exc* is a WRAPPER around a retryable transport failure.
 
-    The decision is made by the two named tuples above and by the DIRECT cause only -- see this
-    module's docstring for why "retry RuntimeError" would have been a catch-all in all but name.
-    No cause, an unrelated cause, or a cause that is itself raise-first: False, so the caller
-    re-raises the wrapper untouched.
+    The decision is made by the two named tuples above, by `retryable_status`, and by the DIRECT
+    cause only -- see this module's docstring for why "retry RuntimeError" would have been a
+    catch-all in all but name. No cause, an unrelated cause, or a cause that is itself
+    raise-first: False, so the caller re-raises the wrapper untouched.
     """
     cause = exc.__cause__
     if cause is None or isinstance(cause, RAISE_UNRETRIED_ERRORS):
         return False
-    return isinstance(cause, RETRYABLE_TRANSPORT_ERRORS)
+    return _is_retryable(cause)
 
 
 def error_evidence(exc: BaseException) -> str:
-    """The `last_error` text a TechnicalWin carries -- the ONE definition, used by both of
+    """The `last_error` text a TechnicalWin carries -- the ONE definition, used by every one of
     `call_with_retry`'s retryable clauses.
 
     A grader reading the artifact sees the real fault ("ConnectError: All connection attempts
@@ -163,6 +169,6 @@ def error_evidence(exc: BaseException) -> str:
     """
     text = f"{type(exc).__name__}: {exc}"
     cause = exc.__cause__
-    if cause is not None and isinstance(cause, RETRYABLE_TRANSPORT_ERRORS):
+    if cause is not None and _is_retryable(cause):
         text += f" (cause: {type(cause).__name__}: {cause})"
     return text

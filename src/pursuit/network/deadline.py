@@ -39,6 +39,12 @@ alone was measured INSUFFICIENT: on the CONNECT path fastmcp re-raises the httpx
 RuntimeError's direct CAUSE -- never about the RuntimeError class itself. The FULL argument,
 member by member and shape by shape, lives with the two tuples in the sibling
 ``deadline_errors.py`` (split at the 150-code-line gate); read it before changing either tuple.
+
+05-10 adds a FOURTH decision, made by HTTP STATUS rather than by exception class: an enumerated
+``RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}`` is retried and EVERY other status still
+propagates unretried, 403 and 501 included. The whole argument lives in ``deadline_status.py``
+and is deliberately not repeated here; this module asks it BY NAME and never branches on a
+status code inline.
 """
 
 import asyncio
@@ -53,13 +59,16 @@ from pursuit.network.deadline_errors import (
     RETRYABLE_TRANSPORT_ERRORS,
     DeadlineExpired,
     error_evidence,
+    retryable_status,
     unwraps_to_retryable,
 )
+from pursuit.network.deadline_wait import bounded, wait_for_opponent
 from pursuit.network.verdict import CallOutcome, TechnicalWin, TechnicalWinReason
 
 # __all__ is an immutable tuple, not a list, so it is not module-level mutable state (NET-02).
 # DeadlineExpired / RETRYABLE_TRANSPORT_ERRORS / RAISE_UNRETRIED_ERRORS are RE-EXPORTED from
-# deadline_errors.py, so every pre-05-09 importer of this module resolves unchanged.
+# deadline_errors.py and wait_for_opponent from deadline_wait.py, so every pre-05-09 importer
+# of this module resolves unchanged.
 __all__ = (
     "CallOutcome",
     "RAISE_UNRETRIED_ERRORS",
@@ -70,29 +79,6 @@ __all__ = (
     "call_with_retry",
     "wait_for_opponent",
 )
-
-
-async def _bounded(awaitable: Awaitable[object], timeout: float) -> object:
-    """Await awaitable, bounded by timeout; raise DeadlineExpired on expiry.
-
-    The single place asyncio.wait_for is called (QUAL-02) -- reused by both wait_for_opponent
-    and every call_with_retry attempt.
-    """
-    try:
-        return await asyncio.wait_for(awaitable, timeout=timeout)
-    except TimeoutError as exc:
-        raise DeadlineExpired(f"No response within {timeout} second deadline") from exc
-
-
-async def wait_for_opponent(queue: asyncio.Queue, *, timeout: float) -> object:
-    """Bound the WAIT_OPPONENT state on a single queued envelope.
-
-    `queue` is the per-process asyncio.Queue that receiving MCP tools enqueue onto. `timeout`
-    is the per-attempt deadline in seconds, keyword-only with no default (QUAL-11) -- callers
-    supply NetworkParams.response_timeout (Table 19 row 6). Returns the queued envelope; raises
-    DeadlineExpired if the deadline passes with the queue still empty.
-    """
-    return await _bounded(queue.get(), timeout)
 
 
 async def call_with_retry(
@@ -124,8 +110,9 @@ async def call_with_retry(
     Raises `RAISE_UNRETRIED_ERRORS` unchanged and never retried, burning no backoff: a
     ToolError is an application-level rejection rather than a transport failure (RESEARCH
     Pitfall 4), and the two httpx members are deterministic faults of our own. An
-    `httpx.HTTPStatusError` (e.g. the 403 from a wrong shared secret) matches no clause here
-    and propagates for the same reason -- it is an answer, not a transport failure.
+    `httpx.HTTPStatusError` outside `RETRYABLE_STATUS_CODES` -- the 403 from a wrong shared
+    secret, a 404, a 501 -- is re-raised from inside its own clause for the same reason: it is
+    an answer about our own request, not a transport failure (05-10).
 
     D-13 policy: missed deadline -> retry `retries` times with `backoff` between attempts ->
     technical win with measured evidence -> returned cleanly; this function never ends the
@@ -138,7 +125,7 @@ async def call_with_retry(
     for attempt in range(total_attempts):
         attempts = attempt + 1
         try:
-            result = await _bounded(send(), timeout)
+            result = await bounded(send(), timeout)
         # Spelled out rather than `except RAISE_UNRETRIED_ERRORS` so the three classes are
         # visible at the point the clause fires; deadline_errors.py names the same three and
         # carries the argument for each. MUST stay before the retryable clause: the two httpx
@@ -146,6 +133,14 @@ async def call_with_retry(
         except (ToolError, httpx.LocalProtocolError, httpx.UnsupportedProtocol):
             raise
         except RETRYABLE_TRANSPORT_ERRORS as exc:
+            last_error = error_evidence(exc)
+        # Decided by STATUS, not by class (05-10). `HTTPStatusError` is a sibling of
+        # `TransportError`, not a subclass, so it reaches this clause untouched by the two
+        # above -- and a 4xx is re-raised from INSIDE it, unretried, burning no backoff, so
+        # the 403 contract `test_secret_channel.py` pins is unchanged.
+        except httpx.HTTPStatusError as exc:
+            if not retryable_status(exc):
+                raise
             last_error = error_evidence(exc)
         # The SAME failure, wrapped: fastmcp re-raises a connect-path fault as
         # `RuntimeError(f"Client failed to connect: {exc}") from exc`. Narrow by CAUSE, never

@@ -219,6 +219,19 @@ technical win. Deliberately not done in 05-09: it is a new cross-module dependen
 `deadline.py`'s pure, FastMCP-free retry ladder into tunnel state, and this plan's scope was
 the exception taxonomy.
 
+### 2026-08-14, 05-10: the 429 residual belongs HERE, not in a new item
+
+05-10 makes **429 Too Many Requests** retryable (`deadline_status.RETRYABLE_STATUS_CODES`).
+An EXHAUSTED 429 ladder therefore accuses the peer for a rate limit that **our own request
+volume may have tripped** -- ngrok's free tier meters the tunnel, not the opponent. That is
+identical IN KIND to the ours-versus-theirs ambiguity examined and accepted above, so it is
+recorded as a widening of this item rather than as a seventh entry pretending to be new.
+
+RETRYING a 429 is nonetheless correct, and is not the residual: it is transient by definition
+and conventionally carries `Retry-After`, so a backoff is exactly the right answer. Only the
+EXHAUSTION case is ambiguous, and the one honest narrowing named above applies to it unchanged
+-- consult our own local `TunnelManager` state before naming the peer.
+
 ---
 
 ## 6. A 5xx/429 from the peer or the tunnel is an uncaught `HTTPStatusError` mid-game
