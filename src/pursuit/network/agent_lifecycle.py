@@ -129,14 +129,36 @@ async def start_server(ctx: AgentContext) -> None:
     await ctx.runtime.start()
 
 
-async def shutdown_cleanly(ctx: AgentContext) -> None:
-    """GAME_OVER teardown: stop the watchdog daemon thread, then ask the
-    runtime to cancel its server task and release its listening socket.
-    Idempotent. Stopping the watchdog here matters: left running past
-    GAME_OVER, its daemon thread would eventually see no further touch()
-    calls and treat a clean shutdown as a freeze (Rule 1)."""
+def stop_watchdog(ctx: AgentContext) -> None:
+    """Teardown half one: stop the freeze-detector's daemon thread.
+    Idempotent. Split out (05-04) so `agent_entrypoint.run_agent` can stop
+    it BEFORE its bounded post-audit linger and the runtime AFTER --
+    `Watchdog.touch()` is called nowhere in the audit path, and a watchdog
+    left running past GAME_OVER treats a clean shutdown as a freeze, whose
+    action is `os._exit(1)` (NET-07)."""
     ctx.watchdog.stop()
+
+
+async def stop_runtime(ctx: AgentContext) -> None:
+    """Teardown half two: ask the runtime to cancel its server task and
+    release its listening socket. Idempotent, and deliberately unchanged --
+    the linger, never a gentler stop, is what leaves a peer still
+    mid-exchange a live listener."""
     await ctx.runtime.stop()
+
+
+async def shutdown_cleanly(ctx: AgentContext) -> None:
+    """GAME_OVER teardown, as the COMPOSITION of the two halves above --
+    never a third copy of the same two statements, or this wrapper and
+    `run_agent` would silently drift apart. Idempotent.
+
+    Since 05-04 its only remaining callers are tests: `run_agent`
+    interleaves a bounded `agent_teardown.linger_for_peer` window BETWEEN
+    the halves, so a peer still retrying its FINAL_REVEAL finds a live
+    listener instead of a socket closed milliseconds after our own audit
+    matched (05-UAT.md G1)."""
+    stop_watchdog(ctx)
+    await stop_runtime(ctx)
 
 
 def __getattr__(name: str):

@@ -7,10 +7,17 @@ including `main.py`.
 
 `run_agent` wraps its whole body in `run_with_tunnel` (tunnel_wiring.py):
 when tunnel.json's domain env var is set, the tunnel starts BEFORE the
-runtime comes up and stops AFTER `shutdown_cleanly` returns; when unset --
+runtime comes up and stops AFTER the whole teardown returns -- including
+the linger, since the teardown lives inside the wrapped body; when unset --
 the default for every existing test and dev flow -- `run_with_tunnel` is a
-transparent no-op, so `run_agent` behaves exactly as it did before this
+transparent no-op, so `run_agent` behaves exactly as it did before that
 plan.
+
+05-04 (05-UAT.md G1): teardown is no longer one `shutdown_cleanly` call.
+It is that function's two halves with a bounded, Table-19-sourced grace
+window between them (`agent_teardown.linger_for_peer`), so a peer still
+retrying its FINAL_REVEAL at us is not cut off by a socket we closed
+milliseconds after our own audit matched.
 
 06-03 (D-61/D-62/D-63/D-67): Step-0 is declared+signed before the handshake
 and rides its third payload digest; on a successful handshake the
@@ -32,7 +39,13 @@ from fastmcp.exceptions import ToolError
 from pursuit.constants import Outcome
 from pursuit.network.agent_audit_exchange import record_technical_loss
 from pursuit.network.agent_audit_wiring import declare_step0, run_final_audit, write_declaration
-from pursuit.network.agent_lifecycle import default_context, shutdown_cleanly, start_server
+from pursuit.network.agent_lifecycle import (
+    default_context,
+    start_server,
+    stop_runtime,
+    stop_watchdog,
+)
+from pursuit.network.agent_teardown import linger_for_peer
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
 from pursuit.network.handshake import make_client_caller, perform_handshake
@@ -101,6 +114,18 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                     outcome = audit_outcome
             return outcome
         finally:
-            await shutdown_cleanly(ctx)
+            # 05-04: shutdown_cleanly's two halves, with a bounded grace
+            # window between them. The watchdog goes FIRST -- touch() is
+            # called nowhere in the audit path, so its freeze action
+            # (os._exit(1)) would otherwise be live across the whole linger
+            # (NET-07). The try/finally is load-bearing, not decoration:
+            # the linger awaits asyncio.wait_for, a cancellation point, and
+            # CancelledError is a BaseException -- three bare statements
+            # here would leak the server task and the bound port on Ctrl-C.
+            stop_watchdog(ctx)
+            try:
+                await linger_for_peer(ctx)
+            finally:
+                await stop_runtime(ctx)
 
     return await run_with_tunnel(tunnel, _play)
