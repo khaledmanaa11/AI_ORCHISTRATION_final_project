@@ -42,19 +42,52 @@ in both directions, no special-casing needed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from pursuit.security import commit_pack
+from pursuit.security.audit_record import AuditRecord, all_matched
+from pursuit.security.audit_shape import NO_USABLE_TURN, container_detail, join_key_turn
 from pursuit.security.audit_state import state_binding_detail
 
+# AuditRecord/all_matched are RE-EXPORTED from audit_record.py (split at the
+# 150-code-line gate when this plan's guards landed), so every pre-05-10
+# importer of this module resolves unchanged. An immutable tuple, not a list, so
+# it is not module-level mutable state (NET-02).
+__all__ = ("AuditRecord", "all_matched", "audit_peer_records")
 
-@dataclass(frozen=True)
-class AuditRecord:
-    """One turn's audit outcome."""
-
-    turn: int
-    matched: bool
-    detail: str
+# --- THE BOUNDARY RULE, written where the boundary is --------------------
+#
+# ANY function that reads a structure the PEER sent must treat malformed input
+# as a NAMED MISMATCH, never as an exception. Not a crash, and not a free pass
+# either: a peer whose records we cannot parse has not published usable nonces,
+# which is exactly what rule 36 sanctions, so it must still LOSE. What changes
+# is that we reach a verdict instead of dying before writing one.
+#
+# This is written once, here, because ONE pattern produced SIX separate defects
+# in Phase 5, each found by a different pass and each with the same consequence:
+# an unhandled exception on peer-controlled data escapes to main.py and kills
+# the process, so WE become the side that published no nonces (rule 36) and our
+# own log carries no verdict at all -- the artifact machine B produced on
+# 2026-08-13.
+#
+#   1. `httpx.ConnectError` escaping `call_with_retry` (05-04 found, 05-09 closed).
+#   2. The wrapped `RuntimeError("Client failed to connect: ...") from exc`
+#      connect shape (05-09 found and closed in flight; a widened tuple ALONE
+#      still let the artifact through).
+#   3. `commit_pack.verify_reveal(**payload)` raising `TypeError` on any other
+#      payload shape (05-05 found and contained at `_audit_one`, below).
+#   4. `audit_peer_records` raising on a malformed FINAL_REVEAL -- at the raw
+#      `entry["turn"]`, at `_missing_turns`' set comprehension and at the final
+#      numeric sort, ALL of them outside instance 3's try/except (05-VERIFICATION
+#      found it by probe; 05-10 closed it).
+#   5. `commit_pack.build_commit_payload` raising `ValueError` on a
+#      peer-controlled `intent` outside {truth, lie}, or on an empty `nonce` --
+#      NOT caught by instance 3's `(TypeError, KeyError)`. Found reviewing 05-10,
+#      inside the very function that plan hardens; closed by widening below.
+#   6. `handshake_step0._step0_verified` raising `AttributeError` on a
+#      `step0_declaration` that is not an object -- found sweeping for a sixth
+#      during 05-10 and closed in that module the same way.
+#
+# A SEVENTH is now a review failure rather than a discovery.
+# -------------------------------------------------------------------------
 
 
 def _audit_one(
@@ -63,8 +96,14 @@ def _audit_one(
 ) -> AuditRecord:
     """Per-entry checks, in order; the FIRST failing check's detail is
     reported -- never computed-but-hidden. See module docstring for why a
-    trailing commit-without-reveal is `matched=True`, not a mismatch."""
-    turn = entry["turn"]
+    trailing commit-without-reveal is `matched=True`, not a mismatch.
+
+    The SHAPE gate runs first (boundary rule above, instance 4): an entry that
+    cannot serve as a join key is a named mismatch carrying `NO_USABLE_TURN`,
+    never the raw `entry["turn"]` that used to raise here."""
+    turn, shape_detail = join_key_turn(entry)
+    if turn is None:
+        return AuditRecord(turn=NO_USABLE_TURN, matched=False, detail=shape_detail)
     if turn not in observed_commits:
         return AuditRecord(turn=turn, matched=False, detail=f"turn {turn}: no observed commit")
     # `verify_reveal(h, **payload)` requires EXACTLY {state,move,intent,nonce}
@@ -76,9 +115,16 @@ def _audit_one(
     # becomes a named mismatch here rather than an exception. This is the one
     # production call site that sees peer data (grep: the only other caller is
     # scripts/gate6_tamper.py, over records it built itself).
+    #
+    # ValueError is INSTANCE 5 of the boundary rule above and was missing here
+    # until 05-10: `build_commit_payload` raises it -- not TypeError -- for a
+    # peer-controlled `intent` outside {truth, lie} and for an empty `nonce`.
+    # Measured: `ValueError: build_commit_payload: intent must be one of
+    # ['lie', 'truth'], got 'maybe'` escaped this clause, escaped
+    # `audit_peer_records`, and `agent_entrypoint` guards only ToolError.
     try:
         rehash_ok = commit_pack.verify_reveal(observed_commits[turn], **entry["payload"])
-    except (TypeError, KeyError) as exc:
+    except (TypeError, KeyError, ValueError) as exc:
         return AuditRecord(
             turn=turn, matched=False,
             detail=f"turn {turn}: malformed final-reveal payload -- {exc}",
@@ -114,8 +160,15 @@ def _missing_turns(
 ) -> list[AuditRecord]:
     """Rule 36 coverage check: a turn watched FULLY exchanged (committed
     AND revealed in-game) but simply absent from `peer_records` -- e.g.
-    every turn, via an empty `{"records": []}` -- is itself a mismatch."""
-    reported = {entry["turn"] for entry in peer_records}
+    every turn, via an empty `{"records": []}` -- is itself a mismatch.
+
+    An entry we cannot parse REPORTS NO TURN and is skipped when building
+    `reported`; the check keeps running for every other entry. The whole check
+    must NOT bail on one malformed entry: a peer would then append a single
+    garbage record and this coverage check would silently vanish for ALL of its
+    valid turns -- the `{"records": []}` evasion re-opened through a side
+    door."""
+    reported = {turn for turn, _ in map(join_key_turn, peer_records) if turn is not None}
     fully_exchanged = set(observed_commits) & set(observed_reveals)
     return [
         AuditRecord(
@@ -146,7 +199,15 @@ def audit_peer_records(
     construction. `agent_audit_wiring.run_final_audit` is the production
     supplier -- the SAME `ctx.candidate_game_ids` set for both directions,
     passed through unchanged and never reconstructed, with `forbidden_role`
-    the only per-direction difference."""
+    the only per-direction difference.
+
+    Total over peer-supplied input (the boundary rule above): an unreadable
+    CONTAINER is one named mismatch and nothing else -- it does not fall through
+    to the coverage check, so an unparseable peer and the `{"records": []}`
+    evasion stay distinguishable in our own evidence even though both lose."""
+    container = container_detail(peer_records)
+    if container is not None:
+        return [AuditRecord(turn=NO_USABLE_TURN, matched=False, detail=container)]
     records = [
         _audit_one(
             entry, observed_commits, observed_reveals,
@@ -157,8 +218,3 @@ def audit_peer_records(
     records.extend(_missing_turns(observed_commits, observed_reveals, peer_records))
     records.sort(key=lambda record: record.turn)
     return records
-
-
-def all_matched(records: list[AuditRecord]) -> bool:
-    """True only when every record matched (vacuously True for an empty list)."""
-    return all(record.matched for record in records)

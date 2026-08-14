@@ -10,6 +10,8 @@ own implementation to publish content) still agrees.
 
 from __future__ import annotations
 
+import pytest
+
 from pursuit.network.config_hash import config_digest
 from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.handshake import (
@@ -93,6 +95,31 @@ async def test_a_digest_only_peer_still_agrees():
     assert result.outcome is HandshakeOutcome.AGREED
     assert "digest-only" in result.detail
     assert result.peer_step0_declaration is None
+
+
+@pytest.mark.parametrize("container", ["a-string", ["a", "list"], 7, 3.5])
+async def test_a_declaration_container_that_is_not_an_object_does_not_kill_us(container):
+    """05-10, INSTANCE 6 of `audit.py`'s boundary rule, found by sweeping for a
+    sixth. `_step0_verified` did `remote_envelope.get("declaration")` on
+    whatever the peer put in `step0_declaration`, so a str/list/number raised
+    `AttributeError` -- measured: `'str' object has no attribute 'get'`.
+    `evaluate`'s try/except wraps the DECODE block only, and on the outbound
+    half this escaped `perform_handshake` into `run_agent` and killed the
+    process AT THE HANDSHAKE, costing the league game before move 1.
+
+    It resolves to the EXISTING digest-only outcome -- there is no content to
+    verify -- named distinctly in the detail so the log still says what
+    happened. Aborting instead would be a new false-accusation path against an
+    honest foreign container shape (rules 16/22), and it would buy nothing: a
+    peer wanting this outcome can already have it by sending no declaration."""
+    result, machine = await _handshake(
+        step0_digest=_SIGNATURE["digest"], step0_declaration=container,
+    )
+
+    assert result.outcome is HandshakeOutcome.AGREED
+    assert result.aborted is False
+    assert machine.state is State.HANDSHAKE
+    assert "unreadable" in result.detail
 
 
 async def test_declaration_hmac_mismatch_when_our_own_secret_is_wrong():
