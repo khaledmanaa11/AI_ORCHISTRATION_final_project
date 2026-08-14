@@ -265,7 +265,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 13/14 | In Progress | - |
-| 5. Cloud Exposure and Tunneling | 3/3 | In Progress (GATE-5 both criteria PENDING -- human smoke run + remote round) | - |
+| 5. Cloud Exposure and Tunneling | 4/8 | In Progress (GATE-5 criterion 1 PASS; criterion 2 PENDING -- gap-closure plans 05-04..05-08, then the human remote round attempt 2) | - |
 | 6. Security and Cryptography | 4/4 | Executed -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md passed 11/11; verify-work pending | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |
