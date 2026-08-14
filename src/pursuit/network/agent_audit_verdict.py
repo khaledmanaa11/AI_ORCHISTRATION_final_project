@@ -22,29 +22,82 @@ from pursuit.network.event_log import EventField, EventType, append_event
 from pursuit.network.verdict import TechnicalWin, TechnicalWinReason
 from pursuit.security.audit import AuditRecord, all_matched
 
+_OWN_SEND_FAILED = "own_final_reveal_send_failed"
+"""The AUDIT_INCOMPLETE reason string (05-04). Deliberately NOT a
+`TechnicalWinReason` member: this record is not a technical win, and the
+subject of its sentence is OUR OWN send -- never the peer (rules 16/22)."""
 
-def _technical_win_record(ctx: AgentContext, verdict: TechnicalWin) -> dict:
+
+def _verdict_record(
+    ctx: AgentContext, verdict: TechnicalWin, *, event: EventType, reason: str,
+) -> dict:
+    """The field assembly both verdict-shaped records share -- one copy,
+    two event types (no-duplication rule). Every field here is measured by
+    the retry ladder that produced *verdict*, never assumed."""
     return {
         EventField.GAME_UID: ctx.game_uid,
         EventField.TURN: ctx.state.turn,
-        EventField.EVENT: EventType.TECHNICAL_WIN.value,
+        EventField.EVENT: event.value,
         EventField.SENDER: ctx.role,
         EventField.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
         "retries_attempted": verdict.attempts,
         "timeout_seconds": verdict.timeout_seconds,
-        "reason": verdict.reason.value,
+        "reason": reason,
     }
+
+
+def _technical_win_record(ctx: AgentContext, verdict: TechnicalWin) -> dict:
+    return _verdict_record(
+        ctx, verdict, event=EventType.TECHNICAL_WIN, reason=verdict.reason.value,
+    )
 
 
 def _record_to_dict(record: AuditRecord) -> dict:
     return {"turn": record.turn, "matched": record.matched, "detail": record.detail}
 
 
+def record_audit_incomplete(ctx: AgentContext, verdict: TechnicalWin) -> None:
+    """05-UAT.md G1: THIS side's own FINAL_REVEAL push failed while the turn
+    loop had ALREADY produced a board outcome. That is evidence about us --
+    our send did not land -- and never grounds to declare the peer
+    unresponsive. The 2026-08-13 remote round made the distinction concrete:
+    machine B declared machine A `opponent_unresponsive` while A's own
+    `peer_audit` already carried B's five ledger hashes byte-for-byte, so
+    B's push HAD in fact been delivered and processed.
+
+    Appends one AUDIT_INCOMPLETE record carrying the same measured evidence
+    a technical win would carry, plus the ladder's elapsed time and last
+    error, and returns None: the board outcome stands and `run_final_audit`
+    continues into the receive + audit steps."""
+    record = _verdict_record(
+        ctx, verdict, event=EventType.AUDIT_INCOMPLETE, reason=_OWN_SEND_FAILED,
+    )
+    record.update(elapsed_seconds=verdict.elapsed_seconds, last_error=verdict.last_error)
+    append_event(ctx.log_path, record)
+
+
 def record_technical_loss(ctx: AgentContext, verdict: TechnicalWin) -> Outcome:
     """Mirrors turn_commit_send.technical_loss()'s log+return shape, MINUS
     the machine.attempt(GAME_OVER) call -- ctx.machine is already terminal
-    here (RESEARCH: GAME_OVER has no outgoing edges)."""
+    here (RESEARCH: GAME_OVER has no outgoing edges).
+
+    ALSO appends a CORRECTED `game_over` record (05-04), for the same reason
+    `record_audit_verdict`'s mismatch path already does: `game_over` is the
+    only event in the log carrying an `outcome` field, `run_turn_loop` wrote
+    its own with the BOARD outcome before any of this ran, and the log's
+    LAST `game_over` is the authoritative one. Without this second record a
+    technical loss is invisible to any reader of the log -- exactly what the
+    2026-08-13 round produced, where machine B's log ends on
+    `game_over=capture` while its process exited on a technical loss. The
+    earlier record is left standing: the log is append-only evidence."""
     append_event(ctx.log_path, _technical_win_record(ctx, verdict))
+    append_event(
+        ctx.log_path,
+        turn_events.game_over_record(
+            game_uid=ctx.game_uid, turn=ctx.state.turn, sender=ctx.role,
+            outcome=Outcome.TECHNICAL_LOSS,
+        ),
+    )
     return Outcome.TECHNICAL_LOSS
 
 
@@ -59,14 +112,10 @@ def record_audit_verdict(
     Outcome.TECHNICAL_LOSS -- never a second, parallel verdict type.
 
     A mismatch additionally appends a CORRECTED `game_over` record (06-05,
-    Gap 2). `run_turn_loop` writes its own `game_over` with the BOARD
-    outcome before this audit ever runs (orchestrator.py), and `game_over`
-    is the only event in the log carrying an `outcome` field -- so without
-    this second record the log's outcome would still read as the cheating
-    peer's win, no matter what the audit concluded. The earlier record is
-    deliberately left in place rather than rewritten: the log is
-    append-only evidence, and the pre-audit board result is a real fact
-    about the game. The LAST game_over record is the audited one."""
+    Gap 2) -- delegated to `record_technical_loss`, which owns that
+    two-record pattern for every technical loss recorded after the turn
+    loop (05-04). It is never re-implemented here: a second copy would let
+    the two paths drift on which record is the log's last word."""
     matched = all_matched(peer_audit) and all_matched(self_audit)
     append_event(
         ctx.log_path,
@@ -90,12 +139,4 @@ def record_audit_verdict(
         timeout_seconds=0.0, backoff_seconds=0.0, elapsed_seconds=elapsed_seconds,
         last_error="; ".join(mismatches),
     )
-    append_event(ctx.log_path, _technical_win_record(ctx, verdict))
-    append_event(
-        ctx.log_path,
-        turn_events.game_over_record(
-            game_uid=ctx.game_uid, turn=ctx.state.turn, sender=ctx.role,
-            outcome=Outcome.TECHNICAL_LOSS,
-        ),
-    )
-    return Outcome.TECHNICAL_LOSS
+    return record_technical_loss(ctx, verdict)

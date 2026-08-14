@@ -82,7 +82,17 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                 # process on the way out, after the game already resolved.
                 audit_started = time.monotonic()
                 try:
-                    audit_outcome = await run_final_audit(ctx)
+                    # board_outcome (05-04) is THE production wiring for
+                    # 05-UAT.md G1: without this argument arriving from here,
+                    # a failed own push still accuses a peer that answered.
+                    audit_outcome = await run_final_audit(ctx, board_outcome=outcome)
+                # This branch stays ACCUSATORY on purpose -- do not fold it
+                # into the non-accusatory audit_incomplete path above.
+                # `deadline.call_with_retry` re-raises ToolError unretried by
+                # design: a peer whose tool body REJECTED our call performed
+                # an act of its own (06-06's PEER_PROTOCOL_ERROR), which is a
+                # different fact from our own send timing out, and the two
+                # must not collapse into one verdict.
                 except ToolError as exc:
                     audit_outcome = record_technical_loss(
                         ctx, peer_protocol_verdict(exc, audit_started),

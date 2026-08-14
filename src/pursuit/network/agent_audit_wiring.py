@@ -17,6 +17,7 @@ from pursuit.network.agent_audit_exchange import (
     observed,
     push_final_reveal,
     receive_final_reveal,
+    record_audit_incomplete,
     record_audit_verdict,
     record_technical_loss,
 )
@@ -89,7 +90,9 @@ def write_declaration(
     step0_collect.record_game_played(cfg.config_dir / _COUNTER_FILENAME)
 
 
-async def run_final_audit(ctx: AgentContext) -> Outcome | None:
+async def run_final_audit(
+    ctx: AgentContext, *, board_outcome: Outcome | None = None,
+) -> Outcome | None:
     """Game-end mutual audit (D-67, SEC-05/08): send this side's own
     ledger as FINAL_REVEAL, receive the opponent's, and audit BOTH
     directions -- the opponent's claims against what we observed on the
@@ -97,12 +100,29 @@ async def run_final_audit(ctx: AgentContext) -> Outcome | None:
     (CONTEXT, locked: symmetric honesty). Called only when
     `ctx.security.commit_reveal` is True, AFTER `run_turn_loop` returns --
     `ctx.machine` is already terminal; this function never calls
-    `ctx.machine.attempt` again."""
+    `ctx.machine.attempt` again.
+
+    *board_outcome* is the turn loop's own result, supplied by
+    `agent_entrypoint.run_agent` (05-04). It decides ONLY what a failed
+    OUTBOUND push means, and nothing else:
+
+    - a push failure with a board outcome standing is evidence about US, so
+      it records a non-accusatory `audit_incomplete` and FALLS THROUGH to
+      the receive + audit steps (05-UAT.md G1: our own send failing is not
+      proof the peer was silent, and aborting here is what left machine B
+      with no verdict at all);
+    - a push failure with NO board outcome still returns TECHNICAL_LOSS --
+      the turn loop never resolved, so nothing else stands;
+    - a failed RECEIVE still returns TECHNICAL_LOSS -- a peer that withholds
+      its own nonces is the peer's own act (rule 36);
+    - a genuine AUDIT_HASH_MISMATCH still returns TECHNICAL_LOSS (D-67)."""
     own_records = CommitLedger(ledger_path(ctx)).read_all()
 
     send_verdict = await push_final_reveal(ctx, own_records)
     if send_verdict is not None:
-        return record_technical_loss(ctx, send_verdict)
+        if board_outcome is None:
+            return record_technical_loss(ctx, send_verdict)
+        record_audit_incomplete(ctx, send_verdict)
 
     peer_records, recv_verdict = await receive_final_reveal(ctx)
     if recv_verdict is not None:

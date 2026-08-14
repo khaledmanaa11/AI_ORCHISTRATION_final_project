@@ -40,6 +40,11 @@ class EventType(Enum):
     TECHNICAL_WIN = "technical_win"
     WATCHDOG_INCIDENT = "watchdog_incident"
     AUDIT_VERDICT = "audit_verdict"
+    # 05-04: our OWN final-reveal push failed while a board outcome already
+    # stood. Evidence about us, never an accusation (rules 16/22) -- added
+    # additively, exactly as AUDIT_VERDICT was, so the stable field set and
+    # the Phase-7 replay parser are untouched.
+    AUDIT_INCOMPLETE = "audit_incomplete"
 
 
 class EventField:

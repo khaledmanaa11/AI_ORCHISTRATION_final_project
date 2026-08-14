@@ -104,8 +104,16 @@ async def _play_to_turn_loop_end(cfg_a, cfg_b, *, game_uid, log_dir):
 
 async def _run_audit_and_merge(outcome_a, outcome_b, ctx_a, ctx_b):
     """The audit half of a full game, split out so a tamper test can run
-    it AFTER corrupting ledger/log state."""
-    audit_a, audit_b = await asyncio.gather(run_final_audit(ctx_a), run_final_audit(ctx_b))
+    it AFTER corrupting ledger/log state.
+
+    Each side's own board outcome is threaded through as `board_outcome`,
+    the SAME argument `agent_entrypoint.run_agent` supplies in production
+    (05-04) -- so this harness, the tamper sibling, and the four
+    `scripts/gate6_*.py` call sites all exercise the real shape."""
+    audit_a, audit_b = await asyncio.gather(
+        run_final_audit(ctx_a, board_outcome=outcome_a),
+        run_final_audit(ctx_b, board_outcome=outcome_b),
+    )
     final_a = audit_a if audit_a is not None else outcome_a
     final_b = audit_b if audit_b is not None else outcome_b
     return final_a, final_b

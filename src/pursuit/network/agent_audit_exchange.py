@@ -17,7 +17,11 @@ from __future__ import annotations
 
 import json
 
-from pursuit.network.agent_audit_verdict import record_audit_verdict, record_technical_loss
+from pursuit.network.agent_audit_verdict import (
+    record_audit_incomplete,
+    record_audit_verdict,
+    record_technical_loss,
+)
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.deadline import call_with_retry
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
@@ -32,6 +36,7 @@ __all__ = [
     "observed",
     "push_final_reveal",
     "receive_final_reveal",
+    "record_audit_incomplete",
     "record_audit_verdict",
     "record_technical_loss",
 ]
