@@ -62,3 +62,49 @@ Contain it where 06-06 contained `ToolError` — at the audit boundary — but r
 to `record_audit_incomplete` (05-04's non-accusatory path), never to a technical win:
 failing to CONNECT to a peer that has already torn down is evidence about the
 connection, not about the peer's honesty.
+
+---
+
+## 2. `agent_lifecycle.py` has two lines of headroom left (148/150)
+
+**Found:** 05-05 Task 1, measured after landing `default_context`'s `GameIdentity`.
+**Not a violation** — the gate passes. Logged so the NEXT change to that file starts
+by splitting rather than discovering this at commit time.
+
+`default_context` grew by 4 code lines (build the identity, hand it to both sinks,
+attach it to the returned context). 05-04 left the file at 144; it is now **148/150**.
+`agent_wiring.py` came the other way, 148 → **122**, because this plan relocated the
+two JSONL sink closures out of it into `game_identity.py`.
+
+**Suggested shape when the room is next needed:** move `stop_watchdog` / `stop_runtime`
+/ `shutdown_cleanly` into the existing `agent_teardown.py` (which already owns
+`linger_for_peer`) and re-export them, the same relocate-and-re-export move
+`secret_wiring.py` (05-02) and `game_identity.py` (05-05) both made. That is a
+coherent seam — one module owning teardown — worth ~10 code lines, and every caller
+resolves unchanged. Not done here: it is outside this plan's `files_modified` and
+this plan's own instruction was to split only if a file landed OVER the limit.
+
+---
+
+## 3. `commit_pack.verify_reveal(h, **payload)` is shape-fragile against peer data
+
+**Found:** 05-05 Task 3, while writing the malformed-state case the plan asked for.
+**Contained, not left open** — recorded because the containment is local, not general.
+
+`verify_reveal` takes `state`/`move`/`intent`/`nonce` as required keyword arguments,
+so ANY other payload shape from a peer (a missing key, an extra key, `state` not a
+dict) raises `TypeError` rather than returning False. `agent_entrypoint`'s guard is
+`except ToolError`, which does not catch it, so a peer's malformed FINAL_REVEAL would
+kill the process before any verdict was recorded — making **us** the side that
+published no nonces (rule 36), the same failure class 06-06 fixed for `ToolError`.
+
+**Contained in this plan** at `audit._audit_one`, the ONLY production call site that
+sees peer-supplied payloads (grep-confirmed; the other caller,
+`scripts/gate6_tamper.py`, operates on records it built itself): the call is wrapped
+and a malformed payload becomes a named `AuditRecord` mismatch — evidence — instead
+of an exception.
+
+**Left for a future plan:** whether `commit_pack` itself should validate-and-report
+rather than raise. That is a security-module contract change, `commit_pack.py` is not
+in this plan's `files_modified`, and D-59 deliberately makes that module strict. The
+containment above means nothing is exposed today.
