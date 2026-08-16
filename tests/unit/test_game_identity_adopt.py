@@ -146,6 +146,34 @@ def test_an_honest_foreign_convention_is_adopted_and_still_matches(foreign, tmp_
     assert intruder is not None and "not one of the ids on the table" in intruder
 
 
+def test_an_os_refusal_on_the_rename_degrades_the_report_never_the_game(tmp_path, monkeypatch):
+    """The belt-and-braces branch, driven by simulating the OS refusal that
+    `usable_peer_game_id` cannot portably enumerate (Win32 still reserves
+    `CON`, `LPT1` and friends; a reserved name is legal on ext4).
+
+    The contract is precise, and 'keeps our own uid' is only half of it: the
+    peer's id must STAY on the table, because dropping it would push the
+    peer's own honest records outside the candidate set and turn an
+    unwritable filename into a technical loss (rules 16/22)."""
+    ctx = _ctx(tmp_path)
+
+    def _refuse(self, target):
+        raise OSError(22, "Invalid argument")
+
+    monkeypatch.setattr(Path, "replace", _refuse)
+    adopt_negotiated_game_id(ctx, FakeResult("a-name-this-os-refuses"))
+
+    assert ctx.game_uid == OWN_UID
+    assert ctx.log_path == tmp_path / "logs" / f"{OWN_UID}.jsonl"
+    assert ctx.identity.game_uid == OWN_UID
+    assert ctx.negotiated_game_id == "a-name-this-os-refuses"
+    assert ctx.candidate_game_ids == {OWN_UID, "a-name-this-os-refuses"}
+    assert state_binding_detail(
+        _peer_entry("a-name-this-os-refuses"),
+        candidate_game_ids=ctx.candidate_game_ids, forbidden_role="thief",
+    ) is None
+
+
 def test_police_keeps_its_own_uid_and_still_records_an_honest_peer_id(tmp_path):
     """D-61 policy, unchanged: police never adopts. But it must still put the
     peer's id in the candidate set -- that is the half `audit_state.py` warns
