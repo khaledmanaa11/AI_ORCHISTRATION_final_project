@@ -1,13 +1,28 @@
-"""D-58 wire mechanics: the jitter-tolerant wait primitives -- split from
+"""D-58 wire mechanics: the jitter-tolerant wait legs -- split from
 `turn_commit.py` at the 150-code-line gate (Segal Table 5,
 pre-authorized), mirroring `handshake.py`/`handshake_wire.py`'s
-policy-vs-mechanism split. `next_protocol_message` generalizes
-`turn_buffer.await_move`'s own shape (tolerant of an interleaved HINT,
-bounded per-pull by `call_with_retry`'s existing NetworkParams ladder --
-no new timeout/retry/backoff number) to any expected type; the four
-`wait_for_*` functions built on top of it are each one named leg of the
-D-58 exchange (opponent COMMIT, ACK+opponent-COMMIT together, REVEAL
-capturing an early ACK, a still-outstanding ACK).
+policy-vs-mechanism split. The four `wait_for_*` functions here are each
+one named leg of the D-58 exchange (opponent COMMIT, ACK+opponent-COMMIT
+together, REVEAL capturing an early ACK, a still-outstanding ACK).
+
+The pull primitive they are all built on, `next_protocol_message`, moved
+to the sibling `turn_commit_pull.py` when 05-17 needed room here for the
+FINAL_REVEAL routing and for the docstring corrections that routing forces
+on three of these legs (this file was at 145/150 -- deferred item #11
+named this exact seam). It is re-exported below, unchanged for every
+importer.
+
+WHAT "DROPPED AS TOLERATED JITTER" NOW MEANS, because it changed. Each leg
+below still discards an arrival it was not waiting for. Until 05-17 that
+DESTROYED the envelope, which for a peer's FINAL_REVEAL meant our own
+audit later waited for a ledger we had already eaten, exhausted its
+ladder, and declared an honest peer OPPONENT_UNRESPONSIVE (rules 16/22 --
+`agent_audit_wiring.py:97`). `next_protocol_message` now RECORDS a
+FINAL_REVEAL into `ctx.commit_state.early_final_reveal` before returning
+it, so a leg's drop costs nothing: the audit reads that buffer before it
+waits. The legs' drop policy itself is byte-unchanged -- nothing here
+started keeping envelopes -- and every drop below is now safe rather than
+merely tolerated.
 
 The commit+ledger mechanics (`build_action_payload`/`commit_own_action`/
 `ledger_path`) moved to the sibling `turn_commit_ledger.py` when 06-05's
@@ -22,11 +37,7 @@ security-critical (06-UAT.md Gap 1).
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
-from pursuit.network import turn_buffer
 from pursuit.network.agent_context import AgentContext
-from pursuit.network.deadline import call_with_retry, wait_for_opponent
 from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State
 from pursuit.network.turn_commit_ledger import (
@@ -34,14 +45,17 @@ from pursuit.network.turn_commit_ledger import (
     commit_own_action,
     ledger_path,
 )
+from pursuit.network.turn_commit_pull import next_protocol_message
 from pursuit.network.turn_commit_send import log_received, send_and_log
 from pursuit.network.verdict import TechnicalWin
 
 H_COMMIT_KEY = "h_commit"
 
 # Re-exported for the callers that already import them from here
-# (turn_commit.py, the gate6 scripts, the test suite); the definitions
-# moved to turn_commit_ledger.py at the 150-line gate, see 06-05.
+# (turn_commit.py, agent_audit_exchange.py, agent_audit_observed.py, the
+# gate6 scripts, the test suite); the definitions moved to
+# turn_commit_ledger.py at the 150-line gate (06-05) and to
+# turn_commit_pull.py at the same gate (05-17).
 __all__ = [
     "H_COMMIT_KEY",
     "build_action_payload",
@@ -55,59 +69,6 @@ __all__ = [
 ]
 
 
-async def next_protocol_message(
-    ctx: AgentContext, *, on_attempt: Callable[[], None] | None = None,
-) -> tuple[Envelope | None, TechnicalWin | None]:
-    """Pull one non-HINT envelope off the wire, tolerant of an interleaved
-    HINT (buffered via `turn_buffer.record_hint`, never blocking) -- the
-    same primitive `turn_buffer.await_move` uses, generalized to any type
-    (D-58). Bounded per-pull by `call_with_retry`'s existing NetworkParams
-    ladder; a silent opponent eventually returns a `TechnicalWin` verdict
-    here (never raises). Duplicate/unexpected types are the caller's own
-    concern to drop."""
-    # `on_attempt` runs once at the START of each BOUNDED attempt.
-    # Introduced by 05-13 (05-UAT.md G6) for the audit path and defaulted to
-    # None so the turn loop stayed byte-identical; 05-16 (deferred item #10)
-    # is what makes EVERY caller pass `ctx.watchdog.touch` -- the four
-    # `wait_for_*` legs below and `agent_audit_exchange.receive_final_reveal`
-    # alike. The default survives only as the signature's neutral element;
-    # there is no caller that wants an unmarked ladder.
-    #
-    # Without it the WHOLE ladder (retry_count+1 attempts x response_timeout
-    # plus backoffs = 135 s at the shipped Table-19 values) runs unmarked
-    # against a 60 s `watchdog_threshold`, because the only touch is the
-    # post-ladder one below. MEASURED on this leg before the fix
-    # (tests/unit/test_turn_loop_watchdog.py, injected clock): the freeze
-    # fired at attempt 2 of 4, t=70 s, touches=0 -- so `os._exit(1)` ran
-    # MID-GAME and the D-13 verdict due at t=140 s was never recorded.
-    #
-    # It marks a real attempt STARTING, never a heartbeat on a dead loop:
-    # each attempt is itself bounded by response_timeout, so a wedged event
-    # loop stops producing attempts and NET-07 still kills us. That is why
-    # this is not closed by widening `watchdog_threshold` (a Table-19 config
-    # value) or by disarming the watchdog across the turn loop -- both are
-    # refuted by named revert probes in that same test module.
-    async def _pull() -> object:
-        if on_attempt is not None:
-            on_attempt()
-        return await wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout)
-
-    while True:
-        call_outcome = await call_with_retry(
-            _pull, timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
-            backoff=ctx.net.backoff_seconds,
-        )
-        ctx.watchdog.touch()
-        if not call_outcome.succeeded:
-            return None, call_outcome.verdict
-        queued = call_outcome.value
-        envelope = queued if isinstance(queued, Envelope) else Envelope.from_dict(queued)
-        if envelope.type is MessageType.HINT:
-            turn_buffer.record_hint(ctx, envelope.sender, envelope.turn, envelope.payload)
-            continue
-        return envelope, None
-
-
 async def wait_for_ack_and_commit(
     ctx: AgentContext, h_commit: str, turn: int, current: State,
 ) -> tuple[str | None, TechnicalWin | None]:
@@ -115,7 +76,10 @@ async def wait_for_ack_and_commit(
     own h_commit AND the opponent's own COMMIT have arrived -- ACKing the
     opponent's COMMIT the instant it arrives, regardless of whether our
     own ACK has arrived yet. A duplicate ACK/COMMIT arriving here is
-    tolerated jitter, dropped. Returns `(opponent_h_commit, verdict)`."""
+    tolerated jitter, dropped -- and so is a peer FINAL_REVEAL, which is
+    SAFE to drop only because `next_protocol_message` buffered it on the
+    way past (05-17); dropping it outright is what made our own audit
+    accuse an honest peer. Returns `(opponent_h_commit, verdict)`."""
     ack_received, opponent_h_commit = False, None
     while not (ack_received and opponent_h_commit is not None):
         envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
@@ -145,7 +109,11 @@ async def wait_for_reveal_capturing_early_ack(
     captured onto `ctx.commit_state.own_ack_received` (it cannot arrive a
     second time), so this side's own later `reveal_pending` never blocks
     on a message that already came. A duplicate/unexpected arrival is
-    tolerated jitter, dropped."""
+    tolerated jitter, dropped -- including a peer FINAL_REVEAL, which now
+    reaches the audit through `ctx.commit_state.early_final_reveal` rather
+    than through this return value (05-17). This is the leg 05-17's
+    reproduction runs against: the peer finishes first and pushes its
+    ledger, and the in-game REVEAL is still what this leg returns."""
     while True:
         envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
@@ -173,7 +141,13 @@ async def wait_for_opponent_commit(
         if envelope.type is MessageType.COMMIT:
             log_received(ctx, envelope, state_from=current, state_to=current, local_turn=turn)
             return envelope.payload.get(H_COMMIT_KEY), None
-        # a duplicate/unexpected arrival here is tolerated jitter -- dropped.
+        # A duplicate/unexpected arrival here is tolerated jitter -- dropped.
+        # That sentence was FALSE for one type until 05-17, and it is the
+        # sentence this plan was written about: a peer FINAL_REVEAL landing
+        # in this window was consumed and destroyed, after which our own
+        # audit waited out its whole ladder and declared the peer
+        # OPPONENT_UNRESPONSIVE. `next_protocol_message` buffers it before
+        # returning it, so the drop below is now genuinely free.
 
 
 async def wait_for_matching_ack(ctx: AgentContext, h_commit: str) -> TechnicalWin | None:

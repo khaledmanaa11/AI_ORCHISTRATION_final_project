@@ -25,6 +25,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pursuit.network.envelope import Envelope
+
 Coord = tuple[int, int]
 
 
@@ -57,8 +59,13 @@ class PendingAction:
 @dataclass
 class CommitTurnState:
     """Per-game mutable holder, one instance per AgentContext, never
-    reconstructed mid-game. Every field returns to its idle default at
-    turn resolution (D-58, D-66)."""
+    reconstructed mid-game. The three D-58/D-66 turn fields each return to
+    their idle default at turn resolution; `early_final_reveal` (D-67,
+    05-17) is the one field that does NOT -- it is written by the turn loop
+    and consumed once by the final audit, so it deliberately outlives every
+    turn boundary. Said explicitly because the blanket "every field returns
+    to its idle default at turn resolution" this docstring used to carry
+    became false the moment that field landed."""
 
     pending_action: PendingAction | None = None
     own_ack_received: bool = False
@@ -67,6 +74,20 @@ class CommitTurnState:
     this side's own later `reveal_pending` runs -- so `reveal_pending`
     never blocks on a message that already arrived and cannot arrive
     twice. Reset to False by `reveal_pending` once consumed."""
+    early_final_reveal: Envelope | None = None
+    """The peer's own FINAL_REVEAL, when it arrived EARLY -- while a
+    `wait_for_*` leg was still running, before `run_final_audit` reached
+    its receive leg (05-17). Written by
+    `final_reveal_buffer.record_final_reveal` (first arrival wins) and
+    consumed once by `agent_audit_exchange.receive_final_reveal`, which
+    checks it BEFORE waiting on the queue.
+
+    It sits here, beside `own_ack_received`, because that field is the
+    same shape one protocol step earlier: an arrival captured early so a
+    later leg never blocks on a message that already came. The difference
+    is only which leg would otherwise have blocked -- and what blocking
+    costs. Blocking here manufactured the peer's silence and then punished
+    it with `OPPONENT_UNRESPONSIVE` (rules 16/22)."""
     chosen_barrier: Coord | None = None
     """The barrier companion to choose_destination's last return value
     (D-66) -- choose_destination stays a thin Coord-only wrapper (existing

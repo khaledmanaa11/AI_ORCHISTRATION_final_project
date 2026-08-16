@@ -29,6 +29,7 @@ from pursuit.network import hint_payload, turn_events
 from pursuit.network.deadline import call_with_retry, wait_for_opponent
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
 from pursuit.network.event_log import append_event
+from pursuit.network.final_reveal_buffer import record_final_reveal, take_final_reveal
 from pursuit.network.hint_payload import Intent
 from pursuit.network.orchestrator import AgentContext
 from pursuit.network.state_machine import State, TransitionResult
@@ -37,16 +38,27 @@ from pursuit.network.verdict import TechnicalWin
 
 # Re-exported (05-06): `record_hint` moved to turn_hint_buffer.py at the
 # 150-line gate. Named here so `turn_buffer.record_hint` keeps resolving
-# for turn_commit_wait's own `turn_buffer.record_hint(...)` reference and
+# for turn_commit_pull's own `turn_buffer.record_hint(...)` reference and
 # for every test that monkeypatches it at this module's namespace.
+#
+# `record_final_reveal`/`take_final_reveal` (05-17) are re-exported for the
+# SAME reason and reach this file the same way -- they live in
+# `final_reveal_buffer.py` because this one had 11 lines of headroom and
+# because their buffer, unlike every other buffer here, is per-GAME rather
+# than per-turn. Named here so the pull primitive's two special cases read
+# as one rule at its own call site (`turn_buffer.record_hint(...)` beside
+# `turn_buffer.record_final_reveal(...)`) rather than as two unrelated
+# mechanisms, and so both are monkeypatchable at one namespace.
 __all__ = [
     "HintProtocolError",
     "await_move",
     "drain_trailing_hint",
     "log_illegal",
+    "record_final_reveal",
     "record_hint",
     "reject_peer_payload",
     "send_hint",
+    "take_final_reveal",
 ]
 
 

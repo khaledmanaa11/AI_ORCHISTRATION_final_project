@@ -21,7 +21,7 @@ re-exported below so no importer changed.
 
 from __future__ import annotations
 
-from pursuit.network import capture_declaration
+from pursuit.network import capture_declaration, turn_buffer
 from pursuit.network.agent_audit_observed import observed
 from pursuit.network.agent_audit_verdict import (
     OWN_RECEIVE_FAILED,
@@ -121,11 +121,28 @@ async def receive_final_reveal(ctx: AgentContext) -> tuple[list[dict], Technical
     seen on the way past is recorded as evidence; anything else is dropped
     as tolerated jitter. Termination is unchanged -- the ladder underneath
     still returns a verdict against a genuinely silent peer, and it still
-    touches the watchdog once per bounded attempt."""
+    touches the watchdog once per bounded attempt.
+
+    05-17: the BUFFER is consulted at the top of every iteration, before
+    the wait. 05-15 hardened this leg against an envelope arriving ahead of
+    the peer's ledger IN THIS LEG; the same ledger arriving one layer
+    earlier -- while the turn loop still owned the queue -- was consumed
+    and destroyed by whichever `wait_for_*` leg was running, and no amount
+    of waiting here brings it back. `turn_commit_pull.next_protocol_message`
+    now records every FINAL_REVEAL it sees into
+    `ctx.commit_state.early_final_reveal`, so the type test that used to
+    live inline here happens there instead and this leg reads the result.
+    Two consequences worth stating: a ledger that arrived early
+    SHORT-CIRCUITS the ladder entirely rather than timing out behind it,
+    and a rule-36 silent peer is UNCHANGED -- the buffer is empty, the
+    ladder runs, the verdict is returned, and `run_final_audit` still
+    accuses. A duplicate cannot double-count: the buffer keeps the first
+    arrival and `take_final_reveal` consumes it."""
     while True:
+        buffered = turn_buffer.take_final_reveal(ctx)
+        if buffered is not None:
+            return buffered.payload.get(_RECORDS_KEY, []), None
         envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
             return [], verdict
-        if envelope.type is MessageType.FINAL_REVEAL:
-            return envelope.payload.get(_RECORDS_KEY, []), None
         capture_declaration.record_received_declaration(ctx, envelope)
