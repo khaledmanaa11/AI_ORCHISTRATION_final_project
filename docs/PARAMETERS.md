@@ -103,6 +103,43 @@ where `C` = capacity (burst size) and `r` = refill rate (sustained rate).
 
 ---
 
+## Derived protocol constants — **not** Appendix F values
+
+> Everything above comes from the book. This one section does not, and is marked so it
+> can never be mistaken for a negotiable parameter. It has **no Status column on purpose**:
+> a derived constant is not `fixed`, `minimum` or `negotiable` — it is *entailed* by a
+> protocol rule stated elsewhere, so there is nothing to negotiate. It is recorded here,
+> and only here, because a reader reconciling this repo against the book will look for
+> every number in this file. It stays a **source constant with no config leaf** (rule 1).
+
+| Constant | Where | Value | Entailed by |
+|---|---|---|---|
+| `_HINT_LOOKBACK_TURNS` | `src/pursuit/network/turn_hint_buffer.py` | **1 turn** | Message order, §6.2 / D-47 |
+
+**Derivation.** A side emits its hint for turn *N* at the **tail** of turn *N* — after
+`REVEAL(N)` has gone out and after a language-model compose has run. By the time the
+receiver pulls it off its queue, that receiver's own `maybe_resolve` has already advanced
+it to *N+1*. A zero-lookback receive guard (`turn < ctx.state.turn`) is therefore
+structurally **unsatisfiable for a responder**: every correctly stamped inbound hint is
+discarded before it can be decoded. One turn is the *minimum* that makes the channel
+deliverable at all; anything older than that is genuinely stale and is still dropped.
+
+**Measured, twice, unconfounded.** (1) `decode_turn_hint` emits `no_hint` on exactly one
+branch — the buffer pop returning nothing — which sits upstream of every provider and API-key
+concern, so the responder's 5-of-5 `no_hint` in the 2026-08-13 round proves the *buffer* was
+empty; a key-starved decode logs `no_evidence` **with** the text instead. (2) In the post-fix
+2026-08-16 attempt-4 round the responder's six inbound hint records all sit at
+`record_turn == envelope_turn + 1` — 6 of 6, exactly on this boundary — while the
+initiator's five sit at delta 0.
+
+**Not the same case as `_MAX_PEER_GAME_ID`** (`game_identity_validate.py`), which is
+deliberately *not* recorded here: that one is a structural limit derived from a filesystem's
+255-byte path component, nobody should ever want to tune it, and no legal game's outcome
+depends on it. This one describes a message ordering two independent implementations must
+agree on. The two are treated differently on purpose.
+
+---
+
 ## Mandatory rules attached to this table (Appendix F §2)
 
 1. Every team must define **all** values above in its configuration file. Both teams must
