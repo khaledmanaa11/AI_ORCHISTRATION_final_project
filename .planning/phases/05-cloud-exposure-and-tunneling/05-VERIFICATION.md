@@ -1,305 +1,491 @@
 ---
 phase: 05-cloud-exposure-and-tunneling
-verified: 2026-08-14T15:20:00Z
-status: human_needed
-score: 18/19 truths verified; §10.4 criterion 2 PENDING a second physical machine (05-08 not yet run)
+verified: 2026-08-16T19:47:03Z
+status: gaps_found
+score: 16/18 truths verified; BOTH §10.4 criteria PASS with independently re-derived evidence
 re_verification:
-  replaces: "05-VERIFICATION.md dated 2026-08-09T05:58:21Z (status human_needed, 16/16). That
-    report predates BOTH §10.4 criteria carrying real evidence: criterion 1 was PENDING then
-    and PASSED on 2026-08-09T09:41:20Z; criterion 2 was PENDING-untried then and has since
-    been ATTEMPTED (2026-08-13, two machines, two networks) and FAILED on the verdicts-agree
-    clause. That failure produced 05-UAT.md gaps G1-G5 plus deferred items, and six
-    gap-closure plans (05-04, 05-05, 05-06, 05-07, 05-09) have landed since. None of that
-    existed in the 2026-08-09 report, whose 16 truths covered only plans 05-01..05-03."
+  supersedes: "05-VERIFICATION.md dated 2026-08-14T15:20:00Z (status human_needed, 18/19).
+    That verdict is NOT deleted: it is preserved verbatim at
+    `05-VERIFICATION-2026-08-14-superseded.md` in this directory, per the append-only
+    evidence discipline this project applies to its own gate documents (rule 38). It was
+    correct when written and is now stale on two counts -- §10.4 criterion 2 was still
+    PENDING there and has since PASSED (attempt 4, 2026-08-16), and plans 05-12..05-16
+    (gaps G6-G10 plus deferred item #10) had not been executed."
   previous_status: human_needed
-  previous_score: "16/16 automated must-haves"
+  previous_score: "18/19"
   previous_truths_regression_checked: true
   gaps_closed:
-    - "G1 (05-04) -- a failed OWN final-reveal send records audit_incomplete and accuses nobody when a board outcome exists; the audit continues; corrected game_over; bounded Table-19 linger"
-    - "G2 (05-05) -- one negotiated game id across log stem, ledger stem, declaration filenames and committed state.game_id; the audit reads the committed state record; candidate set captured before the rebind, on both roles"
-    - "G3 (05-06) -- inbound HINT envelopes are written to the wire log with our turn on top and the peer's turn nested"
-    - "G4 (05-06) -- both sides stamp the turn actually played, the responder actually decodes, and no hint is composed for an already-resolved turn"
-    - "G5 (05-07) -- startup WARNING names the env var only, llm_name reflects real capability, declaration still exactly 10 fields, fallback behaviour unchanged"
-    - "Deferred #1 (05-09) -- transport failures contained including the WRAPPED connect shape; LocalProtocolError/UnsupportedProtocol still raise; no catch-all"
+    - "§10.4 criterion 2 (CLOUD-02) -- the sole human_verification item of the 2026-08-14
+      report. Closed by remote-round attempt 4; re-derived independently from the raw logs
+      this pass, not read off the narrative."
+    - "G9 (05-12) -- a non-str peer digest is a named non-agreement at the handshake, with a
+      real production caller; honest foreign digests still reach the 'differed' branch."
+    - "G7 (05-12) -- peer_game_id is safety-validated before it reaches a set, a Path or the
+      audit's membership key; probed on BOTH roles through the production function."
+    - "G6 (05-13) -- the audit marks each bounded attempt, and BOTH legs stop accusing a peer
+      that answered."
+    - "G8 (05-14) -- one inbound hint is decoded at most once; `ctx.pending_hints` finally has
+      a production reader."
+    - "G10 (05-15) -- dead `declare_truthfully` removed; capture Claim sent on the existing
+      GAME_OVER envelope driven by the resolved outcome; a PRE-EXISTING false-accusation path
+      in `receive_final_reveal` closed on the way."
+    - "Deferred #10 (05-16) -- the turn loop marks every bounded attempt across six ladders."
   gaps_remaining: []
-  regressions: []
-human_verification:
-  - test: "GATE-5 criterion 2 (CLOUD-02) -- remote round ATTEMPT 2, the human-run plan 05-08.
-      Follow docs/phases/phase-5/REMOTE-ROUND-RUNBOOK.md: machine A starts with the tunnel and
-      shared secret, machine B on a different network points PURSUIT_OPPONENT_URL at A's public
-      URL, play one full round to a real outcome, retain both logs, both ledgers, both
-      declaration pairs, and BOTH consoles."
-    expected: "Both sides' logs/<role>/<game_uid>.jsonl exist under ONE shared game uid, both
-      ledgers and both declaration filenames carry that same uid, and the two sides' final
-      verdicts AGREE (no technical_win on a side whose peer answered). Then record the run
-      field-by-field in GATE-5-MEASUREMENT.md as Attempt 2 and tick the gate."
-    why_human: "Requires a second physical machine on a different network and a human operator
-      on each side. Confirmed again this pass: no simulated-remote-machine path exists anywhere
-      in scripts/ or tests/, by design. The local two-peer proof (scripts/dev_launch.py) now
-      passes cleanly, which is a necessary but NOT sufficient condition -- attempt 1 also
-      passed locally before it failed remotely."
+  regressions:
+    - "Deferred item #4 has WORSENED from a flake into a deterministic failure on this box.
+      Its own 2026-08-16 note records '1 failed, 2 passed' and 'the failing run is reliably
+      the FIRST run after a source file changes, and the two runs after it pass'. Measured
+      this pass on a quiet box with no source change between runs: 3 consecutive runs, 3
+      failures. See gap 1."
+gaps:
+  - truth: "The standing Table-5 quality gate is green -- `uv run pytest tests/` reports 0 failed"
+    status: failed
+    reason: "Measured at HEAD ff4ac93: `1 failed, 1523 passed in 163.14s`, coverage 96.62%.
+      The failure is `tests/integration/test_late_peer_teardown.py::
+      test_without_the_linger_the_late_peers_own_push_is_cut_off` -- deferred item #4. It is
+      no longer intermittent: the file alone, on a quiet box, with NO source change between
+      runs, failed 3/3 (26.04 s / 25.97 s / 24.83 s). The orchestrator's briefing figure of
+      `1523 passed / 0 failed` is not reproducible here; the phase TODO's own 05-16 row is
+      accurate ('The one suite failure is deferred #4's late-peer flake'), the briefing is
+      not. This does NOT block either §10.4 criterion and the PRODUCT behaviour is intact --
+      the positive test `test_a_late_peer_still_completes_against_a_torn_down_peer` still
+      passes, so a late peer does still complete with a matched verdict. What has stopped
+      holding is the NON-VACUITY CONTROL: with `linger=False` the late peer's push now lands
+      anyway, so nothing currently proves 05-04's `linger_for_peer` is load-bearing. The
+      test says so in its own words: 'If BOTH are ever absent, the linger has stopped being
+      load-bearing and this file is testing nothing.' 05-04's linger is one of the five
+      diagnosed causes of the criterion-2 failure at attempt 1, so its proof going dark is
+      worth closing rather than carrying."
+    artifacts:
+      - path: "tests/integration/late_peer_harness.py:60"
+        issue: "`_LATE_SECONDS = 0.3` sequences B's audit 0.3 s behind A's rather than
+          strictly after A's `stop_runtime`, so the control condition is a race this machine
+          now loses every time"
+      - path: "tests/integration/test_late_peer_teardown.py:89"
+        issue: "`cut_off = peer_error is not None or bool(audit_incomplete)` -- both are now
+          absent, so the assertion at :90 fires"
+    missing:
+      - "Make the premise deterministic instead of racy, as deferred item #4 has proposed
+        since 05-06: have `late_peer_round(linger=False)` await A's `stop_runtime` before
+        creating B's audit task, so B is unambiguously late rather than 0.3 s late. That
+        STRENGTHENS the probe (B pushes into a demonstrably closed listener)."
+      - "Do NOT close this by widening a timing constant or relaxing the assertion -- deferred
+        item #4 states that explicitly, and the 05-16 executor declined the quick repair for
+        that reason."
+      - "The `linger=True` path must keep B arriving DURING the grace window, so both paths
+        need designing together, by the plan that owns `late_peer_harness.py`."
+  - truth: "The phase's trackers describe what the repository actually contains (rule 38, DOC-01)"
+    status: partial
+    reason: "Bookkeeping, closable inside this verify-work pass; recorded rather than waved
+      through because CLAUDE.md states a phase is not verified until its triplet TODOs are
+      checked. Three trackers still read as if the phase were mid-flight."
+    artifacts:
+      - path: ".planning/REQUIREMENTS.md:59-60"
+        issue: "CLOUD-01 and CLOUD-02 are still `- [ ]` unchecked, though GATE-5 now carries
+          measured PASS evidence for both criteria"
+      - path: ".planning/REQUIREMENTS.md:183"
+        issue: "`| CLOUD-01 … CLOUD-02 | Phase 5 | Pending |`. NOTE: every phase row in that
+          table reads 'Pending', including phases 1-4 -- this is repo-wide tracker rot, not a
+          phase-5 defect, and should be fixed as such rather than by editing one row"
+      - path: "docs/phases/phase-5/TODO.md:23-27"
+        issue: "rows 05-12, 05-13, 05-14, 05-15, 05-16 are still ☐. Each says in its own cell
+          'Box left ☐ deliberately: /gsd:verify-work ticks it' -- so this is the expected
+          hand-off, and this pass is where they get ticked"
+      - path: "docs/TODO.md:108"
+        issue: "row 05-99 'Update docs/TODO.md on phase completion' still ☐"
+    missing:
+      - "Tick docs/phases/phase-5/TODO.md rows 05-12..05-16 and docs/TODO.md row 05-99"
+      - "Check CLOUD-01 and CLOUD-02 in .planning/REQUIREMENTS.md"
+      - "Fix the REQUIREMENTS.md status table repo-wide, or leave it alone -- do not tick only
+        the Phase 5 row while phases 1-4 stay 'Pending', which would misdescribe the repo in
+        the other direction"
 open_deferred_items:
-  - id: 2
-    summary: "agent_lifecycle.py has two lines of headroom (measured 148/150 at this HEAD)"
-    severity: minor
-  - id: 3
-    summary: "commit_pack.verify_reveal is shape-fragile against peer data; contained only at
-      audit._audit_one's verify_reveal call. AMENDED THIS PASS: the note's claim that 'nothing
-      is exposed today' is an over-claim -- see new item 7."
-    severity: major
   - id: 4
-    summary: "test_late_peer_teardown.py's non-vacuity probe is load-sensitive and flakes under
-      concurrent pytest; not reproduced on a quiet box this pass"
+    summary: "test_late_peer_teardown non-vacuity control -- ESCALATED THIS PASS from flake to
+      deterministic failure (3/3 on a quiet box). Promoted to gap 1 above."
+    severity: major
+    blocks_phase_goal: false
+    blocks_10_4_criteria: false
+  - id: 13
+    summary: "With `commit_reveal=False` the second mover's MOVE envelope is stamped one turn
+      ahead. VERIFIED LATENT, not active: config/police/security.json:3 and
+      config/thief/security.json:3 both ship `\"commit_reveal\": true`, and on that path the
+      initiator's `maybe_resolve` is genuinely a no-op. Confined to what a replay of the JSONL
+      says the peer claimed; the receiver keys its own record on `ctx.state.turn`."
+    severity: major-on-a-latent-path
+    blocks_phase_goal: false
+    blocks_10_4_criteria: false
+  - id: 14
+    summary: "A stray envelope costs `receive_final_reveal` one extra bounded ladder. Each
+      iteration is watchdog-marked (agent_audit_exchange.py:126 verified this pass), so it
+      degrades latency, never correctness, and an honest peer sends at most one Capture Claim."
     severity: minor
-  - id: 5
-    summary: "An in-game ladder exhaustion accuses the peer even when the fault was ours
-      (examined and accepted; pre-existing NET-06 policy)"
-    severity: accepted-residual
-  - id: 6
-    summary: "A 5xx/429 from the peer or the tunnel is an uncaught httpx.HTTPStatusError
-      mid-game; needs a status-code policy decision"
-    severity: major
-  - id: 7
-    summary: "NEW, found this pass: audit_peer_records raises (KeyError/TypeError) on a
-      malformed peer FINAL_REVEAL records payload -- at entry['turn'], _missing_turns and the
-      final sort, all OUTSIDE 05-05's verify_reveal containment. Measured by probe. A foreign
-      league implementation whose record shape differs kills our process before any verdict is
-      written: rule 36 against US, the exact artifact 05-04/05-09 exist to prevent. Not a
-      false-accusation path and not one of G1-G5."
-    severity: major
+    blocks_phase_goal: false
+    blocks_10_4_criteria: false
+  - id: 15
+    summary: "tests/unit/services/test_bluff.py at 147/150. `scripts/check_line_limit.sh` exits
+      0 at HEAD; a named seam (`_bluff_fixtures.py`) is already recorded."
+    severity: minor
+    blocks_phase_goal: false
+    blocks_10_4_criteria: false
+  - id: 2
+    summary: "agent_lifecycle.py headroom; 3, 5, 6, 8, 9, 11, 12 carried forward unchanged from
+      the superseded report and from deferred-items.md."
+    severity: carried-forward
+    blocks_phase_goal: false
+    blocks_10_4_criteria: false
 ---
 
-# Phase 5: Cloud Exposure and Tunneling — Verification Report (re-verification)
+# Phase 5: Cloud Exposure and Tunneling — Verification Report (re-verification, 2026-08-16)
 
 **Phase Goal:** Expose the local FastMCP server publicly via ngrok or Localtonet.
-**Verified:** 2026-08-14
-**Status:** human_needed
-**Re-verification:** Yes — this file REPLACES `05-VERIFICATION.md` dated 2026-08-09T05:58:21Z.
+**Verified:** 2026-08-16T19:47:03Z at HEAD `ff4ac93`
+**Status:** gaps_found
+**Re-verification:** Yes — supersedes `05-VERIFICATION.md` dated 2026-08-14T15:20:00Z, which
+is **preserved verbatim** at `05-VERIFICATION-2026-08-14-superseded.md` (append-only, rule 38).
 
-## What changed since the 2026-08-09 report
+## What changed since the 2026-08-14 report
 
-The superseded report verified plans 05-01..05-03 and recorded **both** §10.4 criteria as
-PENDING. Three things have happened since, none of which that report could have known:
-
-| | 2026-08-09 report | Now |
+| | 2026-08-14 report | Now |
 |---|---|---|
-| §10.4 criterion 1 | PENDING (no ngrok account on this box) | **PASS** — real run 2026-08-09T09:41:20Z, `gate5_smoke_evidence.json` `verdict: PASS` |
-| §10.4 criterion 2 | PENDING, never attempted | **PENDING, attempt 1 RAN 2026-08-13 and FAILED** the verdicts-agree clause |
-| Code under verification | 05-01..05-03 (tunnel, secret, gate script) | + 05-04, 05-05, 05-06, 05-07, 05-09 — six gap-closure plans, 14 new/relocated source modules |
-| Verified truths | 16 (all transport/config-level) | 19 (11 of them about behaviour the remote round broke) |
+| §10.4 criterion 1 | PASS | **PASS** (unchanged, re-read) |
+| §10.4 criterion 2 | PENDING — needed a second machine | **PASS** — attempt 4, 2026-08-16, re-derived independently below |
+| Code under verification | 05-01..05-11 | + 05-12, 05-13, 05-14, 05-15, 05-16 (G6–G10 + deferred #10) |
+| Standing test gate | 1327 passed / 0 failed | **1523 passed / 1 FAILED** — see gap 1 |
 
-Attempt 1 is the reason this file exists. The transport worked — a full 5-turn game to a real
-capture across two networks through two ngrok tunnels — but the two sides recorded
-**disagreeing verdicts** and their logs carried **different game UIDs**. That produced
-`05-UAT.md` gaps G1–G5. Every claim in the six gap-closure SUMMARYs was re-checked against
-source and against live runs below; none was taken on trust.
+**Nothing below is taken from a SUMMARY.** Every claim is either a source read with a line
+reference, a probe I ran against the shipped function, a revert probe, or a re-derivation
+from the retained raw evidence. Where a SUMMARY and a measurement disagree, the measurement
+is recorded.
 
 ## Goal Achievement
 
 ### Observable Truths
 
-| # | Truth | Status | Evidence (measured, not quoted) |
+| # | Truth | Status | Evidence (measured this pass) |
 |---|---|---|---|
-| 1 | **G1** A failed OWN final-reveal send, with a board outcome standing, records a non-accusatory `audit_incomplete` — never an accusation | ✓ VERIFIED | `agent_audit_wiring.py:129-133`: `if send_verdict is not None: if board_outcome is None: return record_technical_loss(...)` / `record_audit_incomplete(...)`. `agent_audit_verdict.py:59-76` writes `EventType.AUDIT_INCOMPLETE` with reason `own_final_reveal_send_failed`, a string deliberately **not** a `TechnicalWinReason` member. Returns `None`, so the board outcome stands |
-| 2 | **G1** The fix reaches PRODUCTION, not just the harness | ✓ VERIFIED | `agent_entrypoint.py:110` — `audit_outcome = await run_final_audit(ctx, board_outcome=outcome)`, where `outcome` is `run_turn_loop`'s own return from `:100`. Read in source, not inferred. Repo-wide grep for `board_outcome` shows the production call site plus 6 test files. *(See Anti-Patterns: no test pins this kwarg — a regression here would ship green.)* |
-| 3 | **G1** The audit CONTINUES after a failed push instead of bailing | ✓ VERIFIED | `agent_audit_wiring.py:133-160` — `record_audit_incomplete` has no `return`; control falls through to `receive_final_reveal`, both `observed()` extractions and both `audit_peer_records` directions |
-| 4 | **G1** Every technical loss recorded after the turn loop appends a CORRECTED `game_over` | ✓ VERIFIED | `agent_audit_verdict.py:93-100` — `record_technical_loss` appends the technical-win record **and** `turn_events.game_over_record(outcome=Outcome.TECHNICAL_LOSS)`. The mismatch path (`:142`) delegates here rather than re-implementing, so the two paths cannot drift |
-| 5 | **G1** The linger is bounded by `NetworkParams.response_timeout`/`backoff_seconds` with **zero** new config keys; watchdog stopped first; runtime stopped in a `finally` | ✓ VERIFIED | `agent_teardown.py:66-76` — total cap `ctx.net.response_timeout`, quiet interval `min(ctx.net.backoff_seconds, remaining)`, **no numeric literal in the file**. `agent_entrypoint.py:134-138` — `stop_watchdog(ctx)` then `try: await linger_for_peer(ctx) finally: await stop_runtime(ctx)`. `git diff 950b0ed..HEAD -- config/` is **empty** — no new leaf in any `network.json` |
-| 6 | **G2** ONE negotiated id governs log stem, ledger stem, declaration filenames AND committed `state.game_id` | ✓ VERIFIED (live) | `scripts/dev_launch.py` run this pass: `logs/police/` and `logs/thief/` each hold `59cbf70cf98842bd.jsonl`, `59cbf70cf98842bd.ledger.jsonl`, `declaration_59cbf70cf98842bd.json` — **one stem, both sides, all four artifact classes**. Both ledgers' committed `state.game_id` sets are `{'59cbf70cf98842bd'}` (5 entries each) |
-| 7 | **G2** `_audit_one` validates the peer's committed `state.turn`, `state.role` and `state.game_id` | ✓ VERIFIED | `audit.py:94-98` calls `state_binding_detail` **after** the re-hash and **before** the trailing-commit early return (placement is the exact bug shape 06-05 fixed once). `audit_state.py:101-118`: `claimed_turn != turn`; `state.role == forbidden_role` (a NEGATIVE check, never equality with our vocabulary); `claimed_game not in candidate_game_ids`. Every field read with `.get()`, so peer data yields a named mismatch, not a `KeyError` |
-| 8 | **G2** The candidate set is captured INSIDE `adopt_negotiated_game_id` BEFORE it rebinds `ctx.game_uid`, and a test pins it for BOTH roles | ✓ VERIFIED | `game_identity.py:157-159` builds `{ctx.game_uid, result.peer_game_id}`; the rebind is at `:166`, **seven lines later**. Pinned twice: `tests/integration/test_game_id_negotiation.py:127` asserts `ctx_a.candidate_game_ids == ctx_b.candidate_game_ids == {UID_A, UID_B}` after a real two-peer handshake, and `tests/unit/test_audit_state_wiring.py:53/72` re-derives it through the production path plus a convention-swap control. Both pass |
-| 9 | **G3** Inbound HINT envelopes are on the wire log, our turn on top, the peer's turn nested | ✓ VERIFIED (live) | `turn_hint_buffer.py:147-153` calls `turn_commit_send.log_received(...)` **before** the drop guard at `:154`. Live `dev_launch` log: police holds `message_received`+`hint` at `log_turn 1..4` with `env_turn 0..3`; thief holds five, `log_turn 1..5` / `env_turn 0..4`. Pre-fix both were zero |
-| 10 | **G4** Both sides stamp the turn actually played, and a responder actually decodes | ✓ VERIFIED (live) | `turn_actions.py:92` stamps `pending.turn` on the responder branch (not the post-`maybe_resolve` `ctx.state.turn`). Live log: police hints `0,1,2,3,4`, thief hints `0,1,2,3` — each equal to the turn played. The **thief** (responder) now shows `incoming_hint.text` non-null on 3 of 4 `language_turn` records (`hint decoded to no evidence` — decode ran; `no_evidence` is the honest keyless-box outcome). Pre-fix the thief was 0-of-5 `no_hint` in every game |
-| 11 | **G4** No hint is composed for an already-resolved turn | ✓ VERIFIED | `turn_actions.py:88` and `:127` — `if ctx.language is not None and outcome is None:` on **both** branches, with the initiator branch documented as behaviour-neutral so the two read as one rule |
-| 12 | **G5** Startup WARNING when the LLM is off for lack of a key — env var NAME only, never its value | ✓ VERIFIED (live) | `language_wiring.py:132-137` — `_log.warning` interpolates `API_KEY_ENV_VAR` twice and `provider_cls.__name__`; `has_api_key()` (`client.py:28-36`) returns a bare `bool` and the value is never in scope. Observed live on this keyless box during `measure_gate6.py`: the warning reached bare stderr with no `logging.basicConfig` anywhere |
-| 13 | **G5** `llm_name` reflects real capability; the declaration is still **exactly 10 fields**; fallback behaviour unchanged | ✓ VERIFIED (live) | `language_wiring.declared_llm_name:77-80` returns `LLM_NAME_TEMPLATE_FALLBACK` for a template provider **or** no key. Live Step-0 print from `measure_gate6.py`: `llm_name: 'template-fallback (no LLM calls)'` inside a declaration with exactly the 10 `DeclarationField` keys. The four Phase-4 `test_llm_degradation.py` cases pass **unedited**. `docs/PRD_deception.md:186` carries the new first-person STYLE_GUIDE line verbatim from `bluff_prompt.py:26-28` |
-| 14 | **Deferred #1** Transport failures contained, including the WRAPPED connect shape; `LocalProtocolError`/`UnsupportedProtocol` still RAISE; no catch-all | ✓ VERIFIED | `deadline_errors.py:118-122` `RETRYABLE_TRANSPORT_ERRORS = (McpError, DeadlineExpired, httpx.TransportError)`; `:131-135` `RAISE_UNRETRIED_ERRORS = (ToolError, httpx.LocalProtocolError, httpx.UnsupportedProtocol)`; `unwraps_to_retryable:142-153` decides on the **direct cause** only. `deadline.py:146-157` spells the raise-first clause out **before** the retryable one and narrows `RuntimeError` by cause, never by class. Read both files end-to-end: **no bare `except:` and no `except Exception` anywhere in either**. `httpx>=0.28.1` is a declared dependency (`pyproject.toml` diff) |
-| 15 | **Rules 16/22** No honest peer can be falsely accused by anything added in this phase | ✓ VERIFIED, with three named residuals | See the dedicated section below — this got the deepest pass |
-| 16 | **Rule 38** No fabricated numbers; GATE-5-MEASUREMENT.md records criterion 1 PASS and criterion 2 PENDING-with-attempt-1-failed | ✓ VERIFIED | `GATE-5-MEASUREMENT.md` header states criterion 1 PASS with the evidence link and criterion 2 PENDING, has a full "Attempt 1 — 2026-08-13, completed round, criterion NOT yet closed" section naming the disagreement and the two differing UIDs, and keeps "the phase is not fully measured while either row reads PENDING". Every SUMMARY test count re-measured and matched (05-07 claims 1327/96.37%; measured **1327 passed, 96.37%**). `config/*/games_played*.json` is gitignored and untouched by any plan; the counters advanced only by genuinely playing games |
-| 17 | Phase 6 does not regress | ✓ VERIFIED (live) | `uv run python scripts/measure_gate6.py` → `criterion_1_four_phases_commit_reveal: PASS`, `criterion_2_hash_nonce_mismatch_technical_loss: PASS`, `criterion_3_step0_verified_before_move_1: PASS` |
-| 18 | **§10.4 criterion 1** — each peer reachable on the public internet | ✓ VERIFIED | `docs/phases/phase-5/gate5_smoke_evidence.json`, real run 2026-08-09T09:41:20Z: `verdict: PASS`, `public_url: https://perdurable-mireille-nonzoologically.ngrok-free.dev`, `url_is_https_and_matches_domain: true`, `authorized_request_reached_mcp: true`, `unauthorized_request_rejected_403: true`, `round_trip_seconds: 1.859` |
-| 19 | **§10.4 criterion 2** — a remote agent plays a full round through the tunnel | ? HUMAN NEEDED | Attempt 1 (2026-08-13) played the round but failed the verdicts-agree clause. All five diagnosed causes are now closed (truths 1–13) and the local two-peer proof is clean, but **only a second physical machine can close this**. Plan 05-08 has not been run |
+| 1 | **§10.4 criterion 1** — each peer reachable on the public internet | ✓ VERIFIED | `gate5_smoke_evidence.json`, real run 2026-08-09T09:41:20Z: `verdict: PASS`, `url_is_https_and_matches_domain: true`, `authorized_request_reached_mcp: true`, `unauthorized_request_rejected_403: true`. Corroborated by attempt 4's own console: `public_url=https://perdurable-mireille-nonzoologically.ngrok-free.dev` |
+| 2 | **§10.4 criterion 2** — a remote agent plays a full round through the tunnel | ✓ VERIFIED | Re-derived by script from the raw attempt-4 logs, NOT from the narrative — table below |
+| 3 | **G9** A non-str peer digest is a named non-agreement, not a `TypeError`, with a PRODUCTION caller | ✓ VERIFIED | Probe + revert probe — below |
+| 4 | **G7** `peer_game_id` is safety-validated before a set, a `Path` or the audit's membership key, on BOTH roles | ✓ VERIFIED | Probe through the production function on both roles — below |
+| 5 | **G6a** The audit marks each bounded attempt, so it survives its own 135 s ladder | ✓ VERIFIED | `agent_audit_exchange.py:87` (push `_call`) and `:126` (`next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)`), both inside the per-attempt closure |
+| 6 | **G6b** BOTH audit legs stop accusing a peer that answered | ✓ VERIFIED | `agent_audit_wiring.py` — receive-leg branch present; revert probe fails on exactly the intended case |
+| 7 | **Deferred #10 / 05-16** The turn loop marks every bounded attempt | ✓ VERIFIED | Four `wait_for_*` legs + `turn_buffer.await_move` + `send_hint` + `capture_declaration`; revert probe reproduces the literal NET-07 kill |
+| 8 | **G8a** One inbound hint is decoded at most once, and `ctx.pending_hints` finally has a production reader | ✓ VERIFIED | `turn_hint_buffer.py:150` `is_replay` guard; `turn_language_io.py:73` `consume_hint` — the production reader; revert probe fails 2 |
+| 9 | **G8b** Both hint branches stamp the turn actually played on every supported protocol path | ✓ VERIFIED | `turn_actions.py:92` (responder, `pending.turn`) and the initiator branch's commit-reveal precondition now written out rather than assumed. Deferred #13 is the MOVE envelope on the same toggle — a different envelope, separately logged |
+| 10 | **G10a** Dead `declare_truthfully` removed; the rules-15/16 reasoning recorded | ✓ VERIFIED | `grep -rn declare_truthfully src/` returns only `deception.py:22` and `:25`, both prose explaining the removal. Zero definitions, zero callers |
+| 11 | **G10b** Capture Claim sent on the EXISTING `GAME_OVER` envelope, driven by the resolved outcome | ✓ VERIFIED | `orchestrator.py:154` — `await send_capture_declaration(ctx, turn=ctx.state.turn, outcome=outcome)`, sharing one `outcome` object and one `ctx.state.turn` with the `game_over_record` two statements above. No policy, no LLM (rule 22 by construction) |
+| 12 | **G10c** "no unreachable BARRIER/CAPTURE branches left" | ✓ VERIFIED under the clause's own second option | 05-UAT.md's `missing` reads *"remove **(or explicitly reserve)** the dead `declare_truthfully` + unreachable BARRIER/CAPTURE templates"*. 05-15 took the reserve option and measured why — I reproduced the measurement, below |
+| 13 | **Rules 16/22** No false-accusation path introduced by this phase | ✓ VERIFIED | Every hostile-input probe below ends in a named outcome or a skipped check, never an accusation; honest foreign conventions still match. 05-15 **removed** a pre-existing one (`receive_final_reveal` reading `records` off whatever arrived first) |
+| 14 | **Rule 38** No fabricated numbers; the gate record is honest | ✓ VERIFIED, with one correction | GATE-5-MEASUREMENT.md's header states both criteria PASS with per-attempt sections including the two FAILED attempts, and explicitly de-claims attempt 4's second game as a deterministic re-run of the transport rather than an independent sample. `NEEDED-FROM-MACHINE-B.md` records the one missing artifact as `- [ ]`. Correction: deferred item #4's characterisation of its own failure mode is now outdated — see gap 1 |
+| 15 | **Phase 6 does not regress** | ✓ VERIFIED | `uv run python scripts/measure_gate6.py` → all three criteria `PASS` |
+| 16 | The knowledge graph was refreshed after this phase's code landed | ✓ VERIFIED | `.planning/graphs/GRAPH_REPORT.md` mtime 2026-08-16 22:26; contains `unusable_peer_digest()`, `usable_peer_game_id()`, `consume_hint()`, `is_replay()`, `capture_declaration` |
+| 17 | **The standing Table-5 quality gate is green** | ✗ **FAILED** | `1 failed, 1523 passed` — gap 1 |
+| 18 | **The phase's trackers describe what the repo contains** | ✗ **FAILED (partial)** | gap 2 |
 
-**Score: 18/19 truths verified.** The one open item is the phase's own book criterion, not an
-implementation gap.
+**Score: 16/18 truths verified.** Neither failure is a §10.4 criterion, and neither touches
+the phase goal — both criteria carry real, independently re-derived measured evidence.
 
-### The local two-peer proof (`scripts/dev_launch.py`), run this pass
+---
 
-Exit **0**. Both sides on the same stem `59cbf70cf98842bd`:
+### §10.4 criterion 2 — re-derived from the raw evidence, not from the narrative
 
-| Side | Records | Event mix | Last three records |
+I ran my own script over `docs/phases/phase-5/remote-round-2026-08-16-attempt4/` rather than
+reading GATE-5-MEASUREMENT.md's conclusions.
+
+| Side | Game | Records | `game_over` | `audit_verdict matched` | technical_win | watchdog | audit_incomplete | ledger | declaration |
+|---|---|---|---|---|---|---|---|---|---|
+| machineA-police | `b22361aa93ccf310` | 50 | `capture` | `True` | 0 | 0 | 0 | ✓ | ✓ |
+| machineB-thief | `b22361aa93ccf310` | 49 | `capture` | `True` | 0 | 0 | 0 | ✓ | ✓ |
+| machineA-police | `d265603c116a9f99` | 50 | `capture` | `True` | 0 | 0 | 0 | ✓ | ✓ |
+| machineB-thief | `d265603c116a9f99` | 49 | `capture` | `True` | 0 | 0 | 0 | ✓ | ✓ |
+
+Every log's `game_uid` set is a **singleton** equal to its own filename stem, on both sides
+of both games — the artifact-join failure that sank attempt 1 does not recur.
+
+**Cross-signed declarations, byte-compared:**
+
+```
+b22361aa93ccf310: A.own == B.peer -> True ; B.own == A.peer -> True
+d265603c116a9f99: A.own == B.peer -> True ; B.own == A.peer -> True
+```
+
+**The declaration is honest and complete** — machine A, game `b22361aa93ccf310`, exactly the
+ten `DeclarationField` keys, HMAC'd:
+
+```
+"llm_name": "claude-haiku-4-5",  "team_code": "khm-mn17",  "code_version": "1.00",
+"games_played_so_far": 991,      "commit_hash": "0632e04e364984452ae7b5477c698f379b07e9ef"
+```
+
+`llm_name` is the live model, not `template-fallback` — so 05-07's honest-declaration gate
+and criterion 2's live-LLM claim agree with the artifact.
+
+**Two residuals in the evidence, both already recorded by the phase, neither a criterion failure:**
+
+1. `machineB-thief/eb55daeefafb4208.jsonl` is a **1-record log containing a
+   `watchdog_incident`** (`idle_seconds: 60`, `turn: 0`). This is B's pre-game session waiting
+   for A before the two counted games began. It is retained deliberately and named in
+   `NEEDED-FROM-MACHINE-B.md` under "Extras retained for honesty". It is not part of either
+   counted game. Stated here because the orchestrator's briefing said "zero
+   `watchdog_incident`" — true of the gate runs and of both counted games, not of the
+   evidence directory as a whole.
+2. `consoleB_attempt4.txt` was **not captured** — machine B's console was not Tee'd. Recorded
+   as an open `- [ ]` in `NEEDED-FROM-MACHINE-B.md` rather than glossed. Machine A's console
+   is retained and carries the public ngrok URL. Both JSONLs, both ledgers and all four
+   declarations are present, which is the criterion's stated closing condition.
+
+---
+
+### The skeptical checks I was asked to run
+
+#### 1. Production callers — a validator reachable only from tests proves nothing
+
+| Symbol | Production caller | Chain to `run_agent` |
+|---|---|---|
+| `config_hash.unusable_peer_digest` | `config_hash.py:120`, inside `compare_named_digest` | `compare_named_digest` ← `handshake_evaluate.py:118`/`:125` (`_compare_offer`) ← `perform_handshake` ← `agent_entrypoint.py:82`. **Wired** |
+| `game_identity_validate.usable_peer_game_id` | `game_identity.py:84` (`negotiated_game_id`) **and** `:170` (`adopt_negotiated_game_id`) | `adopt_negotiated_game_id` ← `agent_entrypoint.py:98`, after `result.agreed`, before `write_declaration`/`run_turn_loop`. **Wired** |
+| `Watchdog.touch()` — audit path | `agent_audit_exchange.py:87` (push closure) and `:126` (`on_attempt=`) | `run_final_audit` ← `agent_entrypoint.py:110`. **Wired** |
+| `Watchdog.touch()` — turn-loop path | `turn_commit_wait.py:121, :150, :170, :186` all pass `on_attempt=ctx.watchdog.touch`; `turn_buffer.py:104` and `:153`; `turn_commit_send.py:51, :132`; `capture_declaration.py:117` | all four `wait_for_*` legs are called from `turn_commit.py:79, :111, :151, :164` ← `run_turn_loop`. **Wired**. `grep -rn "watchdog\.touch" src/ --include=*.py` → **18** |
+| `turn_hint_store.consume_hint` | `turn_language_io.py:73` inside `decode_turn_hint` | `decode_turn_hint` ← `turn_actions.py:107` ← `take_my_turn` ← `run_turn_loop`. **Wired** |
+
+`ctx.pending_hints` — flagged in the 2026-08-14 report as a write-only buffer whose tests
+were therefore a trap — now has a genuine production reader: `turn_hint_store.is_replay`
+reads it at `turn_hint_buffer.py:150`, and `consume_hint` writes the marker at consumption.
+
+#### 2. Do the G6–G10 fixes hold in live wiring — probed, not read
+
+**G9, direct probe of the shipped `compare_named_digest`:**
+
+```
+remote=           7 -> (False, 'config digest present in peer payload but not a string: int')
+remote=         [1] -> (False, 'config digest present in peer payload but not a string: list')
+remote=    {'a': 1} -> (False, 'config digest present in peer payload but not a string: dict')
+remote=        True -> (False, 'config digest present in peer payload but not a string: bool')
+remote=        None -> (False, 'config digest absent from peer payload')
+control wrong-but-str -> (False, 'config digest mismatch: local=abc remote=def')
+control agreeing      -> (True, 'config digests agree')
+strict contract kept: digests_match('abc', 7) -> TypeError: digests_match requires two str arguments
+```
+
+The safety gate contains the peer's half; `digests_match` keeps its strict D-46 contract for
+internal callers. Exactly what plan 05-12 promised, verified against the function rather than
+the prose.
+
+**G7, probe through the PRODUCTION `adopt_negotiated_game_id`, both roles, 13 inputs each.**
+No input raised. Selected rows:
+
+```
+police  peer_game_id='../../evil'   raised=None cand=None  log_moved=False
+police  peer_game_id='{}'           raised=None cand=None  log_moved=False
+police  peer_game_id=''             raised=None cand=None  log_moved=False
+thief   peer_game_id='../../evil'   raised=None cand=None  log_moved=False
+thief   peer_game_id='con\x00x'     raised=None cand=None  log_moved=False
+thief   peer_game_id='550e8400-e29b-41d4-a716-446655440000'
+        raised=None uid='550e8400-e29b-41d4-a716-446655440000'
+        cand={'test-thief...','550e8400-e29b-41d4-a716-446655440000'} log_moved=True
+police  peer_game_id='PEERUID99'    raised=None cand={'PEERUID99','test-police...'}
+```
+
+Both halves hold, and they are the halves that matter for rules 16/22: **hostile shapes cost
+the peer nothing** — `candidate_game_ids` goes to `None`, which `audit_state` skips entirely,
+so nobody is accused — while an **honest foreign convention** (a UUID, upper-case) is still
+adopted and still lands in the candidate set on both roles. Validation is safety-only, never
+convention-conformance, which was the trap 05-12 set out to avoid.
+
+**Live two-peer proof, `uv run python scripts/dev_launch.py` — exit 0:**
+
+```
+police  stem=c85ef36086d92961 n=43 game_over=['capture'] matched=[True]
+        technical_win=0 watchdog=0 audit_incomplete=0 ledger=True decl=True
+thief   stem=c85ef36086d92961 n=42 game_over=['capture'] matched=[True]
+        technical_win=0 watchdog=0 audit_incomplete=0 ledger=True decl=True
+```
+
+One shared stem across log, ledger and declaration on both sides — G2's fix still standing
+after five more plans landed on top of it.
+
+#### 3. Are the new tests non-vacuous? Four revert probes
+
+The brief warned that three executors had caught their own tests passing against the wrong
+fix. So I reverted each fix in shipped source and re-ran its guard suite. All four fixes are
+genuinely load-bearing:
+
+| Fix reverted | Suite | Result |
+|---|---|---|
+| `on_attempt=ctx.watchdog.touch` removed from all four `turn_commit_wait` legs + `turn_buffer._pull` | `test_turn_loop_watchdog.py` | **2 failed, 2 passed** — and the failure is the literal `ProcessKilledError: NET-07 fired: os._exit(1) would have run here`. The 2 that still pass are the counter-controls (frozen loop still killed; watchdog never disarmed), which is the correct signature |
+| `turn_hint_store.is_replay` guard removed | `test_hint_replay.py` | **2 failed** — `AssertionError: the initiator decoded the same hint twice / assert 'no_evidence' == 'no_hint'` |
+| G6 receive-leg non-accusation removed | `test_audit_send_failure.py` | **1 failed, 4 passed** — `test_both_of_our_own_legs_failing_after_a_board_outcome_accuses_nobody`: `the board outcome did not stand`. The 4 that pass are the fairness controls, unchanged |
+| `unusable_peer_digest` gate removed **and** `usable_peer_game_id` neutered to identity | `test_config_hash_peer` + `test_handshake_peer_digest` + `test_game_identity_validate` + `test_game_identity_adopt` | **59 failed, 45 passed** |
+
+All source files restored and confirmed byte-clean (`git status --porcelain` empty).
+
+#### 4. The one clause knowingly not met literally
+
+The phase TODO row for 05-15 carries *"no unreachable BARRIER/CAPTURE branches left"*. 05-15
+reported honestly that it did not remove them. **The reasoning holds, and I re-measured it.**
+
+Two things make removal wrong:
+
+- `shared/deception_types.py:62-63` — `ALWAYS_TRUE_KINDS` maps BARRIER → *"rules 15/16"* and
+  CAPTURE → *"rules 21/22"*. This dict **is** `DeceptionPlan.__post_init__`'s truthfulness
+  enforcement. Deleting those rows would not remove dead code, it would make
+  `DeceptionPlan(intent=LIE, kind=BARRIER)` constructible — deleting the rule-16 guard.
+- `services/llm/hintbank_templates.py:130-131` — `BANK` is a **total** `(kind, intent)` map,
+  indexed directly. Probe X, deleting those two rows:
+
+```
+FAILED tests/unit/services/test_bluff_property.py::test_compose_never_raises_and_always_returns_a_legal_hint
+FAILED tests/unit/services/test_hintbank.py::test_select_phrases_barrier_and_capture_declarations
+FAILED tests/unit/services/test_hintbank.py::test_every_legal_kind_intent_pair_selects_without_error[barrier-truth]
+FAILED tests/unit/services/test_hintbank.py::test_every_legal_kind_intent_pair_selects_without_error[capture-truth]
+FAILED tests/unit/services/test_hintbank_templates.py::test_bank_covers_every_legal_claim_kind_intent_pair
+5 failed, 261 passed
+...
+E   KeyError: (<ClaimKind.CAPTURE: 'capture'>, <Intent.TRUTH: 'truth'>)
+```
+
+A `KeyError` escapes `bluff.compose()`, whose contract is having no failure mode. **These
+branches are total, not dead.** And decisively: 05-UAT.md's own `missing` clause reads
+*"remove **(or explicitly reserve)** the dead `declare_truthfully` + unreachable
+BARRIER/CAPTURE templates and prompt branches"* — the reserve option is sanctioned by the gap
+that raised it. 05-15 took it, documented it in source, and the thing the clause actually
+targeted (`declare_truthfully`, the zero-caller constructor with the misleading docstring) is
+**gone**: `grep -rn declare_truthfully src/` returns only two prose lines explaining its
+removal. Not a gap.
+
+#### 5. Deferred items — do any block the phase goal or the §10.4 criteria?
+
+| Item | Blocks phase goal? | Blocks §10.4? | Finding |
 |---|---|---|---|
-| police | 42 | 20 sent / 14 received / 5 language_turn / 1 illegal_transition / 1 game_over / 1 audit_verdict | `message_received`, `game_over capture`, `audit_verdict matched=True` |
-| thief | 41 | 19 sent / 15 received / 4 language_turn / 1 illegal_transition / 1 game_over / 1 audit_verdict | `game_over capture`, `message_received`, `audit_verdict matched=True` |
+| **#4** socket-race flake in `test_late_peer_teardown` | No | No | **But it has escalated.** Now deterministic (3/3), so the standing gate is red and 05-04's linger has no working non-vacuity proof. **Promoted to gap 1** — see below |
+| **#13** toggle-off MOVE envelope stamped one turn ahead | No | No | **The orchestrator's reading is confirmed by measurement, not inherited.** `config/police/security.json:3` and `config/thief/security.json:3` both ship `"commit_reveal": true`; on that path the initiator's `maybe_resolve` is genuinely a no-op, so both sides' REVEALs carry the turn played. Latent. It also costs nothing downstream today: the receiver keys its own record on `ctx.state.turn`, and `await_move` never compares the peer's declared turn — the damage is confined to what a JSONL replay says the peer claimed (rule 20 evidence quality, not a verdict) |
+| **#14** stray envelope costs one extra retry ladder | No | No | Confirmed bounded: each iteration re-enters `next_protocol_message` with `on_attempt=ctx.watchdog.touch` (`agent_audit_exchange.py:126`), so a wedged loop is still killed and a slow one still reaches a verdict. An honest peer sends at most one Capture Claim. Latency, not correctness |
+| **#15** `test_bluff.py` at 147/150 | No | No | `bash scripts/check_line_limit.sh` → exit **0**. A watch item with a named seam already recorded |
 
-**Zero `technical_win` records and zero `audit_incomplete` records on either side.** This is the
-exact artifact class attempt 1 failed to produce, now produced locally. (The trailing Windows
-`WinError 995` / lifespan `CancelledError` tracebacks are the documented proactor teardown
-noise, after exit code 0 was computed.)
+So: on #13, #14 and #15 the orchestrator's reading is right and I verified it rather than
+inheriting it. On **#4 the reading no longer holds** — it has stopped being a flake.
 
-### Required Artifacts
+---
+
+### Gap 1 in detail — the standing gate is red, and #4 is no longer intermittent
+
+My own full run at HEAD `ff4ac93`:
+
+```
+FAILED tests/integration/test_late_peer_teardown.py::test_without_the_linger_the_late_peers_own_push_is_cut_off
+1 failed, 1523 passed in 163.14s (0:02:43)
+Required test coverage of 85.0% reached. Total coverage: 96.62%
+```
+
+Deferred item #4's own latest note (2026-08-16, written by 05-16) says the failing run is
+*"reliably the FIRST run after a source file changes, and the two runs after it pass."*
+Measured this pass, file alone, quiet box, **no source change between runs**:
+
+```
+--- run 1 (file alone) ---  1 failed, 1 passed in 26.04s
+--- run 2 (file alone) ---  1 failed, 1 passed in 25.97s
+--- run 3 (file alone) ---  1 failed, 1 passed in 24.83s
+```
+
+3/3. That is a regression in the item's character, and it matters for two reasons:
+
+1. **The gate is red.** CLAUDE.md's Table 5 treats the suite as a pre-commit gate, and every
+   SUMMARY in this phase reports "N passed / **0 failed**". The briefing figure of
+   `1523 passed / 0 failed` is not reproducible here. The phase's own TODO row for 05-16 is
+   accurate about this — *"The one suite failure is deferred #4's late-peer flake"* — so the
+   phase documented it; the briefing rounded it away.
+2. **The linger's proof has gone dark, not the linger.** The positive test
+   `test_a_late_peer_still_completes_against_a_torn_down_peer` still passes, and
+   `linger_for_peer` is present, literal-free and wired at `agent_entrypoint.py:144-148`
+   inside a `finally` with `stop_watchdog` first. The product behaviour is intact. What fails
+   is the control that proves the linger *causes* it: with `linger=False` the late peer's push
+   now lands anyway. The test states the consequence in its own docstring — *"If BOTH are ever
+   absent, the linger has stopped being load-bearing and this file is testing nothing."*
+   `linger_for_peer` is one of the five diagnosed causes of attempt 1's criterion-2 failure,
+   so losing its proof is worth a plan, not a shrug.
+
+**Do not close this by widening `_LATE_SECONDS` or relaxing the assertion.** Deferred item #4
+says so explicitly and the 05-16 executor declined the quick repair for that reason. The
+recorded fix — sequence the harness so B is unambiguously late rather than 0.3 s late —
+*strengthens* the probe.
+
+### Required Artifacts (05-12..05-16, the plans not covered by the superseded report)
 
 | Artifact | Expected | Status | Details |
 |---|---|---|---|
-| `src/pursuit/network/agent_teardown.py` | bounded post-audit grace window | ✓ VERIFIED | 77 lines, zero numeric literals, pulls through `deadline.wait_for_opponent` so `deadline._bounded` stays the one `asyncio.wait_for` site (QUAL-02) |
-| `src/pursuit/network/agent_audit_verdict.py` | `record_audit_incomplete` + corrected `game_over` | ✓ VERIFIED | `_OWN_SEND_FAILED` deliberately not a `TechnicalWinReason`; `_verdict_record` shared by both record shapes (no duplication) |
-| `src/pursuit/network/agent_audit_wiring.py` | `run_final_audit(board_outcome=...)`, candidate set passed through | ✓ VERIFIED | 134 code lines after 05-07 split `declared_llm_name` out; the same candidate set serves both directions, `forbidden_role` the only per-direction difference |
-| `src/pursuit/network/game_identity.py` | `GameIdentity`, `negotiated_game_id`, `adopt_negotiated_game_id`, relocated sinks | ✓ VERIFIED | Mutable binding read at CALL time by both JSONL sinks; `identity is None` keeps every pre-existing caller byte-identical |
-| `src/pursuit/security/audit_state.py` | D-60 state record, READ | ✓ VERIFIED | 119 lines; the membership rationale and its **three** limitations are in source, not implied |
-| `src/pursuit/network/turn_hint_buffer.py` | inbound HINT logging + lookback window | ✓ VERIFIED | `_HINT_LOOKBACK_TURNS = 1` with its derivation in source; `_usable_stamp` refuses non-int peer stamps (bool included) so `record_hint` cannot raise into a caller that catches nothing |
-| `src/pursuit/network/deadline_errors.py` | NET-06 exception taxonomy | ✓ VERIFIED | Both tuples immutable; `unwraps_to_retryable` narrows by cause; every member's inclusion argued in source |
-| `src/pursuit/services/llm/client.py` | `has_api_key()` presence-only | ✓ VERIFIED | Returns `bool(os.environ.get(API_KEY_ENV_VAR))`; empty string counts as absent, agreeing with `build_client` by construction |
-| `tests/integration/test_late_peer_teardown.py` + `late_peer_harness.py` | sequenced two-peer proof over real sockets | ✓ VERIFIED | Real loopback sockets, real `write_declaration`, A's teardown mirrors `run_agent`'s three steps exactly; the `linger=False` revert probe lives in the harness, not by editing source |
-| `tests/integration/test_hint_delivery.py` | two-peer stamp + decode proof | ✓ VERIFIED | Asserts police hints == police reveals, thief hints == thief reveals[:-1], and that **both** sides carry ≥1 non-`no_hint` incoming hint |
-| `tests/unit/test_audit_state_binding.py` / `test_audit_state_wiring.py` | forgery cases + fairness controls | ✓ VERIFIED | 4 forgery cases; controls for an honest peer, a peer using the `cop` vocabulary, a peer that published no game_id, and a convention-swapping peer through the REAL set builder |
-| `docs/phases/phase-5/GATE-5-MEASUREMENT.md` | both criteria, honest statuses | ✓ VERIFIED | Criterion 1 PASS field-by-field; criterion 2 PENDING with attempt 1 recorded in full, including the two differing UIDs |
-| `.planning/graphs/GRAPH_REPORT.md` | refreshed after the phase's code landed | ✓ VERIFIED | Committed in `460304f` (2026-08-14 17:43); `linger_for_peer`, `adopt_negotiated_game_id`, `state_binding_detail`, `has_api_key` all present |
-
-### Key Link Verification
-
-| From | To | Via | Status |
-|---|---|---|---|
-| `agent_entrypoint.py:110` | `agent_audit_wiring.run_final_audit` | `board_outcome=outcome` — **the production wiring** | ✓ WIRED (source-read; not test-pinned, see below) |
-| `agent_entrypoint.py:134-138` | `agent_teardown.linger_for_peer` | `stop_watchdog` → `try: linger finally: stop_runtime` | ✓ WIRED |
-| `agent_teardown.py:66-73` | `shared/network_config.NetworkParams` | `ctx.net.response_timeout` / `ctx.net.backoff_seconds`, no literals | ✓ WIRED |
-| `agent_entrypoint.py:98` | `game_identity.adopt_negotiated_game_id` | after `result.agreed`, before `write_declaration`/`run_turn_loop` | ✓ WIRED |
-| `game_identity.py:162-169` | `turn_commit_ledger.ledger_path` | renaming `ctx.log_path` moves the D-64 ledger stem (`log_path.stem`) | ✓ WIRED (measured: one stem across all four artifacts) |
-| `agent_audit_wiring.py:153-159` | `security/audit.audit_peer_records` | `candidate_game_ids=ctx.candidate_game_ids`, `forbidden_role` per direction | ✓ WIRED |
-| `turn_hint_buffer.py:147` | `turn_commit_send.log_received` | inbound hint uses the commit path's own record shape with `local_turn` | ✓ WIRED (measured in both live logs) |
-| `turn_actions.py:92` | `commit_state.pending_action.turn` | responder stamps the turn it committed under | ✓ WIRED |
-| `language_wiring.py:124` and `:78` | `services/llm/client.has_api_key` | warning and declared name key off the same probe | ✓ WIRED |
-| `deadline.py:146-157` | `deadline_errors` tuples | raise-first clause before the retryable one; `RuntimeError` narrowed by cause | ✓ WIRED |
-| `bluff_prompt.STYLE_GUIDE` | `docs/PRD_deception.md:186` | quoted verbatim, changed in the same commit | ✓ WIRED |
-
-### Rules 16/22 — the false-accusation sweep
-
-This got the hardest look, as instructed. Every accusatory path reachable from this phase's
-changes was traced from the accusing statement backwards to the peer behaviour that triggers it.
-
-**Clean:**
-
-- **`state.role`** is a NEGATIVE check (`state.role == forbidden_role`), never equality with our
-  vocabulary. An honest opponent writing `"cop"` instead of `"thief"` is matched — pinned by
-  `test_control_a_peer_using_a_different_role_vocabulary_is_still_matched`.
-- **`state.game_id`** is checked by MEMBERSHIP in `{our minted uid, the id the peer published}`,
-  captured before the rebind. Traced on both roles by hand: police keeps its own id and the set
-  is `{own, peer}` → a thief that adopts ours passes, a thief that keeps its own passes; thief
-  adopts the peer's id and the set is still `{own_pre_adoption, peer}` → a police that keeps its
-  own passes, a police that adopted ours passes. A peer that published **no** id sets the whole
-  check to `None` (skipped) — no accusation. Our own records are in the set on both roles by
-  construction, so `self_audit` cannot mis-fire either.
-- **`state.turn`** compares two numbers the **peer itself** supplied (its ledger entry's turn vs
-  its own committed state's turn). Internal consistency, imposing nothing.
-- **A failed own push** is now the non-accusatory `audit_incomplete` (truth 1), and the deliberate
-  accusatory branches (`ToolError` → `PEER_PROTOCOL_ERROR`, a withheld peer reveal → rule 36, a
-  real `AUDIT_HASH_MISMATCH`) are each about an act the peer actually performed.
-- **`LocalProtocolError`/`UnsupportedProtocol`** now raise instead of burning the ladder and ending
-  in a `TechnicalWin` against a peer that never received a valid request — this phase **removed** a
-  false-accusation path here.
-- **Hints** never produce a verdict: 04-12's deviation made late/duplicate hints a silent drop, and
-  05-06 widened the window rather than narrowing it, so no hint timing can forfeit a game.
-
-**Three residuals, stated rather than hidden:**
-
-1. *(Documented, limitation (c) in `audit_state.py`)* A peer deriving a **third** id — a hash of
-   both, the lexicographic min — is accused under any candidate-set rule. Weighed and declined in
-   source; no mechanism covers an unbounded space of conventions.
-2. *(Documented, limitation (b))* A peer that publishes a **prior game's** id at handshake satisfies
-   membership. Contained only by the move cross-check, never by the hash.
-3. *(Deferred item #5, examined and accepted)* An in-game ladder exhaustion still names the peer
-   `OPPONENT_UNRESPONSIVE` when the fault was our own uplink. Pre-existing NET-06 policy; 05-09
-   makes an accidental gap consistent with it rather than widening it, and the alternative it
-   replaced was a crash that loses under rule 36 with no verdict at all.
-
-**Verdict: no false-accusation path is introduced by this phase, and one is removed.**
+| `src/pursuit/network/config_hash.py` | `unusable_peer_digest` containment | ✓ VERIFIED | Production caller at `:120`; probed; peer VALUE never interpolated into the detail, only its type name |
+| `src/pursuit/network/game_identity_validate.py` | peer-id safety gate + `relocate_log` | ✓ VERIFIED | Both consumed by `game_identity.py:84` and `:170`; `relocate_log` catches `OSError` **and** `ValueError` (embedded NUL) and half-adopts nothing on failure |
+| `src/pursuit/network/agent_audit_exchange.py` | per-attempt watchdog touch + FINAL_REVEAL loop | ✓ VERIFIED | `:87`, `:126`; the `while True` loop closes the pre-existing `records=[]` false-accusation path |
+| `src/pursuit/network/agent_audit_wiring.py` | non-accusatory RECEIVE leg | ✓ VERIFIED | Discrimination is `send_verdict is not None` — a push that LANDED keeps rule 36's sanction intact; revert probe confirms |
+| `src/pursuit/network/turn_hint_store.py` | single-decode marker | ✓ VERIFIED | `is_replay` + `consume_hint`; marker written at CONSUMPTION, and the source records that the plan's own arrival-time proposal was measured half-wrong |
+| `src/pursuit/network/turn_commit_wait.py` | four legs mark each attempt | ✓ VERIFIED | `:121, :150, :170, :186`; post-ladder touch at `:100` retained |
+| `src/pursuit/network/capture_declaration.py` | capture Claim on the existing envelope | ✓ VERIFIED | Cop-only, gated on the resolved `Outcome`, `ToolError` swallowed, `message_sent` written only when the push landed |
+| `src/pursuit/strategy/deception.py` | no dead constructor | ✓ VERIFIED | `declare_truthfully` gone; rules 15/16/21/22 quoted in the module docstring |
+| `.planning/graphs/GRAPH_REPORT.md` | refreshed after the code landed | ✓ VERIFIED | 2026-08-16 22:26, carries all five new symbols |
+| `docs/phases/phase-5/GATE-5-MEASUREMENT.md` | both criteria, honest statuses | ✓ VERIFIED | Both PASS; four attempts recorded including two failures; attempt 4's second game explicitly de-claimed as a deterministic transport re-run |
+| `tests/integration/test_late_peer_teardown.py` | sequenced two-peer proof | ✗ **PARTIAL** | Positive case passes; the non-vacuity control fails 3/3 — gap 1 |
 
 ### Requirements Coverage
 
 | Requirement | Status | Blocking issue |
 |---|---|---|
-| CLOUD-01 (each peer reachable via tunnel) | ✓ SATISFIED | None — code complete and criterion 1 carries a real measured PASS |
-| CLOUD-02 (remote agent plays a full round) | ? NEEDS HUMAN | Code complete; all five attempt-1 causes closed and locally proven. Needs attempt 2 on a second machine (plan 05-08) |
+| CLOUD-01 (each peer reachable via tunnel) | ✓ SATISFIED | None — criterion 1 carries measured PASS evidence. Tracker checkbox still unticked (gap 2) |
+| CLOUD-02 (remote agent plays a full round) | ✓ SATISFIED | None — criterion 2 closed by attempt 4 and independently re-derived above. Tracker checkbox still unticked (gap 2) |
+
+### Standing Gates — re-run fresh this pass
+
+| Gate | Result |
+|---|---|
+| `uv run ruff check .` | **All checks passed!** (0 violations) |
+| `uv run pytest tests/ --cov` | **1 failed, 1523 passed**, 96.62% coverage, 163.14 s — **gap 1** |
+| `bash scripts/check_line_limit.sh` | exit **0**, clean |
+| `uv run python scripts/check_no_llm_in_strategy.py` | `OK: no forbidden imports` |
+| `uv run python scripts/measure_gate6.py` | all three criteria **PASS** |
+| `uv run python scripts/dev_launch.py` | exit **0**, one shared uid `c85ef36086d92961`, both sides `matched=true`, zero technical_win / watchdog / audit_incomplete |
+| Secret scan (`sk-ant-` over `src/ config/ scripts/`) | **0 hits**; `.env` untracked (`git ls-files --error-unmatch .env` → *Did you forget to 'git add'?*) |
 
 ### Anti-Patterns / Findings
 
 | File | Severity | Finding |
 |---|---|---|
-| `src/pursuit/security/audit.py:67`, `:118`, `:158` | 🛑 **Blocker for league day, not for this phase's gaps** | `audit_peer_records` **raises** on a malformed peer FINAL_REVEAL payload. Measured by probe against the shipped function: missing `turn` key → `KeyError: 'turn'`; `records` a string → `TypeError`; an entry that is a string → `TypeError`; `turn` a string → `TypeError` at the final `sort`. All three sites sit **outside** 05-05's `verify_reveal` try/except. `agent_entrypoint`'s guard is `except ToolError`, so this kills the process before any verdict is written — rule 36 against US, the exact artifact 05-04/05-09 exist to prevent. **Not** a false accusation, and **not** one of G1–G5, so it is logged as new deferred item **7** rather than a gap against this phase's must_haves |
-| `.planning/phases/05-cloud-exposure-and-tunneling/deferred-items.md` item 3 | ⚠️ Warning | The note's closing claim — *"The containment above means nothing is exposed today"* — is an **over-claim**, refuted by the probe above. The containment covers the `verify_reveal(...)` call only. The note needs amending; recorded here so the correction is not lost |
-| `src/pursuit/network/agent_entrypoint.py:110` | ⚠️ Warning | The production `board_outcome=outcome` wiring is **not pinned by any test**. `tests/unit/test_agent_entrypoint.py`'s four cases never assert the kwarg, and `dev_launch.py` would still pass without it (the linger prevents the failure locally). This is precisely the "wired through tests only" hazard the plan called out, inverted: the production wiring is present, but nothing would catch its removal. Recommend one assertion on the kwarg |
-| `docs/PRD_commit_reveal.md` | ℹ️ Info | Describes the D-60 state record as written (`:110-123`) but was not updated with the **read** side. The membership choice and its three limitations exist only in `audit_state.py`'s source comment. Root `docs/{PRD,PLAN,TODO}.md` are also unchanged since `950b0ed` — doc debt for verify-work, not a code gap |
-| `src/pursuit/network/turn_commit_wait.py:146`, `:119-126` | ℹ️ Info (pre-existing) | "A duplicate/unexpected arrival is tolerated jitter — dropped." A peer's FINAL_REVEAL arriving while we are still mid-turn-loop would be consumed and discarded, after which our own `receive_final_reveal` would exhaust and accuse. Narrow and pre-existing (Phase 6), not reachable in the runs measured here; noted so it is on record |
-| All Phase-5 source files | — | Scanned for `TODO`/`FIXME`/`XXX`/`HACK`/`PLACEHOLDER`/`return null`-shaped stubs: **zero matches**. No stub, no placeholder, no console-log-only implementation anywhere in the 14 modules this phase touched |
-
-### Standing Gates — re-run fresh on this machine
-
-| Gate | Result |
-|---|---|
-| `uv run ruff check .` | **All checks passed!** (0 violations) |
-| `uv run pytest tests/ --cov` | **1327 passed, 0 failed, 96.37% coverage**, 127.94 s (quiet box). Matches 05-07-SUMMARY's claim exactly. A first run, launched concurrently with the ruff/line-limit/no-LLM checks, showed 1326 passed + 1 failed (`test_belief_policy.py::test_belief_enabled_completes_within_the_per_turn_time_budget`, a per-turn **time budget** assertion); re-run alone it passes in 0.35 s. Load flake, attribution measured, nothing relaxed |
-| `bash scripts/check_line_limit.sh` | exit **0**, no output (clean). `agent_lifecycle.py` measured **148/150** — deferred item 2 is accurate |
-| `uv run python scripts/check_no_llm_in_strategy.py` | `OK: no forbidden imports` |
-| `uv run python scripts/measure_gate6.py` | **all three criteria PASS** — Phase 6 has not regressed |
-| `uv run python scripts/dev_launch.py` | exit **0**; both sides end on `audit_verdict matched=true`; one shared game uid; zero technical wins |
-| Targeted gap-closure suites (8 files) | **33 passed** in 35.46 s |
-| `git diff 950b0ed..HEAD -- config/` | **empty** — no new numeric leaf, no new key, no secret |
-
-Baseline check requested: the last independently-measured figure was **1308 passed / 96.36%**
-before 05-07 landed. Measured now: **1327 / 96.37%** — **+19 tests**, coverage up 0.01 pp,
-which is exactly what 05-07-SUMMARY claims.
-
-### Human Verification Required
-
-#### 1. GATE-5 criterion 2 — remote round, attempt 2 (plan 05-08)
-
-**Test:** `docs/phases/phase-5/REMOTE-ROUND-RUNBOOK.md`. Machine A starts with the tunnel and
-shared secret; machine B, on a different network, points `PURSUIT_OPPONENT_URL` at A's public
-URL; play one full round to a real outcome; retain both logs, both ledgers, both declaration
-pairs **and both consoles** (attempt 1 lacked machine B's console, its ngrok agent log, and a
-clock-skew note).
-
-**Expected:** all four artifacts under **one** shared game uid; the two sides' final verdicts
-**agree**; no `technical_win` on a side whose peer answered. Then record it in
-GATE-5-MEASUREMENT.md as Attempt 2 and tick the gate.
-
-**Why human:** needs a second physical machine on a different network with a human operator.
-Re-confirmed this pass: nothing in `scripts/` or `tests/` simulates a remote machine, by design.
-The clean local `dev_launch.py` run above is necessary but **not** sufficient — attempt 1 also
-passed locally before it failed remotely.
+| `tests/integration/late_peer_harness.py:60` | 🛑 **Blocker for the gate, not for the goal** | `_LATE_SECONDS = 0.3` makes the non-vacuity control a race this box now loses deterministically. Gap 1 |
+| `.planning/phases/.../deferred-items.md` item 4 | ⚠️ Warning | Its 2026-08-16 characterisation ("first run after a source change; the two after it pass") is refuted by 3/3 consecutive failures with no source change. Needs a dated append, in the file's own correction style |
+| `.planning/REQUIREMENTS.md:183` | ℹ️ Info | The whole status table reads "Pending" for every phase including 1–4. Repo-wide rot; fixing only the Phase-5 row would misdescribe the repo in the other direction |
+| `docs/phases/phase-6/gate6_measurement_evidence.json` | ℹ️ Info | The **committed** evidence predates 05-15. Re-running `measure_gate6.py` this pass gave all three criteria PASS but a diff of exactly what 05-15 predicted: 3 timestamp lines plus two new `"game_over": 1` counters (under `police_sent` and `thief_received`) — the capture declaration 05-15 added. 05-15 measured this and did not refresh the committed file. Harmless (the verdict is unchanged, and the delta is explained in 05-15's own TODO row), but the file on disk no longer matches a fresh run. I reverted my regeneration to leave the tree clean; refreshing it is a one-command follow-up |
+| `docs/phases/phase-5/remote-round-.../NEEDED-FROM-MACHINE-B.md` | ℹ️ Info (good practice) | Records the one missing artifact (`consoleB_attempt4.txt`) as an open `- [ ]` rather than omitting it. Noted as a model of the discipline, not as a defect |
+| All Phase-5 source added by 05-12..05-16 | — | Scanned for `TODO`/`FIXME`/`XXX`/`HACK`/`PLACEHOLDER` and stub shapes: **zero matches**. No placeholder, no console-log-only implementation |
 
 ### Gaps Summary
 
-**No gap remains against this phase's own must_haves.** All five UAT gaps and deferred item #1
-were re-verified against source and against live runs, not against SUMMARY prose:
+**Both §10.4 criteria are genuinely met and their evidence survives independent
+re-derivation.** Criterion 1 has a real smoke run; criterion 2 has two complete games across
+two machines on two networks, with a shared uid per game across all artifact classes on both
+sides, agreeing `capture` outcomes, `audit_verdict matched=true` on both machines, byte-identical
+cross-signed declarations in both directions, and a live `claude-haiku-4-5` declared. I
+re-derived all of that from the raw logs. Understating it would be its own misreport.
 
-- **G1** — the non-accusatory branch exists *and* `board_outcome=outcome` is present at the
-  production call site (`agent_entrypoint.py:110`), which was the specific thing to confirm; the
-  audit falls through instead of bailing; `record_technical_loss` appends a corrected `game_over`;
-  the linger reuses two existing Table-19 fields with zero literals and zero config keys, inside a
-  `finally`, with the watchdog stopped first.
-- **G2** — one negotiated id now governs all four artifact classes on both sides (measured on a
-  real loopback game, including every committed `state.game_id`), and the candidate set is built
-  seven lines before the rebind, pinned for both roles by two independent tests.
-- **G3+G4** — both live logs now carry `message_received`+`hint` records with the correct turn
-  split, both sides stamp the turn actually played, the responder decodes for the first time, and
-  no hint is composed for a resolved turn.
-- **G5** — the startup warning fires on a keyless box with the env var **name** only, the
-  declaration honestly says `template-fallback (no LLM calls)` and still carries exactly its ten
-  HMAC'd fields, and the four Phase-4 degradation tests pass unedited.
-- **Deferred #1** — both httpx shapes (raw and the `RuntimeError from httpx.ConnectError` connect
-  wrapper) are contained, the two local-fault classes still raise, and neither `deadline.py` nor
-  `deadline_errors.py` contains a catch-all.
+**The G6–G10 fixes are real, not merely tested.** Every validator and hook this phase added
+has a production caller traceable to `run_agent`, every one of them survived a hostile-input
+probe against the shipped function, and all four fixes failed their guard suites when
+reverted. The one clause knowingly not met literally — "no unreachable BARRIER/CAPTURE
+branches" — is met under the sanctioned alternative in the gap's own wording, and I reproduced
+the `KeyError` that makes removal wrong.
 
-**What is still open is the phase's own §10.4 criterion 2**, which cannot be produced by any
-script here. Plus one new finding worth a follow-up plan before league day (deferred item **7**:
-a malformed peer FINAL_REVEAL still kills us at the audit boundary — the last uncontained door in
-the same corridor 05-04 and 05-09 closed), and the amendment it forces on deferred item 3's
-"nothing is exposed today".
+**Two gaps stand:**
 
-**GATE-5 is NOT ticked. `docs/phases/phase-5/TODO.md` and `.planning/ROADMAP.md` are correctly
-left unticked for 05-08 and for the criterion-2 gate row.**
+1. **The standing test gate is red**, and deferred item #4 is no longer a flake (3/3). The
+   product is fine; the non-vacuity proof of 05-04's linger is not. Neither §10.4 criterion is
+   affected, but the project's own enforced gate is, and a fix that widens a timing constant
+   is explicitly ruled out by the item itself.
+2. **Trackers are stale** — CLOUD-01/CLOUD-02 unchecked in REQUIREMENTS.md, five phase-TODO
+   rows still ☐ (each deliberately left for this pass), and `docs/TODO.md` row 05-99 ☐. All
+   closable inside this verify-work pass.
+
+**GATE-5 is MET.** These gaps do not un-tick it.
 
 ---
 
-*Verified: 2026-08-14 — replaces the 2026-08-09T05:58:21Z report*
+*Verified: 2026-08-16T19:47:03Z at HEAD `ff4ac93`*
+*Supersedes: `05-VERIFICATION-2026-08-14-superseded.md` (preserved, not deleted)*
 *Verifier: Claude (gsd-verifier)*
