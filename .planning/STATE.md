@@ -21,15 +21,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-27)
 
 **Core value:** The two agents play a complete, rule-compliant, cryptographically-verifiable game that both sides report correctly.
-**Current focus:** Phase 05 gap closure — **all five code-side gaps (G1–G5) are now closed**; only 05-08, the HUMAN remote round attempt 2, is left, and GATE-5 criterion 2 stays PENDING until it runs. Phase 07 waits.
+**Current focus:** Phase 05 **GATE MET, verified 2026-08-16** — criterion 2 closed by remote-round attempt 4 (two machines, two networks, agreeing verdicts and matched audits on BOTH sides, live `claude-haiku-4-5`). `/gsd:verify-work 5` then ran a 12-agent adversarial audit and found **five NEW gaps G6–G10** (three blocker-class, none a §10.4 criterion) — recorded in `05-UAT.md` Round 2, awaiting their own plan. Phase 07 waits.
 
 ## Current Position
 
-Phase: 05 (cloud-exposure-and-tunneling) — **IN PROGRESS, gap closure.**
-  9 of 10 plans executed (05-01..05-07 + 05-09 + 05-10). **Only 05-08 remains, and
-  it is HUMAN-ONLY** — the remote round, two machines on two networks, per
-  `docs/phases/phase-5/REMOTE-ROUND-RUNBOOK.md`. GATE-5 criterion 2 stays PENDING
-  until it runs; nothing in `scripts/` or `tests/` can close it, by design.
+Phase: 05 (cloud-exposure-and-tunneling) — **GATE-5 MET; follow-up gaps open.**
+  All 11 plans executed (05-01..05-07, 05-09..05-11) and 05-08's human remote round
+  CLOSED at attempt 4 (2026-08-16, games `b22361aa93ccf310` + `d265603c116a9f99`,
+  hotspot ↔ wired ethernet, both sides `capture` + `audit_verdict matched=true`,
+  one shared UID each). Evidence `docs/phases/phase-5/remote-round-2026-08-16-attempt4/`.
+  **Verify-work 2026-08-16 re-measured the phase against live source** (not SUMMARY
+  claims) with 6 verifiers each answered by a skeptic told to refute it. G1–G5 all
+  confirmed present with real production callers; G5 survived a dedicated attack.
+  **Five new gaps G6–G10** were found and hand-re-confirmed: G6 (G1's non-accusation
+  branch is unreachable under a slow send failure — the audit path never touches the
+  freeze watchdog), G7 (the negotiated game_id is peer-controlled and reaches a set
+  constructor and a filesystem path unvalidated), G9 (a seventh peer-data boundary
+  instance — a non-str peer digest raises `TypeError` at the handshake and kills us
+  before move 1; reproduced by direct probe), G8 and G10 (minor/major residuals).
+  Table-5 gate green: ruff 0, **1374 passed / 96.54%**, ≤150 clean, 0 secrets,
+  `.env` untracked.
   **05-10 (2026-08-14) closed deferred items #6 and #7** and, with them, the
   recurring pattern that produced FIVE separate defects across this phase: an
   unhandled exception on PEER-CONTROLLED data escaping to `main.py`, killing the

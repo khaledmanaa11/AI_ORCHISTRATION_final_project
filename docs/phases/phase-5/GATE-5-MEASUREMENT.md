@@ -11,7 +11,10 @@ peers' logs, ledgers, and cross-signed declarations retained and independently
 re-verified (26/26 checks). The road there: attempt 1 (2026-08-13) fell to disagreeing
 verdicts and split game UIDs; attempt 2 (2026-08-16 morning) to a mid-game tunnel-ingress
 drop; attempt 3 (2026-08-16 midday) completed cleanly on template-fallback hints and
-attempt 4 repeated it twice with the live model. Per-attempt sections below.
+attempt 4 ran twice with the live model. **Stated precisely:** attempt 4's two games are
+the *same deterministic game* replayed (identical moves and positions on both sides — the
+seeded tie-break is designed to do that), so the second game is an additional exercise of
+the **transport**, not an independent gameplay sample. Per-attempt sections below.
 **Date:** 2026-08-09 · **Plan:** 05-03 · **Method:** `scripts/gate5_tunnel_smoke.py` for
 criterion 1; a human-run procedure, recorded here, for criterion 2.
 
@@ -224,7 +227,17 @@ Root cause of attempt 3's fallback fixed operationally: the valid `ANTHROPIC_API
 each machine's local `.env` (gitignored; the code reads `os.environ` only, per rules 39–40)
 was exported into the launch console on **both** machines. Two consecutive complete games
 followed, both on commit `0632e04`, both over the tunnel
-(`perdurable-mireille-nonzoologically.ngrok-free.dev`, remote peer `38.191.139.51`):
+(`perdurable-mireille-nonzoologically.ngrok-free.dev`, remote peer `38.191.139.51`).
+
+**Read the two rows below as one game played twice, not as two independent samples.**
+Comparing the ledgers move by move, on *both* machines game 1 and game 2 carry identical
+moves, identical positions, the identical turn-5 barrier and the identical outcome — only
+the nonces, commit hashes, game UID and LLM hint text differ. This is by design (the
+policy's seeded tie-break exists to make a game replay byte-identically), so the second
+game is a **further exercise of the transport and the protocol, not additional evidence
+about the game logic**, and the cross-checks passing "per game" are not two independent
+samples. For criterion 2 — which asks for a full round over the tunnel with agreeing
+verdicts — either game closes it on its own; the second is corroboration of the transport.
 
 | Game UID | End (UTC) | Outcome (A) | Final audit (A) | `llm_name` both sides |
 |---|---|---|---|---|
@@ -259,10 +272,28 @@ with A's own declaration byte-identical to B's peer copy and vice versa.
 **Machine/network note (step 7), confirmed by the operator:** machine A (police,
 Windows, 12-core) on a **phone hotspot**; machine B (thief, Windows 11, 20-core) on
 **wired ethernet** — the same genuine network boundary as attempts 1–2, crossed through
-`perdurable-mireille-nonzoologically.ngrok-free.dev`. One evidence gap, stated honestly:
-machine B's console was not Tee'd, so only machine A's console
-(`consoleA_attempt4.txt`) is retained; the closing condition this section states — both
-retained JSONLs, two agreeing verdicts, the network note — is met in full without it.
+`perdurable-mireille-nonzoologically.ngrok-free.dev`.
+
+**What this round does not prove, stated so a reader cannot infer more than happened:**
+
+1. **Machine B's console was not Tee'd**, so only machine A's console
+   (`consoleA_attempt4.txt`) is retained. The closing condition this section states — both
+   retained JSONLs, two agreeing verdicts, the network note — is met in full without it.
+2. **The 05-11 tunnel-watch repair path never fired.** No tunnel drop occurred in either
+   game (all four logs are clean of reconnect/repair events and the retained console shows
+   uninterrupted traffic), so attempt 4 is evidence that a **healthy** tunnel completes a
+   round — not live evidence that `ensure_connected()` repairs a dropped one. The narrative
+   arc attempt 2 → 05-11 → attempt 4 should not be read as closing that loop empirically.
+3. **The second game is a deterministic replay** of the first (see above), so it corroborates
+   the transport rather than sampling the game logic a second time.
+
+**A post-closure adversarial audit (2026-08-16, 12 agents) found five further gaps, G6–G10,
+recorded in `.planning/phases/05-cloud-exposure-and-tunneling/05-UAT.md`.** Three are
+blocker-class (an unvalidated peer digest and an unvalidated peer game-id can each kill this
+process before move 1; G1's non-accusation branch is unreachable under a slow send failure).
+None of them is a §10.4 criterion and none changes the verdicts above, but they are
+league-day risks and they are the reason this phase is "gate met, work remaining" rather
+than simply finished.
 
 ---
 

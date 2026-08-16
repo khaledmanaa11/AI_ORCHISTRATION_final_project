@@ -152,22 +152,29 @@ below is ticked until `/gsd:verify-work 4` runs, after 04-14):
   1. Each peer is reachable on the public internet through ngrok/Localtonet
   2. An agent on a remote machine connects through the tunnel and plays a full round against the local agent
 
-**Plans**: 8 (05-01..05-03 executed; 05-04..05-08 close the five gaps the 2026-08-13
-remote round exposed — see `05-UAT.md` Gaps)
+**Plans**: 11 (05-01..05-03 built the phase; 05-04..05-07 closed the five gaps the
+2026-08-13 remote round exposed — see `05-UAT.md` Round 1; 05-09..05-11 closed the
+peer-data crash paths and gave `ensure_connected()` its production caller). **GATE-5 MET
+2026-08-16** — criterion 2 closed by remote-round attempt 4. A post-closure adversarial
+audit found five further gaps **G6–G10** (`05-UAT.md` Round 2), three blocker-class; none
+is a §10.4 criterion, so they need their own plan rather than reopening this gate.
 
 Plans:
 
-- [ ] 05-01: Tunnel lifecycle -- pyngrok dep, tunnel.json + loader, TunnelManager (DI'd, reconnect bounded by Table 19), lifecycle wiring, URL/secret exchange printout (CODE+TEST COMPLETE, see 05-01-SUMMARY.md; not yet verified)
-- [ ] 05-02: Shared-secret channel -- ASGI middleware, client transport headers, env plumbing, `.env-example` (CODE+TEST COMPLETE, see 05-02-SUMMARY.md; not yet verified)
-- [ ] 05-03: Gate 5 -- smoke script, in-process integration proof, `GATE-5-MEASUREMENT.md`, Localtonet runbook, graph refresh
-- [ ] 05-04: G1 — verdict honesty + bounded teardown grace (a failed OWN final-reveal send stops accusing the peer; corrected `game_over`; `linger_for_peer` on Table 19 values, zero new numbers)
-- [ ] 05-05: G2 — one negotiated game id across log/ledger/declaration/committed `state.game_id`, and an audit that validates the peer's committed role/turn (game_id when negotiated)
-- [ ] 05-06: G3+G4 — inbound HINTs on the wire log; relaxed receive window AND responder `pending.turn` stamp together; no hint composed for an already-resolved turn
-- [ ] 05-07: G5 — keyless LLM made legible (startup WARNING, honest declared `llm_name`, first-person compose prompt); fallback behaviour unchanged
-- [ ] 05-08: Remote round attempt 2 — HUMAN-RUN on two machines/networks; closes GATE-5 criterion 2 or records honestly why not
-- [ ] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
-- [ ] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
-- [ ] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
+- [x] 05-01: Tunnel lifecycle -- pyngrok dep, tunnel.json + loader, TunnelManager (DI'd, reconnect bounded by Table 19), lifecycle wiring, URL/secret exchange printout
+- [x] 05-02: Shared-secret channel -- ASGI middleware, client transport headers, env plumbing, `.env-example`
+- [x] 05-03: Gate 5 -- smoke script, in-process integration proof, `GATE-5-MEASUREMENT.md`, Localtonet runbook, graph refresh
+- [x] 05-04: G1 — verdict honesty + bounded teardown grace (a failed OWN final-reveal send stops accusing the peer; corrected `game_over`; `linger_for_peer` on Table 19 values, zero new numbers) — shipped; see G6 for the reachability residual
+- [x] 05-05: G2 — one negotiated game id across log/ledger/declaration/committed `state.game_id`, and an audit that validates the peer's committed role/turn (game_id when negotiated) — shipped; see G7 for the peer-input residual
+- [x] 05-06: G3+G4 — inbound HINTs on the wire log; relaxed receive window AND responder `pending.turn` stamp together; no hint composed for an already-resolved turn
+- [x] 05-07: G5 — keyless LLM made legible (startup WARNING, honest declared `llm_name`, first-person compose prompt); fallback behaviour unchanged
+- [x] 05-08: Remote round — HUMAN-RUN on two machines/networks; **closed GATE-5 criterion 2 at attempt 4 (2026-08-16)**: agreeing verdicts + matched audits on both machines, live LLM both sides
+- [x] 05-09: Transport-failure containment — `httpx.TransportError` joins the NET-06 ladder incl. the wrapped connect-path shape; LocalProtocolError/UnsupportedProtocol still raise
+- [x] 05-10: Peer-data boundary — malformed FINAL_REVEAL is a named mismatch not a crash; 5xx/429 retryable while 4xx raises; `board_outcome` wiring pinned — see G9 for the seventh instance still live at the handshake
+- [x] 05-11: Tunnel watch — `ensure_connected()` gets its production caller; drop repaired on the existing Table-19 bound (never exercised live — no drop occurred in attempt 4)
+- [x] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
+- [x] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [x] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 6: Security and Cryptography
 
