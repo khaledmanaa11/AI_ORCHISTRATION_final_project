@@ -1,7 +1,13 @@
 """Coverage-closing tests (Rule 2) for agent_audit_exchange.py's
 technical-loss and edge-case branches: a failed FINAL_REVEAL push/receive,
 observed() skipping a record with no envelope, an absent wire log, and
-record_technical_loss's own append+return shape."""
+record_technical_loss's own append+return shape.
+
+The receive leg's ENVELOPE-TYPE contract (05-15, G10) lives in the sibling
+`test_agent_audit_receive.py`, split off at the 150-code-line gate. The
+silent-peer case below stays here and is BYTE-UNEDITED: it is the fairness
+control for that split -- rule 36's sanction against a peer that really
+does publish nothing must keep firing exactly as it did."""
 
 from __future__ import annotations
 

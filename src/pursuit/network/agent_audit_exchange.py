@@ -11,12 +11,18 @@ agent_audit_wiring.py keeps only the two public entry points and policy
 `agent_audit_verdict.py` when 06-05's Gap-2 fix took this file to 159 code
 lines; both of its public names are re-exported below, so importers that
 already reach for them here are unaffected.
+
+"How to read this side's own observed history back off its wire log"
+(`observed`) moved to the sibling `agent_audit_observed.py` when 05-15's
+receive-leg envelope-type loop took this file to 153 -- split at the gate
+along the seam this docstring already named, never compressed to fit, and
+re-exported below so no importer changed.
 """
 
 from __future__ import annotations
 
-import json
-
+from pursuit.network import capture_declaration
+from pursuit.network.agent_audit_observed import observed
 from pursuit.network.agent_audit_verdict import (
     OWN_RECEIVE_FAILED,
     record_audit_incomplete,
@@ -26,8 +32,7 @@ from pursuit.network.agent_audit_verdict import (
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.deadline import call_with_retry
 from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
-from pursuit.network.event_log import EventField
-from pursuit.network.turn_commit_wait import H_COMMIT_KEY, next_protocol_message
+from pursuit.network.turn_commit_wait import next_protocol_message
 from pursuit.network.verdict import TechnicalWin
 
 _FINAL_REVEAL_TOOL = "receive_final_reveal"
@@ -99,57 +104,28 @@ async def receive_final_reveal(ctx: AgentContext) -> tuple[list[dict], Technical
     ladder -- and it is the leg that runs LAST, so a freeze here kills the
     process with the peer's records already in hand and no `audit_verdict`
     written. `on_attempt` is therefore passed here and nowhere else: the
-    turn-loop callers keep the pre-05-13 behaviour byte for byte."""
-    envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
-    if verdict is not None:
-        return [], verdict
-    return envelope.payload.get(_RECORDS_KEY, []), None
+    turn-loop callers keep the pre-05-13 behaviour byte for byte.
 
-
-def _read_log(ctx: AgentContext) -> list[dict]:
-    if not ctx.log_path.exists():
-        return []
-    with ctx.log_path.open(encoding="utf-8") as fh:
-        return [json.loads(line) for line in fh if line.strip()]
-
-
-def observed(ctx: AgentContext, *, direction: str) -> tuple[dict[int, str], dict[int, dict]]:
-    """Build (observed_commits, observed_reveals) from ctx.log_path's own
-    JSONL, filtered to *direction* ("message_sent" or "message_received").
-    Sent = this side's own self-check evidence; received = what this side
-    actually saw the opponent do (D-67).
-
-    Both dicts are keyed on the RECORD's own top-level turn -- a number
-    THIS side stamped (`turn_commit_send.log_received`'s `local_turn`,
-    `turn_actions.await_opponent_turn`'s pre-resolve `observed_turn`, and
-    our own `send_and_log` turn on the sent side) -- never on the nested
-    `envelope`'s turn, which on the received side is whatever the peer
-    chose to claim.
-
-    That distinction is load-bearing, not cosmetic. Keying on the peer's
-    own number let an adversary stamp its COMMIT and REVEAL envelopes with
-    disjoint turns, which (1) emptied `audit.audit_peer_records`'s
-    `set(commits) & set(reveals)` coverage intersection, re-opening the
-    `{"records": []}` rule-36 evasion, and (2) sent every entry down the
-    trailing-commit exemption, so the D-67 revealed-vs-played check never
-    fired. Found at /gsd:verify-work 6 and reproduced with paired
-    controls; see 06-UAT.md Gap 1 and tests/unit/test_audit_turn_binding.py.
-
-    The nested envelope is still read for its type and payload, and is
-    still stored verbatim, so the peer's claimed turn remains on record as
-    evidence."""
-    commits: dict[int, str] = {}
-    reveals: dict[int, dict] = {}
-    for record in _read_log(ctx):
-        if record.get(EventField.EVENT) != direction:
-            continue
-        envelope = record.get(EventField.ENVELOPE)
-        if envelope is None:
-            continue
-        turn = record.get(EventField.TURN)
-        payload = envelope.get(EnvelopeKey.PAYLOAD, {})
-        if envelope.get(EnvelopeKey.TYPE) == MessageType.COMMIT.value:
-            commits[turn] = payload.get(H_COMMIT_KEY)
-        elif envelope.get(EnvelopeKey.TYPE) == MessageType.REVEAL.value:
-            reveals[turn] = payload
-    return commits, reveals
+    05-15 (G10): this leg now LOOPS until an actual FINAL_REVEAL arrives,
+    the same shape `turn_commit_wait`'s four `wait_for_*` legs have always
+    had. It used to accept whatever `next_protocol_message` returned first
+    and read `records` off it -- so ANY other envelope arriving ahead of the
+    peer's FINAL_REVEAL yielded `records=[]` with `verdict=None`, which is
+    byte-identical to the `{"records": []}` rule-36 evasion and drives an
+    honest peer straight into AUDIT_HASH_MISMATCH / TECHNICAL_LOSS. That is
+    a FALSE ACCUSATION (rules 16/22), and it was reachable BEFORE this plan
+    added a sender: `game_over` is a registered tool on our published league
+    surface, so any peer implementation using it triggered it. Measured
+    pre-fix on a queue of [GAME_OVER, FINAL_REVEAL]: `records=[]`,
+    `verdict=None`, the peer's real ledger discarded. A capture declaration
+    seen on the way past is recorded as evidence; anything else is dropped
+    as tolerated jitter. Termination is unchanged -- the ladder underneath
+    still returns a verdict against a genuinely silent peer, and it still
+    touches the watchdog once per bounded attempt."""
+    while True:
+        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
+        if verdict is not None:
+            return [], verdict
+        if envelope.type is MessageType.FINAL_REVEAL:
+            return envelope.payload.get(_RECORDS_KEY, []), None
+        capture_declaration.record_received_declaration(ctx, envelope)
