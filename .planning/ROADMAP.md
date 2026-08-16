@@ -169,7 +169,7 @@ Plans:
 - [x] 05-05: G2 — one negotiated game id across log/ledger/declaration/committed `state.game_id`, and an audit that validates the peer's committed role/turn (game_id when negotiated) — shipped; see G7 for the peer-input residual
 - [x] 05-06: G3+G4 — inbound HINTs on the wire log; relaxed receive window AND responder `pending.turn` stamp together; no hint composed for an already-resolved turn
 - [x] 05-07: G5 — keyless LLM made legible (startup WARNING, honest declared `llm_name`, first-person compose prompt); fallback behaviour unchanged
-- [x] 05-08: Remote round — HUMAN-RUN on two machines/networks; **closed GATE-5 criterion 2 at attempt 4 (2026-08-16)**: agreeing verdicts + matched audits on both machines, live LLM both sides
+- [x] 05-08: Remote round — HUMAN-RUN on two machines/networks; **closed GATE-5 criterion 2 at attempt 4 (2026-08-16)**: agreeing verdicts + matched audits on both machines, live LLM both sides. Plan executed 2026-08-16: the runbook half (both consoles + both ngrok agent logs in the evidence list, the UTC-clock note, the expected-difference table, the pre-flight commit and `llm_name` checks) landed at `85a7171`, and the gate record's stale `Status: PENDING` line under "Criterion 2" — contradicting its own PASS header — was corrected
 - [x] 05-09: Transport-failure containment — `httpx.TransportError` joins the NET-06 ladder incl. the wrapped connect-path shape; LocalProtocolError/UnsupportedProtocol still raise
 - [x] 05-10: Peer-data boundary — malformed FINAL_REVEAL is a named mismatch not a crash; 5xx/429 retryable while 4xx raises; `board_outcome` wiring pinned — see G9 for the seventh instance still live at the handshake
 - [x] 05-11: Tunnel watch — `ensure_connected()` gets its production caller; drop repaired on the existing Table-19 bound (never exercised live — no drop occurred in attempt 4)
@@ -277,7 +277,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 13/14 | In Progress | - |
-| 5. Cloud Exposure and Tunneling | 4/8 | In Progress (GATE-5 criterion 1 PASS; criterion 2 PENDING -- gap-closure plans 05-04..05-08, then the human remote round attempt 2) | - |
+| 5. Cloud Exposure and Tunneling | 11/15 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) planned and pending execution | - |
 | 6. Security and Cryptography | 4/4 | Executed -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md passed 11/11; verify-work pending | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |

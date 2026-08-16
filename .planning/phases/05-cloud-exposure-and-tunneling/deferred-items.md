@@ -415,3 +415,27 @@ sending no declaration — so a hard abort would only add a false-accusation pat
 **Nothing is left open here.** The boundary rule now lives in `src/pursuit/security/audit.py`
 as a module comment naming all six instances, so a seventh is a review failure rather than a
 discovery.
+
+---
+
+## 8. `.planning/ROADMAP.md`'s progress-summary table is stale for every phase but 5
+
+**Found:** 05-08 Task 3 (2026-08-16), while correcting the Phase-5 row of that table.
+**Status:** OPEN — logged, not fixed (CLAUDE.md SCOPE BOUNDARY: only Phase 5's row is this
+plan's business).
+
+The table at the bottom of `ROADMAP.md` disagrees with the per-phase sections above it:
+
+| Row | Table says | Actually |
+|---|---|---|
+| 3. Blind Strategy Module | `0/5 · Not started` | its own plan list above is `[x]` on all seven rows (03-01…03-99) — a straight internal contradiction inside one file |
+| 2. FastMCP Infrastructure | `0/5 · Not started` | plan checkboxes are also unticked, but `src/pursuit/network/` ships the transport that Phases 5 and 6 measure live over a real tunnel — the tracker under-reports completed work rather than contradicting itself |
+| 4. Language and Scent | `13/14 · In Progress` | matches its list (04-14 GATE-4-vs-live-API is genuinely open), so this row is fine |
+| 6. Security and Cryptography | `Executed … verify-work pending` | `/gsd:verify-work 6` ran 2026-08-09, UAT 11/11, recorded in `STATE.md` and `docs/phases/phase-6/` |
+
+Only the Phase-5 row was corrected here (`11/15`, GATE-5 MET). **Why it is worth fixing
+anyway:** this table is the first thing a grader reads, and rule 38 is about the trackers
+telling the truth, not only the capture declarations. Under-reporting is not the
+disqualifying direction — but it is the same drift, and it reads as carelessness about
+exactly the discipline this project claims. Natural home: a tracker-wide pass in Phase 8's
+submission work, or the next `verify-work` that already touches `ROADMAP.md`.

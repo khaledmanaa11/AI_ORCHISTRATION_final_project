@@ -105,12 +105,20 @@ Two observations from the run, recorded rather than smoothed:
 
 ## Criterion 2 — the genuine remote round (CLOUD-02)
 
-**Status: PENDING.** This criterion inherently needs a second machine on a different network
+**Status: PASS — closed 2026-08-16 by
+[Attempt 4](#attempt-4--2026-08-16-1329z-two-full-rounds-with-live-llm-criterion-closed).**
+*(This line read `PENDING` from 2026-08-09 until attempt 4 closed it; corrected 2026-08-16
+under plan 05-08, which found the header above and this line disagreeing. The per-attempt
+records below are **append-only** and are not touched: attempts 1–3 each state "criterion NOT
+yet closed", and those are true statements about those attempts.)*
+
+This criterion inherently needs a second machine on a different network
 and a human to operate it — it cannot be produced by any script in this repository, and
 same-machine-via-public-URL (criterion 1's smoke test, above) is never a substitute for it
 (must_haves). This section is the full procedure a human with two machines follows to close it,
 mirroring `GATE-4-MEASUREMENT.md`'s own live-run precedent: state the exact steps, then wait for
-a real run rather than softening the PENDING status.
+a real run rather than softening the status — which is how it was held through attempts 1–3,
+across three days and three different failure modes, before a run finally earned the PASS.
 
 **Procedure.** The operator-facing expansion of the seven steps below — machine-B setup,
 the two tunnel paths for the second machine, the digests to verify, and the evidence to
@@ -143,7 +151,18 @@ retain — is [`REMOTE-ROUND-RUNBOOK.md`](REMOTE-ROUND-RUNBOOK.md). The canonica
 
 **What closes this section.** Both retained JSONLs (paths filled in here), both final
 verdicts (must agree — rule 38's own honesty requirement applies to this round like any
-other), and the machine/network note from step 7.
+other), and the machine/network note from step 7. **All three are present for attempt 4**:
+`remote-round-2026-08-16-attempt4/machineA-police/` and `machineB-thief/` hold both sides'
+logs and ledgers for both games, both sides end `game_over outcome=capture` +
+`audit_verdict matched=true`, and the operator-confirmed network note (phone hotspot ↔ wired
+ethernet) is recorded in the Attempt 4 section below.
+
+The operator procedure itself lives in [`REMOTE-ROUND-RUNBOOK.md`](REMOTE-ROUND-RUNBOOK.md)
+and was **amended after the fact** (2026-08-16, plan 05-08) with what all four attempts cost
+to learn — both machines' consoles and both ngrok agent logs in the retained evidence, each
+machine's UTC clock recorded at start, the commit hash recorded from both machines, and a
+live-versus-template `llm_name` check before the round is trusted as a live-LLM round. That
+amendment does not change any verdict below; it exists so league day does not re-learn them.
 
 ### Attempt 1 — 2026-08-13, completed round, criterion NOT yet closed
 
