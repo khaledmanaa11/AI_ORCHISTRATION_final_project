@@ -22,7 +22,7 @@ completion.
 - [x] **Phase 2: FastMCP Infrastructure** - Two separate processes exposing geometric tools over localhost, coordinates only. *(02-VERIFICATION.md `passed`: all three §10.4 criteria + 11/11 plan sub-checks. Ticked 2026-08-16 — the verification passed 2026-07-29 but 02-99's tracker pass was never carried out.)*
 - [x] **Phase 3: Blind Strategy Module** - The decision engine. Delivered as a matrix-game mover over a learned 15-weight evaluation, NOT Q-learning; see docs/phases/phase-3/PRD.md §2.
 - [ ] **Phase 4: Language and Scent** - Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
-- [ ] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
+- [x] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
 - [x] **Phase 6: Security and Cryptography** - Commit-reveal protocol over SHA-256, nonce handling, Step-0 hardware declaration. *(All three §10.4 criteria measured PASS; the 2 security gaps verify-work found beyond the gate were closed by 06-05 and the gate re-measured.)*
 - [ ] **Phase 7: Reporting and Visualization Shell** - Gmail API reporting via OAuth 2.0, live GUI, replay viewer application.
 - [ ] **Phase 8: Submission and League Operations** - Two public repos, academic README, Git tag, league games.
@@ -173,9 +173,9 @@ Plans:
 - [x] 05-09: Transport-failure containment — `httpx.TransportError` joins the NET-06 ladder incl. the wrapped connect-path shape; LocalProtocolError/UnsupportedProtocol still raise
 - [x] 05-10: Peer-data boundary — malformed FINAL_REVEAL is a named mismatch not a crash; 5xx/429 retryable while 4xx raises; `board_outcome` wiring pinned — see G9 for the seventh instance still live at the handshake
 - [x] 05-11: Tunnel watch — `ensure_connected()` gets its production caller; drop repaired on the existing Table-19 bound (never exercised live — no drop occurred in attempt 4)
-- [ ] 05-12: G9+G7 — a malformed peer cannot kill us at the handshake: a non-str peer digest is a named non-agreement; `peer_game_id` is safety-validated (never convention-checked) before it reaches a set, a Path, or the audit's membership key
-- [ ] 05-13: G6 — the audit survives long enough to be honest: it touches the watchdog per bounded attempt, and BOTH legs stop accusing a peer that answered
-- [ ] 05-14: G8 — one inbound hint is decoded at most once; both branches stamp the turn actually played, including the commit-reveal-off path
+- [x] 05-12: G9+G7 — a malformed peer cannot kill us at the handshake: a non-str peer digest is a named non-agreement; `peer_game_id` is safety-validated (never convention-checked) before it reaches a set, a Path, or the audit's membership key
+- [x] 05-13: G6 — the audit survives long enough to be honest: it touches the watchdog per bounded attempt, and BOTH legs stop accusing a peer that answered
+- [x] 05-14: G8 — one inbound hint is decoded at most once; both branches stamp the turn actually played, including the commit-reveal-off path
 - [x] 05-15: G10 — the declaration story settled: rules 15/16 confirmed satisfied by the committed action (rule text quoted in `PRD_deception.md` §2.1.1), dead `declare_truthfully` removed on recorded grep evidence, stale PRD line given a dated superseded-by note, capture Claim SENT on the existing `GAME_OVER` envelope — **EXECUTED 2026-08-16** (`4acee3b` / `1c90869` / `0930aac` / `886772d` / `f80e81b`); building it exposed a PRE-EXISTING false-accusation path in `receive_final_reveal` (a stray envelope ahead of the peer's FINAL_REVEAL yielded `records=[]`, rules 16/22), closed in `886772d`
 - [x] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [x] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
@@ -277,7 +277,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. FastMCP Infrastructure | 11/11 | Complete -- 02-VERIFICATION.md `passed`, 3/3 must-haves (GATE-1/2/3) + 11/11 plan sub-checks | 2026-07-29 |
 | 3. Blind Strategy Module (matrix mover, NOT Q-learning) | 14/26 | Complete -- the other 12 plans (03-14..03-25) were **deliberately superseded** by `da345dd`, which banners all twelve citing book §5.3.2 p.35 (they assumed a sequential turn order the book forbids). 03-VERIFICATION.md written retroactively 2026-08-16: `passed`, 3/3 §10.4 criteria -- but criterion 1 carried **zero** automated evidence until `ee167b0` restored `test_shortest_path.py` | 2026-08-08 |
 | 4. Language and Scent | 14/14 | Executed -- 04-VERIFICATION.md `human_needed`: 3/3 book success-criteria mechanisms verified (mocked) + 1/1 robustness item. **Live-API confirmation is the sole open item** | - |
-| 5. Cloud Exposure and Tunneling | 16/16 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) and 05-16 (deferred #10) ALL EXECUTED 2026-08-16, pending `/gsd:verify-work 5` | - |
+| 5. Cloud Exposure and Tunneling | 18/18 | **Complete — GATE-5 MET** (both §10.4 criteria PASS; criterion 2 closed by remote-round attempt 4 and re-derived from raw JSONL by script in three separate verification passes). 05-VERIFICATION.md `human_needed` 20/21, **no code gap** — the one open item is the repo-wide REQUIREMENTS.md status table, a scope decision, not a Phase-5 defect. Two adversarial rounds beyond the gate found ten further defects (G6-G10, deferred #4/#10, and the envelope-boundary class), closed by 05-12..05-18; the class is now held by a source-enumerated guard over all 12 queue-pull sites | 2026-08-17 |
 | 6. Security and Cryptography | 6/6 | Complete -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md `passed` 11/11 must-haves | 2026-08-09 |
 | 7. Reporting and Visualization Shell | 0/— | Not started -- not yet planned, so the plan count is unknown | - |
 | 8. Submission and League Operations | 0/— | Not started -- not yet planned, so the plan count is unknown | - |
