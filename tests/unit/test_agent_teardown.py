@@ -14,11 +14,21 @@ the AUDIT and stays true about the LINGER, and the distinction is the
 whole of G6: 05-04 read that grep, protected the linger, and left the
 audit exposed -- so the window it describes was never closed, it was
 stepped over. `push_final_reveal` and `receive_final_reveal` now touch
-once per BOUNDED attempt, so the grep returns seven sites; the audit is no
-longer killed at t=60 s of a 135 s ladder (see
-`tests/unit/test_audit_watchdog.py`). The linger still has no attempts to
-touch on, so `stop_watchdog` must still precede it and every assertion
-below stands unchanged.
+once per BOUNDED attempt, so the audit is no longer killed at t=60 s of a
+135 s ladder (see `tests/unit/test_audit_watchdog.py`).
+
+Re-run the grep and read it carefully, because the number is easy to get
+wrong: grepping src/ for the CALL form `watchdog.touch()` returns SIX --
+the five above plus `agent_audit_exchange.py:82` -- and the receive leg's
+touch is NOT among them, because it is PASSED rather than called
+(`next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)` at
+`agent_audit_exchange.py:103`). The call-form grep alone therefore
+undercounts the audit path by one, which is worth knowing before anyone
+uses it as evidence again.
+
+The linger still has no bounded attempt of its own to touch on, so
+`stop_watchdog` must still precede it and every assertion below stands
+unchanged.
 """
 
 from __future__ import annotations
