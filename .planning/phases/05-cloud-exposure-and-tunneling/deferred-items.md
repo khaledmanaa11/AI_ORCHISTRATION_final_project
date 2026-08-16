@@ -488,3 +488,76 @@ that still fails against a genuinely slow brain.
 Prior art in this file's own history: this test has been recorded as "the documented
 `test_belief_policy` time-budget flake" since 05-09, attributed by measurement each time.
 This is the first record of the *mechanism*.
+
+---
+
+## 10. The TURN LOOP still runs its own 135 s wait ladder against a 60 s watchdog
+
+**Found:** 05-13 (2026-08-16), while closing G6. **Severity:** major, unmeasured in the wild.
+**Status:** logged, deliberately NOT fixed — out of this plan's scope and a policy decision of
+its own.
+
+G6 was written about the AUDIT path. Fixing it made the same shape visible one level up.
+`turn_commit_wait.next_protocol_message` touches the watchdog exactly once, AFTER its whole
+`call_with_retry` ladder returns — `(retry_count + 1) x response_timeout` plus backoffs =
+**135 s** at the shipped Table-19 values, against `watchdog_threshold` = **60 s**. Every
+turn-loop wait (`wait_for_opponent_commit`, `wait_for_ack_and_commit`,
+`wait_for_reveal_capturing_early_ack`, `wait_for_matching_ack`) inherits it. So an opponent
+that goes quiet MID-GAME can still get `os._exit(1)` called on us at t=60 s of a ladder whose
+own D-13 verdict would have arrived at t=135 s — we publish no nonces (rule 36 against US)
+and write no verdict, which is the same artifact class G6 is about.
+
+05-13 gave `next_protocol_message` an `on_attempt` hook and **deliberately defaulted it to
+`None`**, so every turn-loop caller is byte-identical. Passing `ctx.watchdog.touch` there too
+is a one-word change and is NOT obviously correct: in-game, a peer that never answers is
+exactly the condition NET-07's threshold was chosen to bound, and the turn loop already has a
+different, deliberate answer for it (the D-13 technical-win ladder). Deciding which of the two
+bounds should win mid-game — and whether `watchdog_threshold` (60) being smaller than one full
+ladder (135) is itself the defect — is a parameter-and-policy question, and rule 1 forbids
+touching either number without `docs/PARAMETERS.md`. It needs its own plan with a control
+proving a genuinely frozen turn loop is still killed.
+
+**Do not close this by widening `watchdog_threshold`.** That is moving a Table-19 value so a
+symptom disappears.
+
+---
+
+## 11. Four files are now within six lines of the 150-line gate
+
+**Found:** 05-13 (2026-08-16). **Severity:** minor, mechanical. **Status:** logged.
+
+Measured at `da58bc2` with `scripts/check_line_limit.sh` (exit 0 tree-wide):
+`turn_commit_wait.py` **145**, `test_audit_send_failure.py` **148**,
+`test_audit_watchdog.py` **146**, `_fakes_agent.py` **144**.
+
+The deferred-item #2 posture applies to each: split BEFORE the next change there, never
+compress to fit. `turn_commit_wait.py`'s natural seam is the four `wait_for_*` legs (policy)
+away from `next_protocol_message` (the primitive) — the same policy-vs-mechanism split
+`handshake.py`/`handshake_wire.py` already uses, and the one its own docstring cites.
+`test_audit_send_failure.py`'s is case 5 and the watchdog cases moving to
+`test_audit_watchdog.py`, where the fakes already live.
+
+05-13 itself acted on this rather than logging it once: `agent_audit_wiring.py` reached
+**exactly 150/150** and was split into `agent_step0_wiring.py` in its own commit (`6920d4d`),
+following 05-10's `security/audit.py` precedent of splitting AT the gate rather than at the
+breach.
+
+---
+
+## 12. `push_final_reveal` cannot be driven without a real backoff sleep
+
+**Found:** 05-13 (2026-08-16). **Severity:** minor, test-ergonomics. **Status:** logged.
+
+`deadline.call_with_retry` already has injected `sleep` and `clock` seams — added precisely so
+"tests never wait on a real backoff" (its own docstring). Neither `push_final_reveal` nor
+`next_protocol_message` plumbs them through, so at production values a four-attempt ladder
+costs `3 x backoff_seconds` = **15 s of real wall clock** in any test that drives it.
+
+05-13 worked around it rather than widening a production signature for a test's benefit: the
+G6 cases set `backoff_seconds=0` and charge the backoff to the INJECTED watchdog clock
+instead, which is the only clock `Watchdog.check_once` reads (see
+`test_audit_watchdog._audit_ctx`'s docstring). That is honest for NET-07 — the ladder really
+is 140 s from the watchdog's point of view — but it does mean no test anywhere exercises the
+real `asyncio.sleep(backoff_seconds)` path at production values. Threading the two seams from
+`AgentContext` would remove the workaround; it touches two production signatures, so it wants
+its own small plan.
