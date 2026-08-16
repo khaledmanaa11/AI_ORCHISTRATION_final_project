@@ -45,9 +45,11 @@ from pursuit.network.agent_lifecycle import start_server, stop_runtime, stop_wat
 from pursuit.network.agent_teardown import linger_for_peer
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
+from pursuit.network.deadline_wait import bounded
 from pursuit.network.handshake import make_client_caller, perform_handshake
 from pursuit.network.orchestrator import run_turn_loop
 from pursuit.shared.scent_config import scent_digest
+from tests.integration.late_peer_gate import hold_peer_final_reveal_open
 from tests.integration.test_secret_channel import _free_port, _wait_until_accepting
 
 # Test scaffolding only -- NOT PARAMETERS.md values, and no config file is
@@ -125,20 +127,42 @@ async def late_peer_round(tmp_path, *, linger: bool):
     A's teardown is the three steps `run_agent` performs, in that exact
     order. `linger=False` is the revert probe -- the pre-Task-2 shape, kept
     HERE rather than by editing source, so the probe is re-runnable.
+
+    The two branches now differ by `linger_for_peer` ALONE, and the gate
+    (`late_peer_gate.py`, whose docstring carries the argument) is what buys
+    that: read it before changing anything below.
     """
     cfg_a, cfg_b = _paired_configs()
     outcome_a, outcome_b, ctx_a, ctx_b = await _play_over_real_sockets(
         cfg_a, cfg_b, game_uid="late-peer-teardown", log_dir=tmp_path,
     )
+    # Installed BEFORE either audit task exists, so no FINAL_REVEAL can slip
+    # past it. `bounded` is `deadline_wait`'s QUAL-02 primitive and
+    # `response_timeout` is the Table-19 field this harness already sets --
+    # reused, not introduced. It only stops a future regression turning the
+    # non-vacuity control into a hang.
+    arrived, released = hold_peer_final_reveal_open(ctx_a)
     audit_a_task = asyncio.create_task(run_final_audit(ctx_a, board_outcome=outcome_a))
     await asyncio.sleep(_LATE_SECONDS)
     audit_b_task = asyncio.create_task(run_final_audit(ctx_b, board_outcome=outcome_b))
 
-    audit_a = await audit_a_task
-    stop_watchdog(ctx_a)
-    if linger:
-        await linger_for_peer(ctx_a)
-    await stop_runtime(ctx_a)
+    try:
+        # B is now provably INSIDE its own push, un-acked. Where `released`
+        # is set is the whole difference between the two branches:
+        # linger=False reaches `task.cancel()` first (B is cut off);
+        # linger=True releases into an awaiting grace window (B lands).
+        await bounded(arrived.wait(), ctx_a.net.response_timeout)
+        audit_a = await audit_a_task
+        stop_watchdog(ctx_a)
+        if linger:
+            released.set()
+            await linger_for_peer(ctx_a)
+        await stop_runtime(ctx_a)
+    finally:
+        # Never leave a handler parked; a no-op for the outcome on both
+        # branches, because linger=True already set it and linger=False has
+        # already committed the cancel.
+        released.set()
 
     # B's audit is allowed to FAIL outright and is returned as evidence
     # rather than raised: without the linger it does (deferred-items.md #1),
