@@ -104,3 +104,8 @@ async def test_the_peer_receives_the_corrected_numbers_on_the_wire(tmp_path, mon
         assert got, "an inbound hint left no durable record"
         assert got == sent[:len(got)], f"received {got}, peer sent {sent}"
         assert len(got) >= len(sent) - 1
+        # Without this line the case passes against the very regression it
+        # is here for: `got == sent[:len(got)]` holds just as well when
+        # BOTH numbers are one turn into the future. Self-audit, 05-14 --
+        # measured against revert probe P5, where it failed to fail.
+        assert got == list(range(len(got))), f"the wire record carries unplayed turns: {got}"
