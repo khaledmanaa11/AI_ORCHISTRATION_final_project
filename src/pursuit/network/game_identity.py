@@ -25,6 +25,13 @@ are re-exported from there, so `agent_lifecycle.make_transition_reporter`
 and every existing importer and test resolve unchanged. Same
 relocate-and-re-export move `secret_wiring.py` made for the same reason
 (05-02).
+
+05-12/G7: everything standing between a PEER-CONTROLLED game id and this
+side's filesystem -- `usable_peer_game_id` and `relocate_log` -- lives in the
+sibling `game_identity_validate.py`, split out at the same 150-code-line gate
+this module is itself a product of (135/150 before that plan). Read that file
+before touching either call site below: its rejection rule is SAFETY-only and
+deliberately not a convention check.
 """
 
 from __future__ import annotations
@@ -36,6 +43,7 @@ from typing import TYPE_CHECKING
 
 from pursuit.network import turn_events
 from pursuit.network.event_log import append_event
+from pursuit.network.game_identity_validate import relocate_log, usable_peer_game_id
 from pursuit.network.state_machine import State, TransitionReporter, TransitionSeverity
 
 if TYPE_CHECKING:  # typing only -- an eager import here would be a real cycle
@@ -55,7 +63,7 @@ class GameIdentity:
     log_path: Path
 
 
-def negotiated_game_id(role: str, own_uid: str, peer_game_id: str | None) -> str:
+def negotiated_game_id(role: str, own_uid: str, peer_game_id: object = None) -> str:
     """D-61's ONE policy definition (moved verbatim from the now-deleted
     `agent_audit_wiring._declared_game_id`, whose own docstring scoped it to
     the declaration filename): police keeps its own `game_uid`; the thief
@@ -65,10 +73,15 @@ def negotiated_game_id(role: str, own_uid: str, peer_game_id: str | None) -> str
     D-61 binds US, not them. `handshake_evaluate` reads `peer_game_id`
     unconditionally and nothing anywhere requires a peer to adopt ours or to
     keep its own -- see `security/audit.py`'s note on why the committed
-    game_id is checked by MEMBERSHIP rather than equality."""
+    game_id is checked by MEMBERSHIP rather than equality.
+
+    05-12/G7: "published none" is now `game_identity_validate`'s single
+    answer, shared with `adopt_negotiated_game_id` below and with
+    `agent_audit_wiring.write_declaration`, so the declaration filename, the
+    log stem and the candidate set cannot disagree about what absent means."""
     if role == "police":
         return own_uid
-    return peer_game_id or own_uid
+    return usable_peer_game_id(peer_game_id) or own_uid
 
 
 def _sink(identity: GameIdentity | None, log_path: Path, game_uid: str) -> tuple[Path, str]:
@@ -145,25 +158,28 @@ def adopt_negotiated_game_id(ctx: AgentContext, result: HandshakeResult) -> None
     Nothing here is an error case. The source file may not exist (no illegal
     transition was logged) and the resolved id may equal the current one
     (always true for police) -- both mean "no filesystem work", not a fault.
+
+    05-12/G7: `peer_id` is `game_identity_validate.usable_peer_game_id`'s
+    single answer, taken ONCE and consumed by all three of the sinks that
+    used to read `result.peer_game_id` raw -- so no peer string reaches a
+    `Path`, no unhashable value reaches a set constructor, and the fallback
+    rule and the candidate set can no longer disagree about what "absent"
+    means. A `None` candidate set does not accuse anyone: `audit_state`
+    SKIPS the membership check entirely on None (its limitation (a)).
     """
-    resolved = negotiated_game_id(ctx.role, ctx.game_uid, result.peer_game_id)
-    ctx.negotiated_game_id = result.peer_game_id
+    peer_id = usable_peer_game_id(result.peer_game_id)
+    resolved = negotiated_game_id(ctx.role, ctx.game_uid, peer_id)
+    ctx.negotiated_game_id = peer_id
     # ORDERING IS LOAD-BEARING -- see security/audit.py's own re-statement of
     # it. Capture the two ids that were on the table BEFORE the rebind below.
     # `ctx.game_uid` is about to become `resolved`, and on the thief that IS
-    # `result.peer_game_id`, so a set built after this point holds ONE element
-    # and the audit's membership check silently degenerates to equality --
-    # which then accuses an honest peer that merely swapped conventions.
-    ctx.candidate_game_ids = (
-        {ctx.game_uid, result.peer_game_id} if result.peer_game_id is not None else None
-    )
-    if resolved == ctx.game_uid:
+    # `peer_id`, so a set built after this point holds ONE element and the
+    # audit's membership check silently degenerates to equality -- which then
+    # accuses an honest peer that merely swapped conventions.
+    ctx.candidate_game_ids = {ctx.game_uid, peer_id} if peer_id is not None else None
+    if resolved == ctx.game_uid or not relocate_log(ctx, resolved):
         return
-    target = ctx.log_path.parent / f"{resolved}{ctx.log_path.suffix}"
-    if ctx.log_path.exists() and ctx.log_path != target:
-        ctx.log_path.replace(target)
-    ctx.log_path = target
     ctx.game_uid = resolved
     if ctx.identity is not None:
-        ctx.identity.log_path = target
+        ctx.identity.log_path = ctx.log_path
         ctx.identity.game_uid = resolved
