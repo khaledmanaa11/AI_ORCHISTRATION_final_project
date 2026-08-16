@@ -12,9 +12,11 @@ import asyncio
 import pytest
 
 from pursuit.network import agent_entrypoint
+from pursuit.shared.network_config import load_network_config
 from pursuit.shared.tunnel_config import load_tunnel_config
 
 _TUNNEL_PARAMS = load_tunnel_config("config/police/tunnel.json")
+_NETWORK_PARAMS = load_network_config("config/police/network.json")
 
 
 class _FakeClient:
@@ -45,6 +47,7 @@ class _FakeTunnel:
         self._order = order
         self.public_url = "https://peer.ngrok-free.app"
         self.params = _TUNNEL_PARAMS
+        self.network_params = _NETWORK_PARAMS  # the 05-11 watch reads its cadence
 
     def start(self) -> None:
         self._order.append("tunnel_start")

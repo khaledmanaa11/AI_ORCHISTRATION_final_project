@@ -62,6 +62,7 @@ async def test_run_with_tunnel_starts_before_body_and_stops_after(capsys) -> Non
     class _FakeTunnel:
         public_url = "https://peer.ngrok-free.app"
         params = _TUNNEL_PARAMS
+        network_params = _NETWORK_PARAMS  # the 05-11 watch reads its cadence
 
         def start(self):
             order.append("start")
@@ -110,6 +111,7 @@ async def test_run_with_tunnel_stops_even_when_body_raises() -> None:
     class _FakeTunnel:
         public_url = "https://peer.ngrok-free.app"
         params = _TUNNEL_PARAMS
+        network_params = _NETWORK_PARAMS  # the 05-11 watch reads its cadence
 
         def start(self):
             order.append("start")
