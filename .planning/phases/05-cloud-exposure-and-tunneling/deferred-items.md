@@ -600,3 +600,36 @@ its own plan with its own tamper tests, not a drive-by inside a hint-channel fix
 tests were built to be independent of it for exactly this reason: the toggle-off case derives
 the played turns as `0..N-1` rather than comparing hints against moves, and says so in its
 module docstring.
+
+---
+
+## #14 (05-15) -- a dropped envelope costs the final-reveal wait a whole retry ladder
+
+**Logged, not fixed.** `agent_audit_exchange.receive_final_reveal` now loops until an actual
+`FINAL_REVEAL` arrives (05-15, the false-accusation fix). Each iteration re-enters
+`next_protocol_message`, which is itself bounded by the full
+`(retry_count + 1) x response_timeout` + backoff ladder -- 135 s at the shipped Table-19
+values. So N stray envelopes ahead of the peer's ledger cost up to N ladders.
+
+Bounded in practice: an honest peer sends at most one Capture Claim, so the realistic worst
+case is one extra ladder, and 05-13's per-bounded-attempt watchdog touch is live throughout
+(a wedged loop still stops producing attempts and NET-07 still kills us). The shape is
+identical to `turn_commit_wait.py`'s four `wait_for_*` legs, which have drained jitter this
+way since 06-02.
+
+**Why it was not closed here.** A per-leg total budget is a parameter decision -- it needs a
+number that is not in `docs/PARAMETERS.md` today (rule 1), and it interacts with
+`watchdog_threshold`. It must **NOT** be closed by widening `watchdog_threshold`, for the
+same reason deferred item #10 says so.
+
+---
+
+## #15 (05-15) -- test_bluff.py is at 147/150
+
+`tests/unit/services/test_bluff.py` gained the shared `declaration(kind)` helper (05-15, the
+`declare_truthfully` replacement) and now measures 147 code lines. It is already the host of
+`FakeProvider`/`_plan`/`_context`/`_result`/`WORD_LIMIT` for two sibling modules.
+
+**The named seam:** move the shared fakes into `tests/unit/services/_bluff_fixtures.py`, the
+`_hint_decode_fixtures.py` (05-14) and `_fakes_agent.py` precedent -- a non-`test_*.py`
+helper module pytest never collects. Split, never compress.

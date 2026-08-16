@@ -176,7 +176,7 @@ Plans:
 - [ ] 05-12: G9+G7 — a malformed peer cannot kill us at the handshake: a non-str peer digest is a named non-agreement; `peer_game_id` is safety-validated (never convention-checked) before it reaches a set, a Path, or the audit's membership key
 - [ ] 05-13: G6 — the audit survives long enough to be honest: it touches the watchdog per bounded attempt, and BOTH legs stop accusing a peer that answered
 - [ ] 05-14: G8 — one inbound hint is decoded at most once; both branches stamp the turn actually played, including the commit-reveal-off path
-- [ ] 05-15: G10 — the declaration story settled: rules 15/16 confirmed satisfied by the committed action, dead `declare_truthfully` removed, stale PRD line corrected, capture Claim de-risked via the existing `GAME_OVER` envelope
+- [x] 05-15: G10 — the declaration story settled: rules 15/16 confirmed satisfied by the committed action (rule text quoted in `PRD_deception.md` §2.1.1), dead `declare_truthfully` removed on recorded grep evidence, stale PRD line given a dated superseded-by note, capture Claim SENT on the existing `GAME_OVER` envelope — **EXECUTED 2026-08-16** (`4acee3b` / `1c90869` / `0930aac` / `886772d` / `f80e81b`); building it exposed a PRE-EXISTING false-accusation path in `receive_final_reveal` (a stray envelope ahead of the peer's FINAL_REVEAL yielded `records=[]`, rules 16/22), closed in `886772d`
 - [x] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [x] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [x] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
@@ -277,7 +277,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. FastMCP Infrastructure | 0/5 | Not started | - |
 | 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
 | 4. Language and Scent | 13/14 | In Progress | - |
-| 5. Cloud Exposure and Tunneling | 11/15 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) planned and pending execution | - |
+| 5. Cloud Exposure and Tunneling | 15/15 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) ALL EXECUTED 2026-08-16, pending `/gsd:verify-work 5` | - |
 | 6. Security and Cryptography | 4/4 | Executed -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md passed 11/11; verify-work pending | - |
 | 7. Reporting and Visualization Shell | 0/5 | Not started | - |
 | 8. Submission and League Operations | 0/5 | Not started | - |
