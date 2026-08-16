@@ -129,7 +129,16 @@ def test_compare_named_digest_remote_absent():
 
 
 def test_compare_named_digest_uses_constant_time_compare():
-    """Never a second, weaker '==' path (CLAUDE.md) -- non-str local/remote (both present,
-    neither None) must still raise via digests_match rather than silently comparing."""
-    with pytest.raises(TypeError):
-        compare_named_digest("config", "aaaa", 1234)
+    """Never a second, weaker '==' path (CLAUDE.md).
+
+    RE-SPECIFIED by 05-12, not deleted. Until then this test asserted
+    `pytest.raises(TypeError)` for a non-str REMOTE, certifying G9 as
+    intended: the remote half is PEER-CONTROLLED, and that raise escaped
+    `evaluate()` and `run_agent` and killed us at the handshake. The property
+    it was really guarding -- no second, weaker comparison path -- is now
+    asserted the honest way: the LOCAL half (ours, internal misuse) still
+    raises out of `digests_match`, and the strict contract itself stays
+    directly pinned in `test_digests_match_keeps_its_strict_raising_contract`
+    above."""
+    with pytest.raises(TypeError, match="digests_match requires two str arguments"):
+        compare_named_digest("config", 1234, "aaaa")
