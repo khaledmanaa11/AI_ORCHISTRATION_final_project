@@ -56,8 +56,8 @@
 
 ### Cloud Tunneling (CLOUD) — Phase 5
 
-- [ ] **CLOUD-01**: Each peer is exposed to the public internet via a tunneling tool (ngrok/Localtonet) (rule 10)
-- [ ] **CLOUD-02**: A remote agent connects via tunnel and plays a full round against the local agent (Stage 5 gate)
+- [x] **CLOUD-01**: Each peer is exposed to the public internet via a tunneling tool (ngrok/Localtonet) (rule 10)
+- [x] **CLOUD-02**: A remote agent connects via tunnel and plays a full round against the local agent (Stage 5 gate)
 
 ### Security & Cryptography (SEC) — Phase 6
 

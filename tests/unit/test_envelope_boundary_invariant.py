@@ -1,11 +1,20 @@
 """ONE invariant, held across EVERY queue-pull site in the codebase (05-18).
 
 THE CLASS, not the fifth instance of it. 05-09, 05-10, 05-15, 05-17 and
-deferred item #18 are the same defect five times over: an unexpected envelope
-type at a layer boundary is mishandled -- dropped, or misread as something
-else. Every one was found by grepping outward after the previous fix, never by
-review, and every fix bought exactly one defect. This module is the standing
-guard instead.
+deferred item #18 are the same defect five times over: peer-supplied data at a
+boundary is mishandled -- dropped, or misread as something else. Every one was
+found by grepping outward after the previous fix, never by review, and every
+fix bought exactly one defect. This module is the standing guard instead.
+
+SCOPE, stated precisely because an earlier draft of this docstring over-claimed
+it (corrected at verify-work, 2026-08-17): this guard covers the QUEUE-PULL
+sites, which is where 05-15, 05-17 and #18 live -- three of the five, not all
+five. 05-09 was an OUTBOUND exception-taxonomy defect in `call_with_retry`
+(`deadline.py`) and 05-10 was in `security/audit.py`; both are the same family
+but structurally outside any pull-site enumeration, and neither would be caught
+here. What this guard IS complete for, it is genuinely complete for: no queue
+read exists anywhere under `src/` outside the discovered set (re-measured at
+verify-work). Do not read a green run here as cover for the outbound half.
 
 THE INVARIANT. Every site that pulls an envelope either HANDLES its type,
 BUFFERS it for the layer that wants it, or SKIPS it -- and no site ever passes

@@ -100,12 +100,28 @@ Gate: hint→inference; scent decays; LLM emits a hint each turn (true or false)
 ## Phase 5 — Cloud Exposure and Tunneling  *(Milestone M5)*
 
 Gate: remote agent plays a full round via tunnel.
+**Gate met — both §10.4 criteria PASS
+([GATE-5-MEASUREMENT.md](phases/phase-5/GATE-5-MEASUREMENT.md)).** Criterion 1 measured
+2026-08-09 against the reserved domain; criterion 2 closed 2026-08-16 by remote-round
+**attempt 4** — two machines on two networks, hotspot ↔ wired, games `b22361aa93ccf310` and
+`d265603c116a9f99`, agreeing `capture` + `audit_verdict matched=true` on BOTH machines, one
+shared UID each, live `claude-haiku-4-5` both sides. Attempts 1–3 are retained beside it with
+their honest failure verdicts (rule 38); criterion 2 was re-derived from the raw JSONL, by
+script, in three separate verification passes.
+
+Beyond the gate, two adversarial rounds found **ten** further defects (G6–G10 plus deferred
+#4, #10 and the envelope-boundary class), closed by plans 05-12…05-18. Five of those shared
+one shape — an unexpected envelope type at a layer boundary dropped or misread — every one a
+rules-16/22 false-declaration path reachable by an honest peer. 05-18 therefore pinned the
+class with a source-enumerated guard over all 12 queue-pull sites rather than fixing the
+fifth instance alone; the guard found a sixth on its first run (deferred #19, latent because
+shipped config is `commit_reveal: true`). Suite 1374 → **1539 passed**, coverage 96.64%.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
 | 05-01 Tunnel integration + public URL in config | P0 | ☑ | Khaled | Peer reachable publicly via ngrok/Localtonet (CLOUD-01) |
 | 05-02 Remote end-to-end round validation | P0 | ☑ | Khaled | Remote agent completes a full round (CLOUD-02) — closed 2026-08-16, attempt 4: two live-LLM games over the tunnel, agreeing verdicts + matched audits on both machines (phase-5 GATE-5-MEASUREMENT.md) |
-| 05-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
+| 05-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 
 ---
 
