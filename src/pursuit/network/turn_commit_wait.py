@@ -22,6 +22,8 @@ security-critical (06-UAT.md Gap 1).
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from pursuit.network import turn_buffer
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.deadline import call_with_retry, wait_for_opponent
@@ -53,7 +55,9 @@ __all__ = [
 ]
 
 
-async def next_protocol_message(ctx: AgentContext) -> tuple[Envelope | None, TechnicalWin | None]:
+async def next_protocol_message(
+    ctx: AgentContext, *, on_attempt: Callable[[], None] | None = None,
+) -> tuple[Envelope | None, TechnicalWin | None]:
     """Pull one non-HINT envelope off the wire, tolerant of an interleaved
     HINT (buffered via `turn_buffer.record_hint`, never blocking) -- the
     same primitive `turn_buffer.await_move` uses, generalized to any type
@@ -61,10 +65,28 @@ async def next_protocol_message(ctx: AgentContext) -> tuple[Envelope | None, Tec
     ladder; a silent opponent eventually returns a `TechnicalWin` verdict
     here (never raises). Duplicate/unexpected types are the caller's own
     concern to drop."""
+    # 05-13 (05-UAT.md G6): `on_attempt` runs once at the START of each
+    # BOUNDED attempt. Default None, so every pre-05-13 caller -- the four
+    # turn-loop `wait_for_*` legs below -- is byte-identical; only
+    # `agent_audit_exchange.receive_final_reveal` passes a hook, and it
+    # passes `ctx.watchdog.touch`. Without it the WHOLE ladder
+    # (retry_count+1 attempts x response_timeout plus backoffs = 135 s at
+    # the shipped Table-19 values) runs unmarked against a 60 s
+    # `watchdog_threshold`, because the only touch is the post-ladder one
+    # below -- so `os._exit(1)` fires long before this function returns and
+    # the caller's verdict is never recorded.
+    #
+    # It marks a real attempt STARTING, never a heartbeat on a dead loop:
+    # each attempt is itself bounded by response_timeout, so a wedged event
+    # loop stops producing attempts and NET-07 still kills us.
+    async def _pull() -> object:
+        if on_attempt is not None:
+            on_attempt()
+        return await wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout)
+
     while True:
         call_outcome = await call_with_retry(
-            lambda: wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout),
-            timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
+            _pull, timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
             backoff=ctx.net.backoff_seconds,
         )
         ctx.watchdog.touch()

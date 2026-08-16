@@ -44,7 +44,32 @@ __all__ = [
 
 async def push_final_reveal(ctx: AgentContext, records: list[dict]) -> TechnicalWin | None:
     """Send THIS side's own ledger as one FINAL_REVEAL envelope, via the
-    SAME call_with_retry ladder every other push uses (D-17, no new number)."""
+    SAME call_with_retry ladder every other push uses (D-17, no new number).
+
+    05-13 (05-UAT.md G6) -- the audit now touches the freeze watchdog once
+    at the START of each BOUNDED attempt. Before this, `Watchdog.touch()`
+    was called NOWHERE in the audit path: all five call sites were in the
+    turn loop, and `agent_entrypoint.run_agent` arms the watchdog before
+    `start_server` and stops it only in the teardown `finally`, so this
+    ladder -- (retry_count+1) x response_timeout plus backoffs, 135 s at
+    the shipped Table-19 values -- ran entirely unmarked against a 60 s
+    `watchdog_threshold` whose freeze action is `os._exit(1)`. Against a
+    peer whose socket accepts TCP but never answers (a stalled tunnel edge,
+    exactly the drop 05-11 exists for) the process died at t=60 s, so
+    `run_final_audit`'s non-accusatory `record_audit_incomplete` at
+    t~135 s NEVER RAN: our log ended on `watchdog_incident` with no
+    `audit_verdict`, and the peer then declared US `opponent_unresponsive`.
+
+    NET-07 is PRESERVED, not traded away, and the placement is the whole
+    reason. The touch marks a real attempt STARTING -- the shape
+    `turn_commit_send.push` already uses around this same ladder -- never a
+    heartbeat on a dead loop. Every attempt is itself bounded by
+    `response_timeout`, so the widest possible gap between two touches is
+    response_timeout + backoff_seconds (35 s) < watchdog_threshold (60 s),
+    while a genuinely wedged event loop stops producing attempts at all and
+    is still killed. Stopping the watchdog across the audit would have made
+    the same test pass by deleting the requirement.
+    """
     envelope = Envelope(
         type=MessageType.FINAL_REVEAL, turn=ctx.state.turn, sender=ctx.role,
         payload={_RECORDS_KEY: records},
@@ -52,6 +77,7 @@ async def push_final_reveal(ctx: AgentContext, records: list[dict]) -> Technical
     args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
 
     async def _call() -> object:
+        ctx.watchdog.touch()
         async with ctx.runtime.client() as client:
             return await client.call_tool(_FINAL_REVEAL_TOOL, args)
 
@@ -64,8 +90,15 @@ async def push_final_reveal(ctx: AgentContext, records: list[dict]) -> Technical
 
 async def receive_final_reveal(ctx: AgentContext) -> tuple[list[dict], TechnicalWin | None]:
     """Block for the opponent's own FINAL_REVEAL -- the SAME bounded-wait
-    primitive turn_commit.py's own waits use (tolerant of a stray HINT)."""
-    envelope, verdict = await next_protocol_message(ctx)
+    primitive turn_commit.py's own waits use (tolerant of a stray HINT).
+
+    The receive leg carries the IDENTICAL 135 s-against-60 s exposure the
+    push leg does -- `next_protocol_message`'s only touch is AFTER its whole
+    ladder -- and it is the leg that runs LAST, so a freeze here kills the
+    process with the peer's records already in hand and no `audit_verdict`
+    written. `on_attempt` is therefore passed here and nowhere else: the
+    turn-loop callers keep the pre-05-13 behaviour byte for byte."""
+    envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
     if verdict is not None:
         return [], verdict
     return envelope.payload.get(_RECORDS_KEY, []), None
