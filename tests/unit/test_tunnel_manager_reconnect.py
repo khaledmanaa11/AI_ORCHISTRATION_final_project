@@ -70,6 +70,89 @@ def test_ensure_connected_stops_early_once_healthy_again(
     assert len(connect.calls) == 1
 
 
+def test_ensure_connected_contains_a_raising_attempt_as_one_spent_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """05-11, attempt-2 evidence shape: ERR_NGROK_334 raises out of connect.
+    The raise must spend ONE Table-19 attempt, never abort the whole ladder."""
+    set_tunnel_env(monkeypatch)
+    calls = {"n": 0}
+
+    def _raising_connect(port, *, domain):
+        calls["n"] += 1
+        raise RuntimeError("ERR_NGROK_334: endpoint already online")
+
+    mgr = make_manager(
+        connect=_raising_connect, get_process=lambda: FakeProcess(healthy=False)
+    )
+
+    assert mgr.ensure_connected() is False
+    assert calls["n"] == NETWORK_PARAMS.retry_count
+
+
+def test_ensure_connected_succeeds_on_a_later_attempt_after_an_earlier_raise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The ghost session expires mid-ladder: attempt 1 raises, attempt 2
+    lands -- the repair must report True, not carry the old failure."""
+    set_tunnel_env(monkeypatch)
+    connect_calls = {"n": 0}
+    real_connect = RecordingConnect("https://back.ngrok-free.app")
+
+    def _flaky_connect(port, *, domain):
+        connect_calls["n"] += 1
+        if connect_calls["n"] == 1:
+            raise RuntimeError("ERR_NGROK_334: endpoint already online")
+        return real_connect(port, domain=domain)
+
+    healthy_after_reconnect = {"reconnected": False}
+
+    def get_process():
+        return FakeProcess(healthy=healthy_after_reconnect["reconnected"])
+
+    def _connect_and_heal(port, *, domain):
+        result = _flaky_connect(port, domain=domain)
+        healthy_after_reconnect["reconnected"] = True
+        return result
+
+    mgr = make_manager(connect=_connect_and_heal, get_process=get_process)
+
+    assert mgr.ensure_connected() is True
+    assert connect_calls["n"] == 2
+    assert mgr.public_url == "https://back.ngrok-free.app"
+
+
+def test_ensure_connected_treats_a_raising_probe_as_unhealthy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A dead agent process makes get_process() raise -- that is 'unhealthy',
+    so the bounded repair must run, not crash the caller (05-11)."""
+    set_tunnel_env(monkeypatch)
+
+    def _dead_process():
+        raise RuntimeError("ngrok process has been terminated")
+
+    mgr = make_manager(get_process=_dead_process)
+
+    assert mgr.ensure_connected() is False
+
+
+def test_ensure_connected_after_stop_never_resurrects(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """05-11 teardown race: cancelling to_thread cannot interrupt a repair
+    already in a worker thread, so a straggler that runs after stop() must
+    be a no-op -- zero connect calls, never a resurrected agent."""
+    set_tunnel_env(monkeypatch)
+    connect = RecordingConnect()
+    mgr = make_manager(connect=connect, get_process=lambda: FakeProcess(healthy=False))
+
+    mgr.stop()
+
+    assert mgr.ensure_connected() is False
+    assert connect.calls == []
+
+
 def test_stop_calls_disconnect_then_kill_once_each() -> None:
     order: list[str] = []
     mgr = make_manager(

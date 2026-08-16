@@ -63,7 +63,10 @@ class TunnelManager:
         clock: ClockFn = time.monotonic,
     ) -> None:
         self.params = params
-        self._network_params = network_params
+        # Public on purpose (05-11): tunnel_wiring.monitor_tunnel reads the
+        # D-55 poll cadence (watchdog_poll_seconds) from here -- params is
+        # already public for the same reason (exchange_block).
+        self.network_params = network_params
         self._connect = connect
         self._disconnect = disconnect
         self._kill = kill
@@ -86,11 +89,19 @@ class TunnelManager:
         """
         require_env(self.params.authtoken_env)
         domain = require_env(self.params.domain_env)
-        tunnel = self._connect(self._network_params.port, domain=domain)
+        tunnel = self._connect(self.network_params.port, domain=domain)
         self.public_url = tunnel.public_url
 
     def healthy(self) -> bool:
-        """True iff the local ngrok agent process reports itself healthy."""
+        """True iff the local ngrok agent process reports itself healthy.
+
+        Detection envelope, stated honestly (05-11): pyngrok latches its
+        started/connected flags at startup and probes only the LOCAL agent
+        API, so this detects agent-process death and local-API death -- an
+        upstream session blip while the process lives is invisible here.
+        get_ngrok_process is also not read-only: pyngrok may start a fresh
+        agent for a dead one, and a fresh agent that reports healthy
+        without this manager's domain bound is the residual blind spot."""
         return self._get_process().healthy()
 
     def ensure_connected(self) -> bool:
@@ -98,16 +109,33 @@ class TunnelManager:
         network_params.retry_count with backoff_seconds waits between
         attempts (Table 19, reused -- D-55). Returns True iff healthy by
         the time this returns, False if every attempt was exhausted.
+
+        05-11: a raising probe or connect attempt is CONTAINED as one spent
+        attempt, never a crash and never an escape from the bound. The
+        retained 2026-08-14 console is the motivating shape: reconnecting a
+        free-tier domain while ngrok's server still holds the prior session
+        online raises ERR_NGROK_334 out of connect -- wait out the backoff
+        and try again. After stop() every remaining attempt is a no-op: a
+        repair already running in a worker thread when teardown lands must
+        never resurrect the agent it just killed.
         """
-        if self.healthy():
-            return True
-        domain = require_env(self.params.domain_env)
-        for _attempt in range(self._network_params.retry_count):
-            self._sleep(self._network_params.backoff_seconds)
-            tunnel = self._connect(self._network_params.port, domain=domain)
-            self.public_url = tunnel.public_url
+        try:
             if self.healthy():
                 return True
+        except Exception:  # a dead agent process is just "unhealthy" (05-11)
+            pass
+        domain = require_env(self.params.domain_env)
+        for _attempt in range(self.network_params.retry_count):
+            self._sleep(self.network_params.backoff_seconds)
+            if self._stopped:  # teardown won the race -- no resurrection (05-11)
+                return False
+            try:
+                tunnel = self._connect(self.network_params.port, domain=domain)
+                self.public_url = tunnel.public_url
+                if self.healthy():
+                    return True
+            except Exception:  # one spent attempt -- ERR_NGROK_334, no route, DNS
+                continue
         return False
 
     def stop(self) -> None:
