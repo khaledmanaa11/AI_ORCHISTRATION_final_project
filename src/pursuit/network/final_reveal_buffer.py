@@ -56,10 +56,14 @@ def record_final_reveal(ctx: AgentContext, envelope: Envelope) -> None:
 def take_final_reveal(ctx: AgentContext) -> Envelope | None:
     """Pop the buffered Final Reveal, or None if none arrived early.
 
-    Consuming rather than peeking is what keeps the audit driven exactly
-    once per published ledger: `receive_final_reveal` checks this buffer at
-    the top of every iteration, so a peek would spin on the same envelope
-    forever instead of terminating."""
+    Consuming rather than peeking is what makes ONE published ledger drive
+    AT MOST ONE audit. (An earlier draft of this docstring justified the
+    pop by claiming a peek would spin forever -- it would not, since the
+    caller returns on the first non-None. That reason was false and is
+    replaced by the one that is testable: probe P6 turns this into a peek
+    and `test_a_duplicate_final_reveal_neither_double_counts_nor_re_drives_the_audit`
+    fails, because its second call to the receive leg is served the same
+    ledger again instead of the verdict a silent peer earns.)"""
     envelope = ctx.commit_state.early_final_reveal
     ctx.commit_state.early_final_reveal = None
     return envelope

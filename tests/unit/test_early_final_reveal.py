@@ -39,9 +39,11 @@ from pursuit.network.agent_audit_wiring import run_final_audit
 from pursuit.network.envelope import MessageType
 from pursuit.network.state_machine import State
 from pursuit.network.turn_commit_wait import wait_for_reveal_capturing_early_ack
+from pursuit.network.verdict import TechnicalWinReason
 from tests.unit._early_reveal_fixtures import (
     ON,
     audit_verdicts,
+    events,
     final_reveal,
     honest_peer_turn,
     in_game_reveal,
@@ -50,6 +52,10 @@ from tests.unit._early_reveal_fixtures import (
 from tests.unit._fakes_agent import make_ctx
 
 _OUR_H_COMMIT = "our-own-commit-hash"
+
+# No `parametrize` anywhere in this file or its sibling, deliberately: an
+# empty parameter set is a SILENT pytest SKIP, and a control that skips is a
+# control that cannot fail (05-16's own anti-vacuity note).
 
 
 async def test_a_peer_that_pushes_its_final_reveal_early_is_not_declared_unresponsive(
@@ -96,4 +102,65 @@ async def test_a_peer_that_pushes_its_final_reveal_early_is_not_declared_unrespo
     assert (outcome, kinds(ctx).count("technical_win")) == (None, 0)
     # And the peer's ledger did not merely fail to trigger an accusation --
     # it was AUDITED, over the real hashes of the turn we watched it play.
+    assert [(v["matched"], len(v["peer_audit"])) for v in audit_verdicts(ctx)] == [(True, 1)]
+
+
+async def test_a_genuinely_silent_peer_is_still_declared_unresponsive(
+    tmp_path, default_params, network_params,
+):
+    """THE COUNTER-CONTROL, rule 36, and the one that decides whether this
+    plan fixed anything or just stopped enforcing something.
+
+    We watched this peer commit and reveal a full turn, our own push
+    LANDED, and it then published no nonces at all. Nothing was buffered,
+    because nothing arrived. `agent_audit_wiring.py:90-93`'s inference is
+    sound here -- the silence really is theirs -- so the sanction must fire
+    exactly as it did before, with the SAME reason string.
+
+    A fix that spares this peer has broken the game, and that is not
+    hypothetical: the whole shape of the 05-17 change is "stop
+    manufacturing the silence", never "stop punishing it". Any relaxation
+    of `run_final_audit`'s accusatory branch fails HERE."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, role="thief", label="silent-peer",
+        security=ON, initial_state=State.WAIT_OPPONENT,
+    )
+    honest_peer_turn(ctx)
+    assert ctx.commit_state.early_final_reveal is None, "nothing may be buffered here"
+
+    outcome = await run_final_audit(ctx, board_outcome=Outcome.CAPTURE)
+
+    accusations = [e["reason"] for e in events(ctx) if e["event"] == "technical_win"]
+    assert (outcome, accusations) == (
+        Outcome.TECHNICAL_LOSS, [TechnicalWinReason.OPPONENT_UNRESPONSIVE.value],
+    )
+
+
+async def test_the_buffered_reveal_survives_our_own_leg_timing_out(
+    tmp_path, default_params, network_params,
+):
+    """The shape reachable INSIDE this codebase, with no foreign peer and
+    no reordering: one lost or ladder-exhausted message makes the peer
+    abort its own turn loop and run its final audit, so it publishes its
+    ledger and never sends the REVEAL we are still waiting for.
+
+    Two facts have to hold together, and they pull in opposite directions.
+    Our leg's OWN verdict about the REVEAL that never came is UNTOUCHED --
+    NET-06's in-game sanction is not this plan's business and is not
+    softened by it. And the ledger that arrived in the same window is still
+    audited, so the audit does not add a SECOND, false accusation on top of
+    a legitimate one."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, role="thief", label="leg-timeout",
+        security=ON, initial_state=State.WAIT_OPPONENT,
+    )
+    peer_ledger = [honest_peer_turn(ctx)]
+    ctx.runtime.queue.put_nowait(final_reveal(ctx, peer_ledger))
+
+    envelope, leg_verdict = await wait_for_reveal_capturing_early_ack(ctx, _OUR_H_COMMIT)
+    assert (envelope, leg_verdict.reason) == (None, TechnicalWinReason.OPPONENT_UNRESPONSIVE)
+
+    outcome = await run_final_audit(ctx, board_outcome=Outcome.TECHNICAL_LOSS)
+
+    assert (outcome, kinds(ctx).count("technical_win")) == (None, 0)
     assert [(v["matched"], len(v["peer_audit"])) for v in audit_verdicts(ctx)] == [(True, 1)]

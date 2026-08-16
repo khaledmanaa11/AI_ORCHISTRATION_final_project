@@ -21,6 +21,7 @@ own control.
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 from pursuit.network.envelope import Envelope, MessageType
@@ -37,6 +38,27 @@ _INTENT = "truth"
 _ACTION = {"move": {"kind": "move", "direction": "north"}, "barrier": None}
 _TURN = 0
 _POSITION = {"row": 2, "col": 3}
+
+
+class CountingQueue(asyncio.Queue):
+    """An inbound queue that counts pulls (the `_fakes_watchdog.StalledQueue`
+    precedent: assigned onto `ctx.runtime.queue` after `make_ctx`).
+
+    It exists to refute ONE wrong fix that passes every other assertion in
+    this corridor: buffer the reveal, but consult the buffer only AFTER the
+    receive ladder has run. That returns the peer's records and accuses
+    nobody -- and costs the audit its whole `(retry_count + 1) x
+    response_timeout`, 135 s at the shipped Table-19 values against a 60 s
+    `watchdog_threshold` (deferred item #10's own arithmetic). Zero pulls is
+    the difference, and it is only visible by counting them."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.gets = 0
+
+    async def get(self) -> object:
+        self.gets += 1
+        return await super().get()
 
 
 def _peer_state(ctx) -> dict:
