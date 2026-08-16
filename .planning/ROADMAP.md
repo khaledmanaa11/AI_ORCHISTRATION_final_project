@@ -152,12 +152,13 @@ below is ticked until `/gsd:verify-work 4` runs, after 04-14):
   1. Each peer is reachable on the public internet through ngrok/Localtonet
   2. An agent on a remote machine connects through the tunnel and plays a full round against the local agent
 
-**Plans**: 11 (05-01..05-03 built the phase; 05-04..05-07 closed the five gaps the
+**Plans**: 15 (05-01..05-03 built the phase; 05-04..05-07 closed the five gaps the
 2026-08-13 remote round exposed — see `05-UAT.md` Round 1; 05-09..05-11 closed the
-peer-data crash paths and gave `ensure_connected()` its production caller). **GATE-5 MET
-2026-08-16** — criterion 2 closed by remote-round attempt 4. A post-closure adversarial
-audit found five further gaps **G6–G10** (`05-UAT.md` Round 2), three blocker-class; none
-is a §10.4 criterion, so they need their own plan rather than reopening this gate.
+peer-data crash paths and gave `ensure_connected()` its production caller; **05-12..05-15
+close G6–G10 from the post-closure audit**). **GATE-5 MET 2026-08-16** — criterion 2 closed
+by remote-round attempt 4. The 05-12..05-15 set does not reopen the gate: none of G6–G10 is
+a §10.4 criterion, but three are league-day blockers (a malformed peer can end our game
+before move 1) and are planned, verified, and pending execution.
 
 Plans:
 
@@ -172,6 +173,10 @@ Plans:
 - [x] 05-09: Transport-failure containment — `httpx.TransportError` joins the NET-06 ladder incl. the wrapped connect-path shape; LocalProtocolError/UnsupportedProtocol still raise
 - [x] 05-10: Peer-data boundary — malformed FINAL_REVEAL is a named mismatch not a crash; 5xx/429 retryable while 4xx raises; `board_outcome` wiring pinned — see G9 for the seventh instance still live at the handshake
 - [x] 05-11: Tunnel watch — `ensure_connected()` gets its production caller; drop repaired on the existing Table-19 bound (never exercised live — no drop occurred in attempt 4)
+- [ ] 05-12: G9+G7 — a malformed peer cannot kill us at the handshake: a non-str peer digest is a named non-agreement; `peer_game_id` is safety-validated (never convention-checked) before it reaches a set, a Path, or the audit's membership key
+- [ ] 05-13: G6 — the audit survives long enough to be honest: it touches the watchdog per bounded attempt, and BOTH legs stop accusing a peer that answered
+- [ ] 05-14: G8 — one inbound hint is decoded at most once; both branches stamp the turn actually played, including the commit-reveal-off path
+- [ ] 05-15: G10 — the declaration story settled: rules 15/16 confirmed satisfied by the committed action, dead `declare_truthfully` removed, stale PRD line corrected, capture Claim de-risked via the existing `GAME_OVER` envelope
 - [x] 05-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
 - [x] 05-97: Create/refresh `docs/phases/phase-5/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [x] 05-99: On verify-work, mark all Phase 5 TODOs `[x]` in the phase triplet + root `docs/TODO.md`

@@ -41,6 +41,16 @@ Phase: 05 (cloud-exposure-and-tunneling) — **GATE-5 MET; follow-up gaps open.*
   before move 1; reproduced by direct probe), G8 and G10 (minor/major residuals).
   Table-5 gate green: ruff 0, **1374 passed / 96.54%**, ≤150 clean, 0 secrets,
   `.env` untracked.
+  **Plans 05-12..05-15 written and verified 2026-08-16** (`/gsd:plan-phase 5 --gaps`,
+  plan-checker 2 iterations: 1 blocker + 2 major + 1 minor found and closed). Sequential
+  waves 4-7, fix order by blast radius: **05-12** (G9+G7, peer input cannot kill us at the
+  handshake) -> **05-13** (G6, the audit touches the watchdog and both legs stop accusing)
+  -> **05-14** (G8, single-decode guarantee + both-branch stamping) -> **05-15** (G10, the
+  declaration story). Rules question settled at plan time against `docs/RULES.md` +
+  `PRD_commit_reveal.md` §2.2: rules 15/16 ARE satisfied by the committed action, so
+  `declare_truthfully` is dead code, not a missing feature; only the *capture* Claim is a
+  genuine residual and it is de-risked with the existing `GAME_OVER` envelope.
+  NEXT: `/gsd:execute-phase 5` (runs the four new plans; 05-01..05-11 are done).
   **05-10 (2026-08-14) closed deferred items #6 and #7** and, with them, the
   recurring pattern that produced FIVE separate defects across this phase: an
   unhandled exception on PEER-CONTROLLED data escaping to `main.py`, killing the
