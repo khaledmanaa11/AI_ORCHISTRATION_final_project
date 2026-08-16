@@ -439,3 +439,52 @@ telling the truth, not only the capture declarations. Under-reporting is not the
 disqualifying direction — but it is the same drift, and it reads as carelessness about
 exactly the discipline this project claims. Natural home: a tracker-wide pass in Phase 8's
 submission work, or the next `verify-work` that already touches `ROADMAP.md`.
+
+---
+
+## 9. The belief per-turn budget test still fails in full-suite runs after the CPU-time fix
+
+**Found:** 05-08 verification (2026-08-16), running the plan's own `pytest tests/ --cov`.
+**Status:** OPEN — logged, **deliberately not fixed** (this plan changes no source, and the
+one-line "fix" available is to weaken a budget assertion, which is exactly what must never
+be done to make a gate green).
+
+`tests/integration/test_belief_policy.py::test_belief_enabled_completes_within_the_per_turn_time_budget`
+failed in **both** full-suite runs (1373 passed / 1 failed / 96.54% coverage, twice) and
+**passed alone in 0.21 s**. The failure, verbatim:
+
+```
+    assert max(thief_ms) < thief_params.max_decision_ms
+E   AssertionError: assert 62.5 < 50
+E    +  where 62.5 = max([0.0, 0.0, 0.0, 0.0, 15.625, 0.0, ...])
+
+belief-enabled per-turn decision CPU time over 35 turns -- cop: max=15.625ms mean=2.232ms;
+thief: max=62.500ms mean=3.571ms (budget: cop=50ms, thief=50ms)
+```
+
+**What the numbers say, and what they do not.** Commit `330e450` re-priced this gate in CPU
+time (`time.thread_time`) precisely to stop wall-clock counting OS preemption of other
+processes. It did not remove the failure, and the sample above shows why: every measurement
+is a multiple of **15.625 ms**, Windows' thread-CPU accounting tick. The decision path is
+genuinely fast — mean **3.571 ms** against a 50 ms budget — but a single decision straddling
+four ticks is *reported* as 62.5 ms, and `max()` over 35 turns reliably finds one under
+full-suite load. So this is a **measurement-resolution defect in the test, not evidence that
+the algorithm breaches `max_decision_ms`** — and equally, the test currently cannot tell the
+difference, which is the actual problem.
+
+**Do not "fix" it by raising the budget.** `max_decision_ms = 50` lives in
+`config/{police,thief}/strategy.json` — checked while writing this: it does **not** appear in
+`docs/PARAMETERS.md` under that name or as a decision-time row, so it is a project-chosen
+engineering budget rather than a book value. That makes it easier to edit and no more
+legitimate to edit *for this reason*: moving a threshold so a red test turns green is
+weakening the assertion, and the measurement is what is wrong here, not the threshold.
+(Whether this budget belongs in `PARAMETERS.md` at all is a separate, smaller question —
+worth asking, not answered here.) The honest repairs are to make the
+*measurement* fit the clock's resolution — e.g. time a batch of N decisions and compare the
+mean against the budget, so quantization averages out, or assert on a percentile rather than
+`max()` while keeping the budget value untouched. Either needs its own plan and a control
+that still fails against a genuinely slow brain.
+
+Prior art in this file's own history: this test has been recorded as "the documented
+`test_belief_policy` time-budget flake" since 05-09, attributed by measurement each time.
+This is the first record of the *mechanism*.
