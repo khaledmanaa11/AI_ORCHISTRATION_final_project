@@ -19,7 +19,7 @@ completion.
 - Decimal phases (2.1, 2.2): urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Base Logic** - Grid, movement rules, barrier quota, capture detection. No networking, no AI.
-- [ ] **Phase 2: FastMCP Infrastructure** - Two separate processes exposing geometric tools over localhost, coordinates only.
+- [x] **Phase 2: FastMCP Infrastructure** - Two separate processes exposing geometric tools over localhost, coordinates only. *(02-VERIFICATION.md `passed`: all three §10.4 criteria + 11/11 plan sub-checks. Ticked 2026-08-16 — the verification passed 2026-07-29 but 02-99's tracker pass was never carried out.)*
 - [x] **Phase 3: Blind Strategy Module** - The decision engine. Delivered as a matrix-game mover over a learned 15-weight evaluation, NOT Q-learning; see docs/phases/phase-3/PRD.md §2.
 - [ ] **Phase 4: Language and Scent** - Free-text hints, pheromone emission and decay, LLM for hint decoding and deception.
 - [ ] **Phase 5: Cloud Exposure and Tunneling** - Expose the local FastMCP server publicly via ngrok or Localtonet.
@@ -69,19 +69,19 @@ Plans:
 
 Plans:
 
-- [ ] 02-00: Phase-2 scaffold — `uv add fastmcp` + `pytest-asyncio`, per-agent `network.json`, test stubs
-- [ ] 02-01: Network config loader + `loader_helpers.py` extraction (QUAL-02)
-- [ ] 02-02: Message envelope + canonical-JSON config digest
-- [ ] 02-03: Turn state machine + severity-based illegal-transition reporting
-- [ ] 02-04: JSONL event log + watchdog daemon thread
-- [ ] 02-05: Write `docs/PRD_mcp_transport.md` (the FastMCP peer layer)
-- [ ] 02-06: FastMCP tool surface (4 async stubs) + peer runtime (server+client, one loop)
-- [ ] 02-07: Deadline tracker + technical-win verdict
-- [ ] 02-08: Handshake — connectivity + config-digest exchange, abort before move 1
-- [ ] 02-09: Per-agent orchestrator + thin `main.py` + dev launcher (no referee)
-- [ ] 02-10: §10.4 gate tests (GATE-1/2/3) + NET coverage audit
+- [x] 02-00: Phase-2 scaffold — `uv add fastmcp` + `pytest-asyncio`, per-agent `network.json`, test stubs
+- [x] 02-01: Network config loader + `loader_helpers.py` extraction (QUAL-02)
+- [x] 02-02: Message envelope + canonical-JSON config digest
+- [x] 02-03: Turn state machine + severity-based illegal-transition reporting
+- [x] 02-04: JSONL event log + watchdog daemon thread
+- [x] 02-05: Write `docs/PRD_mcp_transport.md` (the FastMCP peer layer)
+- [x] 02-06: FastMCP tool surface (4 async stubs) + peer runtime (server+client, one loop)
+- [x] 02-07: Deadline tracker + technical-win verdict
+- [x] 02-08: Handshake — connectivity + config-digest exchange, abort before move 1
+- [x] 02-09: Per-agent orchestrator + thin `main.py` + dev launcher (no referee)
+- [x] 02-10: §10.4 gate tests (GATE-1/2/3) + NET coverage audit
 - [x] 02-97: Create/refresh `docs/phases/phase-2/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
-- [ ] 02-99: On verify-work, mark all Phase 2 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
+- [x] 02-99: On verify-work, mark all Phase 2 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 3: Blind Strategy Module (RL policy)
 
@@ -273,11 +273,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Base Logic | 5/5 | Complete | 2026-07-28 |
-| 2. FastMCP Infrastructure | 0/5 | Not started | - |
-| 3. Blind Strategy Module (RL policy) | 0/5 | Not started | - |
-| 4. Language and Scent | 13/14 | In Progress | - |
-| 5. Cloud Exposure and Tunneling | 15/15 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) ALL EXECUTED 2026-08-16, pending `/gsd:verify-work 5` | - |
-| 6. Security and Cryptography | 4/4 | Executed -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md passed 11/11; verify-work pending | - |
-| 7. Reporting and Visualization Shell | 0/5 | Not started | - |
-| 8. Submission and League Operations | 0/5 | Not started | - |
+| 1. Base Logic | 5/5 | Complete -- 01-VERIFICATION.md `passed`, 3/3 must-haves | 2026-07-28 |
+| 2. FastMCP Infrastructure | 11/11 | Complete -- 02-VERIFICATION.md `passed`, 3/3 must-haves (GATE-1/2/3) + 11/11 plan sub-checks | 2026-07-29 |
+| 3. Blind Strategy Module (matrix mover, NOT Q-learning) | 14/26 | Complete -- the other 12 plans (03-14..03-25) were **deliberately superseded** by `da345dd`, which banners all twelve citing book §5.3.2 p.35 (they assumed a sequential turn order the book forbids). 03-VERIFICATION.md written retroactively 2026-08-16: `passed`, 3/3 §10.4 criteria -- but criterion 1 carried **zero** automated evidence until `ee167b0` restored `test_shortest_path.py` | 2026-08-08 |
+| 4. Language and Scent | 14/14 | Executed -- 04-VERIFICATION.md `human_needed`: 3/3 book success-criteria mechanisms verified (mocked) + 1/1 robustness item. **Live-API confirmation is the sole open item** | - |
+| 5. Cloud Exposure and Tunneling | 16/16 | **GATE-5 MET 2026-08-16** -- both §10.4 criteria PASS (criterion 2 closed by remote-round attempt 4). 05-01..05-11 executed; 05-12..05-15 (gaps G6-G10, none a §10.4 criterion) and 05-16 (deferred #10) ALL EXECUTED 2026-08-16, pending `/gsd:verify-work 5` | - |
+| 6. Security and Cryptography | 6/6 | Complete -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md `passed` 11/11 must-haves | 2026-08-09 |
+| 7. Reporting and Visualization Shell | 0/— | Not started -- not yet planned, so the plan count is unknown | - |
+| 8. Submission and League Operations | 0/— | Not started -- not yet planned, so the plan count is unknown | - |

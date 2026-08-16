@@ -20,7 +20,7 @@
 | 2-09 Orchestrator + thin `main.py` + dev launcher | P0 | ☑ | Khaled | Turn loop drives the state machine; no shared runtime state between agents (two named tests); launcher is not a referee; `GAME_OVER` releases the port (NET-01/02/04/05/06/07) |
 | 2-10 §10.4 gate tests + coverage audit | P0 | ☑ | Khaled | GATE-1/2/3 each map to named runnable tests; NET-01…NET-09 coverage audit closes; real two-process standalone launch succeeds |
 | 2-97 Phase doc triplet at plan-phase | P1 | ☑ | Khaled | `docs/phases/phase-2/{PRD,PLAN,TODO}.md` created and filled (CLAUDE.md) |
-| 2-99 Verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☐ | Khaled | Phase gate met; all TODOs checked; root docs/TODO.md Phase 2 section all ☑ (DOC-01) |
+| 2-99 Verify-work: mark all rows ☑ + tick root docs/TODO.md | P1 | ☑ | Khaled | Phase gate met; all TODOs checked; root docs/TODO.md Phase 2 section all ☑ (DOC-01) |
 
 ## Phase gate (§10.4)
 
@@ -32,4 +32,4 @@
 - [x] `uv run ruff check .` → 0 violations (QUAL-09)
 - [x] `bash scripts/check_line_limit.sh` passes all src/ and tests/ files (QUAL-08)
 - [x] `docs/PRD_mcp_transport.md` committed at v1.00 (DOC-02)
-- [ ] `docs/phases/phase-2/{PRD,PLAN,TODO}.md` committed and filled (CLAUDE.md)
+- [x] `docs/phases/phase-2/{PRD,PLAN,TODO}.md` committed and filled (CLAUDE.md)
