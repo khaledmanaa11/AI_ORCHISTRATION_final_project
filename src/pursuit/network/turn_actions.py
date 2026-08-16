@@ -118,14 +118,38 @@ async def take_my_turn(ctx: AgentContext) -> Outcome | None:
     if result is not None:
         return result
 
-    # Same `outcome is None` guard as the responder branch above. Here the
-    # initiator's own maybe_resolve is a no-op (the opponent's slot is
-    # still empty at this point), so outcome is always None and this is
-    # behaviour-neutral -- stated so the two branches read as one rule,
-    # not as an asymmetry someone later "tidies away". ctx.state.turn IS
-    # the turn being played on this branch, for the same reason.
+    # Same `outcome is None` guard as the responder branch above -- stated
+    # so the two branches read as one rule, not as an asymmetry someone
+    # later "tidies away".
+    #
+    # 05-14 (G8): the turn stamp here used to be `ctx.state.turn`, on the
+    # ground that "the initiator's own maybe_resolve is a no-op, so
+    # ctx.state.turn IS the turn being played". That ground is a
+    # PRECONDITION -- commit-reveal ON -- which was assumed rather than
+    # written down, and it does not hold on the other supported path.
+    # With `ctx.security.commit_reveal` false (`turn_commit.py:63-64`,
+    # `:100-101` -- documented, toggle-off, byte-identical to
+    # pre-Phase-6) `pending_action` is NEVER set, so BOTH sides arrive
+    # through THIS branch; the second mover finds the opponent's slot
+    # already filled by its own `await_opponent_turn`, the maybe_resolve
+    # above advances N -> N+1, and the hint went out stamped one turn in
+    # the FUTURE. That is the original G4 defect still live on that path,
+    # and there it corrupts wire evidence SILENTLY rather than losing it:
+    # a receiver's drop guard never fires for a future stamp, so nothing
+    # anywhere records that the number is wrong (rule 20). Latent, not
+    # active -- shipped config is `commit_reveal: true` -- and fixed
+    # anyway, because a latent evidence defect on a supported toggle is
+    # still a defect.
+    #
+    # `pre_turn_state` is captured above BEFORE record_action/maybe_resolve
+    # -- the same discipline `await_opponent_turn`'s `observed_turn` keeps
+    # -- so its turn is the turn ACTUALLY PLAYED on either path. The
+    # responder branch's `pending.turn` is that same fact by that same
+    # rule, which is what makes the two branches one rule and not two.
     if ctx.language is not None and outcome is None:
-        await compose_and_send_hint(ctx, plan, ctx.state.turn, started, budget, regime, incoming_log)
+        await compose_and_send_hint(
+            ctx, plan, pre_turn_state.turn, started, budget, regime, incoming_log,
+        )
     ctx.machine.attempt(State.WAIT_OPPONENT)
     return outcome
 
