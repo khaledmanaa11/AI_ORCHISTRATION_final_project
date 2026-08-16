@@ -561,3 +561,42 @@ is 140 s from the watchdog's point of view — but it does mean no test anywhere
 real `asyncio.sleep(backoff_seconds)` path at production values. Threading the two seams from
 `AgentContext` would remove the workaround; it touches two production signatures, so it wants
 its own small plan.
+
+---
+
+## 13. With `commit_reveal=False` the second mover's MOVE envelope is stamped one turn into the future
+
+**Found:** 05-14 (2026-08-16), while building G8's ground truth. **Severity:** major on a
+latent path (evidence integrity, rule 20). **Status:** logged, deliberately NOT fixed here.
+
+**Measured**, `scripts`-free probe on `tests/integration/two_peer_game.play_two_peer_game`
+with `security.commit_reveal=False` on both sides, one full 16-turn game:
+
+```
+police (first mover):  moves=[0..15]  hints=[0..15]   final ctx.state.turn=16
+thief  (second mover): moves=[1..16]  hints=[0..14]   final ctx.state.turn=16
+```
+
+Turn **16 was never played by anybody**. The hints are correct — that is 05-14 Task 2 — but
+`turn_commit_send.send_move_only` reads `ctx.state.turn` (`:119`, `:139`) and is called from
+`turn_commit.initiate`, which `take_my_turn` reaches AFTER `record_action` + `maybe_resolve`
+(`turn_actions.py:114-117`). On the second mover that `maybe_resolve` fires, so the MOVE
+envelope carries N+1 for the action played at N. Exactly the same defect class 05-14 closed
+one line away, through a second door.
+
+It is **latent, not active**: shipped config is `commit_reveal: true`, and on that path the
+initiator's `maybe_resolve` is genuinely a no-op, so both sides' REVEALs are correct
+(`test_hint_delivery.py` pins this, unedited). It costs no game today — the receiver keys its
+own record on `ctx.state.turn` (`log_received`'s `local_turn`, 06-UAT Gap 1) and `await_move`
+never compares the peer's declared turn — so the damage is confined to what a replay of the
+JSONL says the peer claimed.
+
+**Why 05-14 did not fix it.** The repair is to thread the pre-resolve turn into
+`turn_commit.initiate` instead of letting it re-read `ctx.state.turn` (`turn_commit.py:67`).
+That changes a public entry point's signature, and on the commit-reveal-ON path the same
+`turn` value feeds `commit_own_action` — the D-59 hash input and the D-64 ledger join key.
+A wrong number there is a rules-19/22 technical loss, not an evidence blemish. That deserves
+its own plan with its own tamper tests, not a drive-by inside a hint-channel fix. 05-14's own
+tests were built to be independent of it for exactly this reason: the toggle-off case derives
+the played turns as `0..N-1` rather than comparing hints against moves, and says so in its
+module docstring.
