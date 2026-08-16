@@ -2,21 +2,24 @@
 
 **Status:** Criterion 1 **PASS** — measured 2026-08-09T09:41:20Z against the reserved domain
 `perdurable-mireille-nonzoologically.ngrok-free.dev`; evidence in
-[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** — two genuine
-remote rounds have run. Attempt 1 (2026-08-13): full capture across two machines/networks, but
-the verdicts disagree and the logs carry different game UIDs. Attempt 2 (2026-08-16): the
-attempt-1 protocol fixes all held — one shared game UID, cross-verified Step-0 declarations,
-honest failure records — but machine A's tunnel ingress died at turn 4 and nothing repaired
-it, so no agreeing verdicts exist; see
-[Attempt 1](#attempt-1--2026-08-13-completed-round-criterion-not-yet-closed) and
-[Attempt 2](#attempt-2--2026-08-16-mid-game-tunnel-drop-criterion-not-yet-closed) below.
+[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PASS** — closed
+2026-08-16 by attempt 4 (see [Attempt 4](#attempt-4--2026-08-16-1329z-two-full-rounds-with-live-llm-criterion-closed)):
+two complete rounds over the tunnel between two machines on two networks (hotspot ↔ wired
+ethernet), live `claude-haiku-4-5` hints declared on both sides, **both sides recording
+`capture` and `audit_verdict matched=true`** on one shared game UID per round, with both
+peers' logs, ledgers, and cross-signed declarations retained and independently
+re-verified (26/26 checks). The road there: attempt 1 (2026-08-13) fell to disagreeing
+verdicts and split game UIDs; attempt 2 (2026-08-16 morning) to a mid-game tunnel-ingress
+drop; attempt 3 (2026-08-16 midday) completed cleanly on template-fallback hints and
+attempt 4 repeated it twice with the live model. Per-attempt sections below.
 **Date:** 2026-08-09 · **Plan:** 05-03 · **Method:** `scripts/gate5_tunnel_smoke.py` for
 criterion 1; a human-run procedure, recorded here, for criterion 2.
 
 Per rule 38 and this plan's own must_haves: **the phase is not fully measured while either
 row above reads PENDING.** `/gsd:verify-work 5` must not tick GATE-5 until both criteria carry
 real evidence — mirroring `docs/phases/phase-4/GATE-4-MEASUREMENT.md`'s own live-PENDING
-discipline. Criterion 1 now carries a real run; criterion 2 remains the one open item.
+discipline. Both criteria now carry real runs: criterion 1 the 2026-08-09 smoke, criterion 2
+the 2026-08-16 attempt-4 rounds. Nothing above reads PENDING; GATE-5 is fully measured.
 
 ---
 
@@ -202,6 +205,64 @@ retained evidence. Evidence gap, stated for attempt 3: **neither console was ret
 for this round (the runbook's amended §5 list requires them) — attempt 3 must
 `Tee-Object` both consoles from the start. The criterion stays **PENDING** until attempt
 3 produces two agreeing verdicts on one shared game UID.
+
+### Attempt 3 — 2026-08-16 ≈10:46Z, full round completed, template-fallback hints
+
+Same machine/network pair and Path-C shape as attempt 2, both sides on commit `0632e04`,
+with the 05-11 tunnel watch now wired. Game `9c1cf313482719d4` played **all turns to a real
+`capture` (turn 5)** over the tunnel with no drop, one shared game UID, and machine A's
+final-reveal audit **`matched=true` on every turn**. Neither side had `ANTHROPIC_API_KEY`
+exported, so every hint came from the deterministic template bank — declared honestly in
+both Step-0 declarations as `template-fallback (no LLM calls)` (the D-33 design working as
+specified; rule 38 satisfied). Machine-A evidence:
+[`remote-round-2026-08-16-attempt3/`](remote-round-2026-08-16-attempt3/). Superseded the
+same afternoon by attempt 4, which repeats the result with the live model.
+
+### Attempt 4 — 2026-08-16 ≈13:29Z, two full rounds with live LLM, criterion CLOSED
+
+Root cause of attempt 3's fallback fixed operationally: the valid `ANTHROPIC_API_KEY` in
+each machine's local `.env` (gitignored; the code reads `os.environ` only, per rules 39–40)
+was exported into the launch console on **both** machines. Two consecutive complete games
+followed, both on commit `0632e04`, both over the tunnel
+(`perdurable-mireille-nonzoologically.ngrok-free.dev`, remote peer `38.191.139.51`):
+
+| Game UID | End (UTC) | Outcome (A) | Final audit (A) | `llm_name` both sides |
+|---|---|---|---|---|
+| `b22361aa93ccf310` | 13:29:27 | `capture` (turn 6) | `matched=true`, all turns | `claude-haiku-4-5` |
+| `d265603c116a9f99` | 13:31:52 | `capture` (turn 6) | `matched=true`, all turns | `claude-haiku-4-5` |
+
+Step-0 declarations were exchanged and HMAC-signed in both directions for both games; the
+peer declarations identify machine B (Windows 11, 20-core) — a genuinely distinct machine.
+Machine A's console was Tee'd (`consoleA_attempt4.txt`, retained in the evidence dir; its
+trailing `WinError 995` / `CancelledError` lines are benign Windows-asyncio shutdown noise,
+not failures). Machine-A evidence:
+[`remote-round-2026-08-16-attempt4/`](remote-round-2026-08-16-attempt4/).
+
+**Closure (rule 38 satisfied).** Machine B's artifacts were retrieved the same day and are
+filed in [`remote-round-2026-08-16-attempt4/machineB-thief/`](remote-round-2026-08-16-attempt4/)
+(both games' event logs, ledgers, and declaration pairs, plus the honest stray
+`eb55daeefafb4208` — B launching first, waiting 60 s for A, and recording its own
+`watchdog_incident` at 13:27:41Z, eight seconds before the first real game began).
+**Both sides' verdicts agree on both games:** B's thief logs end in
+`game_over outcome=capture` and `audit_verdict matched=true` (self and peer, all six
+turns), mirroring A's. B's `language_turn` events carry real per-call `token_spend`
+(e.g. 364 input / 15 output tokens on turn 0), confirming the declared
+`claude-haiku-4-5` ran live on B as well.
+
+An independent re-verification script was run over the retained files (26/26 checks PASS
+per game): every ledger `h_commit` recomputes as `sha256(canonical_json(payload))`; each
+side's six committed hashes are byte-identical to the commits the *other* side logged as
+received over the tunnel (delivery proven end-to-end, turns 0–5 both directions); the
+`game_over` outcomes and audit verdicts agree; and all four declaration digests recompute,
+with A's own declaration byte-identical to B's peer copy and vice versa.
+
+**Machine/network note (step 7), confirmed by the operator:** machine A (police,
+Windows, 12-core) on a **phone hotspot**; machine B (thief, Windows 11, 20-core) on
+**wired ethernet** — the same genuine network boundary as attempts 1–2, crossed through
+`perdurable-mireille-nonzoologically.ngrok-free.dev`. One evidence gap, stated honestly:
+machine B's console was not Tee'd, so only machine A's console
+(`consoleA_attempt4.txt`) is retained; the closing condition this section states — both
+retained JSONLs, two agreeing verdicts, the network note — is met in full without it.
 
 ---
 

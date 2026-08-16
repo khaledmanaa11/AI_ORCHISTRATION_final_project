@@ -29,7 +29,7 @@
 ## Phase gate (§10.4)
 - [x] Each peer is reachable on the public internet through ngrok/Localtonet
       (real run 2026-08-09T09:41:20Z, `verdict: PASS` — gate5_smoke_evidence.json)
-- [ ] An agent on a remote machine connects through the tunnel and plays a full round
+- [x] An agent on a remote machine connects through the tunnel and plays a full round
       against the local agent (human-run; procedure in REMOTE-ROUND-RUNBOOK.md).
       **Attempt 1, 2026-08-13: a full 5-turn game to a real capture across two machines
       on two networks — but the two sides' verdicts disagreed and the two logs carried
@@ -39,4 +39,11 @@
       cross-verified declarations, honest failure records) — but machine A's tunnel
       ingress died at turn 4 and the designed reconnect had no production caller, so
       no agreeing verdicts exist.** That gap closed same-day as 05-11 (the tunnel
-      watch); attempt 3 runs on it.
+      watch); attempt 3 ran on it.
+      **CLOSED by attempts 3–4, 2026-08-16 (hotspot ↔ wired ethernet): attempt 3 —
+      full round to capture, audit matched, template-fallback hints declared honestly;
+      attempt 4 — TWO full rounds with live `claude-haiku-4-5` hints on both sides,
+      both `capture` with `audit_verdict matched=true` on BOTH machines, one shared
+      game UID each, declarations byte-identical cross copies. 26/26 cross-checks
+      (recomputed commit hashes, wire delivery, verdicts, digests) pass. Evidence:
+      GATE-5-MEASUREMENT.md Attempts 3–4 + `remote-round-2026-08-16-attempt{3,4}/`.**
