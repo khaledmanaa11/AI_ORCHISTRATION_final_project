@@ -74,13 +74,22 @@ async def test_without_the_linger_the_late_peers_own_push_is_cut_off(tmp_path, _
     it reproduces is the 2026-08-13 shape exactly: A dequeues and processes
     B's push, completes a matched audit, and closes its listener before B's
     client is done with the session, so B's own push comes back a failure.
-    Measured today it raises `httpx.ConnectError` straight out of
-    `run_final_audit` and B ends with NO verdict at all.
+
+    The two branches differ by `linger_for_peer` ALONE. That is what makes
+    this pair a real non-vacuity proof rather than two differently-shaped
+    runs, and it is only true because the harness now HOLDS A's
+    FINAL_REVEAL handler open (`late_peer_gate.py`) until A's teardown has
+    committed its `task.cancel()`. "A's listener closed while B's push was
+    in flight" is therefore a fact of PROGRAM ORDER, not of the scheduler:
+    before 2026-08-17 it was a sub-tick coin flip on one event loop and
+    this control failed roughly one run in three (deferred-items.md #4).
 
     Asserted as "B's own push did not land", NOT as "it raises
-    ConnectError": once deferred-items.md #1 is closed B will record a
-    contained, non-accusatory `audit_incomplete` here instead, and this
-    test must keep passing on that shape too. If BOTH are ever absent, the
+    ConnectError": deferred-items.md #1 is closed, so the measured shape
+    here is now the contained, non-accusatory
+    `audit_incomplete{reason: own_final_reveal_send_failed}` with
+    `peer_error is None` -- which that item anticipated and this assertion
+    was deliberately written to survive. If BOTH are ever absent, the
     linger has stopped being load-bearing and this file is testing nothing.
     """
     round_result = await late_peer_round(tmp_path, linger=False)

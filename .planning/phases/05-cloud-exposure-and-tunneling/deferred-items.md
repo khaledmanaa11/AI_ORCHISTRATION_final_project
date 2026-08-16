@@ -174,13 +174,144 @@ it raising, so this stays a design question rather than a defect.
 
 ---
 
-## 4. `test_late_peer_teardown.py`'s non-vacuity test is load-sensitive and flakes
+## 4. `test_late_peer_teardown.py`'s non-vacuity control had no happens-before edge
+
+> **CLOSED, 2026-08-17.** Test-only fix; **no production source changed** and **no number
+> moved**. The title above is a rewrite: this item shipped for three plans as *"is
+> load-sensitive and flakes"*, and that label was wrong in a way that propagated into
+> several briefings. Both of its earlier diagnoses and its own **Suggested shape** are
+> struck below, with the measurements that refute them.
+>
+> ### What was actually wrong
+>
+> The control had **no happens-before edge**, and in its old shape it structurally could not
+> have one, because A's audit **rendezvouses on the very push the control needs to see cut
+> off**. `run_final_audit` is push-THEN-receive (`agent_audit_wiring.py`), and the receive leg
+> is `receive_final_reveal` -> `next_protocol_message` -> `wait_for_opponent` ->
+> `bounded(queue.get(), ...)` (`deadline_wait.py:46`). The **only** producer for that queue is
+> A's own tool handler, `tools._accept`'s `await queue.put(envelope)` (`tools.py:87`), which
+> runs *during* B's `client.call_tool`. So A cannot finish its audit until B has already
+> pushed. `_LATE_SECONDS = 0.3` is absorbed whole by A blocking on B; **B was never "late" in
+> any sense the control needed.**
+>
+> What was left racing was a sub-tick **tail** on ONE event loop. `tools._accept` acks at
+> ENQUEUE time (`tools.py:87-88`), so A's audit unblocks *before* the 200 is flushed. Two
+> continuations are then both runnable: B's httpx client reading that 200, and A's
+> post-dequeue work (two `audit_peer_records`, the `audit_verdict` write, `stop_watchdog`,
+> `stop_runtime` = `task.cancel()` + `listen_socket.close()`). Whichever the scheduler resumed
+> first decided the test. Nothing sequenced them. That is a coin flip, not a load effect.
+>
+> ### Struck: "load-sensitive"
+>
+> Measured on a **quiet** box, the file alone, pristine tree, 6 consecutive runs:
+> `2 passed 37.23s` / **`1 failed` 25.98s** / **`1 failed` 27.29s** / `2 passed 37.33s` /
+> `2 passed 37.51s` / `2 passed 37.04s` -- **2 failures in 6 with nothing else running.**
+> The 05-09 note ("3/3 pass alone") and the 05-06 attribution table ("nothing reproduced once
+> the box was quiet") were sampling luck, not evidence of a load trigger.
+>
+> ### Struck: "the failing run is reliably the FIRST after a source file changes / bytecode
+> recompilation slows A's teardown"
+>
+> Refuted. In the 6-run baseline above no source file changed at all between runs, and the
+> failures landed at positions **2 and 3**, not at position 1. The real correlation is
+> **fast == fail**, and its causation is the **reverse** of what that note assumed: nothing
+> arrives early. When the control **passes**, B's cut-off push then walks the whole
+> `call_with_retry` ladder against a dead listener (retry_count=3 -> 4 attempts at the
+> harness's `response_timeout=5` with `backoff_seconds=1`, ~12 s). When it **fails**, B's push
+> returns instantly and that ladder is never walked. A failing round is ~10-12 s **shorter by
+> construction** -- which is exactly the 37 s vs 26 s split above. Wall clock is a
+> *consequence* of the outcome and does not predict it.
+>
+> ### Struck: the item's own "Suggested shape" -- NOT IMPLEMENTABLE
+>
+> The suggestion was *"have `late_peer_round(linger=False)` await A's `stop_runtime` before
+> creating B's audit task, so B is unambiguously late"*. It cannot be written:
+>
+> - `run_final_audit(ctx_a)` **cannot return until B pushes** (`agent_audit_wiring.py:87` ->
+>   `deadline_wait.py:46` `queue.get()`). Awaiting A's teardown before B's audit task exists
+>   means `audit_a_task` never completes and the harness **deadlocks**.
+> - Tearing A down *without* awaiting its audit is worse: A burns its own receive ladder and
+>   takes `record_technical_loss` (`agent_audit_wiring.py:97`, `OPPONENT_UNRESPONSIVE`),
+>   manufacturing an `opponent_unresponsive` accusation against a demonstrably-alive peer --
+>   the exact rules-16/22 false declaration this whole corridor of items exists to prevent --
+>   and it stops reproducing the 2026-08-13 shape (A matched, B nothing) at all.
+>
+> The item was right that the two branches must be designed **together**. The design is a
+> gate, not the sequencing it guessed at.
+>
+> ### The fix
+>
+> `tests/integration/late_peer_gate.py` (NEW, test-only) installs a one-shot gate on **A's
+> inbound queue**, monkeypatching the *instance* attribute `ctx.runtime.queue.put` only --
+> `tools._accept` resolves `queue.put` at call time, so no production file is touched. The
+> replacement `put_nowait`s the envelope (never `queue.put`, which would recurse; the queue is
+> unbounded so it cannot raise), then, for a `FINAL_REVEAL` only, sets `arrived` and parks the
+> handler on `await released.wait()`.
+>
+> `late_peer_harness.late_peer_round` installs it before either audit task exists and makes the
+> **release point the only difference between the two branches**. That buys two facts of strict
+> **program order**:
+>
+> 1. **Arrival.** `arrived` is set inside A's own handler, on the request path of B's
+>    `client.call_tool`, so it cannot fire unless B's push has already reached A. Awaiting it
+>    returns only in a state where B is demonstrably mid-request. The old harness merely *hoped*
+>    for this.
+> 2. **Cut-off (`linger=False`).** The handler is parked and cannot emit its 200.
+>    `stop_runtime` reaches `task.cancel()` with **no intervening suspension point** (only the
+>    following `await task` yields), so the cancel is committed before the loop can resume a
+>    parked handler. `released.set()` in the `finally` is then a no-op for the outcome and
+>    exists only so no path leaves a handler parked.
+>
+> On the `linger=True` branch the release precedes an *awaiting* window, so B's client gets the
+> loop and lands inside a full `backoff_seconds` -- a ~1000x margin, and that window **is** the
+> thing under test, so it cannot be made stricter without deleting it.
+>
+> **The pair is now mutation-sensitive, which it was not before.** Because the cut-off edge is
+> strict, deleting the linger collapses the positive branch onto it, so the POSITIVE test
+> fails deterministically instead of on a ~1-in-3 coin flip. Both mutations were run:
+>
+> ```
+> M1  `return` inserted as the first statement of `linger_for_peer`
+>     -> positive test 5/5 FAILED at test_late_peer_teardown.py:57
+>        AssertionError: the late peer's own push was cut off
+>     restored -> green again
+> M2  linger=False branch given the linger=True ordering
+>     -> control 5/5 FAILED
+>        AssertionError: the late peer's push succeeded WITHOUT a linger -- harness proves nothing
+>     reverted
+> ```
+>
+> M2 is what proves the control's pass comes from the **absence of the grace window**, not from
+> the gate's mere presence.
+>
+> **No number moved.** `_LATE_SECONDS`, `_RESPONSE_TIMEOUT`, `_BACKOFF_SECONDS`,
+> `_ACCEPT_TIMEOUT`, every `config/*/network.json` field and every Table-19 value are
+> untouched, and no numeric literal is introduced. The one bound the fix adds is
+> `ctx_a.net.response_timeout`, an existing Table-19 field this harness already sets, reused
+> through the existing `deadline_wait.bounded` primitive (the QUAL-02 single `asyncio.wait_for`
+> site) so a future regression turns the control into a failure rather than a hang.
+>
+> **Production needs no fix here, and that was measured rather than assumed.** Driving the real
+> teardown functions with the peer's push provably in flight: with `linger_for_peer` present
+> B's push lands 4/4; with it removed B's push is cut off 4/4 (`b_incomplete:
+> ['own_final_reveal_send_failed']`). `linger_for_peer` is load-bearing in production, and over
+> a tunnel the exposure is strictly wider (one WAN RTT rather than microseconds).
+>
+> Two adjacent findings surfaced while closing this and are **not** covered by any linger:
+> `agent_teardown.py:22-25` justifies the quiet interval as "the peer would have retried inside
+> one backoff", but a peer schedules its retry one backoff from its own **failure**, strictly
+> later than our last **arrival** -- narrow, but unsound as written; and the four turn-loop
+> `wait_for_*` legs still DROP an early `FINAL_REVEAL` (`turn_commit_wait.py:176` and the same
+> shape at `:119-136`, `:148-155`), which is reachable when one side exits its loop early and
+> pushes immediately, and ends in `record_technical_loss(OPPONENT_UNRESPONSIVE)` against a peer
+> that demonstrably did push. 05-15 hardened the mirror case inside `receive_final_reveal`; this
+> side of the same boundary was not. Neither is this item -- see items #5 and #14, and file the
+> turn-loop one if it is not already covered there.
 
 **Found:** 05-06 verification, running the full suite while the parallel 05-05 executor
 was also running pytest on the same box.
 **Not caused by 05-06** — measured below. **Severity:** minor (a flaky gate, not a
-product defect). **Owner:** whoever next touches `late_peer_harness.py` (05-04's file,
-outside 05-06's `files_modified`).
+product defect). **Owner:** ~~whoever next touches `late_peer_harness.py`~~ — closed above.
 
 ### The failure
 
@@ -190,9 +321,11 @@ E   AssertionError: the late peer's push succeeded WITHOUT a linger -- harness p
 ```
 
 The test pins 05-04's non-vacuity probe: with `linger=False`, B's own FINAL_REVEAL push
-must NOT land. That is a genuine race — the harness starts B's audit `_LATE_SECONDS =
+must NOT land. ~~That is a genuine race — the harness starts B's audit `_LATE_SECONDS =
 0.3` after A's and then tears A down — so under enough CPU/socket contention B
-occasionally wins it and the premise stops holding.
+occasionally wins it and the premise stops holding.~~ **Struck:** the contention framing is
+wrong; see the closure note. B always arrives; what varied was a sub-tick scheduling order
+*after* it arrived.
 
 ### Measured (attribution, not assumed)
 
@@ -211,14 +344,19 @@ targeted probe that disabled 05-06's `outcome is None` compose guard and re-ran 
 audit-heavy integration files 4× was clean **with and without** the guard, so the
 production change is not the trigger either.
 
-### Suggested shape
+> **Read the table above as sampling luck, not as attribution.** At a ~1-in-3 per-run failure
+> rate, a clean 6-run block has probability ~0.09 and a clean 4-run block ~0.20 — so every
+> "clean" row here is unremarkable, and none of them is evidence that concurrency was the
+> trigger.
 
-Make the premise deterministic instead of racy: have `late_peer_round(linger=False)`
+### ~~Suggested shape~~ — struck, NOT IMPLEMENTABLE (see the closure note)
+
+~~Make the premise deterministic instead of racy: have `late_peer_round(linger=False)`
 await A's `stop_runtime` before creating B's audit task, so B is unambiguously late
 rather than 0.3 s late. That STRENGTHENS the probe (B pushes into a demonstrably closed
 listener) instead of widening any assertion. Not done here: `late_peer_harness.py` is
 05-04's file and the `linger=True` path must keep B arriving DURING the grace window,
-so the two paths need designing together, by the plan that owns them.
+so the two paths need designing together, by the plan that owns them.~~
 
 **05-09 note:** re-run alone on a quiet box, 3/3 pass (26.4 s, then 33.3 s once the
 containment made the failing push walk the whole ladder instead of dying on attempt 1).
@@ -237,17 +375,20 @@ pattern appears with this plan's source changes stashed:
 Identical, and the failure is the item's own message verbatim (`AssertionError: the late peer's
 push succeeded WITHOUT a linger -- harness proves nothing`). Two things worth carrying forward:
 
-1. **It reproduces on a QUIET box now**, which the 05-09 note could not. The 0.3 s race has
-   simply drifted onto the wrong side of this machine's timing.
-2. **The failing run is reliably the FIRST run after a source file changes**, and the two runs
+1. **It reproduces on a QUIET box now**, which the 05-09 note could not. ~~The 0.3 s race has
+   simply drifted onto the wrong side of this machine's timing.~~ **Struck:** `_LATE_SECONDS`
+   never governed the outcome; A blocks on B's push regardless of the stagger.
+2. ~~**The failing run is reliably the FIRST run after a source file changes**, and the two runs
    after it pass. The plausible mechanism is bytecode recompilation slowing A's teardown enough
    for B's push to land — which is the same race, arriving through a schedulable trigger rather
    than through ambient load. That makes the suggested fix (sequence the harness so B is
-   unambiguously late, rather than 0.3 s late) more urgent, not less.
+   unambiguously late, rather than 0.3 s late) more urgent, not less.~~ **Struck:** refuted by
+   the 6-run pristine baseline in the closure note (no file changed between runs; failures at
+   positions 2 and 3). The mechanism is the response-tail race, and the fast/slow signal is the
+   retry ladder.
 
-Still **NOT fixed here**: `late_peer_harness.py` is 05-04's file, outside this plan's scope, and
-the only quick repair is to widen a timing constant — which is weakening the probe, exactly what
-this item says must not happen.
+~~Still **NOT fixed here**~~ — fixed 2026-08-17 by the gate described in the closure note, with
+`late_peer_harness.py` still owning the sequence and **no timing constant widened**.
 
 ---
 
