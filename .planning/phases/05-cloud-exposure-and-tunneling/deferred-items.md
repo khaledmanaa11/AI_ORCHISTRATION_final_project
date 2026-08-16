@@ -224,6 +224,31 @@ so the two paths need designing together, by the plan that owns them.
 containment made the failing push walk the whole ladder instead of dying on attempt 1).
 Not reproduced; not relaxed.
 
+### 2026-08-16, 05-16: it now reproduces ALONE, and the trigger is sharper than "load"
+
+Re-attributed by paired measurement rather than assumed. **Not caused by 05-16** — the same
+pattern appears with this plan's source changes stashed:
+
+| Tree | Runs of the file alone | Result |
+|---|---|---|
+| `a010a55` (tests only, no 05-16 source change) | 3 | **1 failed, 2 passed** |
+| `a010a55` + the 05-16 fix | 3 | **1 failed, 2 passed** |
+
+Identical, and the failure is the item's own message verbatim (`AssertionError: the late peer's
+push succeeded WITHOUT a linger -- harness proves nothing`). Two things worth carrying forward:
+
+1. **It reproduces on a QUIET box now**, which the 05-09 note could not. The 0.3 s race has
+   simply drifted onto the wrong side of this machine's timing.
+2. **The failing run is reliably the FIRST run after a source file changes**, and the two runs
+   after it pass. The plausible mechanism is bytecode recompilation slowing A's teardown enough
+   for B's push to land — which is the same race, arriving through a schedulable trigger rather
+   than through ambient load. That makes the suggested fix (sequence the harness so B is
+   unambiguously late, rather than 0.3 s late) more urgent, not less.
+
+Still **NOT fixed here**: `late_peer_harness.py` is 05-04's file, outside this plan's scope, and
+the only quick repair is to widen a timing constant — which is weakening the probe, exactly what
+this item says must not happen.
+
 ---
 
 ## 5. An in-game ladder exhaustion accuses the peer even when the fault was OURS
@@ -493,6 +518,45 @@ This is the first record of the *mechanism*.
 
 ## 10. The TURN LOOP still runs its own 135 s wait ladder against a 60 s watchdog
 
+> **CLOSED by 05-16** (2026-08-16, commits `a010a55` measurement, `4e3d42e` fix, `0993b05`
+> controls). Closed by the mechanism 05-13 built, not a new one, and **without moving one
+> numeric value**.
+>
+> **Measured before**, on an injected clock in 0.000 s of real time
+> (`tests/unit/test_turn_loop_watchdog.py`, `tests/unit/test_turn_push_watchdog.py`):
+>
+> ```
+> config: response_timeout=30 retry_count=3 backoff=5 watchdog_threshold=60
+> attempt cost (injected) = 35
+> wait attempts=2 elapsed=70.0s touches=0 checks=[False, True] fired=['freeze','exit'] verdict=None
+> push attempts=2 elapsed=70.0s touches=0 checks=[False, True] fired=['freeze','exit'] verdict=None
+> move attempts=2 elapsed=70.0s touches=0 checks=[False, True] fired=['freeze','exit'] verdict=None
+> ```
+>
+> **After:** `attempts=4 elapsed=140.0s touches=5 checks=[F,F,F,F] fired=[] verdict=TechnicalWin`
+> on every leg. 140 s of ladder against a 60 s threshold, zero freeze polls firing, D-13's
+> honest verdict recorded.
+>
+> **One correction to the item's own diagnosis, found by measuring rather than reading.** The
+> text below names only the four `wait_for_*` legs. There were **six** unmarked ladders, and
+> the ones it missed are the ones a stalled peer hits FIRST: `turn_commit_send.push` sends the
+> COMMIT the wait leg is waiting for a reply to, so marking only the waits would have left the
+> turn loop dying at exactly the same t=60 s one door earlier. Also unmarked:
+> `turn_buffer.await_move` (the toggle-off MOVE wait), `turn_buffer.send_hint`,
+> `turn_commit_send.send_move_only`, and 05-15's `capture_declaration` — which runs INSIDE
+> `run_turn_loop`, where the watchdog stays armed until `agent_entrypoint:134`, so an unmarked
+> ladder there killed us BEFORE `run_final_audit` could publish our nonces. All six are marked
+> now; `grep -rn "watchdog\.touch" src/` returns **18** = 12 calls + 5 `on_attempt` hook passes
+> + 1 comment (the call-form grep alone returns **12** and undercounts the hooked legs by five).
+>
+> **Both wrong fixes are refuted by named revert probe**, which is what this item asked for:
+> widening `watchdog_threshold` 60 → 150 fails **6 of 8** cases on `assert 140.0 > 150`
+> ("a Table-19 NUMBER was moved"), because every ladder case reads the bound from config and
+> asserts the ladder outlives it; a blanket `ctx.watchdog.stop()` across the turn loop fails
+> **8 of 8**, including `test_a_genuinely_frozen_turn_loop_is_still_killed`
+> ("DID NOT RAISE ProcessKilledError") and `test_the_turn_loop_never_disarms_the_watchdog`.
+> Six single-leg reverts fail exactly one case each. See 05-16-SUMMARY.md for the full table.
+
 **Found:** 05-13 (2026-08-16), while closing G6. **Severity:** major, unmeasured in the wild.
 **Status:** logged, deliberately NOT fixed — out of this plan's scope and a policy decision of
 its own.
@@ -541,6 +605,22 @@ away from `next_protocol_message` (the primitive) — the same policy-vs-mechani
 **exactly 150/150** and was split into `agent_step0_wiring.py` in its own commit (`6920d4d`),
 following 05-10's `security/audit.py` precedent of splitting AT the gate rather than at the
 breach.
+
+### 2026-08-16, 05-16: two of the four are relieved, and one new file is watched
+
+`test_audit_watchdog.py` went **146 → 142** because its three Table-19 helpers moved to
+`_fakes_watchdog.py` at their second copy; every one of its four cases is byte-unedited.
+`turn_commit_wait.py` is **unchanged at 145** — 05-16 added only comment lines and inline
+keyword arguments there, deliberately, precisely because of this item.
+
+Re-measured at `0993b05`: `turn_commit_wait.py` **145**, `test_audit_send_failure.py` **148**,
+`_fakes_agent.py` **144**, `_fakes_watchdog.py` **143** (was 112; it absorbed the three shared
+helpers). `test_audit_watchdog.py` is off the list.
+
+05-16 acted rather than logging: `test_turn_loop_watchdog.py` would have reached ~163 with its
+NET-07 controls, so the harness went to `_turn_loop_fixtures.py` (74) and the four push legs to
+`test_turn_push_watchdog.py` (85), leaving it at **110**. Split, never compressed — no assertion
+was shortened to fit.
 
 ---
 
