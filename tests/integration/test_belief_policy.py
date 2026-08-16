@@ -117,27 +117,35 @@ def test_belief_enabled_completes_within_the_per_turn_time_budget(default_params
     state = make_state(default_params)
     outcome = None
     cop_ms, thief_ms = [], []
-    # CPU time (thread_time), not wall-clock: max_decision_ms prices the
-    # algorithm's own computation, and the timed path is pure compute -- no
-    # I/O, no sleeps (test_no_forbidden_import_reachable_from_decision_path
-    # keeps sockets/services out of pursuit.strategy). On an idle core the
-    # two clocks agree; under a loaded machine wall-clock also counts OS
-    # preemption of OTHER processes, which flaked this gate in full-suite
-    # runs while saying nothing about the algorithm. thread_time over
-    # process_time so a sibling thread in the test process never bills us.
-    # The no_cover marker above excludes the coverage tracer for the same
-    # reason: tracing is test instrumentation, absent in production, and it
-    # multiplies pure-Python CPU here ~6x (measured ~2ms -> ~12ms/decision).
-    # Windows charges thread CPU in 15.625ms scheduler ticks, so with the
-    # tracer left on, one tick of quantization noise crossed the budget.
-    # The budget itself is unchanged: config/*/strategy.json max_decision_ms.
+    # Two clocks, each doing the job it can actually do. Measured on this
+    # Windows box under a full-suite run (1374 tests, coverage on), 2026-08-16:
+    #
+    #   Per-decision time.thread_time() samples came back as the set
+    #   {0.0, 15.625} -- literally two distinct values. Windows charges thread
+    #   CPU in 15.625ms scheduler ticks, so a ~3.6ms decision is a one-bit
+    #   measurement. Worse, the charge is lumpy: a single sample returned 62.5ms
+    #   (four ticks at once) and failed this gate against the 50ms budget, which
+    #   measured the scheduler, not the algorithm.
+    #
+    #   The same loop's AGGREGATE, though: cpu=250.000ms vs wall=251.091ms --
+    #   0.4% apart. Preemption by other processes is NOT inflating wall-clock
+    #   here, which is the thing a CPU clock was reached for in the first place.
+    #
+    # So: perf_counter (sub-microsecond) for the per-decision cap it can
+    # resolve -- measured max 10.754ms against the 50ms budget -- and aggregate
+    # thread_time for a preemption-immune mean, where 250ms spans 16 ticks and
+    # quantization costs +/-0.22ms per decision instead of swamping it. The
+    # no_cover marker stays: the coverage tracer multiplies pure-Python CPU
+    # here ~6x and is test instrumentation absent in production. The budgets
+    # are unchanged and still come from config/*/strategy.json max_decision_ms.
+    loop_cpu_start = time.thread_time()
     for _ in range(default_params.move_ceiling + 1):
-        start = time.thread_time()
+        start = time.perf_counter()
         cop_decision = decide(cop, "cop", state, cop_field)
-        cop_ms.append((time.thread_time() - start) * 1000.0)
-        start = time.thread_time()
+        cop_ms.append((time.perf_counter() - start) * 1000.0)
+        start = time.perf_counter()
         thief_decision = decide(thief, "thief", state, thief_field)
-        thief_ms.append((time.thread_time() - start) * 1000.0)
+        thief_ms.append((time.perf_counter() - start) * 1000.0)
         cop_action = (
             CopAction(barrier=cop_decision.barrier)
             if cop_decision.barrier is not None
@@ -148,11 +156,17 @@ def test_belief_enabled_completes_within_the_per_turn_time_budget(default_params
             break
 
     assert outcome is not None
+    decisions = len(cop_ms) + len(thief_ms)
+    cpu_per_decision = (time.thread_time() - loop_cpu_start) * 1000.0 / decisions
     print(
-        f"\nbelief-enabled per-turn decision CPU time over {len(cop_ms)} turns -- "
-        f"cop: max={max(cop_ms):.3f}ms mean={sum(cop_ms) / len(cop_ms):.3f}ms; "
-        f"thief: max={max(thief_ms):.3f}ms mean={sum(thief_ms) / len(thief_ms):.3f}ms "
+        f"\nbelief-enabled decision cost over {len(cop_ms)} turns -- per-decision wall: "
+        f"cop max={max(cop_ms):.3f}ms mean={sum(cop_ms) / len(cop_ms):.3f}ms; "
+        f"thief max={max(thief_ms):.3f}ms mean={sum(thief_ms) / len(thief_ms):.3f}ms; "
+        f"aggregate CPU per decision={cpu_per_decision:.3f}ms "
         f"(budget: cop={cop_params.max_decision_ms}ms, thief={thief_params.max_decision_ms}ms)"
     )
+    # The pooled aggregate mixes both roles' decisions, so it answers to the
+    # tighter of the two configured budgets rather than to either one alone.
+    assert cpu_per_decision < min(cop_params.max_decision_ms, thief_params.max_decision_ms)
     assert max(cop_ms) < cop_params.max_decision_ms
     assert max(thief_ms) < thief_params.max_decision_ms
