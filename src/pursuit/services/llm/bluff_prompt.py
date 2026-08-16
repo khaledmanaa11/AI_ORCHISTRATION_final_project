@@ -79,7 +79,20 @@ def build_user_prompt(plan: DeceptionPlan, *, shorten: bool = False) -> str:
 
 def _describe_claim(plan: DeceptionPlan) -> str:
     """One plain-data sentence describing what `plan` claims -- ClaimKind
-    is a closed, four-member enum, so this is exhaustive by construction."""
+    is a closed, four-member enum, so this is exhaustive by construction.
+
+    05-15 (G10): the BARRIER and CAPTURE arms have NO POLICY CALLER and are
+    said here to be reserved rather than left looking live. Every
+    `DeceptionPlan` the two policies build is `kind=ClaimKind.LOCATION`, and
+    neither declaration is a hint utterance -- the barrier rides inside the
+    committed action (`PRD_commit_reveal.md` Sec2.2, D-66/SEC-07) and the
+    capture is the `GAME_OVER` envelope (`network/capture_declaration.py`).
+    They stay because exhaustiveness over the closed enum is the property
+    this function's callers rely on: `DeceptionPlan(intent=TRUTH,
+    kind=BARRIER)` is constructible -- `__post_init__` refuses only the LIE
+    combination -- so an arm removed here is a wrong sentence, not dead code
+    removed. Same measured reasoning as `hintbank_templates.BANK`'s two
+    reserved rows; see docs/PRD_deception.md Sec2.1.1."""
     if plan.kind is ClaimKind.LOCATION:
         region = plan.claimed_region.value
         return f"State that you are currently near the {region} part of the board."

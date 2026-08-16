@@ -13,7 +13,7 @@ from pursuit.services.llm.hintbank import HintBank, validate_bank
 from pursuit.shared.deception_types import ALWAYS_TRUE_KINDS, ClaimKind, DeceptionPlan, Intent
 from pursuit.shared.directions import DirectionWord
 from pursuit.shared.inference import Region
-from pursuit.strategy.deception import declare_truthfully
+from tests.unit.services.test_bluff import declaration
 
 _CONFIG = pathlib.Path(__file__).parents[3] / "config"
 
@@ -85,8 +85,8 @@ def test_select_phrases_a_heading_claim():
 
 def test_select_phrases_barrier_and_capture_declarations():
     bank = HintBank(rng=random.Random(0))
-    barrier = bank.select(declare_truthfully(ClaimKind.BARRIER), arena="New York")
-    capture = bank.select(declare_truthfully(ClaimKind.CAPTURE), arena="New York")
+    barrier = bank.select(declaration(ClaimKind.BARRIER), arena="New York")
+    capture = bank.select(declaration(ClaimKind.CAPTURE), arena="New York")
     assert "barrier" in barrier.lower()
     assert "capture" in capture.lower() or "caught" in capture.lower()
 
@@ -155,7 +155,7 @@ def test_every_legal_kind_intent_pair_selects_without_error(kind, intent):
     elif kind is ClaimKind.HEADING:
         plan = _heading(intent)
     else:
-        plan = declare_truthfully(kind)
+        plan = declaration(kind)
     result = bank.select(plan, arena="New York")
     assert isinstance(result, str)
     assert result.strip()

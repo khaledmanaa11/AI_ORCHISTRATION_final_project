@@ -107,6 +107,21 @@ CAPTURE_TEMPLATES: tuple[str, ...] = (
 #: LIE -- DeceptionPlan.__post_init__ makes that combination unconstructable)
 #: mapped to its own phrasing set. `hintbank.py`'s import-time check walks
 #: every entry here with every filler this module defines.
+#:
+#: 05-15 (G10), stated plainly rather than left to be re-discovered: the two
+#: TRUTH-only rows below have NO POLICY CALLER. All four DeceptionPlan
+#: constructions in deception_cop.py/deception_thief.py hardcode
+#: kind=ClaimKind.LOCATION, and the barrier/capture DECLARATIONS are not hint
+#: utterances at all -- the barrier rides inside the committed action
+#: (PRD_commit_reveal.md Sec2.2, D-66/SEC-07) and the capture is the
+#: GAME_OVER envelope (network/capture_declaration.py). The rows are kept
+#: anyway, and that is a MEASURED decision, not inertia: BANK must be TOTAL
+#: over every (kind, intent) pair __post_init__ permits, because
+#: HintBank.select indexes it directly and its own docstring promises it
+#: "cannot KeyError for a real DeceptionPlan". Deleting these two rows was
+#: probed -- 4 tests fail, one of them a KeyError escaping bluff.compose(),
+#: whose whole contract is having no failure mode. Reserved and total by
+#: design; see docs/PRD_deception.md Sec2.1.1.
 BANK: dict[tuple[ClaimKind, Intent], tuple[str, ...]] = {
     (ClaimKind.LOCATION, Intent.TRUTH): LOCATION_TEMPLATES,
     (ClaimKind.LOCATION, Intent.LIE): LOCATION_TEMPLATES,

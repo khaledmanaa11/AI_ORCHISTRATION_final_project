@@ -12,8 +12,7 @@ from pursuit.services.llm.provider import LlmFailure, LlmFailureReason
 from pursuit.services.llm.wordcount import count
 from pursuit.shared.deception_types import ClaimKind, Intent
 from pursuit.shared.hint_guard import assert_no_coordinates
-from pursuit.strategy.deception import declare_truthfully
-from tests.unit.services.test_bluff import WORD_LIMIT, _context, _plan, _result
+from tests.unit.services.test_bluff import WORD_LIMIT, _context, _plan, _result, declaration
 
 
 def test_compose_contains_no_raise_statement():
@@ -75,9 +74,22 @@ _ADVERSARIAL_PLANS = (
     _plan(ClaimKind.LOCATION, Intent.LIE),
     _plan(ClaimKind.HEADING, Intent.TRUTH),
     _plan(ClaimKind.HEADING, Intent.LIE),
-    declare_truthfully(ClaimKind.BARRIER),
-    declare_truthfully(ClaimKind.CAPTURE),
+    declaration(ClaimKind.BARRIER),
+    declaration(ClaimKind.CAPTURE),
 )
+
+
+def test_the_adversarial_plan_table_covers_every_claim_kind():
+    """Non-vacuity guard for the property test below (05-15). The table is
+    indexed modulo its OWN length, so silently losing the two declaration
+    entries leaves 300 iterations that still PASS while never exercising
+    either always-true kind -- the vacuous shape 05-13 and 05-14 each caught
+    in their own controls. Pinned as a test, not a module-level assert: an
+    import-time failure here would fail COLLECTION for the whole directory,
+    which is precisely the blast radius this plan was sequenced to avoid."""
+    assert len(_ADVERSARIAL_PLANS) == 6
+    assert {plan.kind for plan in _ADVERSARIAL_PLANS} == set(ClaimKind)
+    assert [plan.kind for plan in _ADVERSARIAL_PLANS].count(ClaimKind.BARRIER) == 1
 
 
 async def test_compose_never_raises_and_always_returns_a_legal_hint():

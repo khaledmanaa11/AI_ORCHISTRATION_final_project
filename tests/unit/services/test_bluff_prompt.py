@@ -15,7 +15,7 @@ from pursuit.services.llm.bluff_prompt import (
 from pursuit.shared.deception_types import ClaimKind, DeceptionPlan, Intent
 from pursuit.shared.directions import DirectionWord
 from pursuit.shared.inference import Region
-from pursuit.strategy.deception import declare_truthfully
+from tests.unit.services.test_bluff import declaration
 
 
 def test_system_prompt_names_the_configured_arena():
@@ -102,7 +102,7 @@ _HEADING = DeceptionPlan(
 
 @pytest.mark.parametrize(
     "plan",
-    [_LOCATION, _HEADING, declare_truthfully(ClaimKind.BARRIER), declare_truthfully(ClaimKind.CAPTURE)],
+    [_LOCATION, _HEADING, declaration(ClaimKind.BARRIER), declaration(ClaimKind.CAPTURE)],
 )
 def test_user_prompt_never_reveals_the_intent_flag(plan):
     prompt = build_user_prompt(plan)
@@ -129,7 +129,7 @@ def test_shorten_prompt_asks_for_a_shorter_retry():
 
 
 def test_barrier_and_capture_prompts_describe_the_declaration():
-    barrier = build_user_prompt(declare_truthfully(ClaimKind.BARRIER))
-    capture = build_user_prompt(declare_truthfully(ClaimKind.CAPTURE))
+    barrier = build_user_prompt(declaration(ClaimKind.BARRIER))
+    capture = build_user_prompt(declaration(ClaimKind.CAPTURE))
     assert "barrier" in barrier.lower()
     assert "captured" in capture.lower()

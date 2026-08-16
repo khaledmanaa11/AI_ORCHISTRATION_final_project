@@ -24,9 +24,18 @@ from pursuit.shared.deception_types import ClaimKind, DeceptionPlan, Intent
 from pursuit.shared.directions import DirectionWord
 from pursuit.shared.hint_guard import assert_no_coordinates
 from pursuit.shared.inference import Region
-from pursuit.strategy.deception import declare_truthfully
 
 WORD_LIMIT = 15  # PARAMETERS.md Table 14 row 2, passed in as the caller would
+
+
+def declaration(kind: ClaimKind) -> DeceptionPlan:
+    """A truthful barrier/capture declaration, built the ONE way that is
+    left after 05-15 deleted the zero-caller `declare_truthfully` wrapper:
+    through `DeceptionPlan` itself, whose `__post_init__` is the actual
+    rules-15/16/21/22 gate. Shared with `test_bluff_property.py` via the
+    same sibling import that already carries `_plan`/`_context`/`_result`
+    (QUAL-02) -- one definition, not two."""
+    return DeceptionPlan(intent=Intent.TRUTH, kind=kind)
 
 
 class FakeProvider:
@@ -174,7 +183,7 @@ async def test_a_provider_that_raises_never_lets_the_exception_escape():
 
 
 async def test_barrier_and_capture_plans_compose_through_the_full_path():
-    for plan in (declare_truthfully(ClaimKind.BARRIER), declare_truthfully(ClaimKind.CAPTURE)):
+    for plan in (declaration(ClaimKind.BARRIER), declaration(ClaimKind.CAPTURE)):
         provider = FakeProvider(_result("Barrier's up, right by the docks."))
         result = await compose(plan, _context(provider))
         assert result.strip()

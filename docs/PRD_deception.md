@@ -46,9 +46,45 @@ not a separate validator function a caller could skip: it refuses to construct a
 plan on either always-true kind, naming the violated rules in the error. **`dataclasses.replace`
 re-runs `__post_init__`,** so — unlike a checked factory function that only guards its own single
 call site — there is genuinely no construction path, including inside a test double, that can
-produce a lying capture or barrier declaration. `declare_truthfully(kind)` is the **only**
-constructor for these two kinds and deliberately takes no `intent` argument at all: there is
-nowhere to pass the wrong flag, because the parameter does not exist on that call path.
+produce a lying capture or barrier declaration.
+
+> **Superseded 2026-08-16 (plan 05-15, gap G10).** This paragraph used to end: *"`declare_truthfully(kind)`
+> is the **only** constructor for these two kinds and deliberately takes no `intent` argument at all:
+> there is nowhere to pass the wrong flag, because the parameter does not exist on that call path."*
+> That sentence is withdrawn, and the appended text below replaces it. It was never wrong about the
+> wrapper's shape — it was wrong about which thing is the gate, and a `/gsd:verify-work 5` reviewer
+> read a disqualification-class rules gap into the mismatch. `declare_truthfully` had **zero production
+> callers** for its whole life (measured: `grep -rn declare_truthfully src/` returned only its own
+> definition at `strategy/deception.py:73` and its own error string at `:90`; every caller was a test),
+> so it is **deleted**. Nothing about rules 15/16/21/22 changes, because the wrapper was never what
+> enforced them — `__post_init__` above is, and it is untouched. The reasoning is recorded in
+> `src/pursuit/strategy/deception.py`'s module docstring so it is not re-litigated.
+
+### 2.1.1 Where the barrier and capture declarations actually live (05-15, G10)
+
+Neither always-true kind is produced by any policy: all four `DeceptionPlan(...)` constructions in
+`deception_cop.py` (`:77`, `:83`) and `deception_thief.py` (`:97`, `:103`) hardcode
+`kind=ClaimKind.LOCATION`. That is **correct**, not a gap, because neither declaration is an
+utterance on the hint channel:
+
+| Rule (quoted verbatim from `docs/RULES.md`) | Where it is satisfied |
+|---|---|
+| 15 — **MUST** "Declare every barrier placement openly" · sanction "Board forgery and automatic loss at audit" | The composite committed action. `PRD_commit_reveal.md` §2.2 (D-66/SEC-07): `barrier` rides inside the `{move, barrier}` dict, crosses the wire in REVEAL, is hashed into `H_commit`, and is cross-checked at audit (D-67). The sanction is *audit-shaped*, which is the shape this design answers. |
+| 16 — **FORBIDDEN** "Lie about where a barrier was placed" · sanction "Severe disqualification cause" | Same place. The declared barrier **is** the hashed one; a different placement fails the D-67 re-hash. |
+| 21 — **MUST** "Declare the truth **only** at the moment of capturing a thief" · sanction "Immediate disqualification for denying reality" | `network/capture_declaration.py` (05-15): the cop sends the existing `MessageType.GAME_OVER` envelope on the capturing turn, driven by the resolved `Outcome`. |
+| 22 — **FORBIDDEN** "Make a false capture declaration" · sanction "**Immediate disqualification**, zero score, technical loss, no appeal" | Same place, and by construction: the payload is read off the same resolved `Outcome` object the `game_over` ledger record commits, so the transmitted claim and the audited record cannot disagree. No policy and no model can reach it. |
+
+**The two `ClaimKind` members stay, and so do their phrasing rows.** Deleting them was considered and
+**rejected on measurement**, not on taste: `ALWAYS_TRUE_KINDS` is what `__post_init__` iterates, so an
+empty map turns the rules-15/16/21/22 refusal into a vacuous check. Deleting only the downstream rows
+(`hintbank_templates.BANK`, `bluff_prompt._describe_claim`) is also wrong — `DeceptionPlan(intent=TRUTH,
+kind=BARRIER)` remains perfectly constructible, so `HintBank.select` would `KeyError` on a plan the gate
+allows, falsifying that method's own totality docstring. **Measured** (probe X, 2026-08-16 — the two
+`BANK` rows deleted, nothing else changed): **4 failed / 42 passed** against a 46-passed baseline, and the
+fourth failure is the decisive one — `KeyError` escaping `bluff.compose()`, whose entire contract is that
+it *has* no failure mode (`test_compose_contains_no_raise_statement`). Deleting the rows would convert the
+zero-token fallback into a raising one. Both modules therefore document the rows as **reserved and
+total-by-design, with no policy caller today** rather than pretending they are live.
 
 **Beyond the literal rule requirement:** the constructor also refuses a `TRUTH`-flagged plan whose
 `claimed_region` differs from its own `true_region`. Rules 15/16/21/22 only bind barrier and

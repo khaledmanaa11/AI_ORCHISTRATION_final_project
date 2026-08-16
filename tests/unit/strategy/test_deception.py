@@ -17,8 +17,9 @@ from pursuit.shared.deception_types import (
     Intent,
 )
 from pursuit.shared.inference import Region
+from pursuit.strategy import deception as deception_module
 from pursuit.strategy.belief import BeliefMap
-from pursuit.strategy.deception import ROLES, declare_truthfully, plan_deception
+from pursuit.strategy.deception import ROLES, plan_deception
 from pursuit.strategy.regions import region_of
 
 _CONFIG = pathlib.Path(__file__).parents[3] / "config" / "police"
@@ -60,26 +61,51 @@ def test_an_unknown_role_is_rejected(role, start_state, default_params, config, 
 
 
 @pytest.mark.parametrize("kind", sorted(ALWAYS_TRUE_KINDS, key=lambda k: k.value))
-def test_declare_truthfully_builds_the_always_true_kinds(kind):
-    plan = declare_truthfully(kind)
+def test_an_always_true_declaration_is_built_through_the_constructor_itself(kind):
+    """05-15 (G10) re-specification of `test_declare_truthfully_builds_the_
+    always_true_kinds`. The FACT it pinned is unchanged and still pinned: a
+    barrier or capture claim exists as a TRUTH-flagged plan and is never a
+    lie. What changed is the path -- `declare_truthfully` was a convenience
+    wrapper with zero production callers, and `DeceptionPlan.__post_init__`
+    (never the wrapper) is the gate. Constructing it directly here is the
+    point, not an inconvenience."""
+    plan = DeceptionPlan(intent=Intent.TRUTH, kind=kind)
     assert plan.intent is Intent.TRUTH
     assert plan.kind is kind
     assert plan.is_lie is False
 
 
-@pytest.mark.parametrize("kind", [ClaimKind.LOCATION, ClaimKind.HEADING])
-def test_declare_truthfully_refuses_a_policy_kind(kind):
-    """A location or heading claim carries content and must come from a
-    policy, never from the always-true shortcut."""
-    with pytest.raises(ValueError, match="only for"):
-        declare_truthfully(kind)
+@pytest.mark.parametrize("role", ROLES)
+def test_a_policy_kind_always_carries_its_own_content(role, start_state, default_params, config, belief):
+    """05-15 (G10) re-specification of `test_declare_truthfully_refuses_a_
+    policy_kind`. That test pinned "a LOCATION/HEADING claim must carry a
+    sector or a heading and must come from a policy, never from the
+    always-true shortcut". With the shortcut deleted the second half is
+    `test_the_dispatcher_exposes_no_always_true_shortcut` below; the FIRST
+    half is this -- and it is pinned against the real policies rather than
+    against the wrapper's own error message, which is strictly stronger."""
+    rng = random.Random(11)
+    for _ in range(50):
+        plan = plan_deception(role, start_state, default_params, belief, rng, config)
+        assert plan.kind in (ClaimKind.LOCATION, ClaimKind.HEADING)
+        if plan.kind is ClaimKind.LOCATION:
+            assert plan.claimed_region is not None
+        else:
+            assert plan.claimed_heading is not None
 
 
-def test_declare_truthfully_takes_no_intent_argument():
-    """The caller cannot pass the wrong flag because there is nowhere to."""
-    import inspect
-
-    assert "intent" not in inspect.signature(declare_truthfully).parameters
+def test_the_dispatcher_exposes_no_always_true_shortcut():
+    """05-15 (G10) re-specification of `test_declare_truthfully_takes_no_
+    intent_argument`, which pinned "there is nowhere to pass the wrong
+    flag". There is now no shortcut at all: this module exposes no
+    always-true constructor AND cannot even name an always-true kind, so
+    re-adding one is not a silent change -- it needs an import this test
+    fails on. `plan_deception` is asserted present as the control, so the
+    introspection cannot pass by looking at the wrong object."""
+    public = {name for name in dir(deception_module) if not name.startswith("_")}
+    assert "plan_deception" in public  # control: we really are reading the module
+    assert "declare_truthfully" not in public
+    assert not public & {"ALWAYS_TRUE_KINDS", "ClaimKind", "Intent"}
 
 
 @pytest.mark.parametrize("role", ROLES)
