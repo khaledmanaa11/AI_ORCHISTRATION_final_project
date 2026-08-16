@@ -2,11 +2,14 @@
 
 **Status:** Criterion 1 **PASS** — measured 2026-08-09T09:41:20Z against the reserved domain
 `perdurable-mireille-nonzoologically.ngrok-free.dev`; evidence in
-[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** — a genuine
-remote round WAS run 2026-08-13 (attempt 1: full capture across two machines/networks, but
-the two sides' final verdicts disagree and the logs carry different game UIDs, so it cannot
-close the criterion; see
-[Attempt 1](#attempt-1--2026-08-13-completed-round-criterion-not-yet-closed) below).
+[`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). Criterion 2 **PENDING** — two genuine
+remote rounds have run. Attempt 1 (2026-08-13): full capture across two machines/networks, but
+the verdicts disagree and the logs carry different game UIDs. Attempt 2 (2026-08-16): the
+attempt-1 protocol fixes all held — one shared game UID, cross-verified Step-0 declarations,
+honest failure records — but machine A's tunnel ingress died at turn 4 and nothing repaired
+it, so no agreeing verdicts exist; see
+[Attempt 1](#attempt-1--2026-08-13-completed-round-criterion-not-yet-closed) and
+[Attempt 2](#attempt-2--2026-08-16-mid-game-tunnel-drop-criterion-not-yet-closed) below.
 **Date:** 2026-08-09 · **Plan:** 05-03 · **Method:** `scripts/gate5_tunnel_smoke.py` for
 criterion 1; a human-run procedure, recorded here, for criterion 2.
 
@@ -164,6 +167,41 @@ hints are never wire-logged, and the responder never receives hints at all), dia
 tracked as gaps in `.planning/phases/05-cloud-exposure-and-tunneling/05-UAT.md`. The
 criterion stays **PENDING** until a re-run after those fixes produces two logs, one shared
 game UID, and two agreeing verdicts.
+
+### Attempt 2 — 2026-08-16, mid-game tunnel drop, criterion NOT yet closed
+
+Same machine/network pair as attempt 1, reversed operational shape on machine B: Smart App
+Control (`WinError 4556`) blocks pyngrok's downloaded binary there, so B ran the signed
+Microsoft-Store ngrok CLI standalone (`ngrok http 8002 --domain=corny-ocelot-dominion...`)
+with the agent tunnel-off (`PURSUIT_NGROK_DOMAIN` unset) — the runbook's Path C. Both sides
+ran commit `9bda33a`. Game `5efbc5811fabfac4` — **one shared game UID across all four
+artifacts on both machines** (the 05-05/D-61 fix, confirmed live), Step-0 declarations
+cross-verified byte-for-byte in both directions, five ledger rows each, turns 0–3 played
+with commit → ack → reveal and live LLM hints both ways. Evidence:
+[`remote-round-2026-08-16/`](remote-round-2026-08-16/).
+
+**Why this does not close criterion 2 (rule 38):** at 09:35:01Z machine B received A's
+turn-4 commit (A→B still delivering); B's pushes to A then died with `ConnectError` —
+its 4-attempt ladder gave up at 09:35:16.9Z, so B's real patience in this failure mode
+measured **≈15.6 s**, not the nominal 30 s/attempt (a `ConnectError` returns instantly;
+only the backoffs remain). A one-directional break: **machine A's public ingress (its
+ngrok tunnel) dropped mid-game.** A stayed alive and listening until its watchdog killed
+it at 09:36:02Z with **no verdict written**; B recorded
+`technical_win {opponent_unresponsive}` → `game_over: technical_loss`, then its own
+failed FINAL_REVEAL push honestly as `audit_incomplete {own_final_reveal_send_failed}`
+(the 05-04/05-10 fixes, confirmed live — attempt 1's false accusation did not recur).
+One verdict, no agreement. Root cause in `src/`: `TunnelManager.ensure_connected()` —
+the bounded reconnect designed for exactly this under D-55 — had **no production
+caller**; a dropped tunnel was permanent. Closed by plan 05-11
+(`.planning/phases/05-cloud-exposure-and-tunneling/05-11-PLAN.md`): a watch task now
+polls tunnel health every `watchdog_poll_seconds` for the whole game and repairs a
+detected drop with the existing Table-19 bound. Detection envelope stated honestly there:
+pyngrok's `healthy()` sees agent-process/local-API death, not a live-process session
+blip — whether A's exact drop was in the detectable class is not recoverable from the
+retained evidence. Evidence gap, stated for attempt 3: **neither console was retained**
+for this round (the runbook's amended §5 list requires them) — attempt 3 must
+`Tee-Object` both consoles from the start. The criterion stays **PENDING** until attempt
+3 produces two agreeing verdicts on one shared game UID.
 
 ---
 

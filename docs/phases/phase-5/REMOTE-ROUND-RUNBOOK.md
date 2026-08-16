@@ -54,6 +54,30 @@ second), claim that account's free static domain, and copy its authtoken. Machin
 runs exactly like machine A and `scripts/gate5_tunnel_smoke.py` works on it unchanged,
 giving B an independent reachability proof before the joint session.
 
+### Path C — standalone ngrok CLI on machine B (proven 2026-08-16)
+
+Used in attempt 2, forced by Windows **Smart App Control**: SAC blocks the unsigned binary
+pyngrok downloads (`OSError: [WinError 4556] An Application Control policy has blocked this
+file`) and removes it, so every run re-downloads and re-fails. The signed Microsoft-Store
+ngrok runs fine — but its App Execution Alias is a zero-byte reparse point that cannot be
+copied into pyngrok's expected path. So: run ngrok **by hand** and run the agent
+**tunnel-off**, keeping B's static domain (unlike Path B's random URLs, nothing on machine
+A changes).
+
+```
+winget install --id ngrok.ngrok -e
+ngrok config add-authtoken <B's token>
+ngrok http 8002 --domain=<B's reserved domain>        # window 1, leave running
+```
+
+In window 2, start the agent with **`PURSUIT_NGROK_DOMAIN` unset** (the tunnel-off signal —
+`build_tunnel_manager` returns `None` and pyngrok is never touched). `PURSUIT_TUNNEL_SECRET`
+still applies — the secret is independent of who runs the tunnel. **Start order changes:**
+A spends seconds inside pyngrok before binding; B binds instantly. Start A first, count to
+five, then start B — starting together makes B's handshake fire into A's not-yet-open
+listener. Note the trade: on this path B is outside the 05-11 in-process tunnel watch; a
+mid-game drop of B's tunnel is repaired only by the standalone agent's own reconnect.
+
 ### Path B — Localtonet on machine B (fallback, D-57)
 
 Full install-through-use procedure: [`LOCALTONET-FALLBACK.md`](LOCALTONET-FALLBACK.md).
