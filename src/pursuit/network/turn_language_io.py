@@ -24,7 +24,7 @@ from __future__ import annotations
 import dataclasses
 import time
 
-from pursuit.network import turn_buffer, turn_events
+from pursuit.network import turn_buffer, turn_events, turn_hint_store
 from pursuit.network.event_log import append_event
 from pursuit.network.hint_payload import HintKey
 from pursuit.network.orchestrator import AgentContext
@@ -55,8 +55,22 @@ async def decode_turn_hint(
     """Stage 1: decode the opponent's hint, if any is cached (turn_buffer's
     `record_hint`), abandoning at whatever budget remains. Returns
     (inference, log_dict); also drives the reliability update (04-09
-    carry-over F) when a hint genuinely arrived."""
-    payload = ctx.incoming_hints.pop(opponent_wire_role(ctx.role), None)
+    carry-over F) when a hint genuinely arrived.
+
+    05-14 (G8): the pop goes through `turn_hint_store.consume_hint`, which
+    performs the SAME pop and additionally leaves what it took in
+    `ctx.pending_hints` as the consumed marker -- so a re-sent hint cannot
+    drive `observe_reliability` and the belief update a second time on
+    evidence already spent. This is the one place in the codebase that
+    spends an inbound hint, which is why it is the one place that may
+    mark it spent; the buffers' own invariants stay in the module that
+    owns them.
+
+    `no_hint` continues to mean exactly one thing -- nothing was in the
+    buffer -- and that branch still sits UPSTREAM of every provider and
+    key concern, which is what makes it usable as evidence about the
+    receive window rather than about the API key."""
+    payload = turn_hint_store.consume_hint(ctx, opponent_wire_role(ctx.role))
     text = payload.get(HintKey.TEXT.value) if payload else None
     if text is None:
         return NO_EVIDENCE, _no_hint_log()

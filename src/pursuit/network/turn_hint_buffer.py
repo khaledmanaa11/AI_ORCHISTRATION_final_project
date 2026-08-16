@@ -16,14 +16,18 @@ ZERO `message_received`+`hint`, while its own `language_turn` records
 carry the thief's verbatim hint texts with `outcome: evidence` -- the
 hints demonstrably arrived and drove belief updates, with no durable
 record that they ever crossed the wire (D-11/D-14, rule 20).
+
+05-14 splits the buffers themselves into `turn_hint_store.py` at the same
+gate (this file measured 141/150 once G8's replay guard landed). What is
+left here is the INGESTION policy alone: log the receipt, then decide
+whether the arrival may enter the buffers at all.
 """
 
 from __future__ import annotations
 
-from pursuit.network import turn_commit_send
+from pursuit.network import turn_commit_send, turn_hint_store
 from pursuit.network.agent_context import AgentContext
 from pursuit.network.envelope import Envelope, MessageType
-from pursuit.network.hint_payload import HintKey
 
 # How many turns of lookback the receive window keeps (05-06, G4).
 # Recorded in docs/PARAMETERS.md ("Derived protocol constants"), 05-14.
@@ -79,105 +83,6 @@ from pursuit.network.hint_payload import HintKey
 _HINT_LOOKBACK_TURNS = 1
 
 
-def _usable_stamp(buffer: dict, sender: str) -> int | None:
-    """The turn stamp on the payload already buffered for *sender*, or
-    None when there is no usable one (nothing buffered, or a stamp we
-    refuse to trust).
-
-    This reads PEER DATA and must never raise. `validate_hint_payload`
-    runs only inside `build_hint`, on the SEND path -- `grep -rn
-    validate_hint_payload src/` returns that one call site. The inbound
-    path is `tools.receive_hint` -> `_accept` -> `Envelope.from_dict`,
-    which validates the payload as nothing more than `isinstance(payload,
-    dict)` on what its own docstring calls an attacker-controlled wire
-    dict. So the stamp may be missing, None, `"3"`, a float, a list or a
-    bool, and a bare `turn >= stored[...]` would raise `TypeError` inside
-    `record_hint` -- caught by NO call site (`await_opponent_turn` catches
-    only `HintProtocolError`), so it escapes `run_turn_loop` and ends the
-    game. That is exactly the forfeit-caused-by-a-hint failure 04-12's
-    deviation exists to prevent.
-
-    Anything that is not a plain int is therefore "no usable stamp",
-    bool included -- mirroring `envelope._require_non_bool_int`."""
-    stored = buffer.get(sender)
-    if not isinstance(stored, dict):
-        return None
-    stamp = stored.get(HintKey.TURN.value)
-    if isinstance(stamp, bool) or not isinstance(stamp, int):
-        return None
-    return stamp
-
-
-def _buffer_if_not_older(buffer: dict, sender: str, turn: int, payload: dict) -> None:
-    """Overwrite only with a hint at least as new as the one already
-    buffered for this sender. Unconditional overwrite was safe only while
-    at most ONE turn was ever admissible; with lookback in play two hints
-    from the same sender can both pass the window, and an out-of-order
-    OLDER one would clobber a fresher one -- silently feeding stale
-    evidence to the belief update.
-
-    A payload with no usable stamp is simply replaced, so the existing
-    same-turn-overwrite semantics (`{"text": ...}` with no turn key) are
-    unchanged.
-
-    Consequence, stated rather than discovered later: the stamp is
-    peer-controlled, so a peer can make its own hint sticky by stamping a
-    huge turn. Self-inflicted on a best-effort channel whose content is a
-    CLAIM anyway, and the lookback window still expires it."""
-    stamp = _usable_stamp(buffer, sender)
-    if stamp is None or turn >= stamp:
-        buffer[sender] = payload
-
-
-# 05-14 (05-UAT.md Round 2, G8). `decode_turn_hint` POPS
-# `ctx.incoming_hints` (`turn_language_io.py:59`) and `_buffer_if_not_older`
-# above compares an arrival only against what is STILL buffered -- so a
-# hint re-sent for turn N-1 after a pop sailed through the (correctly)
-# widened window and was decoded a SECOND time, re-driving
-# `observe_reliability` and the belief update on evidence already counted.
-# Double-counted evidence corrupts the posterior, which is the one thing
-# the strategy layer is entitled to trust. Before 05-06 widened the window
-# the old `turn < ctx.state.turn` guard dropped the duplicate as a side
-# effect; nothing did afterwards.
-#
-# `ctx.pending_hints` becomes the marker store, and that is a REPURPOSING,
-# not a new field: it was declared (`agent_context.py:112`), cleared
-# (`turn_resolve.py:96`) and written (below) with ZERO production readers,
-# and `maybe_resolve` already clears it exactly once per resolved turn --
-# which is precisely the right lifetime for a replay guard whose window is
-# one turn wide. So `agent_context.py`, `turn_resolve.py` and
-# `test_turn_buffer.py`'s four `pending_hints` assertions need no edit;
-# those assertions stop being a write-only-buffer trap the moment the
-# field is genuinely read.
-#
-# MARKER AND WINDOW DOVETAIL rather than overlap, and the window WIDTH is
-# byte-unchanged: within one joint turn the marker refuses the repeat, and
-# across the `maybe_resolve` that clears the marker our own turn counter
-# has advanced, so the one-turn window refuses it instead. Residual, stated
-# rather than discovered later: a peer that stamps a FUTURE turn can still
-# get its own hint re-admitted after a resolve -- the same self-inflicted
-# stickiness `_buffer_if_not_older` already documents, on a channel whose
-# content is a CLAIM anyway.
-def _is_replay(ctx: AgentContext, sender: str, turn: int) -> bool:
-    """True when this arrival would be decoded a SECOND time.
-
-    "Already decoded" is `incoming_hints[sender]` ABSENT while
-    `pending_hints[sender]` is PRESENT -- the two are written together
-    below, and only `incoming_hints` is popped, so that pair is what
-    distinguishes *already decoded* from *never arrived*.
-
-    Only a STRICTLY NEWER stamp re-enters. `_buffer_if_not_older`'s
-    inclusive `>=` is right for an overwrite and WRONG here -- reusing it
-    unexamined re-admits the exact repeat this guard exists to block. An
-    arrival with no usable stamp cannot prove it is newer either, so it
-    does not re-enter: the same "peer data proves nothing until it does"
-    rule `_usable_stamp` keeps, and it never raises on peer input."""
-    if sender in ctx.incoming_hints or sender not in ctx.pending_hints:
-        return False
-    stamp = _usable_stamp(ctx.pending_hints, sender)
-    return stamp is None or turn <= stamp
-
-
 def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> None:
     """Log, then buffer, one inbound hint. A missing hint is simply never
     passed here, and never blocks resolution.
@@ -199,8 +104,8 @@ def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> Non
     whichever side's `take_my_turn` runs after the buffer already cleared
     (design note 7's "police sends first") can still decode the hint that
     arrived alongside the opponent's last revealed move. `decode_turn_hint`
-    pops `incoming_hints`; `pending_hints` survives that pop and is read
-    back by `_is_replay` as this turn's consumed marker (05-14).
+    consumes `incoming_hints`; `pending_hints` is left holding what was
+    consumed, as `turn_hint_store.is_replay`'s marker (05-14).
 
     05-06 (G3): the receipt is logged FIRST, ahead of the drop guard, on
     purpose -- a hint we DROP is still a thing that crossed the wire, and
@@ -227,10 +132,12 @@ def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> Non
     keep the freshest hint per sender rather than the last one to
     arrive.
 
-    05-14 (G8): one inbound hint is decoded AT MOST ONCE -- `_is_replay`
-    rejects a re-send of something already popped, WITHOUT narrowing the
-    window (see that helper). Both guards sit after the log, for 05-06's
-    reason: a hint we drop still crossed the wire."""
+    05-14 (G8): one inbound hint is decoded AT MOST ONCE --
+    `turn_hint_store.is_replay` rejects a re-send of something already
+    consumed, WITHOUT narrowing the window (see that module for why the
+    marker is written at consumption and not at arrival). Both guards sit
+    after the log, for 05-06's reason: a hint we drop still crossed the
+    wire."""
     turn_commit_send.log_received(
         ctx,
         Envelope(type=MessageType.HINT, turn=turn, sender=sender, payload=payload),
@@ -240,7 +147,7 @@ def record_hint(ctx: AgentContext, sender: str, turn: int, payload: dict) -> Non
     )
     if turn < ctx.state.turn - _HINT_LOOKBACK_TURNS:
         return
-    if _is_replay(ctx, sender, turn):
+    if turn_hint_store.is_replay(ctx, sender, turn):
         return
-    _buffer_if_not_older(ctx.pending_hints, sender, turn, payload)
-    _buffer_if_not_older(ctx.incoming_hints, sender, turn, payload)
+    turn_hint_store.buffer_if_not_older(ctx.pending_hints, sender, turn, payload)
+    turn_hint_store.buffer_if_not_older(ctx.incoming_hints, sender, turn, payload)

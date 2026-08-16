@@ -27,7 +27,7 @@ hole -- the re-hash, the D-60 state binding and the D-67 move cross-check all
 still fire on the normalised entry, exactly as they do on a plain int.
 
 `bool` is REJECTED rather than normalised, agreeing with
-`envelope._require_non_bool_int` and `turn_hint_buffer._usable_stamp`: no
+`envelope._require_non_bool_int` and `turn_hint_store.usable_stamp`: no
 serialiser emits `true` for a turn counter, and a bool silently keying a dict at
 0/1 is precisely the surprise those two already refuse.
 """
