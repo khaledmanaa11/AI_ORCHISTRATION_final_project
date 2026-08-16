@@ -13,6 +13,16 @@ Criterion 1 (public reachability) already PASSED live on 2026-08-09 —
 [`gate5_smoke_evidence.json`](gate5_smoke_evidence.json). This runbook is criterion 2 only.
 The measurement record it closes is [`GATE-5-MEASUREMENT.md`](GATE-5-MEASUREMENT.md).
 
+> **Status, 2026-08-16: criterion 2 is CLOSED** by remote-round **attempt 4** — two full
+> rounds, agreeing `capture` verdicts and `audit_verdict matched=true` on both machines
+> ([`remote-round-2026-08-16-attempt4/`](remote-round-2026-08-16-attempt4/)).
+> **This file is not retired.** It is the durable operator procedure for league day, and it
+> is amended below with what attempts 1–4 each cost to learn: attempt 1 lost a day to
+> unretained consoles and a 72 s clock skew, attempt 2 died to a tunnel drop no one could
+> attribute, attempt 3 played a whole round on template hints because a key was never
+> exported, and attempt 4 still went out with only one machine's console. Every item marked
+> **learned the hard way** below is there because a round already paid for it.
+
 Running it **after** Phase 6 is deliberate and better evidence: the round exercises the
 commit-reveal protocol (Phase 6) and the live LLM hint layer (Phase 4) over a real network
 at the same time.
@@ -118,8 +128,9 @@ uv sync
 uv run python -c "from pursuit.network.config_hash import config_digest; from pursuit.shared.scent_config import load_scent_model, scent_digest; print('game_params:', config_digest('config/thief/game_params.json')); print('scent:', scent_digest(load_scent_model('config/thief/scent.json')))"
 ```
 
-Measured on machine A at commit `0427137` (identical across both role directories —
-recompute if `game_params.json` or `scent.json` ever change):
+Re-measured on machine A at commit `330e450` and **unchanged** since `0427137`, where they
+were first recorded (identical across both role directories — recompute if
+`game_params.json` or `scent.json` ever change):
 
 | Digest | Value |
 |---|---|
@@ -128,6 +139,13 @@ recompute if `game_params.json` or `scent.json` ever change):
 
 A mismatch is information, not something to edit away. Editing config to force agreement
 defeats the check.
+
+**Both machines must be on the same *post-fix* commit — write the hash into the evidence.**
+Equal digests are necessary but not sufficient: `game_params.json` and `scent.json` are the
+only files hashed, so two machines can agree on every digest while running months-apart
+`src/`. Record `git rev-parse --short HEAD` from **both** machines alongside the digests.
+For reference, each attempt's commit: attempt 1 `384da44`, attempt 2 `9bda33a`,
+attempts 3 and 4 `0632e04`.
 
 **Prove the environment before involving the network:** `uv run ruff check` (0 violations),
 `uv run pytest -q` (all green), then one full local loopback game with
@@ -170,6 +188,57 @@ on each side with `--check-config`, which prints the resolved role, listen addre
 opponent URL without starting a server; `opponent_url` must show the peer's **public**
 host, not `127.0.0.1`.
 
+### Pre-flight — five recordings, each paid for by a previous attempt
+
+Do all five **before** either process starts. None takes a minute; each one cost a whole
+round to learn.
+
+1. **Both machines' commit hash and config digests** (§3 above) — into the evidence file.
+2. **Each machine's UTC clock — learned the hard way.** In attempt 1 the two machines' clocks
+   were **≈72 s apart**, and comparing timestamps *across* machines produced a confidently
+   wrong causal story that survived hours of analysis. Record both clocks now:
+
+   ```powershell
+   Get-Date -AsUTC -Format o     # PowerShell
+   ```
+   ```
+   date -u +"%Y-%m-%dT%H:%M:%SZ"  # sh
+   ```
+
+   Then, for the rest of the round: **compare timestamps only WITHIN one machine.** Across
+   machines, the ordering evidence is the *content* — a commit hash this side logged as sent
+   and that side logged as received — never the clock.
+3. **Both consoles redirected, stdout AND stderr, for the whole session — learned the hard
+   way, twice.** Attempt 1 kept machine A's console and not B's, so B's side of the teardown
+   was unreconstructable; attempt 2 kept **neither**; attempt 4 still shipped with only A's.
+   On each machine:
+
+   ```powershell
+   uv run python -m pursuit.main --config-dir config/police 2>&1 |
+       Tee-Object -FilePath consoleA.txt
+   ```
+
+   Two honest notes from attempt 4's retained capture: PowerShell wraps every stderr line in
+   a `NativeCommandError` record (harmless — the text is all there), and `Tee-Object` writes
+   **UTF-16**, so `grep`/`rg` need `-a` or a conversion afterwards. If your `Tee-Object`
+   supports `-Encoding utf8`, pass it and the file stays greppable.
+4. **The ngrok agent log on both machines — see §5 item 6.** Set it up now; it cannot be
+   recovered afterwards.
+5. **Decide the language layer deliberately — learned the hard way.** Attempt 3 played an
+   entire clean round on the deterministic template bank because neither machine had
+   exported `ANTHROPIC_API_KEY`. That is a *sanctioned* mode, not a bug, and the Step-0
+   declaration says so honestly (`llm_name: template-fallback (no LLM calls)`) — but it is
+   not the same evidence as a live model. This project reads `os.environ` only and has no
+   dotenv loader, so a key sitting in a local `.env` is **not** loaded: export it into the
+   launch shell yourself (never commit it, never echo its value). Then confirm at startup —
+   the run's own `declaration_<uid>.json` must read `claude-haiku-4-5`, not
+   `template-fallback (no LLM calls)`, before you trust the round as a live-LLM round.
+
+**One more, from attempt 4's failed launch:** if a previous ngrok agent is still holding the
+reserved domain, the launch dies with `ERR_NGROK_334 — the endpoint ... is already online`
+(retained: `remote-round-2026-08-16/consoleA_2026-08-14_failed_launch_ERR_NGROK_334.txt`).
+Kill leftover ngrok agents on both machines first.
+
 ### Start them together — the handshake does not retry
 
 `perform_handshake` makes **exactly one attempt: no retry, no timeout, no sleep**
@@ -183,6 +252,33 @@ risk, not silently tolerated.)*
 
 Play to a **real outcome** — capture, survival, tie, or technical loss. A partial handshake
 does not close the criterion.
+
+### What should look different from attempt 1 — how to spot a regression live
+
+Attempt 1 (2026-08-13) ran a complete 5-turn game to a real capture and still failed the
+criterion. Five things were fixed afterwards; each has a signature you can check *during* the
+round rather than in the post-mortem. If one of these is missing, stop and say so — do not
+re-run until it looks good.
+
+| Check | Attempt 1 | Expected now | Fixed by |
+|---|---|---|---|
+| One game UID | two different stems (`074fc2b16888899e` on A, `d50ceb00be724b93` on B) | **one** stem shared by both machines' `.jsonl`, `.ledger.jsonl` and `declaration_*` | 05-05 (D-61) |
+| Inbound hints logged | **zero** `message_received` + `hint` records on either machine | both sides carry them | 05-06 (rule 20) |
+| Hints actually decoded | machine B: five `no_hint` in a row | both sides show ≥1 `incoming_hint` that is **not** `no_hint` in `language_turn` | 05-06 |
+| Verdicts | A `capture`; B `capture` **then** a spurious `technical_win {opponent_unresponsive}` | both sides `capture` (or the same real outcome) + `audit_verdict`, **no** `technical_win` against a peer that answered | 05-04 |
+| Game end | A cancelled its server and killed its tunnel with zero grace, mid-exchange | a **bounded pause** after the audit before the process exits | 05-04 |
+
+**Do not `Ctrl-C` at `game_over`.** That pause is the fix, not a hang: `linger_for_peer`
+drains the peer's in-flight exchange, capped by `NetworkParams.response_timeout` with a
+`backoff_seconds` quiet interval (Table 19 values — no new number was introduced). Measured
+on a clean loopback pair it costs **17.44 s / 17.64 s** of wall clock against **14.44–14.72 s**
+without it (`05-04-SUMMARY.md`); over a real tunnel expect more. Killing the process during
+that window recreates attempt 1's failure by hand.
+
+One thing this list cannot promise: attempt 2's mid-game tunnel drop is now watched and
+repaired on a bounded budget (05-11), but **that repair path has never fired in a live
+round** — no drop occurred in attempts 3 or 4. If your tunnel drops, that is new evidence:
+keep the ngrok agent log (§5 item 6) whatever the outcome.
 
 ---
 
@@ -199,6 +295,39 @@ does not close the criterion.
    so which one was crossed is part of the evidence.
 4. On Path A, machine B's own `gate5_smoke_evidence.json`, kept as
    `gate5_smoke_evidence_machineB.json` so it does not clobber machine A's.
+5. **Both machines' FULL console output — stdout AND stderr — for the whole session**
+   (§4 pre-flight item 3), named per machine (`consoleA_<attempt>.txt`,
+   `consoleB_<attempt>.txt`) so neither clobbers the other. *Learned the hard way:* attempt 1
+   ([`remote-round-2026-08-13/`](remote-round-2026-08-13/) — nine files, **not one console
+   and not one ngrok agent log among them**) kept A's console only, so **B's side of the
+   teardown is permanently unreconstructable**;
+   attempt 2 kept neither and its root cause had to be inferred; attempt 4 closed the gate
+   with A's console alone and the gap is recorded in `NEEDED-FROM-MACHINE-B.md`. Retaining
+   both is the difference between diagnosing the next attempt in an hour and re-running it.
+6. **The ngrok agent log from BOTH machines.** This is the single artifact that would have
+   settled attempt 1 — whether machine A's zero-grace teardown or an independent tunnel drop
+   killed B's push — and attempt 2, where A's public ingress died mid-game and nothing on
+   disk can say why. Two ways to get it; use whichever matches the machine's tunnel path,
+   and do not guess a path — ask the tool:
+   - **Path A (pyngrok, tunnel-on):** pyngrok surfaces the ngrok agent process's output on
+     the *agent's own console*, so the full console redirect of item 5 already captures it.
+     Keep it in that file and say so in the evidence notes.
+   - **Path C (standalone ngrok CLI):** the CLI's window shows a TUI, not a log. Either run
+     it as `ngrok http <port> --domain=<domain> --log=stdout --log-format=json > ngrokB.log`
+     (the redirect replaces the TUI with the agent log), **or** set a `log:` path in ngrok's
+     own configuration file and retain that file — `ngrok config check` prints where that
+     file lives on this machine.
+7. **Each machine's recorded UTC clock** from §4 pre-flight item 2, and **any stray or
+   aborted session logs.** Do not tidy those away: attempt 4 retained
+   `eb55daeefafb4208.jsonl` — machine B launching first, waiting for A, and honestly
+   recording its own `watchdog_incident` eight seconds before the real game — and that stray
+   is part of why the round reads as honest rather than curated (rule 38).
+
+**Before committing any of it — check for secrets (rules 39–40).** Consoles and ngrok agent
+logs are exactly where the shared secret, an `NGROK_AUTHTOKEN` or an `ANTHROPIC_API_KEY`
+leaks into a file you are about to make public. Grep the retained directory for each of the
+three values before `git add`, and remember the console may be UTF-16 (§4 pre-flight item 3),
+which a naive `grep` will silently fail to match.
 
 ## 6. What closes afterwards
 
@@ -207,6 +336,9 @@ does not close the criterion.
 - Tick both §10.4 boxes and rows 05-01…05-99 in [`TODO.md`](TODO.md).
 - Tick the matching Phase-5 rows in the root [`docs/TODO.md`](../../TODO.md).
 - Re-run `/gsd:verify-work 5`; the phase moves from `human_needed` to `passed`.
+
+*All four were carried out for attempt 4 on 2026-08-16 and GATE-5 is met; the section stays
+as the procedure for any future round, league day included.*
 
 ---
 
