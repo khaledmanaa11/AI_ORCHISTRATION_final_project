@@ -39,12 +39,11 @@ from pursuit.network.turn_commit_send import (
 from pursuit.network.turn_commit_wait import (
     H_COMMIT_KEY,
     commit_own_action,
-    next_protocol_message,
     wait_for_ack_and_commit,
     wait_for_matching_ack,
     wait_for_opponent_commit,
-    wait_for_reveal_capturing_early_ack,
 )
+from pursuit.network.turn_commit_wait_reveal import wait_for_reveal_capturing_early_ack
 from pursuit.network.turn_language import choose_destination, known_opponent_cell
 from pursuit.network.turn_language_io import decode_turn_hint, plan_turn_deception
 from pursuit.network.verdict import TechnicalWin
@@ -96,11 +95,68 @@ async def await_and_respond(ctx: AgentContext) -> tuple[Envelope | None, Technic
     own COMMIT, ACK theirs, wait for their REVEAL -- NEVER record_action/
     maybe_resolve here (`CommitTurnState`'s own docstring); only
     `pending_action` is set, consumed later by `reveal_pending`. Off:
-    `turn_buffer.await_move(ctx)` verbatim, either way."""
+    `turn_buffer.await_move(ctx)` verbatim, either way.
+
+    BOTH branches now end in the SAME leg, `wait_for_reveal_capturing_early_ack`
+    -- 05-18, deferred item #18. What differs is only whether this side has
+    an outstanding commit for that leg to capture an ACK for."""
     if not ctx.security.commit_reveal:
         return await turn_buffer.await_move(ctx)
     if ctx.role == "police":
-        return await next_protocol_message(ctx)
+        # THE FIX (05-18, deferred item #18). This was
+        # `return await next_protocol_message(ctx)` -- the pull primitive
+        # called BARE, the only wait in the codebase with no type test, and
+        # the only production caller of that primitive still taking
+        # `on_attempt=None`. Whatever arrived was handed to
+        # `turn_actions.await_opponent_turn` as the opponent's REVEAL, so a
+        # peer's published FINAL_REVEAL was decoded as an illegal move.
+        # MEASURED at `da45b55`, police, queue [FINAL_REVEAL, REVEAL]:
+        #
+        #     returned type = final_reveal   verdict = None
+        #     await_opponent_turn outcome = Outcome.TECHNICAL_LOSS
+        #     technical_win reasons = ['payload must be a dict, got NoneType']
+        #
+        # A false declaration against an honest peer (rules 16/22), and a
+        # 0-point loss of a game we did not lose.
+        #
+        # `None` = we hold no outstanding commit: `initiate` already
+        # collected this turn's ACK inside `wait_for_ack_and_commit`.
+        #
+        # THE DECISION, and the alternative was RUN, not argued. "Keep
+        # waiting" versus "treat the peer's FINAL_REVEAL as the end of the
+        # game", measured against this same turn loop and `run_final_audit`:
+        #
+        #   scenario                        keep waiting        end the game
+        #   ledger, then the REVEAL         None, no accusation AttributeError
+        #                                                       (returning no
+        #                                                       envelope) or a
+        #                                                       FABRICATED
+        #                                                       technical_win
+        #                                                       against a peer
+        #                                                       that just spoke
+        #   ledger, no REVEAL ever          technical_loss      technical_loss
+        #                                   opponent_unresponsive  same, on
+        #                                                       fabricated
+        #                                                       evidence
+        #   genuinely silent peer (rule 36) unchanged           unchanged
+        #
+        # Ending the game has no truthful expression here. This function
+        # returns `(Envelope | None, TechnicalWin | None)`; `(None, None)`
+        # makes `await_opponent_turn` raise `AttributeError: 'NoneType'
+        # object has no attribute 'sender'`, and the only other door is to
+        # build a `TechnicalWin` by hand -- whose own docstring says every
+        # field is MEASURED by the retry ladder, "never assumed or
+        # defaulted", precisely so the declaration is defensible at audit.
+        #
+        # Waiting costs nothing that is not already owed. The ledger is
+        # already safe in `ctx.commit_state.early_final_reveal` (05-17), so
+        # the audit matches either way; the REVEAL is normally the very next
+        # item on the queue; and a peer that really has stopped exhausts the
+        # ladder below and earns D-13's own measured `opponent_unresponsive`
+        # -- NET-06's in-game sanction, untouched. No timeout, retry count or
+        # backoff moves: 05-17 measured the timing fix directly and widening
+        # the ladder to 21 attempts produced a BYTE-IDENTICAL accusation.
+        return await wait_for_reveal_capturing_early_ack(ctx, None)
 
     current = ctx.machine.state
     # Captured BEFORE the wait and reused as this turn's single local

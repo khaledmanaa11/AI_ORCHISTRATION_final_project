@@ -41,6 +41,7 @@ from pursuit.constants import Outcome
 from pursuit.network.agent_audit_wiring import run_final_audit
 from pursuit.network.state_machine import State
 from pursuit.network.turn_actions import await_opponent_turn
+from pursuit.network.turn_commit import await_and_respond
 from pursuit.network.verdict import TechnicalWinReason
 from tests.unit._early_reveal_fixtures import (
     ON,
@@ -51,6 +52,7 @@ from tests.unit._early_reveal_fixtures import (
     in_game_reveal,
 )
 from tests.unit._fakes_agent import make_ctx
+from tests.unit._turn_loop_fixtures import assert_ladder_survived, lethal, stall, turn_ctx
 
 _UNRESPONSIVE = [TechnicalWinReason.OPPONENT_UNRESPONSIVE.value]
 
@@ -149,3 +151,37 @@ async def test_a_genuinely_silent_peer_is_still_declared_unresponsive(
     outcome = await await_opponent_turn(ctx)
 
     assert (outcome, accusations(ctx)) == (Outcome.TECHNICAL_LOSS, _UNRESPONSIVE)
+
+
+async def test_the_initiators_own_wait_marks_its_ladder_like_every_other_leg(
+    tmp_path, default_params, network_params,
+):
+    """THE SECOND HALF OF THE SAME OMISSION (deferred item #10 / 05-16).
+    `turn_commit.py:103` was ALSO the last production caller of
+    `next_protocol_message` still taking `on_attempt=None`: 05-16 marked the
+    other five turn-loop ladders and this branch was skipped for the same
+    reason the type test was -- it is the one wait that does not read like a
+    wait leg. So the initiator's whole `(retry_count + 1) x response_timeout`
+    ladder ran UNMARKED against `watchdog_threshold`.
+
+    MEASURED pre-fix on the injected clock at the shipped Table-19 values:
+    the freeze fires at attempt 2 of 4, t=70.0 s, `touches=0`, and
+    `ProcessKilledError` ends the call -- so `os._exit(1)` runs MID-GAME and
+    the D-13 verdict due at t=140 s is never spoken. Post-fix the same
+    ladder burns its full length, outlives the threshold, and still returns
+    the verdict.
+
+    It lives here rather than in `test_turn_loop_watchdog.py` because that
+    module is at 135/150 and this is the sixth leg of its own subject; the
+    harness is shared, not copied. NET-07 is preserved, not traded: that
+    module's own frozen-loop and never-disarmed controls are unchanged."""
+    armed = lethal(network_params)
+    ctx = turn_ctx(tmp_path, default_params, network_params, "police-ladder", armed, security=ON)
+    queue = stall(ctx, armed, network_params)
+
+    envelope, verdict = await await_and_respond(ctx)
+
+    assert_ladder_survived(armed, queue.pulls, network_params)
+    assert envelope is None
+    assert verdict is not None, "no verdict -- the D-13 ladder never got to speak"
+    assert verdict.attempts == network_params.retry_count + 1

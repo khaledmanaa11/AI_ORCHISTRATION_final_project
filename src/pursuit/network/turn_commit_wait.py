@@ -1,9 +1,19 @@
 """D-58 wire mechanics: the jitter-tolerant wait legs -- split from
 `turn_commit.py` at the 150-code-line gate (Segal Table 5,
 pre-authorized), mirroring `handshake.py`/`handshake_wire.py`'s
-policy-vs-mechanism split. The four `wait_for_*` functions here are each
-one named leg of the D-58 exchange (opponent COMMIT, ACK+opponent-COMMIT
-together, REVEAL capturing an early ACK, a still-outstanding ACK).
+policy-vs-mechanism split. The three `wait_for_*` functions here are each
+one named leg of the D-58 exchange, and each is ROLE-SPECIFIC: the
+responder's first wait for the initiator's COMMIT, the initiator's dual
+ACK+opponent-COMMIT wait, the responder's still-outstanding-ACK wait.
+
+The fourth leg, the tail wait for the opponent's REVEAL, moved to the
+sibling `turn_commit_wait_reveal.py` when 05-18 took this file to 151 code
+lines -- and along that exact division, because 05-18 is what made it the
+one leg BOTH roles run (deferred item #18: the police branch of
+`turn_commit.await_and_respond` had been pulling bare, with no type test at
+all). It is NOT re-exported here, unlike every other split this module has
+been through: that leg imports `H_COMMIT_KEY` from this file, so exporting
+it back would be an import cycle. Its three importers name it directly.
 
 The pull primitive they are all built on, `next_protocol_message`, moved
 to the sibling `turn_commit_pull.py` when 05-17 needed room here for the
@@ -38,7 +48,7 @@ security-critical (06-UAT.md Gap 1).
 from __future__ import annotations
 
 from pursuit.network.agent_context import AgentContext
-from pursuit.network.envelope import Envelope, MessageType
+from pursuit.network.envelope import MessageType
 from pursuit.network.state_machine import State
 from pursuit.network.turn_commit_ledger import (
     build_action_payload,
@@ -65,7 +75,6 @@ __all__ = [
     "wait_for_ack_and_commit",
     "wait_for_matching_ack",
     "wait_for_opponent_commit",
-    "wait_for_reveal_capturing_early_ack",
 ]
 
 
@@ -99,29 +108,6 @@ async def wait_for_ack_and_commit(
             if ack_verdict is not None:
                 return None, ack_verdict
     return opponent_h_commit, None
-
-
-async def wait_for_reveal_capturing_early_ack(
-    ctx: AgentContext, h_commit: str,
-) -> tuple[Envelope | None, TechnicalWin | None]:
-    """The responder's own tail wait (D-58): block until the opponent's
-    REVEAL arrives. An ACK matching our own h_commit arriving FIRST is
-    captured onto `ctx.commit_state.own_ack_received` (it cannot arrive a
-    second time), so this side's own later `reveal_pending` never blocks
-    on a message that already came. A duplicate/unexpected arrival is
-    tolerated jitter, dropped -- including a peer FINAL_REVEAL, which now
-    reaches the audit through `ctx.commit_state.early_final_reveal` rather
-    than through this return value (05-17). This is the leg 05-17's
-    reproduction runs against: the peer finishes first and pushes its
-    ledger, and the in-game REVEAL is still what this leg returns."""
-    while True:
-        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
-        if verdict is not None:
-            return None, verdict
-        if envelope.type is MessageType.REVEAL:
-            return envelope, None
-        if envelope.type is MessageType.ACK and envelope.payload.get(H_COMMIT_KEY) == h_commit:
-            ctx.commit_state.own_ack_received = True
 
 
 async def wait_for_opponent_commit(

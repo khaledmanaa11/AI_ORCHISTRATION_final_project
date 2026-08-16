@@ -54,13 +54,18 @@ def lethal(network_params) -> LethalWatchdog:
     )
 
 
-def turn_ctx(tmp_path, default_params, network_params, label, armed, client=None):
+def turn_ctx(tmp_path, default_params, network_params, label, armed, client=None, security=None):
     """A WAIT_OPPONENT ctx running the REAL Table-19 ladder against the REAL
-    watchdog -- the turn-loop twin of `test_audit_watchdog._audit_ctx`."""
+    watchdog -- the turn-loop twin of `test_audit_watchdog._audit_ctx`.
+
+    `security` defaults to None, which `make_ctx` reads as commit_reveal
+    OFF, so every pre-05-18 caller is byte-unchanged. 05-18 passes it: the
+    SIXTH turn-loop ladder, `await_and_respond`'s police branch, exists only
+    on the commit-reveal path and cannot be reached without it."""
     return make_ctx(
         tmp_path, default_params, network_params, role="police", label=label,
         initial_state=State.WAIT_OPPONENT, client=client or FakeClient(),
-        watchdog=armed, net_overrides=table19_overrides(network_params),
+        watchdog=armed, net_overrides=table19_overrides(network_params), security=security,
     )
 
 

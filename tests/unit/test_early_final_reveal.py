@@ -44,7 +44,7 @@ from pursuit.constants import Outcome
 from pursuit.network.agent_audit_wiring import run_final_audit
 from pursuit.network.envelope import MessageType
 from pursuit.network.state_machine import State
-from pursuit.network.turn_commit_wait import wait_for_reveal_capturing_early_ack
+from pursuit.network.turn_commit_wait_reveal import wait_for_reveal_capturing_early_ack
 from pursuit.network.verdict import TechnicalWinReason
 from tests.unit._early_reveal_fixtures import (
     ON,
