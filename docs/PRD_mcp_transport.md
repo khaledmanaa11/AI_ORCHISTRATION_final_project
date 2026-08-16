@@ -62,8 +62,26 @@ At `GAME_OVER` the background server task is cancelled and the listening port mu
 |------|-----------|-------------------|--------------|
 | `handshake` | `async def handshake(turn: int, sender: str, payload: dict) -> dict` | Proves reachability and exchanges the config digest; payload `{"role", "config_digest"}`; returns this agent's role + digest | Phase 6 adds the Step-0 declaration to the same call |
 | `receive_move` | `async def receive_move(turn: int, sender: str, payload: dict) -> dict` | Decodes the envelope, enqueues it, returns `{"status": "ack"}` immediately; payload `{"x", "y"}` | Phase 4 carries a hint alongside; Phase 6 carries commit/reveal fields |
-| `receive_barrier` | `async def receive_barrier(turn: int, sender: str, payload: dict) -> dict` | Same enqueue-and-ack stub; payload `{"x", "y"}` — the cop's barrier declaration | Phase 3 consumes it in the strategy loop |
-| `game_over` | `async def game_over(turn: int, sender: str, payload: dict) -> dict` | Same enqueue-and-ack stub; payload carries the outcome and reason | Phase 7 feeds the mutual game report |
+| `receive_barrier` | `async def receive_barrier(turn: int, sender: str, payload: dict) -> dict` | Same enqueue-and-ack stub; payload `{"x", "y"}` — the cop's barrier declaration | ~~Phase 3 consumes it in the strategy loop~~ — **superseded, see the note below** |
+| `game_over` | `async def game_over(turn: int, sender: str, payload: dict) -> dict` | Same enqueue-and-ack stub; payload carries the outcome and reason | **Live since Phase 5** — carries the cop's rule-21 Capture Claim; Phase 7 feeds the mutual game report |
+
+> **Superseded 2026-08-16 (plan 05-15, gap G10) — appended, not rewritten.** The `receive_barrier` row's
+> "Phase 3 consumes it in the strategy loop" never happened and will not: **Phase 6 moved the barrier
+> declaration off its own envelope and into the committed action.** `docs/PRD_commit_reveal.md` §2.2
+> (D-66/SEC-07) is the current specification — `barrier` rides inside the composite
+> `{"move": …, "barrier": … | null}` dict, which crosses the wire only inside `REVEAL`, is hashed into
+> `H_commit`, and is cross-checked against what was actually played at audit (D-67). That is what
+> satisfies rule 15 ("Declare every barrier placement openly", sanctioned *at audit*) and rule 16
+> ("Lie about where a barrier was placed"); the audit-shaped sanction is the shape the committed action
+> answers. `MessageType.BARRIER` and the `receive_barrier` tool are **deliberately retained** — the
+> published tool surface is part of the league protocol contract and removing a tool other peers may
+> call is a breaking change — but nothing in `src/` sends one (`grep -rn "MessageType.BARRIER" src/`
+> returns exactly one hit, the receiving handler at `network/tools.py:133`).
+>
+> The `game_over` row is corrected in the other direction: as of 05-15 it is no longer a Phase-7-only
+> stub. `network/capture_declaration.py` sends it from the **cop** on the capturing turn, driven by the
+> same resolved `Outcome` the ledger's `game_over` record commits — book §3.5 p.22 Table 2 ("the cop
+> lands on the thief's cell and declares Capture Claim"), rules 21/22.
 
 - **Every handler is `async def`.** A plain `def` body is executed by FastMCP in a worker threadpool; touching a main-loop `asyncio.Queue` from that thread is not thread-safe and produces intermittently lost messages rather than a clean crash. The implementation carries a test asserting each handler is a coroutine function.
 - **The tool name supplies the envelope's `type`.** The three wire arguments are `turn`, `sender`, `payload`; the handler pairs them with its own `MessageType` to reconstruct the full `Envelope` of §5.
