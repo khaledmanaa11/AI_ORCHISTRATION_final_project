@@ -69,7 +69,7 @@ completed: 2026-08-16
 - **Tasks:** 3 (plus 2 follow-on test commits from the self-audit)
 - **Commits:** 5
 - **Files created:** 5 · **Files modified:** 8
-- **Suite:** 1478 passed / 0 failed / **96.57%** (baseline 1374 / 96.54%) -- +104 tests, +0.03pp
+- **Suite:** 1479 passed / 0 failed / **96.57%** (baseline 1374 / 96.54%) -- +105 tests, +0.03pp
 
 ## Accomplishments
 
@@ -288,7 +288,7 @@ src\pursuit\network\game_identity.py                44      0   100%
 src\pursuit\network\game_identity_validate.py       27      0   100%
 src\pursuit\network\handshake_step0.py              29      0   100%
 Required test coverage of 85.0% reached. Total coverage: 96.57%
-====================== 1478 passed in 157.17s (0:02:37) =======================
+====================== 1479 passed in 167.88s (0:02:47) =======================
 
 GATE-6:  criterion_1_four_phases_commit_reveal: PASS
          criterion_2_hash_nonce_mismatch_technical_loss: PASS
@@ -300,7 +300,12 @@ dev_launch.py exit=0
   -> ONE shared uid across both sides' log AND ledger; zero technical_win
 ```
 
-**Against the orchestrator's baseline (1374 passed / 96.54%): +104 tests, +0.03pp, zero failures.** `test_belief_policy.py`'s per-turn budget test — the documented deferred item #9 flake — **passed in all three full-suite runs** this session, under `0437559`'s rewritten clock. It was not touched.
+**Against the orchestrator's baseline (1374 passed / 96.54%): +105 tests, +0.03pp, zero failures.**
+This number was CORRECTED after the fact and the correction is recorded rather than
+smoothed over (rule 38 applies to our own trackers): the summary first said **1478**,
+which was a real measurement — but taken at `5c92ec7`, one commit before the anti-vacuity
+guard landed. Re-measured at the final HEAD: **1479 in 167.88 s**. A count carried across
+two commits is a stale count, not a measured one. `test_belief_policy.py`'s per-turn budget test — the documented deferred item #9 flake — **passed in all three full-suite runs** this session, under `0437559`'s rewritten clock. It was not touched.
 
 **Untouched, verified by `git diff HEAD`:** `tests/integration/test_secret_channel.py`, `tests/integration/test_game_id_negotiation.py`, `tests/integration/test_belief_policy.py` — all byte-unedited and all passing.
 
