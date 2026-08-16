@@ -82,6 +82,18 @@ def test_the_bound_is_a_boundary_not_a_convention():
     assert usable_peer_game_id("x" * (_MAX_PEER_GAME_ID + 1)) is None
 
 
+def test_neither_parametrised_set_can_quietly_empty_out():
+    """ANTI-VACUITY. `UNSAFE` and `HONEST_FOREIGN` drive parametrised cases in
+    this file AND in test_game_identity_adopt.py, and pytest treats an empty
+    parametrize argument as a SKIP, not an error -- so emptying either list
+    would turn most of this plan's evidence green and silent. Asserted here,
+    where a reviewer reading the lists will see it, together with the property
+    that no value is claimed to be both safe and unsafe."""
+    assert len(UNSAFE) >= 20
+    assert len(HONEST_FOREIGN) >= 8
+    assert not {v for _, v in UNSAFE if isinstance(v, str)} & set(HONEST_FOREIGN)
+
+
 def test_the_bound_leaves_real_room_for_every_derived_filename():
     """`write_declaration` builds `declaration_{id}_peer.json` (22 fixed
     characters) and `ledger_path` builds `{id}.ledger.jsonl` (14). The
