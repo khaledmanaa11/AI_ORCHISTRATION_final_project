@@ -940,6 +940,34 @@ re-entry question open.
 
 ## #18 (05-17) -- the INITIATOR's own wait treats a FINAL_REVEAL as a malformed move
 
+> **CLOSED by 05-18** (2026-08-17, commit `f099ad2`). The police branch now calls
+> `wait_for_reveal_capturing_early_ack(ctx, None)` -- the SAME leg the thief branch runs --
+> so both roles share one type discipline instead of one having it and its sibling not.
+> Re-measured on the identical queue `[FINAL_REVEAL, REVEAL]`: `outcome = None`, zero
+> `technical_win` records, `audit_verdict matched=true` over one real peer turn. With the
+> REVEAL absent the peer is still accused, now with the honest name -- `opponent_unresponsive`,
+> the verdict `call_with_retry` actually measured -- instead of a decoder's message.
+>
+> **The decision was named, not smuggled.** Both candidates in the paragraph below were RUN.
+> "End the game on the peer's FINAL_REVEAL" has no truthful expression inside
+> `await_and_respond`'s `(Envelope | None, TechnicalWin | None)` contract: returning
+> `(None, None)` makes `await_opponent_turn` raise `AttributeError: 'NoneType' object has no
+> attribute 'sender'`, and the only other door is building a `TechnicalWin` by hand, whose own
+> docstring says every field is MEASURED by the retry ladder and "never assumed or defaulted"
+> -- and which, measured, accuses a peer that demonstrably just spoke. "Keep waiting" costs
+> nothing already owed: 05-17 has the ledger buffered, so the audit matches either way.
+>
+> **A second omission at the same line, fixed with it:** `turn_commit.py:103` was also the
+> LAST production caller of `next_protocol_message` still taking `on_attempt=None`. 05-16
+> marked the other five turn-loop ladders and skipped this one for the same reason the type
+> test was skipped -- it does not read like a wait leg. Measured pre-fix on the injected clock
+> at shipped Table-19 values: freeze at attempt 2 of 4, `t=70.0 s`, `touches=0`, `os._exit(1)`
+> mid-game, D-13's verdict due at t=140 s never spoken.
+>
+> **The class, not just the instance:** `tests/unit/test_envelope_boundary_invariant.py`
+> enumerates all **12** pull sites FROM SOURCE and holds each to one invariant. It found
+> instance six on its first run -- see **#19**.
+
 **Found:** 05-17, by grepping production callers of `next_protocol_message` for the routing
 fix -- not by reading the diff. **Severity:** major (a rules-16/22 false-accusation path).
 **Status:** OPEN. **Pre-existing and unchanged by 05-17**, measured both ways below.
@@ -970,3 +998,67 @@ deciding what the initiator should do when the peer has demonstrably ended the g
 still expect its REVEAL -- keep waiting (and burn a ladder we already know is hopeless), or
 end the game on the buffered evidence. That is a turn-loop policy decision with its own
 controls, and it interacts with #17's "does a late publisher get audited" question.
+
+---
+
+## #19 (05-18) -- `turn_buffer.await_move` has NO type test, so the toggle-off path reads any envelope as a move
+
+**Found:** 05-18 Task 3, by the boundary enumeration ON ITS FIRST RUN -- not by grepping
+outward after a fix, which is how instances one through five were each found. **Severity:**
+major on a non-shipped toggle. **Status:** OPEN -- logged with a measurement, deliberately
+NOT fixed.
+
+This is **instance six** of the class #18 closed the fifth of: an unexpected envelope type at
+a layer boundary read as something it is not. `turn_buffer.await_move` is the
+`commit_reveal=False` wait (`turn_commit.await_and_respond`'s first branch). It buffers a
+HINT and returns **everything else** to `turn_actions.await_opponent_turn`, which hands it
+straight to `decode_revealed_action`. The four `wait_for_*` legs each check a type; this one,
+like #18's police branch before it, does not.
+
+**Measured** (police, all nine `MessageType` members, one well-formed envelope each,
+`tests/unit/test_toggle_off_move_boundary.py`):
+
+```
+commit_reveal ON   0 of 9 unnamed reasons          <- 05-18 Task 2's fix
+commit_reveal OFF  8 of 9 unnamed reasons, every one
+                   'payload has neither direction nor x/y keys'
+```
+
+Eight false declarations against a peer that sent a perfectly legal envelope of a type we
+were not waiting for (rules 16/22). Only HINT survives, because it is the one type that
+branch tests for.
+
+**Why it was not closed here.** Shipped config is `commit_reveal: true`, so the exposed path
+is not the one a league game runs; `turn_buffer.py` is not in 05-18's `files_modified` and
+sits at **146/150** code lines, so the repair needs its own split; and 05-18 is the last plan
+of phase 5, whose non-goals say anything further is recorded and carried. **Latent is not
+harmless** -- 05-14 (G8) fixed a defect of exactly this shape on exactly this toggle, on the
+ground that "a latent evidence defect on a supported toggle is still a defect".
+
+**Reachability, honestly.** With the toggle off this codebase never sends
+COMMIT/ACK/REVEAL/FINAL_REVEAL, so the reachable foreign types are HANDSHAKE and GAME_OVER --
+and `game_over` is a registered tool on our published league surface, which is precisely the
+door 05-15 found a second implementation walking through.
+
+**The fix has a named shape:** give that leg the same `while True` + type test the other four
+have, returning only MOVE (toggle off) and skipping the rest. The test that reproduces it is
+already written and will fail the day it is closed, by design, so the record cannot rot.
+
+---
+
+## #20 (05-18) -- three modules are within two lines of the 150-line gate
+
+**Found:** 05-18, while fitting the #18 repair. **Severity:** minor, structural.
+**Status:** OPEN -- recorded, not fixed (fixing it means splitting files this plan has no
+reason to touch).
+
+| File | Code lines | Named seam |
+|---|---|---|
+| `src/pursuit/network/turn_commit.py` | **149/150** | the three public entry points are already the minimum this module can hold; the next split is `initiate`/`reveal_pending` (the two `take_my_turn` halves) away from `await_and_respond` |
+| `tests/unit/_pull_site_drivers.py` | **136/150** | the twelve drivers away from `probe` + `_carries` (the measurement harness), the `_turn_loop_fixtures.py` precedent |
+| `src/pursuit/network/turn_buffer.py` | **146/150** | pre-existing; #19's repair needs this room, and the seam is `await_move`/`drain_trailing_hint` (the queue readers) away from `reject_peer_payload`/`log_illegal`/`send_hint` |
+
+Recorded for the same reason #11 and #15 were: a file at the gate is a file the next plan
+cannot touch without an unrelated split, and discovering that mid-execution is how a repair
+turns into a refactor. `turn_commit_wait.py` went 135 -> 151 in this plan and was split to
+122 (`turn_commit_wait_reveal.py`), which is what that looks like when it is caught.

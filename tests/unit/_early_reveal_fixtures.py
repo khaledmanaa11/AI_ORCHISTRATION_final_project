@@ -34,6 +34,7 @@ ON = SecurityParams(version="1.00", commit_reveal=True, team_code="khm-mn17")
 """Commit-reveal ON: the FINAL_REVEAL exchange only exists on this path."""
 
 RECORDS_KEY = "records"
+_PEER_H_COMMIT = "peer-commit-hash"
 _INTENT = "truth"
 _ACTION = {"move": {"kind": "move", "direction": "north"}, "barrier": None}
 _TURN = 0
@@ -125,6 +126,29 @@ def peer_commit(ctx, h_commit: str) -> Envelope:
     return Envelope(
         type=MessageType.COMMIT, turn=_TURN, sender=opponent_role(ctx.role),
         payload={H_COMMIT_KEY: h_commit},
+    )
+
+
+def envelope_of(ctx, message_type: MessageType) -> Envelope:
+    """One WELL-FORMED envelope of *message_type*, as a peer would send it.
+
+    05-18's boundary enumeration drives every pull site with every
+    `MessageType`, so the arrival must never be malformed: a site rejecting
+    garbage proves nothing about how it treats a legitimate envelope of a
+    type it was not waiting for, and that -- not garbage -- is the class
+    (05-09, 05-10, 05-15, 05-17, #18). The four commit-reveal kinds and
+    REVEAL carry their real payloads so a site that HANDLES the type gets
+    something it can actually decode."""
+    payloads = {
+        MessageType.REVEAL: _ACTION,
+        MessageType.COMMIT: {H_COMMIT_KEY: _PEER_H_COMMIT},
+        MessageType.ACK: {H_COMMIT_KEY: _PEER_H_COMMIT},
+        MessageType.FINAL_REVEAL: {RECORDS_KEY: []},
+        MessageType.HINT: {"text": "heading north", "intent": _INTENT},
+    }
+    return Envelope(
+        type=message_type, turn=_TURN, sender=opponent_role(ctx.role),
+        payload=payloads.get(message_type, {}),
     )
 
 
