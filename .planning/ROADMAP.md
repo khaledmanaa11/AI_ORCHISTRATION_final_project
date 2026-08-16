@@ -223,7 +223,10 @@ closed by plan 06-05; gate re-measured afterwards, still PASS):
   2. The live GUI displays state — only local truth, never the full objective board
   3. The replay app reconstructs a recorded round and shows `Verified OK`
 
-**Plans**: TBD
+**Plans**: 10 (waves 1-5; see `.planning/phases/07-reporting-and-visualization-shell/07-PLAN-OUTLINE.md`).
+Rows below are deliverable **groups**; plan IDs are not 1:1 with them this phase (mapping in the
+outline §10). Waves 1-4 run unattended; **07-10 is the phase's single `autonomous: false` plan**
+(OAuth consent + one live send + presentation screenshots).
 
 Plans:
 
@@ -232,7 +235,7 @@ Plans:
 - [ ] 07-03: Local-truth live GUI + verifying replay viewer
 - [ ] 07-04: Write `docs/PRD_gatekeeper.md` (rate limiting and reporting)
 - [ ] 07-96: Refresh the graphify graph (`/gsd:graphify`) at plan-phase and after execute
-- [ ] 07-97: Create/refresh `docs/phases/phase-7/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
+- [x] 07-97: Create/refresh `docs/phases/phase-7/{PRD,PLAN,TODO}.md` (phase triplet) at plan-phase
 - [ ] 07-99: On verify-work, mark all Phase 7 TODOs `[x]` in the phase triplet + root `docs/TODO.md`
 
 ### Phase 8: Submission and League Operations
