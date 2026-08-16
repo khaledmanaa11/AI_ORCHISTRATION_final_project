@@ -63,13 +63,22 @@ Gate: geometric message A→B over localhost decoded correctly.
 ## Phase 3 — Blind Strategy Module (RL policy)  *(Milestone M3)*
 
 Gate: agent walks the shortest path to a known target unaided.
+**Gate met — measured 2026-08-16, retroactively
+([03-VERIFICATION.md](../.planning/phases/03-blind-strategy-module-rl-policy/03-VERIFICATION.md)).
+All three §10.4 criteria PASS. The phase was closed on 2026-08-08 by chore commit `da345dd`
+rather than by `/gsd:verify-work 3`, and that skipped pass cost one thing: criterion 1 had no
+evidence at all between 2026-08-08 and 2026-08-16, because its only test was deleted with the
+run-1 stack and never replaced. Restored in 03-05 below. The 12 superseded plans 03-14..03-25
+are a deliberate, book-cited descope (§5.3.2 p.35), not unfinished work.**
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
 | 03-01 `BrainBase` + registry (3 brains) | P0 | ☑ | Khaled | Pluggable via config `[strategy]`; value_search/chaser_cop/greedy_evader (STRAT-02/03) |
 | 03-02 Simultaneous turn + matrix-game mover | P0 | ☑ | Khaled | `resolve_turn` joint resolver; equilibrium sampled, never an LLM (STRAT-01/04/07) |
 | 03-03 Self-play harness + learning curves | P0 | ☑ | Khaled | 24,000 games; trained beats prior +14.5/+18.0 pts, significant at 95% (STRAT-06) |
-| 03-04 Write `docs/PRD_matrix_mover.md` | P1 | ☑ | Khaled | Per-mechanism PRD committed; PRD_rl_strategy.md superseded (DOC-02) |
+| 03-04 Write `docs/PRD_matrix_mover.md` | P1 | ☑ | Khaled | Per-mechanism PRD committed; PRD_rl_strategy.md superseded (DOC-02) — banner written 2026-08-16, dated to the 2026-08-08 supersession |
+| 03-05 Restore the §10.4 criterion-1 gate test | P0 | ☑ | Khaled | `tests/integration/test_shortest_path.py` — 7 starts, frozen thief, exact-1 BFS decrease per move turn, `move+barrier == initial distance`; proven able to fail (STRAT-04) |
+| 03-98 Retroactive phase verification report | P1 | ☑ | Khaled | `03-VERIFICATION.md` records all three criteria, the descope, the criterion-2 reword, and its own late authorship (DOC-01) |
 | 03-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 
 ---
