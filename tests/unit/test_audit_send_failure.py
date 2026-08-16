@@ -11,6 +11,11 @@ Case 1 is the fix. Cases 2-4 are the paired fairness controls this repo
 requires whenever a sanction is relaxed (the established
 `test_audit_turn_binding.py::test_an_honest_peer_is_still_matched`
 pattern): every genuine sanction must still fire, unchanged.
+
+Case 5 (05-13, G6) is case 1's MIRROR on the receive leg, and it is
+deliberately filed here rather than beside the watchdog cases so that all
+three controls sit in the same file as the relaxation they constrain --
+case 3 in particular, which is exactly the discrimination case 5 owes.
 """
 
 from __future__ import annotations
@@ -131,6 +136,36 @@ async def test_a_peer_that_withholds_its_own_nonces_is_still_a_technical_loss(
     assert "technical_win" in _kinds(ctx)
     assert _events(ctx)[-1]["event"] == "game_over"
     assert _events(ctx)[-1]["outcome"] == Outcome.TECHNICAL_LOSS.value
+
+
+async def test_both_of_our_own_legs_failing_after_a_board_outcome_accuses_nobody(
+    tmp_path, default_params, network_params,
+):
+    """CASE 5, the fix's MIRROR (05-13, 05-UAT.md G6). Our push failed AND
+    our receive failed, with a board outcome standing: both of our own legs
+    are demonstrably broken, so the peer may well have answered into a
+    socket we could not reach. Contrast case 3, where the push LANDED --
+    that is the whole discrimination, and it is why rule 36's sanction
+    survives this relaxation."""
+    ctx = make_ctx(
+        tmp_path, default_params, network_params, role="police", label="both-legs-fail",
+        security=_ON, client=FakeClient(fail=True), initial_state=State.GAME_OVER,
+    )
+
+    outcome = await run_final_audit(ctx, board_outcome=Outcome.CAPTURE)
+
+    assert outcome is not Outcome.TECHNICAL_LOSS, "the board outcome did not stand"
+    kinds = _kinds(ctx)
+    assert "technical_win" not in kinds, "a peer that may have answered was accused"
+    assert "game_over" not in kinds
+    reasons = [e["reason"] for e in _events(ctx) if e["event"] == "audit_incomplete"]
+    assert reasons == ["own_final_reveal_send_failed", "own_final_reveal_receive_failed"]
+    # Both records name OUR OWN half of the exchange, never the peer's.
+    assert all("own" in r and "opponent" not in r for r in reasons)
+    # And it must NOT have fallen through to the audit: with peer_records
+    # empty, every honest turn fails and TECHNICAL_LOSS re-enters through
+    # the AUDIT_HASH_MISMATCH door.
+    assert "audit_verdict" not in kinds
 
 
 async def test_a_genuine_hash_mismatch_is_still_a_technical_loss(

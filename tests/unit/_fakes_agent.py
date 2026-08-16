@@ -128,6 +128,7 @@ def make_ctx(
     client=None,
     net_overrides=None,
     security=None,
+    watchdog=None,
 ):
     """Assemble a fully-independent AgentContext from fakes plus a REAL
     TurnStateMachine (02-03) and a REAL engine.make_state (Phase 1). Nothing
@@ -140,19 +141,34 @@ def make_ctx(
     already-resolved fake resolve well within budget, while a genuinely
     empty queue still times out fast (test scaffolding only -- mirrors
     test_deadline.py's own `_TEST_DEADLINE_SECONDS` precedent, NOT a
-    PARAMETERS.md value)."""
+    PARAMETERS.md value).
+
+    `watchdog` is 05-13's opt-in seam (05-UAT.md G6): pass
+    `_fakes_watchdog.ArmedWatchdog` to run a case against the REAL
+    `Watchdog` on an injected clock. Default `None` keeps every pre-05-13
+    caller on the counting-only `FakeWatchdog` -- and note the
+    `watchdog_threshold=0` below, which is precisely why no existing
+    fake-driven test could ever have seen a freeze."""
     reporter = FakeReporter()
     machine = TurnStateMachine(reporter, initial=initial_state)
-    watchdog = FakeWatchdog()
+    watchdog = watchdog or FakeWatchdog()
     runtime = FakeRuntime(client=client)
+    # Merged into ONE dict before `replace`, not splatted alongside the five
+    # keywords: splatting made `net_overrides` unable to name any of them
+    # (`TypeError: got multiple values for keyword argument`), so the fast
+    # test defaults could never be traded back for the real Table-19 ones.
+    # 05-13's G6 cases need exactly that. Every pre-05-13 caller is
+    # unaffected -- same five defaults, same precedence.
     net = dataclasses.replace(
         network_params,
-        response_timeout=_FAST_TIMEOUT,
-        retry_count=1,
-        backoff_seconds=0,
-        watchdog_threshold=0,
-        watchdog_poll_seconds=0,
-        **(net_overrides or {}),
+        **{
+            "response_timeout": _FAST_TIMEOUT,
+            "retry_count": 1,
+            "backoff_seconds": 0,
+            "watchdog_threshold": 0,
+            "watchdog_poll_seconds": 0,
+            **(net_overrides or {}),
+        },
     )
     return orchestrator.AgentContext(
         role=role,
