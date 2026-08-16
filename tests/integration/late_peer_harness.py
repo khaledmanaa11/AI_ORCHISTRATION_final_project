@@ -26,7 +26,12 @@ diverge, one of them is wrong -- that is a finding, not a merge conflict.
 The watchdog is deliberately NOT started here: a real `Watchdog`'s default
 exit action is `os._exit(1)`, which would kill the pytest process. Its
 NET-07 property is proven in `tests/unit/test_agent_teardown.py` against an
-INJECTED exit_action instead.
+INJECTED exit_action instead -- and, since 05-13, ACROSS THE AUDIT ITSELF
+in `tests/unit/test_audit_watchdog.py`, which arms a real `Watchdog` on an
+injected clock. That gap is worth naming rather than leaving implied: this
+harness runs the real audit with the freeze detector switched off, so a
+100%-green run of THIS file was never evidence that the audit outlives
+`watchdog_threshold`. It did not (05-UAT.md G6).
 """
 
 from __future__ import annotations

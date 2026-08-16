@@ -124,10 +124,20 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
             return outcome
         finally:
             # 05-04: shutdown_cleanly's two halves, with a bounded grace
-            # window between them. The watchdog goes FIRST -- touch() is
-            # called nowhere in the audit path, so its freeze action
-            # (os._exit(1)) would otherwise be live across the whole linger
-            # (NET-07). The try/finally is load-bearing, not decoration:
+            # window between them. The watchdog goes FIRST -- its freeze
+            # action (os._exit(1)) would otherwise be live across the whole
+            # linger (NET-07), which has no bounded attempt of its own to
+            # touch on: it is a drain loop, not a retry ladder.
+            #
+            # 05-13 corrects this comment's original REASON, not its
+            # conclusion. It used to read "touch() is called nowhere in the
+            # audit path" -- true when 05-04 wrote it, and 05-04 protected
+            # the linger while leaving the audit itself exposed to exactly
+            # that fact (05-UAT.md G6). `run_final_audit` now touches once
+            # per bounded attempt, so it survives its own 135 s ladder; the
+            # linger still does not, so this ordering is unchanged.
+            #
+            # The try/finally is load-bearing, not decoration:
             # the linger awaits asyncio.wait_for, a cancellation point, and
             # CancelledError is a BaseException -- three bare statements
             # here would leak the server task and the bound port on Ctrl-C.
