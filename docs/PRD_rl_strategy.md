@@ -1,6 +1,36 @@
 # PRD — RL Strategy Module (Q-Learning Policy)
 
-**Version:** 1.00 · **Status:** approved · **Updated:** 2026-07-31
+**Version:** 1.00 · **Status:** ⛔ SUPERSEDED 2026-08-08 — see the banner below · **Updated:** 2026-07-31
+
+> # ⛔ SUPERSEDED — 2026-08-08 — DO NOT IMPLEMENT
+>
+> **Replaced by [docs/PRD_matrix_mover.md](PRD_matrix_mover.md)**, the per-mechanism PRD for the
+> matrix-game mover that actually ships.
+>
+> **Why.** The mechanism described below — a per-role tabular Q-table trained by self-play, with
+> moves chosen by `argmax` over a Q-row — was **withdrawn as unsound under the book's turn
+> order**. Book §5.3.2 p.35 makes the turn *simultaneous*: the Acknowledge phase
+> *"guarantees that the reveal will occur only when both sides have already fixed their moves"*.
+> That makes the game a two-player zero-sum **matrix game**, not an MDP, so `max_a' Q(s',a')` has
+> no meaning, and an `argmax` policy is deterministic by construction and therefore readable by
+> any searching opponent. The full argument, with the measurements that settled it, is in
+> [docs/phases/phase-3/PRD.md](phases/phase-3/PRD.md) §2, with the narrative in
+> [ENGINEERING-LOG.md](phases/phase-3/ENGINEERING-LOG.md) and
+> [RUN-1-POSTMORTEM.md](phases/phase-3/RUN-1-POSTMORTEM.md).
+>
+> **Nothing below is implemented.** No file under `src/pursuit/strategy/` implements this
+> mechanism: there is no `QLearningBrain`, no `HeuristicBrain`, no Q-table artefact and no
+> `qtable_<role>.json`. `strategy/registry.py` registers exactly three brains — `value_search`
+> (the shipped mover), `chaser_cop` and `greedy_evader` (the sparring anchors). Treat every
+> section below as a record of a design that was tried and dropped, never as a contract on the
+> code.
+>
+> **Kept, not deleted**, deliberately — the same discipline commit `da345dd` applied to the twelve
+> superseded plans `03-14..03-25`: the record of what was planned, and why it was dropped,
+> is part of the engineering evidence.
+>
+> Superseded in the run-2 rebuild landed 2026-08-08 (`8b30328`, `f3d9847`, `2606efa`, `7040d7a`;
+> planning state reconciled in `da345dd`).
 
 > Per-mechanism PRD required by CLAUDE.md and [SEGAL_GUIDELINES.md](SEGAL_GUIDELINES.md) §2.3,
 > written before the code it describes (§2.5 step 5) — no file under `src/pursuit/strategy/`
