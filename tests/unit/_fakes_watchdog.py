@@ -60,6 +60,7 @@ class ArmedWatchdog:
         self.fired: list[str] = []
         self.checks: list[bool] = []
         self.touches = 0
+        self.stopped = False
         self.watchdog = Watchdog(
             threshold_seconds=threshold_seconds, poll_seconds=poll_seconds,
             on_freeze=lambda: self.fired.append("freeze"),
@@ -75,11 +76,23 @@ class ArmedWatchdog:
         self.watchdog.start()
 
     def stop(self) -> None:
+        self.stopped = True
         self.watchdog.stop()
 
     def check(self) -> bool:
-        """One poll, recorded. True iff this poll called the freeze action."""
-        detected = self.watchdog.check_once()
+        """One poll of the daemon loop, recorded. True iff this poll called
+        the freeze action.
+
+        The `stopped` gate is load-bearing and was MISSING in this harness's
+        first draft, which is a hole worth naming: `Watchdog._run` returns
+        without polling once `stop()` has been called, but `check_once()`
+        itself never consults the flag. Driving `check_once` directly
+        therefore made a stopped watchdog look armed -- so the control that
+        exists to refute "just disarm the watchdog across the audit" would
+        have passed against exactly that wrong fix. Found by running the
+        wrong fix as a fourth revert probe, not by reading the code.
+        """
+        detected = False if self.stopped else self.watchdog.check_once()
         self.checks.append(detected)
         return detected
 
