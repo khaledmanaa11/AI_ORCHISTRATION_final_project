@@ -362,3 +362,16 @@ made **us** the side with no verdict and no published nonces (rule 36).
 ---
 *Phase: 05-cloud-exposure-and-tunneling*
 *Completed: 2026-08-16*
+
+## Self-Check: PASSED
+
+Every claim in this file re-verified against disk and git at `0650f4b`, not copied from memory:
+
+- **13 files** named as created/modified — all present (`agent_step0_wiring.py`,
+  `_fakes_watchdog.py`, `test_audit_watchdog.py`, and the ten modified).
+- **8 commits** named — all resolve (`d5f2f36`, `a2f7034`, `6920d4d`, `ce89f02`, `2633df4`,
+  `da58bc2`, `63c4ba1`, `0650f4b`).
+- **Gates re-run at final HEAD after every commit landed:** `ruff check .` exit 0,
+  `scripts/check_line_limit.sh` exit 0, **1484 passed / 0 failed** in 81.39 s, working tree clean.
+- **One claim was found wrong by this check and corrected** rather than left standing: the "grep
+  now returns seven" line in `2633df4`. See deviation 6.
