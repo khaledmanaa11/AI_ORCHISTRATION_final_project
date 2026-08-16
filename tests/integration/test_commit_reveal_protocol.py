@@ -13,10 +13,22 @@ from __future__ import annotations
 import dataclasses
 import json
 
+from pursuit.constants import Outcome
 from pursuit.network.agent_wiring import load_agent_config
 from tests.integration.two_peer_game import play_two_peer_game
 
-_ALLOWED_TYPES_OFF = {"handshake", "move", "hint"}
+# 05-15 (G10): `game_over` is ADMITTED here, and this is a correction of the
+# constant to match the test's own stated contract rather than a relaxation
+# of it -- `test_toggle_off_is_byte_equivalent_to_pre_phase_6`'s docstring
+# has always read "only handshake/move/hint/game_over types". The tool and
+# the MessageType have existed since Phase 2; what changed in 05-15 is that
+# something finally SENDS one (rule 21's Capture Claim,
+# network/capture_declaration.py). The claim this test actually makes --
+# that commit_reveal=False puts no D-58 traffic on the wire -- is the NEXT
+# assertion, `not ({"commit", "ack", "reveal"} & types)`, and it is
+# byte-unchanged. The admission is paired with a positive pin below, so the
+# set is strictly stronger than before, never looser.
+_ALLOWED_TYPES_OFF = {"handshake", "move", "hint", "game_over"}
 
 
 def _events(log_path) -> list[dict]:
@@ -99,3 +111,19 @@ async def test_toggle_off_is_byte_equivalent_to_pre_phase_6(tmp_path, monkeypatc
 
     assert ctx_a.state.barriers_placed == 0
     assert ctx_b.state.barriers_placed == 0
+
+    # The positive pin that pays for admitting "game_over" above (05-15).
+    # Rule 21 does not depend on the commit-reveal toggle, so the Capture
+    # Claim must go out on THIS path too -- from the cop only (book Sec3.5
+    # p.22 Table 2), exactly once, carrying the outcome both sides resolved.
+    declared = {
+        role: [
+            e for e in _events(path)
+            if e["event"] == "message_sent" and e.get("envelope", {}).get("type") == "game_over"
+        ]
+        for role, path in (("police", tmp_path / "a.jsonl"), ("thief", tmp_path / "b.jsonl"))
+    }
+    assert declared["thief"] == [], "only the capturing side declares (rules 21/22)"
+    assert len(declared["police"]) == (1 if outcome_a is Outcome.CAPTURE else 0)
+    for record in declared["police"]:
+        assert record["envelope"]["payload"]["outcome"] == outcome_a.value

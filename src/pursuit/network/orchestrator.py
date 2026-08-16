@@ -98,6 +98,11 @@ async def run_turn_loop(ctx: AgentContext) -> Outcome | None:
     # call time is safe -- by the time run_turn_loop actually runs, both
     # modules are always already fully loaded. Mirrors shared/state.py's
     # own local-import precedent for the identical reason.
+    # 05-15 (G10) joins the same deferred-import discipline, for the same
+    # reason: capture_declaration.py imports `engine_agent` FROM this module
+    # (one-directional, at module level), so importing it back at load time
+    # would be a genuine circular import.
+    from pursuit.network.capture_declaration import send_capture_declaration  # noqa: PLC0415
     from pursuit.network.turn_actions import await_opponent_turn, take_my_turn  # noqa: PLC0415
     from pursuit.network.turn_commit_send import technical_loss  # noqa: PLC0415
 
@@ -137,6 +142,16 @@ async def run_turn_loop(ctx: AgentContext) -> Outcome | None:
                 game_uid=ctx.game_uid, turn=ctx.state.turn, sender=ctx.role, outcome=outcome,
             ),
         )
+        # 05-15 (G10), rule 21 / book Sec3.5 p.22 Table 2: the cop's Capture
+        # Claim. THE TWO STATEMENTS ARE DELIBERATELY ADJACENT AND SHARE ONE
+        # `outcome` OBJECT AND ONE `ctx.state.turn` -- that is the whole
+        # rule-22 argument, since a claim that cannot be computed separately
+        # from the audited record cannot disagree with it. The ledger record
+        # goes first because it is the durable evidence; the declaration is
+        # best-effort by contract and cannot raise, return a verdict, or
+        # change `outcome` (see capture_declaration.py). A no-op for the
+        # thief and for every non-capture outcome.
+        await send_capture_declaration(ctx, turn=ctx.state.turn, outcome=outcome)
     return outcome
 
 
