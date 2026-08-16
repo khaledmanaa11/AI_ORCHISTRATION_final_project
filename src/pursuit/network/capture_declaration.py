@@ -108,7 +108,13 @@ async def send_capture_declaration(
     envelope = build_declaration(ctx, turn=turn, outcome=outcome)
     args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
 
+    # 05-16 (deferred item #10): this runs INSIDE `run_turn_loop`, where the
+    # watchdog is armed and stays armed until `agent_entrypoint:134` -- so an
+    # unmarked ladder here kills us BEFORE `run_final_audit` publishes our
+    # nonces (rule 36 against us). Marked per bounded attempt like every
+    # other leg.
     async def _push() -> object:
+        ctx.watchdog.touch()
         async with ctx.runtime.client() as client:
             return await client.call_tool(DECLARATION_TOOL, args)
 

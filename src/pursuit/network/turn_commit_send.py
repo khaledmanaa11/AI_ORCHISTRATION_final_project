@@ -41,7 +41,14 @@ async def push(ctx: AgentContext, message_type: MessageType, turn: int, payload:
     args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
     tool_name = _TOOL_FOR_TYPE[message_type]
 
+    # 05-16 (deferred item #10): the touch marks each BOUNDED attempt
+    # STARTING -- the shape `agent_audit_exchange.push_final_reveal` has had
+    # since 05-13. Against a peer whose socket accepts TCP and never answers
+    # this leg stalls FIRST, before any wait leg is reached, so marking only
+    # the waits would have left the turn loop dying at the same t=60 s
+    # through the earlier door (measured: freeze at attempt 2 of 4, t=70 s).
     async def _call() -> object:
+        ctx.watchdog.touch()
         async with ctx.runtime.client() as client:
             return await client.call_tool(tool_name, args)
 
@@ -122,6 +129,7 @@ async def send_move_only(ctx: AgentContext, current: State, pre_cell: Coord, des
     args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
 
     async def _push_move() -> object:
+        ctx.watchdog.touch()
         async with ctx.runtime.client() as client:
             return await client.call_tool("receive_move", args)
 

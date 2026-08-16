@@ -94,10 +94,19 @@ async def await_move(ctx: AgentContext) -> tuple[Envelope | None, TechnicalWin |
     """Bounded wait for the opponent's MOVE envelope, recording (never
     blocking on) any HINT seen first -- a peer that never sends hints must
     still be playable. Raises HintProtocolError on a buffering violation."""
+
+    # 05-16 (deferred item #10): the touch moved INSIDE the per-attempt
+    # closure, exactly as `turn_commit_wait.next_protocol_message`'s
+    # `on_attempt` hook does. The post-ladder touch below is kept. The
+    # anonymous lambda became a named closure only because a lambda cannot
+    # hold two statements -- the awaited call is byte-identical.
+    async def _pull() -> object:
+        ctx.watchdog.touch()
+        return await wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout)
+
     for _ in range(2):
         call_outcome = await call_with_retry(
-            lambda: wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout),
-            timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
+            _pull, timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
             backoff=ctx.net.backoff_seconds,
         )
         ctx.watchdog.touch()
@@ -141,6 +150,7 @@ async def send_hint(ctx: AgentContext, turn: int, *, text: str, intent: Intent) 
     args = {k: v for k, v in hint_envelope.to_dict().items() if k != EnvelopeKey.TYPE}
 
     async def _push() -> object:
+        ctx.watchdog.touch()
         async with ctx.runtime.client() as client:
             return await client.call_tool("receive_hint", args)
 

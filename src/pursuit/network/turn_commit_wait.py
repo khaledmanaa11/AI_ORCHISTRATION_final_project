@@ -65,20 +65,28 @@ async def next_protocol_message(
     ladder; a silent opponent eventually returns a `TechnicalWin` verdict
     here (never raises). Duplicate/unexpected types are the caller's own
     concern to drop."""
-    # 05-13 (05-UAT.md G6): `on_attempt` runs once at the START of each
-    # BOUNDED attempt. Default None, so every pre-05-13 caller -- the four
-    # turn-loop `wait_for_*` legs below -- is byte-identical; only
-    # `agent_audit_exchange.receive_final_reveal` passes a hook, and it
-    # passes `ctx.watchdog.touch`. Without it the WHOLE ladder
-    # (retry_count+1 attempts x response_timeout plus backoffs = 135 s at
-    # the shipped Table-19 values) runs unmarked against a 60 s
-    # `watchdog_threshold`, because the only touch is the post-ladder one
-    # below -- so `os._exit(1)` fires long before this function returns and
-    # the caller's verdict is never recorded.
+    # `on_attempt` runs once at the START of each BOUNDED attempt.
+    # Introduced by 05-13 (05-UAT.md G6) for the audit path and defaulted to
+    # None so the turn loop stayed byte-identical; 05-16 (deferred item #10)
+    # is what makes EVERY caller pass `ctx.watchdog.touch` -- the four
+    # `wait_for_*` legs below and `agent_audit_exchange.receive_final_reveal`
+    # alike. The default survives only as the signature's neutral element;
+    # there is no caller that wants an unmarked ladder.
+    #
+    # Without it the WHOLE ladder (retry_count+1 attempts x response_timeout
+    # plus backoffs = 135 s at the shipped Table-19 values) runs unmarked
+    # against a 60 s `watchdog_threshold`, because the only touch is the
+    # post-ladder one below. MEASURED on this leg before the fix
+    # (tests/unit/test_turn_loop_watchdog.py, injected clock): the freeze
+    # fired at attempt 2 of 4, t=70 s, touches=0 -- so `os._exit(1)` ran
+    # MID-GAME and the D-13 verdict due at t=140 s was never recorded.
     #
     # It marks a real attempt STARTING, never a heartbeat on a dead loop:
     # each attempt is itself bounded by response_timeout, so a wedged event
-    # loop stops producing attempts and NET-07 still kills us.
+    # loop stops producing attempts and NET-07 still kills us. That is why
+    # this is not closed by widening `watchdog_threshold` (a Table-19 config
+    # value) or by disarming the watchdog across the turn loop -- both are
+    # refuted by named revert probes in that same test module.
     async def _pull() -> object:
         if on_attempt is not None:
             on_attempt()
@@ -110,7 +118,7 @@ async def wait_for_ack_and_commit(
     tolerated jitter, dropped. Returns `(opponent_h_commit, verdict)`."""
     ack_received, opponent_h_commit = False, None
     while not (ack_received and opponent_h_commit is not None):
-        envelope, verdict = await next_protocol_message(ctx)
+        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
             return None, verdict
         if envelope.type is MessageType.ACK and envelope.payload.get(H_COMMIT_KEY) == h_commit:
@@ -139,7 +147,7 @@ async def wait_for_reveal_capturing_early_ack(
     on a message that already came. A duplicate/unexpected arrival is
     tolerated jitter, dropped."""
     while True:
-        envelope, verdict = await next_protocol_message(ctx)
+        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
             return None, verdict
         if envelope.type is MessageType.REVEAL:
@@ -159,7 +167,7 @@ async def wait_for_opponent_commit(
     *turn* is THIS side's own pre-resolve turn, used as the log record's
     join key instead of the peer's declared `envelope.turn` (Gap 1)."""
     while True:
-        envelope, verdict = await next_protocol_message(ctx)
+        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
             return None, verdict
         if envelope.type is MessageType.COMMIT:
@@ -175,7 +183,7 @@ async def wait_for_matching_ack(ctx: AgentContext, h_commit: str) -> TechnicalWi
     early, during the tail wait above). Returns None once found, or the
     TechnicalWin verdict on exhaustion."""
     while True:
-        envelope, verdict = await next_protocol_message(ctx)
+        envelope, verdict = await next_protocol_message(ctx, on_attempt=ctx.watchdog.touch)
         if verdict is not None:
             return verdict
         if envelope.type is MessageType.ACK and envelope.payload.get(H_COMMIT_KEY) == h_commit:
