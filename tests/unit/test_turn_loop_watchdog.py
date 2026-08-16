@@ -39,60 +39,20 @@ fixture, so no number is written down here.
 
 from __future__ import annotations
 
-from pursuit.network import turn_buffer, turn_commit_send
-from pursuit.network.envelope import MessageType
+import pytest
+
+from pursuit.network import turn_buffer
+from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State
 from pursuit.network.turn_commit_wait import H_COMMIT_KEY, wait_for_opponent_commit
-from tests.unit._fakes_agent import FakeClient, make_ctx
-from tests.unit._fakes_watchdog import (
-    ArmedWatchdog,
-    StalledClient,
-    StalledQueue,
-    attempt_cost,
-    table19_overrides,
+from tests.unit._fakes_watchdog import armed_from
+from tests.unit._turn_loop_fixtures import (
+    ProcessKilledError,
+    assert_ladder_survived,
+    lethal,
+    stall,
+    turn_ctx,
 )
-
-
-class ProcessKilledError(Exception):
-    """What `os._exit(1)` actually means, as an exception a test can see."""
-
-
-class LethalWatchdog(ArmedWatchdog):
-    """An `ArmedWatchdog` whose freeze STOPS THE WORLD, as production's does.
-
-    05-13's harness records `["freeze", "exit"]` and lets the ladder carry on,
-    which is enough to see that NET-07 fired but NOT enough to see what it
-    cost. Here the freeze ends the call, so "the verdict was never reached"
-    is measured rather than inferred -- and a case that returns at all has
-    proven the process would have survived."""
-
-    def check(self) -> bool:
-        if super().check():
-            raise ProcessKilledError("NET-07 fired: os._exit(1) would have run here")
-        return False
-
-
-def _lethal(network_params) -> LethalWatchdog:
-    return LethalWatchdog(
-        threshold_seconds=network_params.watchdog_threshold,
-        poll_seconds=network_params.watchdog_poll_seconds,
-    )
-
-
-def _turn_ctx(tmp_path, default_params, network_params, label, armed, client=None):
-    """A WAIT_OPPONENT ctx running the REAL Table-19 ladder against the REAL
-    watchdog -- the turn-loop twin of `test_audit_watchdog._audit_ctx`."""
-    return make_ctx(
-        tmp_path, default_params, network_params, role="police", label=label,
-        initial_state=State.WAIT_OPPONENT, client=client or FakeClient(),
-        watchdog=armed, net_overrides=table19_overrides(network_params),
-    )
-
-
-def _stall(ctx, armed, network_params) -> StalledQueue:
-    queue = StalledQueue(armed, step=attempt_cost(network_params))
-    ctx.runtime.queue = queue
-    return queue
 
 
 async def test_a_stalled_peer_costs_the_wait_leg_a_ladder_and_not_the_process(
@@ -102,44 +62,16 @@ async def test_a_stalled_peer_costs_the_wait_leg_a_ladder_and_not_the_process(
     D-58 waits that took `on_attempt=None`; the whole ladder now burns --
     longer than `watchdog_threshold` -- and still returns D-13's honest
     verdict instead of dying at t=60 s."""
-    armed = _lethal(network_params)
-    ctx = _turn_ctx(tmp_path, default_params, network_params, "t10-wait", armed)
-    queue = _stall(ctx, armed, network_params)
+    armed = lethal(network_params)
+    ctx = turn_ctx(tmp_path, default_params, network_params, "t10-wait", armed)
+    queue = stall(ctx, armed, network_params)
 
     opponent, verdict = await wait_for_opponent_commit(ctx, State.WAIT_OPPONENT, turn=0)
 
-    assert queue.pulls == network_params.retry_count + 1, "the ladder was cut short"
-    assert armed.clock.now > network_params.watchdog_threshold, (
-        "the ladder no longer outlives watchdog_threshold -- a Table-19 NUMBER was moved"
-    )
-    assert armed.checks and not any(armed.checks), "NET-07 killed the turn loop mid-ladder"
-    assert armed.fired == []
-    assert armed.touches >= queue.pulls, "the ladder ran unmarked"
+    assert_ladder_survived(armed, queue.pulls, network_params)
     assert opponent is None
     assert verdict is not None, "no verdict -- the D-13 ladder never got to speak"
     assert verdict.attempts == network_params.retry_count + 1
-
-
-async def test_a_stalled_peer_costs_the_push_leg_a_ladder_and_not_the_process(
-    tmp_path, default_params, network_params,
-):
-    """THE FIX, send leg. A peer whose socket accepts TCP and never answers
-    stalls our COMMIT/ACK/REVEAL push first -- before any wait leg is ever
-    reached -- so marking only the waits would have left the turn loop dying
-    at the same t=60 s through the earlier door."""
-    armed = _lethal(network_params)
-    client = StalledClient(armed, step=attempt_cost(network_params))
-    ctx = _turn_ctx(tmp_path, default_params, network_params, "t10-push", armed, client=client)
-
-    verdict = await turn_commit_send.push(ctx, MessageType.COMMIT, 0, {H_COMMIT_KEY: "h"})
-
-    assert len(client.calls) == network_params.retry_count + 1, "the ladder was cut short"
-    assert armed.clock.now > network_params.watchdog_threshold, (
-        "the ladder no longer outlives watchdog_threshold -- a Table-19 NUMBER was moved"
-    )
-    assert armed.checks and not any(armed.checks), "NET-07 killed the push leg mid-ladder"
-    assert armed.touches >= len(client.calls), "the ladder ran unmarked"
-    assert verdict is not None, "no verdict -- the D-13 ladder never got to speak"
 
 
 async def test_a_stalled_peer_costs_the_move_wait_a_ladder_and_not_the_process(
@@ -148,17 +80,55 @@ async def test_a_stalled_peer_costs_the_move_wait_a_ladder_and_not_the_process(
     """THE FIX, `turn_buffer.await_move` -- the fifth turn-loop wait leg,
     reached on the `commit_reveal=False` path (`turn_commit.await_opponent`)
     and carrying the identical post-ladder-only touch."""
-    armed = _lethal(network_params)
-    ctx = _turn_ctx(tmp_path, default_params, network_params, "t10-move", armed)
-    queue = _stall(ctx, armed, network_params)
+    armed = lethal(network_params)
+    ctx = turn_ctx(tmp_path, default_params, network_params, "t10-move", armed)
+    queue = stall(ctx, armed, network_params)
 
     envelope, verdict = await turn_buffer.await_move(ctx)
 
-    assert queue.pulls == network_params.retry_count + 1, "the ladder was cut short"
-    assert armed.clock.now > network_params.watchdog_threshold, (
-        "the ladder no longer outlives watchdog_threshold -- a Table-19 NUMBER was moved"
-    )
-    assert armed.checks and not any(armed.checks), "NET-07 killed the move wait mid-ladder"
-    assert armed.touches >= queue.pulls, "the ladder ran unmarked"
+    assert_ladder_survived(armed, queue.pulls, network_params)
     assert envelope is None
     assert verdict is not None, "no verdict -- the D-13 ladder never got to speak"
+
+
+async def test_a_genuinely_frozen_turn_loop_is_still_killed(
+    tmp_path, default_params, network_params,
+):
+    """NET-07 PRESERVED, and this is the assertion that says the fix is not a
+    heartbeat. The touch marks an attempt STARTING, so one attempt that
+    overruns `watchdog_threshold` on the wall clock -- only possible with the
+    event loop wedged, since `bounded` would otherwise have cancelled it --
+    still trips the freeze, and nothing after it runs."""
+    armed = lethal(network_params)
+    ctx = turn_ctx(tmp_path, default_params, network_params, "t10-frozen", armed)
+    queue = stall(ctx, armed, network_params, step=network_params.watchdog_threshold + 1)
+
+    with pytest.raises(ProcessKilledError):
+        await wait_for_opponent_commit(ctx, State.WAIT_OPPONENT, turn=0)
+
+    assert armed.checks[0] is True, "a frozen turn loop was NOT detected -- NET-07 traded away"
+    assert armed.fired == ["freeze", "exit"], "the incident write must precede the exit"
+    assert queue.pulls == 1, "the ladder ran on past the point os._exit(1) would have ended it"
+
+
+async def test_the_turn_loop_never_disarms_the_watchdog(
+    tmp_path, default_params, network_params,
+):
+    """THE CONTROL AGAINST THE WRONG FIX. A blanket `ctx.watchdog.stop()`
+    across the turn loop turns every ladder case above green by DELETING
+    NET-07. After a completely successful wait the watchdog must still be
+    armed and still lethal: wedge the process afterwards -- no further
+    attempt, so no further touch -- and the freeze fires."""
+    armed = armed_from(network_params)
+    ctx = turn_ctx(tmp_path, default_params, network_params, "t10-armed", armed)
+    ctx.runtime.queue.put_nowait(
+        Envelope(type=MessageType.COMMIT, turn=0, sender="thief", payload={H_COMMIT_KEY: "h"}),
+    )
+
+    opponent, verdict = await wait_for_opponent_commit(ctx, State.WAIT_OPPONENT, turn=0)
+
+    assert (opponent, verdict) == ("h", None)
+    assert armed.fired == [], "a clean turn must not look like a freeze"
+    armed.clock.advance(network_params.watchdog_threshold + 1)
+    assert armed.check() is True, "the turn loop left the watchdog disarmed"
+    assert armed.fired == ["freeze", "exit"]
