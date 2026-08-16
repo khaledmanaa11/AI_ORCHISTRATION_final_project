@@ -36,7 +36,14 @@ from pursuit.network.envelope import Envelope, MessageType
 from pursuit.network.state_machine import State
 from pursuit.shared.security_config import SecurityParams
 from tests.unit._fakes_agent import FakeClient, make_ctx
-from tests.unit._fakes_watchdog import ArmedWatchdog, StalledClient, StalledQueue
+from tests.unit._fakes_watchdog import (
+    ArmedWatchdog,
+    StalledClient,
+    StalledQueue,
+    armed_from,
+    attempt_cost,
+    table19_overrides,
+)
 
 _ON = SecurityParams(version="1.00", commit_reveal=True, team_code="khm-mn17")
 
@@ -47,35 +54,24 @@ def _kinds(ctx) -> list[str]:
 
 
 def _armed(network_params) -> ArmedWatchdog:
-    return ArmedWatchdog(
-        threshold_seconds=network_params.watchdog_threshold,
-        poll_seconds=network_params.watchdog_poll_seconds,
-    )
+    return armed_from(network_params)
 
 
 def _attempt_cost(network_params) -> float:
-    """One bounded attempt plus its backoff, in Table-19 seconds."""
-    return network_params.response_timeout + network_params.backoff_seconds
+    return attempt_cost(network_params)
 
 
 def _audit_ctx(tmp_path, default_params, network_params, label, armed, client):
     """A GAME_OVER ctx running the REAL Table-19 ladder against the REAL
-    watchdog. `backoff_seconds=0` is the one real-time deviation and it is
-    deliberate: `push_final_reveal` does not plumb `call_with_retry`'s
-    injected `sleep` seam, so the production 5 s x 3 would be 15 s of wall
-    clock. The backoff is charged to the INJECTED clock instead (see
-    `_attempt_cost`), which is the only clock `Watchdog.check_once` reads --
-    so the ladder is the full 135 s+ from NET-07's point of view."""
+    watchdog. The three helpers above and the override dict below moved to
+    `_fakes_watchdog.py` at their SECOND copy (05-16 needs the identical
+    three for the turn loop) -- re-exported through the private names here so
+    every case below is byte-unedited, and the `backoff_seconds=0` argument
+    now lives with the dict it explains."""
     return make_ctx(
         tmp_path, default_params, network_params, role="police", label=label,
         security=_ON, initial_state=State.GAME_OVER, client=client, watchdog=armed,
-        net_overrides={
-            "response_timeout": network_params.response_timeout,
-            "retry_count": network_params.retry_count,
-            "watchdog_threshold": network_params.watchdog_threshold,
-            "watchdog_poll_seconds": network_params.watchdog_poll_seconds,
-            "backoff_seconds": 0,
-        },
+        net_overrides=table19_overrides(network_params),
     )
 
 

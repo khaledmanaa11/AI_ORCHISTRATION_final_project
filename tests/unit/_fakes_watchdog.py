@@ -97,6 +97,45 @@ class ArmedWatchdog:
         return detected
 
 
+def armed_from(network_params) -> ArmedWatchdog:
+    """An `ArmedWatchdog` wearing the SHIPPED Table-19 freeze bounds.
+
+    Extracted at the second copy (CLAUDE.md, Segal Table 5 "no duplication"):
+    05-13's `test_audit_watchdog.py` and 05-16's `test_turn_loop_watchdog.py`
+    both need it, and neither may write a number down (rule 1)."""
+    return ArmedWatchdog(
+        threshold_seconds=network_params.watchdog_threshold,
+        poll_seconds=network_params.watchdog_poll_seconds,
+    )
+
+
+def attempt_cost(network_params) -> float:
+    """One bounded attempt plus its backoff, in Table-19 seconds."""
+    return network_params.response_timeout + network_params.backoff_seconds
+
+
+def table19_overrides(network_params) -> dict:
+    """`make_ctx(net_overrides=...)` trading the five fast test defaults back
+    for the REAL shipped ladder, so a case runs the production
+    `(retry_count + 1) x response_timeout` against the production
+    `watchdog_threshold`.
+
+    `backoff_seconds=0` is the one real-time deviation and it is deliberate:
+    no production push plumbs `call_with_retry`'s injected `sleep` seam
+    (deferred item #12), so the shipped 5 s x 3 would be 15 s of WALL clock.
+    The backoff is charged to the INJECTED clock instead, via `attempt_cost`
+    -- the only clock `Watchdog.check_once` reads -- so the ladder is the
+    full 135 s+ from NET-07's point of view while costing 0.000 s of real
+    time."""
+    return {
+        "response_timeout": network_params.response_timeout,
+        "retry_count": network_params.retry_count,
+        "watchdog_threshold": network_params.watchdog_threshold,
+        "watchdog_poll_seconds": network_params.watchdog_poll_seconds,
+        "backoff_seconds": 0,
+    }
+
+
 class StalledClient(FakeClient):
     """A peer whose socket accepts TCP and never answers -- a stalled tunnel
     edge, the drop 05-11 exists for and the failure class G6 is about.
