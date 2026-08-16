@@ -854,3 +854,119 @@ same reason deferred item #10 says so.
 **The named seam:** move the shared fakes into `tests/unit/services/_bluff_fixtures.py`, the
 `_hint_decode_fixtures.py` (05-14) and `_fakes_agent.py` precedent -- a non-`test_*.py`
 helper module pytest never collects. Split, never compress.
+
+---
+
+## #16 (05-17) -- the linger's quiet interval is derived from the wrong clock
+
+**Found:** 05-17, as one of two findings named in that plan's own `non_goals` and carried
+here rather than fixed. **Severity:** minor-to-major, arithmetic. **Status:** OPEN --
+logged, deliberately NOT fixed (it is a comment/interval-derivation question, not 05-17's
+routing bug, and `agent_teardown.py` is not in that plan's `files_modified`).
+
+`agent_teardown.py:22-25` justifies the linger's quiet interval like this:
+
+> **quiet interval = `NetworkParams.backoff_seconds`** (Table 19 row 3, "Backoff before a
+> retry", minimum, 5 s). *If the peer were going to retry, it would have retried inside one
+> backoff.*
+
+The italicised sentence is unsound as written, and the two clocks are the reason. **A peer
+schedules its retry one backoff from its own FAILURE, which is up to one `response_timeout`
+after the attempt STARTED -- and the attempt's start is what our side observes as an
+ARRIVAL.** Our quiet interval, meanwhile, is measured from that arrival.
+
+**Measured against the shipped Table-19 values** (`config/police/network.json`:
+`response_timeout: 30`, `backoff_seconds: 5`, `retry_count: 3`, `watchdog_threshold: 60` --
+no number invented, none moved):
+
+| Quantity | Value | From |
+|---|---|---|
+| our quiet interval | **5 s** | `backoff_seconds` |
+| our total linger cap | **30 s** | `response_timeout` |
+| worst-case gap, peer's ARRIVAL -> peer's RETRY | **35 s** | `response_timeout + backoff_seconds` |
+
+So the retry a peer schedules after a lost/slow RESPONSE lands **5 s after our whole linger
+has already returned**, and **30 s after the quiet interval the comment says covers it** --
+and the shape that produces it (the request lands, the response is lost) is exactly the
+05-04/05-09 failure this linger exists for. The window is not useless: it covers a peer
+whose attempt FAILED FAST (connection refused, a 502), where failure and arrival nearly
+coincide. It simply does not cover the slow case the prose claims it does.
+
+**Not a false-accusation path by itself** -- a missed retry after the audit costs nothing
+today. Recorded because the DERIVATION is the load-bearing part of that module (it is the
+whole reason it contains no numeric literal), and a derivation that does not hold is worse
+than a magic number: it looks audited.
+
+**Whoever fixes it must not simply widen a bound.** `response_timeout + backoff_seconds` as
+the quiet interval would exceed `watchdog_threshold` (60 s) in total across the two bounds
+and is a parameter decision, not a comment fix. The honest minimum is to correct the prose
+to say what the interval actually covers.
+
+---
+
+## #17 (05-17) -- the linger DRAINS a peer FINAL_REVEAL and discards it unaudited
+
+**Found:** 05-17, the second of that plan's two named non-goals. **Severity:** major on a
+narrow window. **Status:** OPEN -- logged with a measurement, deliberately NOT fixed.
+
+`agent_teardown.linger_for_peer` drains through `deadline.wait_for_opponent`, i.e. a plain
+`queue.get()`. It does not go through `turn_commit_pull.next_protocol_message`, so **05-17's
+buffer does not cover this window**: a peer FINAL_REVEAL arriving during the linger is
+consumed, discarded, and never audited or logged.
+
+**Measured** (`linger_for_peer` driven directly, a peer FINAL_REVEAL already queued, quiet
+interval non-zero so the drain actually runs):
+
+```
+queue before linger      = 1
+queue after linger       = 0        <- consumed
+buffered after linger    = None     <- and NOT routed to the buffer
+log kinds                = []       <- no record that it ever arrived
+```
+
+That module's own docstring already declares the drain intentional ("Draining is not
+answering ... do not 'optimise' the drain away"), and it is right about why it drains. What
+it does not say is what happens to the CONTENT. By the time the linger runs, `run_final_audit`
+has already returned, so a late ledger cannot change our verdict without re-entering the
+audit -- which is a policy decision (does a peer that publishes after our audit get audited?
+what if our verdict already accused it?), not a routing fix.
+
+**The cheap half is now genuinely cheap**, which is the reason to record it rather than
+forget it: routing the drain's arrivals through `final_reveal_buffer.record_final_reveal`
+(05-17) would at least keep the evidence instead of destroying it, leaving only the
+re-entry question open.
+
+---
+
+## #18 (05-17) -- the INITIATOR's own wait treats a FINAL_REVEAL as a malformed move
+
+**Found:** 05-17, by grepping production callers of `next_protocol_message` for the routing
+fix -- not by reading the diff. **Severity:** major (a rules-16/22 false-accusation path).
+**Status:** OPEN. **Pre-existing and unchanged by 05-17**, measured both ways below.
+
+`turn_commit.await_and_respond` branches on role, and the POLICE branch (`turn_commit.py:103`)
+calls the pull primitive BARE -- `return await next_protocol_message(ctx)` -- with no type
+test at all, handing whatever arrives to `turn_actions.await_opponent_turn` as if it were the
+opponent's REVEAL. The four `wait_for_*` legs each check a type; this one does not.
+
+**Measured**, police role, queue `[FINAL_REVEAL, REVEAL]`:
+
+```
+await_and_respond (police) returned type = final_reveal   verdict = None
+await_opponent_turn outcome              = Outcome.TECHNICAL_LOSS
+technical_win reasons                    = ['payload must be a dict, got NoneType']
+```
+
+An honest peer's published ledger is decoded as an illegal move and turned into a technical
+loss through `turn_buffer.reject_peer_payload`. **Identical with 05-17's routing reverted**
+-- same outcome, same reason string -- so this is not something that plan introduced; the
+only difference 05-17 makes is that the ledger is now SAFE in the buffer
+(`buffered = MessageType.FINAL_REVEAL` after the call, where pre-fix it was `None`), so the
+AUDIT still matches even while the turn loop mis-declares.
+
+**Why it was not fixed there:** `turn_commit.py` is not in 05-17's `files_modified`, and the
+repair is not the one-liner it looks like. Skipping a FINAL_REVEAL in that branch means
+deciding what the initiator should do when the peer has demonstrably ended the game while we
+still expect its REVEAL -- keep waiting (and burn a ladder we already know is hopeless), or
+end the game on the buffered evidence. That is a turn-loop policy decision with its own
+controls, and it interacts with #17's "does a late publisher get audited" question.
