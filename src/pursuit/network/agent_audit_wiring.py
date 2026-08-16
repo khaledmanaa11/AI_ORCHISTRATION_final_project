@@ -14,6 +14,7 @@ import time
 
 from pursuit.constants import Outcome
 from pursuit.network.agent_audit_exchange import (
+    OWN_RECEIVE_FAILED,
     observed,
     push_final_reveal,
     receive_final_reveal,
@@ -121,8 +122,20 @@ async def run_final_audit(
       with no verdict at all);
     - a push failure with NO board outcome still returns TECHNICAL_LOSS --
       the turn loop never resolved, so nothing else stands;
-    - a failed RECEIVE still returns TECHNICAL_LOSS -- a peer that withholds
-      its own nonces is the peer's own act (rule 36);
+    - a failed RECEIVE after a push that SUCCEEDED still returns
+      TECHNICAL_LOSS -- our envelope reached the peer's tool, so the channel
+      demonstrably worked and a peer that then never publishes its own
+      nonces performed an act of its own (rule 36);
+    - a failed RECEIVE when our OWN push had ALREADY failed and a board
+      outcome stands is the mirror of the first case (05-13, G6): our own
+      transport is demonstrably broken on this leg, the peer may well have
+      answered into a socket we could not reach, and accusing it is exactly
+      the false declaration 05-04 removed from the send leg. It records a
+      second non-accusatory `audit_incomplete` -- reason naming OUR OWN
+      receive -- and RETURNS, leaving the board outcome standing. Returning
+      is load-bearing: falling through with `peer_records == []` would fail
+      every honest turn at `audit_state` and re-enter TECHNICAL_LOSS through
+      the AUDIT_HASH_MISMATCH door;
     - a genuine AUDIT_HASH_MISMATCH still returns TECHNICAL_LOSS (D-67)."""
     own_records = CommitLedger(ledger_path(ctx)).read_all()
 
@@ -134,6 +147,14 @@ async def run_final_audit(
 
     peer_records, recv_verdict = await receive_final_reveal(ctx)
     if recv_verdict is not None:
+        # `send_verdict is not None` is the whole discrimination, and it is
+        # what keeps rule 36's sanction intact: a push that LANDED proves
+        # the peer's server accepted our envelope, so silence afterwards is
+        # the peer's own act. Only when BOTH of our own legs failed is the
+        # evidence about us rather than about them.
+        if board_outcome is not None and send_verdict is not None:
+            record_audit_incomplete(ctx, recv_verdict, reason=OWN_RECEIVE_FAILED)
+            return None
         return record_technical_loss(ctx, recv_verdict)
 
     sent_commits, sent_reveals = observed(ctx, direction="message_sent")

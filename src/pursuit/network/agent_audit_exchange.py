@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 
 from pursuit.network.agent_audit_verdict import (
+    OWN_RECEIVE_FAILED,
     record_audit_incomplete,
     record_audit_verdict,
     record_technical_loss,
@@ -33,6 +34,7 @@ _FINAL_REVEAL_TOOL = "receive_final_reveal"
 _RECORDS_KEY = "records"
 
 __all__ = [
+    "OWN_RECEIVE_FAILED",
     "observed",
     "push_final_reveal",
     "receive_final_reveal",

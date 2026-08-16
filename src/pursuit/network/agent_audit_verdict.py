@@ -27,6 +27,13 @@ _OWN_SEND_FAILED = "own_final_reveal_send_failed"
 `TechnicalWinReason` member: this record is not a technical win, and the
 subject of its sentence is OUR OWN send -- never the peer (rules 16/22)."""
 
+OWN_RECEIVE_FAILED = "own_final_reveal_receive_failed"
+"""The RECEIVE leg's own reason string (05-13, 05-UAT.md G6). Same rule,
+same grammar: the subject is OUR OWN receive. Exported (no leading
+underscore) because `agent_audit_wiring.run_final_audit` -- which owns the
+policy deciding WHEN a failed receive is non-accusatory -- must name it at
+the call site rather than have it defaulted in behind its back."""
+
 
 def _verdict_record(
     ctx: AgentContext, verdict: TechnicalWin, *, event: EventType, reason: str,
@@ -56,7 +63,9 @@ def _record_to_dict(record: AuditRecord) -> dict:
     return {"turn": record.turn, "matched": record.matched, "detail": record.detail}
 
 
-def record_audit_incomplete(ctx: AgentContext, verdict: TechnicalWin) -> None:
+def record_audit_incomplete(
+    ctx: AgentContext, verdict: TechnicalWin, *, reason: str = _OWN_SEND_FAILED,
+) -> None:
     """05-UAT.md G1: THIS side's own FINAL_REVEAL push failed while the turn
     loop had ALREADY produced a board outcome. That is evidence about us --
     our send did not land -- and never grounds to declare the peer
@@ -68,9 +77,16 @@ def record_audit_incomplete(ctx: AgentContext, verdict: TechnicalWin) -> None:
     Appends one AUDIT_INCOMPLETE record carrying the same measured evidence
     a technical win would carry, plus the ladder's elapsed time and last
     error, and returns None: the board outcome stands and `run_final_audit`
-    continues into the receive + audit steps."""
+    continues into the receive + audit steps.
+
+    05-13 (G6) generalises the record to the RECEIVE leg via *reason*,
+    rather than adding a second near-identical writer (no-duplication
+    rule). The default keeps every 05-04 call site byte-identical. Whatever
+    a caller passes, the grammar is fixed by this function's contract: the
+    subject of the sentence is OUR OWN half of the exchange, so no
+    AUDIT_INCOMPLETE record can ever read as an accusation."""
     record = _verdict_record(
-        ctx, verdict, event=EventType.AUDIT_INCOMPLETE, reason=_OWN_SEND_FAILED,
+        ctx, verdict, event=EventType.AUDIT_INCOMPLETE, reason=reason,
     )
     record.update(elapsed_seconds=verdict.elapsed_seconds, last_error=verdict.last_error)
     append_event(ctx.log_path, record)
