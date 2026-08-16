@@ -86,7 +86,41 @@ __all__ = ("AuditRecord", "all_matched", "audit_peer_records")
 #      `step0_declaration` that is not an object -- found sweeping for a sixth
 #      during 05-10 and closed in that module the same way.
 #
-# A SEVENTH is now a review failure rather than a discovery.
+# THE HANDSHAKE CORRIDOR (05-12). Instances 1-6 were found one at a time, each
+# by a different pass. 05-12 stopped doing that and swept the corridor: EVERY
+# peer-controlled value read between `Envelope.from_dict` and move 1. Four more
+# came out of it, and the count is the point -- 05-10 closed instance 6 in this
+# very corridor and still left three doors open one function further in.
+#
+#   7. `config_hash.digests_match` raising `TypeError` on a non-str peer
+#      digest, reached UNCONDITIONALLY at `handshake_evaluate.py:118` (config)
+#      and, because `agent_entrypoint.py:80,85` always supplies
+#      `local_scent_digest`, at `:124-125` (scent) too. BOTH sit OUTSIDE the
+#      try/except at `:151-156`, which wraps the DECODE block only -- reading
+#      `envelope.payload[DIGEST]` is a plain dict lookup that succeeds for an
+#      int. Closed in `config_hash.unusable_peer_digest`, the ONE gate every
+#      peer-supplied digest slot now passes; `digests_match` keeps its strict
+#      contract for internal callers (D-46).
+#   8. `HandshakeResult.peer_game_id` -- read verbatim at
+#      `handshake_evaluate.py:162` -- reaching a set constructor (unhashable ->
+#      `TypeError`) and a `Path.replace` (traversal, embedded NUL ->
+#      `ValueError`, over-long -> `OSError`) inside `adopt_negotiated_game_id`,
+#      which has no guard at all. Closed in `game_identity_validate`.
+#   9. The SAME `digests_match` raise reached TWICE MORE through
+#      `step0_sign.verify_declaration` -- a non-str `step0_digest`, and a
+#      non-str `hmac` inside the peer's declaration envelope. Both fire only
+#      when the peer ALSO sends a declaration, which is why 05-10's sweep,
+#      stopping at the declaration CONTAINER (instance 6), passed straight over
+#      them. Closed in `handshake_step0`, and DOWNGRADED rather than aborted:
+#      see that module on why an abort there would have been a new
+#      false-accusation path bought for no evasion closed.
+#
+# A TENTH IS A REVIEW FAILURE, NOT A DISCOVERY -- and the seventh through ninth
+# say why the bar is that high: instance 7 had a GREEN TEST certifying the
+# crash as intended (`test_config_hash.py:131-135`, `pytest.raises(TypeError)`),
+# so "the suite is green" has already failed once as evidence here. The rule is
+# not "catch exceptions"; it is: name every peer-controlled value a function
+# reads, and say what that function returns for each shape it can arrive in.
 # -------------------------------------------------------------------------
 
 

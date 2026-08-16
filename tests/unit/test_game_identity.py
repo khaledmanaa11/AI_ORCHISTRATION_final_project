@@ -97,3 +97,17 @@ def test_negotiated_game_id_is_the_one_d61_policy():
     assert negotiated_game_id("police", "ours", None) == "ours"
     assert negotiated_game_id("thief", "ours", "theirs") == "theirs"
     assert negotiated_game_id("thief", "ours", None) == "ours"
+
+
+def test_negotiated_game_id_consumes_the_same_absence_rule_as_adoption():
+    """05-12/G7: this function and `adopt_negotiated_game_id` must agree on
+    what "the peer published none" means, or the thief's log stem and the
+    audit's candidate set describe different games. `write_declaration` is
+    the THIRD consumer, so an unsafe id cannot slip into a declaration
+    filename either. The hostile set itself is exercised in
+    tests/unit/test_game_identity_validate.py; this pins the SHARING."""
+    for unusable in ("", "../evil", "logs/evil", "x" * 500, 7, {}, None):
+        assert negotiated_game_id("thief", "ours", unusable) == "ours"
+    assert negotiated_game_id("thief", "ours", "3f2504e0-4f89-11d3-9a0c") == (
+        "3f2504e0-4f89-11d3-9a0c"
+    )
