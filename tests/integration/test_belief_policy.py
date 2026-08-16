@@ -16,6 +16,8 @@ import dataclasses
 import random
 import time
 
+import pytest
+
 from pursuit.sdk.actions import CopAction
 from pursuit.sdk.resolve import make_state, resolve_turn
 from pursuit.shared.config import GameParams
@@ -100,6 +102,7 @@ def test_target_cell_is_no_longer_vestigial(default_params, belief_cfg, scent_mo
     assert near != far
 
 
+@pytest.mark.no_cover
 def test_belief_enabled_completes_within_the_per_turn_time_budget(default_params, belief_cfg, scent_model):
     cop_params, thief_params = strategy_params("cop"), strategy_params("thief")
     cop = registry.build_brain(
@@ -114,13 +117,27 @@ def test_belief_enabled_completes_within_the_per_turn_time_budget(default_params
     state = make_state(default_params)
     outcome = None
     cop_ms, thief_ms = [], []
+    # CPU time (thread_time), not wall-clock: max_decision_ms prices the
+    # algorithm's own computation, and the timed path is pure compute -- no
+    # I/O, no sleeps (test_no_forbidden_import_reachable_from_decision_path
+    # keeps sockets/services out of pursuit.strategy). On an idle core the
+    # two clocks agree; under a loaded machine wall-clock also counts OS
+    # preemption of OTHER processes, which flaked this gate in full-suite
+    # runs while saying nothing about the algorithm. thread_time over
+    # process_time so a sibling thread in the test process never bills us.
+    # The no_cover marker above excludes the coverage tracer for the same
+    # reason: tracing is test instrumentation, absent in production, and it
+    # multiplies pure-Python CPU here ~6x (measured ~2ms -> ~12ms/decision).
+    # Windows charges thread CPU in 15.625ms scheduler ticks, so with the
+    # tracer left on, one tick of quantization noise crossed the budget.
+    # The budget itself is unchanged: config/*/strategy.json max_decision_ms.
     for _ in range(default_params.move_ceiling + 1):
-        start = time.perf_counter()
+        start = time.thread_time()
         cop_decision = decide(cop, "cop", state, cop_field)
-        cop_ms.append((time.perf_counter() - start) * 1000.0)
-        start = time.perf_counter()
+        cop_ms.append((time.thread_time() - start) * 1000.0)
+        start = time.thread_time()
         thief_decision = decide(thief, "thief", state, thief_field)
-        thief_ms.append((time.perf_counter() - start) * 1000.0)
+        thief_ms.append((time.thread_time() - start) * 1000.0)
         cop_action = (
             CopAction(barrier=cop_decision.barrier)
             if cop_decision.barrier is not None
@@ -132,7 +149,7 @@ def test_belief_enabled_completes_within_the_per_turn_time_budget(default_params
 
     assert outcome is not None
     print(
-        f"\nbelief-enabled per-turn decision time over {len(cop_ms)} turns -- "
+        f"\nbelief-enabled per-turn decision CPU time over {len(cop_ms)} turns -- "
         f"cop: max={max(cop_ms):.3f}ms mean={sum(cop_ms) / len(cop_ms):.3f}ms; "
         f"thief: max={max(thief_ms):.3f}ms mean={sum(thief_ms) / len(thief_ms):.3f}ms "
         f"(budget: cop={cop_params.max_decision_ms}ms, thief={thief_params.max_decision_ms}ms)"
