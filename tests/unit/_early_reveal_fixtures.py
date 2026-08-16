@@ -139,5 +139,16 @@ def kinds(ctx) -> list[str]:
     return [event["event"] for event in events(ctx)]
 
 
+def accusations(ctx) -> list[str]:
+    """Every `technical_win` REASON this side wrote, in order.
+
+    Extracted at the second copy (CLAUDE.md / Segal Table 5 "no
+    duplication"): the reason STRING is the load-bearing half of a
+    declaration under rules 16/22, so a case that asserts only the count
+    cannot tell an honest `opponent_unresponsive` apart from 05-18's
+    `'payload must be a dict, got NoneType'`."""
+    return [event["reason"] for event in events(ctx) if event["event"] == "technical_win"]
+
+
 def audit_verdicts(ctx) -> list[dict]:
     return [event for event in events(ctx) if event["event"] == "audit_verdict"]

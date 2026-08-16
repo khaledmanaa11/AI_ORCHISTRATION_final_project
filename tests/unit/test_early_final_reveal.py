@@ -21,6 +21,12 @@ not soften rule 36, and
 `test_a_genuinely_silent_peer_is_still_declared_unresponsive` is the control
 that says so.
 
+THE ROLE THIS FILE DOES NOT COVER. Every case here drives the RESPONDER
+(thief) legs. `turn_commit.await_and_respond`'s INITIATOR branch pulls
+without any type test at all and was untouched by 05-17 -- deferred item
+#18, reproduced and fixed in the sibling `test_early_final_reveal_police.py`
+(05-18), which also carries rule 36's counter-control for that branch.
+
 REACHABILITY, stated honestly. Two copies of THIS codebase serialise their
 own pushes (each `await`s its tool call, and `tools._accept` enqueues before
 answering), so a clean loopback game never reorders. The ordering needs a
@@ -42,8 +48,8 @@ from pursuit.network.turn_commit_wait import wait_for_reveal_capturing_early_ack
 from pursuit.network.verdict import TechnicalWinReason
 from tests.unit._early_reveal_fixtures import (
     ON,
+    accusations,
     audit_verdicts,
-    events,
     final_reveal,
     honest_peer_turn,
     in_game_reveal,
@@ -130,8 +136,7 @@ async def test_a_genuinely_silent_peer_is_still_declared_unresponsive(
 
     outcome = await run_final_audit(ctx, board_outcome=Outcome.CAPTURE)
 
-    accusations = [e["reason"] for e in events(ctx) if e["event"] == "technical_win"]
-    assert (outcome, accusations) == (
+    assert (outcome, accusations(ctx)) == (
         Outcome.TECHNICAL_LOSS, [TechnicalWinReason.OPPONENT_UNRESPONSIVE.value],
     )
 
