@@ -82,8 +82,14 @@ def test_the_notebook_imports_nothing_that_can_reach_a_network():
 
 
 def test_no_credential_is_read_by_name():
-    """`os.environ` never appears, so no key can be picked up implicitly."""
+    """`os.environ` never appears, so no key can be picked up implicitly.
+
+    The `assert code` is not padding: every check below is an absence, and
+    absences are all satisfied by an empty string. Without it this test
+    would go green if `_code()` ever stopped finding the code cells.
+    """
     code = _code()
+    assert len(code) > 500, "the code-cell join returned almost nothing"
     for forbidden in ("os.environ", "getenv", "API_KEY", "anthropic"):
         assert forbidden not in code, forbidden
 

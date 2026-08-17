@@ -98,27 +98,47 @@ def test_every_cited_repository_path_resolves(relative):
             assert (REPO_ROOT / path).exists(), f"{relative} cites `{path}`, which does not exist"
 
 
-@pytest.mark.parametrize("relative", DOCS)
-def test_every_cited_commit_hash_resolves(relative):
-    """Skipped on a tree with no history -- 08-10's split repos are built
-    with a single initial commit, and a hash from this repo cannot exist
-    there. Nothing is silently passed: the skip names its reason."""
+def test_every_cited_commit_hash_resolves():
+    """NOT parametrized, deliberately.
+
+    Only `docs/PROMPT_LOG.md` cites commits; the other two carry none, so a
+    per-document version would pass over an empty list for two of its three
+    parametrizations and the regex would be proven live by only one of them.
+    Gathering across all three and asserting a floor makes every run check
+    something. Skipped on a tree with no history -- 08-10's split repos are
+    built with a single initial commit and a hash from this repo cannot
+    exist there -- and the skip names its reason rather than passing.
+    """
     depth = subprocess.run(["git", "rev-list", "--count", "HEAD"], cwd=REPO_ROOT,
                            capture_output=True, text=True, check=False)
     if depth.returncode != 0 or int(depth.stdout.strip() or 0) < 50:
         pytest.skip("no development history here (a split/export tree)")
-    for short in sorted(set(_HASH.findall(_text(relative)))):
+    cited = {short for relative in DOCS for short in _HASH.findall(_text(relative))}
+    assert len(cited) >= 3, f"the commit-hash regex matched almost nothing: {cited}"
+    for short in sorted(cited):
         found = subprocess.run(["git", "cat-file", "-e", f"{short}^{{commit}}"],
                                cwd=REPO_ROOT, capture_output=True, text=True, check=False)
-        assert found.returncode == 0, f"{relative} cites commit `{short}`, which does not exist"
+        assert found.returncode == 0, f"cited commit `{short}` does not exist"
 
 
-@pytest.mark.parametrize("relative", DOCS)
-def test_no_document_claims_a_league_result_or_a_games_played_value(relative):
+def test_no_document_claims_a_league_result_or_a_games_played_value():
     """Rule 38 makes a false games-played declaration an absolute
-    disqualification, and no league game has been played at all."""
-    text = _text(relative).lower()
-    for forbidden in ("games_played_declared", "games played so far", "league standing",
-                      "we won", "our record against"):
-        assert forbidden not in text, f"{relative} contains {forbidden!r}"
-    assert "no league game" in text or "league" not in text, relative
+    disqualification, and no league game has been played at all.
+
+    The disclaimer rule has two branches -- a document that mentions the
+    league must carry "no league game", and one that never mentions it needs
+    nothing. `docs/PROMPT_LOG.md` takes the trivial branch, so the test
+    additionally asserts that the NON-trivial branch is exercised by at
+    least one document. Without that, deleting the disclaimer from all three
+    and every mention of the league with it would still pass.
+    """
+    disclaimed = 0
+    for relative in DOCS:
+        text = _text(relative).lower()
+        for forbidden in ("games_played_declared", "games played so far", "league standing",
+                          "we won", "our record against"):
+            assert forbidden not in text, f"{relative} contains {forbidden!r}"
+        if "league" in text:
+            assert "no league game" in text, f"{relative} mentions the league without the clause"
+            disclaimed += 1
+    assert disclaimed >= 2, "no document exercised the disclaimer branch"
