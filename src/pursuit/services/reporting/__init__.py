@@ -12,6 +12,11 @@ NOTHING IN THIS PACKAGE TRANSMITS. The sink is injected and has no default;
 import `google-*`). Every shipped config carries `reporting.mode = dry_run`.
 """
 
+from pursuit.services.reporting.artifact_config import (
+    ConfigArtifactField,
+    build_config_artifact,
+    write_config_artifact,
+)
 from pursuit.services.reporting.artifacts import (
     ArtifactField,
     ArtifactPrefix,
@@ -33,6 +38,7 @@ from pursuit.services.reporting.quota import QuotaField, QuotaManager
 __all__ = (
     "ArtifactField",
     "ArtifactPrefix",
+    "ConfigArtifactField",
     "DosDetector",
     "QuotaField",
     "QuotaManager",
@@ -42,6 +48,7 @@ __all__ = (
     "artifact_digest",
     "artifact_digest_matches",
     "artifact_header",
+    "build_config_artifact",
     "config_filename",
     "declaration_filename",
     "log_filename",
@@ -49,4 +56,5 @@ __all__ = (
     "result_filename",
     "sub_game_suffix",
     "write_artifact",
+    "write_config_artifact",
 )
