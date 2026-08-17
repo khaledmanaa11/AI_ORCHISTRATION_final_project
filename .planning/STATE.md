@@ -3,74 +3,6 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 7 PLAN 03 EXECUTED (2026-08-17) -- THE RULES 8-9 FIREWALL IS BUILT, AND ITS
-  COUNTER-CONTROLS ARE MEASURED RATHER THAN ASSERTED. Rule 9 (docs/RULES.md:30) makes displaying
-  the objective board state in the live interface a PROJECT DISQUALIFICATION and RULES.md:115
-  ranks it third among the cheapest ways to score zero. AN IMPORT BOUNDARY IS NOT THE FIREWALL:
-  GameState is exactly {cop, thief, barriers, barriers_placed, turn} and turn_language.py:57
-  reads ctx.state.thief on every cop turn from turn 1, so a gui/ module could import nothing
-  forbidden and still read the opponent's true cell -- the leak is a FIELD READ. THE MITIGATION
-  IS A CLOSED FIELD SET: sdk/local_view.py is four FROZEN dataclasses with twelve LocalView
-  fields pinned by name (role, board_size, turn, own_cell, declared_barriers, barriers_placed,
-  belief, scent, hints, machine_state, idle_seconds, watchdog_threshold_seconds) -- no
-  GameState, no AgentContext, no free-form dict, no extras. They live in sdk/ and NOT gui/,
-  because pyproject.toml:38 omits */gui/* from coverage and redaction logic there would be
-  invisible to the gate; no logic was put in scripts/ either, which is scanned by NEITHER gate.
-  THE DENSIFICATION IS THE NON-OBVIOUS HALF: ScentField keys its grids by coordinate, so handing
-  those to a view would put EVERY cell on the board into it as a VALUE, the opponent's among
-  them -- both scent grids and the belief posterior are positional row-major floats instead
-  (reverting: belief 7 failed, scent 6 failed). THE VACUITY WAS DEMONSTRATED, NOT ASSUMED: with
-  coordinate_hits mutated to always return clean, the absence test STILL PASSES 2/2 while
-  exactly the three counter-controls fail -- which is why (b) the leaky-view control and (c) the
-  anti-vacuity control exist. LeakyLocalView (an honest view with the true cell bolted on, never
-  importable from pursuit) is REPORTED with the hit path naming true_opponent_cell, all five
-  planted encodings are reported, and the same scanner over the HONEST payload finds all four
-  cells the view may legally carry. Coordinates chosen, not arbitrary: OPPONENT_CELL (5,3)
-  differs from own (0,0), both barriers and the belief argmax (6,6), and its flat indices 38/26
-  differ from every other integer in the view. THE CI GATE FAILS LOUDLY ON AN EMPTY SCAN:
-  check_no_llm_in_strategy.py's rglob shape returns [] for a missing root and prints OK, and
-  src/pursuit/gui/ does not exist until 07-06 -- so gui_module_paths raises EmptyScanError,
-  main returns ExitCode.EMPTY_SCAN (2), and the OK line prints the module count. Measured today:
-  exit=2, "local-truth gate scanned nothing: <repo>/src/pursuit/gui does not exist." The
-  workflow job is therefore RED until 07-06, DELIBERATELY -- skipping when the directory is
-  missing is the same vacuity moved from the script into the workflow (filed D7-6 with the
-  rejected alternatives). THIRTY REVERT PROBES, every count real: view carries the opponent cell
-  3 failed; extras field 1; coordinate-keyed belief 7; coordinate-keyed scent 6; scanner always
-  clean 3; each scanner branch 1/1/1; never descends 3; fabricated belief 1; bool stamp guard 2;
-  coerced intent 3; unguarded peer payload 1; dedupe removed 1; MODULE-LEVEL GLOBAL history 5;
-  gate missing-root 1; zero-module root 1; ImportFrom hole 1; field-chain check 3; allowlist
-  emptied 2; module count dropped 1; log2 -> ln 1; engine_agent inverted 3; a NEW sdk module
-  reading ctx.state.thief 1; dict-typed field 1; stray GUI_ROOT 1; unfrozen dataclass 1;
-  import check removed 1; bare startswith 3; two thinned literal sets 1 and 2. FOUR HOLES THE
-  SELF-AUDIT FOUND IN ITS OWN WORK: probe 15 first returned 0 failed because the mutation only
-  DECLARED two globals and never wired them into the dataclass defaults -- the hazard ran not at
-  all, the 07-02 lesson repeating on my own first probe; probe 24 ran halfway, aliasing one
-  ctx.state read while ctx.state.barriers two lines below kept the AST chain alive; the entropy
-  extraction had NO PINNED VALUE, the only assertions in the whole repo being >= 0.0 and is not
-  None, both of which hold under ln as readily as log2 -- now pinned at exactly log2(49) with
-  both consumers asserted to agree, and confirmed live (turn-0 entropy 5.6108 vs log2(49)
-  5.6147, ln(49) 3.8918); and two tests were shape-only plus one loop vacuous, all three now
-  pinned on values. An AST scan found ONE parametrize site in the plan's five test files
-  (already guarded) but two unguarded module-level literal tuples iterated in assert-bearing
-  loops -- both now counted. TWO EXTRACTIONS, each because the alternative was a second copy:
-  shared/roles.py takes engine_agent/opponent_role out of network/orchestrator.py (sdk/ and the
-  07-06 gui/ both need the vocabulary and NEITHER may import pursuit.network) re-exported so no
-  call site changed; BeliefMap.entropy() takes the Shannon formula to the object owning the grid
-  at its second consumer. PRODUCTION READERS OF THE TRUE POSITION, GREPPED EXHAUSTIVELY:
-  turn_actions:184, turn_commit_ledger:66, turn_language:57/78/90/93 (all the turn loop) and
-  sdk/view_builder:95/101/102 -- the only new one, asserted by an AST scan of src/pursuit/sdk/
-  on every run with its own counter-control and a forward probe (a planted leaky_panel.py fails
-  it). SCOPE: nine files outside tests/, git diff over src/pursuit/security/,
-  agent_step0_wiring.py, handshake_evaluate.py, agent_wiring.py, turn_actions.py, turn_commit.py
-  and ALL of config/ is EMPTY; the workflow edit is +18/-0. GATES: ruff 0, line-limit exit 0
-  including all 12 new/edited paths checked EXPLICITLY, 1826 passed from a 1794 baseline,
-  coverage 96.95% from 96.90%, local_view/view_builder/roles/belief/turn_language all 100%,
-  check_no_llm_in_strategy OK, check_local_truth exit 2 as designed, dev_launch exit 0 with
-  outcome capture, audit_verdict matched=true, zero technical_*, zero STEP0_MISMATCH and the one
-  pre-existing D7-5 illegal transition. GAMES-PLAYED, rule 38: full suite 1913/1906 -> 1913/1906
-  DELTA 0/0; one real game 1913/1906 -> 1914/1907 DELTA 1/1. Nothing here reads, writes,
-  defaults or reads around the counter; the VALUE remains the human's at 07-10. Commits 70df24a
-  / f7d21c6 / 1ccd4ea / 094eb12 / 7c69f81.
 Resume file: None -- 07-03 is fully committed and closed, tree clean. **WAVE 1 IS COMPLETE**
   (07-01, 07-02, 07-03 all executed and summarised). Next is WAVE 2: 07-04 (mail transport,
   depends_on 07-01 + 07-02), 07-05 (log_ builder) and 07-06 (live GUI, the consumer side of
@@ -89,6 +21,107 @@ Resume file: None -- 07-03 is fully committed and closed, tree clean. **WAVE 1 I
   citations; OQ-4 is resolved in the outline but not implemented; OQ-5 -- the games-played
   VALUE -- remains the human's at 07-10, before any live send. Nothing in this repo transmits:
   every shipped config carries reporting.mode dry_run.
+stopped_at: PHASE 7 PLAN 11 EXECUTED (2026-08-17) -- THE COP WAS PUBLISHING THE THIEF'S EXACT
+  CELL, AND 07-03'S FIREWALL WAS GREEN BECAUSE ITS FIXTURES WERE VACUOUS. Rules 8-9 are an
+  ABSOLUTE DISQUALIFICATION (docs/RULES.md:30). TWO INDEPENDENT FIXTURE DEFECTS made every
+  assertion in that area worthless: local_view_fixtures.scent_field never called emit_opponent,
+  so view.scent.opponent was an ALL-ZERO grid in all thirty of 07-03's revert probes -- the one
+  field carrying the true cell at full strength was empty in every test written to protect it --
+  and honest_context seeded belief with observe_exact((6,6)), a cell production never supplies.
+  Corrected to run ONE real decide(known_cell=ctx.state.thief), 07-03's own load-bearing absence
+  test FAILED at '$.belief.argmax: pair [5, 3]'. THE MEASURED LEAK, through the shipped path with
+  the real config/police/*.json: belief argmax (5,3) == ctx.state.thief; entropy 1.8799649487271113;
+  support [(4,3),(5,2),(5,3),(5,4),(6,3)], 5 of 49, P(true) 0.5556; scent.opponent argmax (5,3) at
+  0.9, which is EXACTLY scent.json's "source" -- the unmixed kernel centre, not a decayed trace.
+  THE OBVIOUS FIX IS A TRAP AND IT WAS RUN: publishing the strategy maps again and deleting
+  BeliefView.argmax makes 07-03's coordinate scanner PASS 2/2 -- a clean verdict -- while the
+  geometric, scent and floor tests all FAIL, because observe_exact gives a delta, spread disperses
+  it only over that cell's legal destinations and update multiplies pointwise so a zeroed cell
+  never reopens: the published support IS the legal-move plus centred on the true pre-move cell,
+  and the centre of a plus inverts uniquely. A fix validated by a coordinate-absence test would
+  have looked successful and shipped the disqualification. THE SEALED-THIEF ENDGAME IS WORSE AND
+  IS THE COP'S WIN CONDITION, not a corner case: thief walled at (0,0) behind 2 barriers against a
+  quota of 14 published argmax (0,0), entropy -0.0, lit cells [(0,0,1.0)] -- a one-pixel heatmap on
+  the truth. IT WAS REAL IN A REAL GAME, not only in a fixture: logs/police/29dec44e0ab71785.jsonl
+  records cop belief_entropy 5.6108 at turn 0 then 1.8800/1.8800/1.8800/1.7159, while the thief's
+  stayed 5.6131/5.6100/5.5183/5.4697. OPTION (a) CHOSEN AND WRITTEN DOWN (source + the new
+  docs/PRD_display_belief.md, which CLAUDE.md Sec2.3 requires anyway): a display-only BeliefMap
+  never fed ctx.state.thief, driven by the legal-motion model and the opponent's own broadcast
+  hints, published in place of the strategy map. Option (b) -- publish only when observe_exact did
+  not fire -- is for the COP a PERMANENTLY BLANK PANEL, since turn_language.py:57 returns the true
+  cell on every turn but turn 0; it hides the leak by deleting the feature. NOBODY OWNED RULE 9
+  BEFORE THIS: beliefadapter.py:120-123 said in its own docstring that local truth was "a
+  display-layer concern, not this one's" and view_builder published the value unredacted -- both
+  delegated, neither owned. strategy/display_belief.py owns it now. THE STRATEGY BELIEF IS
+  UNCHANGED and still receives known_cell (argmax still (5,3), entropy still 1.88): provenance is
+  the opponent's own honest Reveal and rule 9 governs the DISPLAY, not play. scent.opponent IS
+  FIXED TOO because it leaks independently -- uniform scalar decay lets two published snapshots
+  subtract to recover the fresh deposit, so even an animate-only GUI leaked every turn; scent.own
+  is passed through untouched at 1.8, local truth by definition. AFTER: published argmax (1,3),
+  entropy 5.5469, support 47/49, P(truth) 0.0223, inversion [], scent peak (4,4) at 0.154; sealed
+  case argmax (1,2), entropy 5.5472, support 47. COP SEAT ONLY BY PROVENANCE, NEVER BY ROLE NAME:
+  the substitution fires on a contamination flag, so the thief's published belief is BYTE-IDENTICAL
+  before and after -- sha256 0b046a9430b79af3d1b7f3a58a4bf91ffdce383d739d3d5267f3e03e1ba0e3b0,
+  2565 bytes, argmax (4,5), entropy 5.5328, support 47 -- and a future path that contaminated a
+  different seat is covered without an edit. FLOORS ARE DERIVED, NEVER INVENTED (CLAUDE.md rule 1,
+  D-18): belief.json gains display.min_support_cells 6 (one cell's legal destination set is STAY
+  plus four orthogonal moves = len(DIRECTION_WORDS) = 5, so a support of 6+ cannot fit inside any
+  cell's neighbourhood and the inversion is structurally empty) and display.min_entropy_bits 1.0
+  (a fair coin between two cells); validate_display_floors REFUSES a floor at or below
+  MAX_STEP_NEIGHBOURHOOD, because a floor that admits the measured leak is not a floor. TWELVE
+  REVERT PROBES, every count real: strategy belief republished 9; raw scent republished 3; the
+  argmax-only fix 3 failed / 2 PASSED (the scanner); publishable() hard-wired True 2; contamination
+  never recorded 14; display map fed the truth 9; the SYMMETRIC fix (thief redacted too) 3; advance
+  made inert 3; geometric_inversion always [] 2; grid_argmax always (0,0) 2; min_support_cells
+  lowered to 5 22 failed + 12 errors; published_scent leaking the raw grid 3. Probe 3's first
+  attempt reported "anchor not found" (a trailing \n against a CRLF tree) and was NOT counted as a
+  pass -- it was rewritten to report per-test outcomes. Probes 8/9/10 exist because this
+  mechanism's likeliest failure is an inert display map or an attack that never fires, either of
+  which would make every assertion pass vacuously. AST scan of all eight touched test files: one
+  parametrize site and one module-level literal looped in an assert, BOTH already length-guarded,
+  zero unguarded. Production callers grepped for all 13 new names: ten external; publishable,
+  contaminated and MAX_STEP_NEIGHBOURHOOD are reached only from inside their own module, by
+  published_belief/published_scent and validate_display_floors, all of which are on the production
+  path -- proven live by probes 4 and 11. THREE FALSE DOCSTRINGS IN local_view.py CORRECTED, each
+  now saying what it used to claim: "cannot express an opponent's true cell" (a dense grid
+  expresses one without any coordinate in it), "argmax ... is routinely wrong; that is exactly why
+  it is legal to draw" (observe_exact made it RIGHT every turn by construction) and "our own
+  RECONSTRUCTION ... not a live reading of where it is now" (the kernel was stamped on the true
+  CURRENT cell at source strength). FOUR FILES SPLIT AT THE 150-LINE GATE, never compressed:
+  BeliefKey to shared/belief_keys.py (which also removed a real cycle -- every group module is
+  imported BY belief_config.py, so the newest group could not name its fields canonically),
+  scent_likelihood checks to shared/scent_likelihood_config.py, 07-03's scanner to
+  tests/unit/local_view_scanner.py, and the display rationale to docs/PRD_display_belief.md.
+  D7-8 FILED AND DELIBERATELY NOT FIXED: turn_language.belief_snapshot still writes the true argmax
+  to the JSONL, which is CORRECT -- the log is the audit record (rule 38) and rules 8-9 govern the
+  LIVE interface -- but 07-08's replay viewer may not render it live. D7-9 restates that
+  check_local_truth.py CANNOT see a coordinate that is drawn rather than named and was not cited as
+  evidence anywhere in this plan. 07-06 AND 07-08 WERE BLOCKED ON THIS AND ARE NOW UNBLOCKED;
+  07-06 must also render belief=None gracefully, which is now a LIVE case (the floor guard), not
+  only the belief-disabled one.
+---
+
+Last session: 2026-08-17T09:20:00+03:00
+Stopped at: Completed 07-11-PLAN.md (the display belief -- rules 8-9 recovery, not absence)
+  in full. Three tasks, each committed atomically: Task 1 the RED reproduction on fixtures
+  rebuilt to model production (`4c4c03d` -- 9 failed / 45 passed, including 07-03's OWN
+  load-bearing absence test failing at `$.belief.argmax: pair [5, 3]`, with both anti-vacuity
+  controls passing so the attack was proven to fire before being used as evidence), Task 2 the
+  root-cause fix at the strategy layer with option (a) reasoned in source and in the new
+  `docs/PRD_display_belief.md` (`19aa946`), Task 3 the three false docstrings corrected and the
+  byte-level thief control added (`df041a0`). Gates: `ruff check .` 0 violations; 1846 passed /
+  0 failed against the 1826 baseline; coverage 96.95% (baseline 96.95%); `check_line_limit.sh`
+  exit 0 with all nine new files ALSO checked explicitly by path; `check_no_llm_in_strategy.py`
+  OK; `dev_launch.py` exit 0 with both sides `"matched":true`. Rule-38 counters, all four:
+  the full suite moved police 1914->1914 and thief 1907->1907 (delta 0/0); one real game moved
+  1914->1915 and 1907->1908 (delta 1/1). Graphify refreshed -- `DisplayBelief` at
+  `display_belief.py:50`, degree 25, edges to BeliefMap/ScentField/DisplayFloors and from
+  BeliefAdapter. `07-11-SUMMARY.md` written with every number from a run in this session,
+  self-check PASSED (23 files and 3 commits verified). `docs/phases/phase-7/TODO.md` gains a
+  ticked 07-11 row; D7-8 and D7-9 filed in the phase's `deferred-items.md`.
+Resume file: None -- the tree is clean and 07-11 is closed. Wave 2 of phase 7 is next
+  (`/gsd:execute-phase 7`): 07-04, 07-05, and 07-06, which was BLOCKED on this plan and is
+  now unblocked. 07-08 is likewise unblocked but inherits D7-8.
 ---
 
 Last session: 2026-08-17T05:40:00+03:00
