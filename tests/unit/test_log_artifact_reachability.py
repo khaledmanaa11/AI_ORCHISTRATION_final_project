@@ -118,6 +118,7 @@ def test_the_builder_never_reaches_for_the_ledger_reader_itself(scan):
     """The join uses its own crash-tolerant reader, so `CommitLedger.read_all`'s
     deliberate fail-loud contract for the AUDIT path is not weakened, widened
     or shared."""
+    assert len(LOG_ARTIFACT_MODULES) == 4, "a thinned module set would loop over nothing"
     for name in sorted(LOG_ARTIFACT_MODULES):
         tree = ast.parse((SRC / (name.replace(".", "/") + ".py")).read_text(encoding="utf-8"))
         # Checked on the SYNTAX, not on the source text: three of these modules
