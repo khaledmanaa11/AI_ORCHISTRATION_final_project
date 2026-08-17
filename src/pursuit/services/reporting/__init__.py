@@ -7,9 +7,18 @@ package's public surface -- import from here, not from the sibling modules
 directly, matching `services/llm/__init__.py`'s convention so 07-04's mail
 transport and 07-07's end-of-game hook code against one stable path.
 
-NOTHING IN THIS PACKAGE TRANSMITS. The sink is injected and has no default;
-07-04 adds `DryRunSink` (disk) and `GmailSink` (the only module that will
-import `google-*`). Every shipped config carries `reporting.mode = dry_run`.
+NOTHING THIS SURFACE EXPORTS TRANSMITS. The sink is injected and has no
+default; `DryRunSink` (disk) is here, and every shipped config carries
+`reporting.mode = dry_run`.
+
+`GmailSink` IS DELIBERATELY NOT RE-EXPORTED, and that is the one departure
+from `services/llm/__init__.py`'s convention. That package must import
+`anthropic_provider` for its `register_provider()` side effect; this one has no
+such requirement, and re-exporting would make every importer of the reporting
+package load `google-*` -- measured at 0.265 s -- for a dependency that no
+shipped config uses. A caller in `live` mode imports
+`pursuit.services.reporting.gmail_sink` explicitly, which is also what keeps
+D-70's "exactly one module imports the vendor SDK" grep meaningful.
 """
 
 from pursuit.services.reporting.artifact_config import (
