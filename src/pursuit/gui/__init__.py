@@ -25,3 +25,14 @@ Entry point::
 
     uv run python -m pursuit.gui.live_app --snapshot logs/police/<uid>.view.json --refresh-ms <N>
 """
+
+#: Sec14 professional packaging. This package imports nothing, so `__all__`
+#: declares its SUBMODULE INVENTORY -- the documented meaning of `__all__` on a
+#: package. Derived from the tracked tree and re-derived on every run by
+#: `tests/unit/test_package_exports.py`, so a module added here without being
+#: exported, or exported after being deleted, fails that test rather than
+#: leaving a decorative list behind.
+__all__ = (
+    "live_app", "live_panels", "live_sidebar", "replay_app", "replay_panels",
+    "widgets",
+)

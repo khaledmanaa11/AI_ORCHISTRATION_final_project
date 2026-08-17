@@ -29,17 +29,44 @@ GETATTR = "getattr"
 _MIN_GETATTR_ARGS = 2
 
 
+def _is_literal_dunder(node: ast.stmt) -> bool:
+    """True for `__all__ = ("a", "b")` and nothing that computes or imports.
+
+    Added by 08-03, which gave every package the `__all__` Sec14 requires. The
+    admission is deliberately narrow: a single `__dunder__` target whose value
+    `ast.literal_eval` accepts. Such a statement binds no name from anywhere and
+    evaluates nothing, so it cannot reach the objective board state -- which is
+    the only question this module exists to answer. `__version__ = VERSION` is
+    NOT admitted, because its value is a Name and a Name came from an import.
+    """
+    if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
+        return False
+    target = node.targets[0]
+    if not (isinstance(target, ast.Name) and target.id.startswith("__")
+            and target.id.endswith("__")):
+        return False
+    try:
+        ast.literal_eval(node.value)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return False
+    return True
+
+
 def is_package_marker(tree: ast.Module) -> bool:
-    """True for a module that declares nothing -- a docstring, `__future__`
-    imports, or an empty file.
+    """True for a module that declares nothing it could derive anything from --
+    a docstring, `__future__` imports, a literal `__all__`, or an empty file.
 
     The anti-vacuity question. Measured before this existed: a root holding
     one empty `__init__.py` printed `OK: 1 module(s) scanned` and exited 0,
     so the gate could be turned green without a single view module existing.
+    That property is untouched by the `__all__` admission above: a `gui/`
+    holding only a marker still raises `EmptyScanError`, and the three floors
+    in `test_gui_structural.py` still count only substantive modules.
     """
     return all(
         (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant))
         or (isinstance(node, ast.ImportFrom) and node.module == "__future__")
+        or _is_literal_dunder(node)
         for node in tree.body
     )
 
