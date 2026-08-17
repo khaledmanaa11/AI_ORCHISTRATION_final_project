@@ -1,36 +1,27 @@
-"""`view_builder` behaviour: the ONE reader of `ctx.state` outside the turn
-loop, the honest-`None` belief convention, and the caller-owned hint history
-(NET-02 -- never a module-level global, never a class attribute).
+"""`view_builder` as a projection: the ONE reader of `ctx.state` outside the
+turn loop, the honest-`None` belief convention, and the densification that
+keeps a coordinate from ever being a value in a grid.
 
-Peer data is hostile by 05-12's boundary rule: `ctx.incoming_hints[sender]`
-is whatever arrived over the wire, validated as nothing more than a dict.
-The accumulator must be TOTAL over it -- a view that raises is a dashboard
-that dies mid-game.
+The hint-history half lives in `test_view_hint_history.py` -- split at the
+150-code-line gate (Segal Table 5).
 """
 
 from __future__ import annotations
 
 import ast
 import dataclasses
+import math
 import pathlib
 
 import pytest
-from pursuit.sdk.view_builder import HintHistory, build_local_view
 
+from pursuit.network.turn_language import belief_snapshot
+from pursuit.sdk.view_builder import HintHistory, build_local_view
 from tests.unit import local_view_fixtures as fx
 from tests.unit._fakes_agent import make_ctx
 
 _SDK_ROOT = pathlib.Path(__file__).parents[2] / "src" / "pursuit" / "sdk"
 _TRUE_POSITION_FIELDS = ("cop", "thief", "barriers")
-
-_HOSTILE_PAYLOADS = (
-    {},
-    {"text": None},
-    {"text": 17, "intent": "lie", "turn": 1},
-    {"text": "ok", "intent": "maybe", "turn": "3"},
-    {"text": "ok", "intent": "truth", "turn": True},
-    "not a dict at all",
-)
 
 
 def _reads_true_position(path: pathlib.Path) -> bool:
@@ -55,7 +46,7 @@ def test_view_builder_is_the_only_sdk_module_that_reads_the_true_position():
 
 def test_the_scan_above_can_actually_fail(tmp_path):
     """Counter-control for the scan: a module that DOES read `ctx.state.thief`
-    is reported, so an empty `readers` set means something."""
+    is reported, so an empty `readers` set would mean something."""
     leaky = tmp_path / "leaky.py"
     leaky.write_text("def render(ctx):\n    return ctx.state.thief\n", encoding="utf-8")
     clean = tmp_path / "clean.py"
@@ -85,12 +76,29 @@ def test_belief_view_carries_the_posterior_argmax_and_reliability(
     assert 0.0 <= view.belief.reliability <= 1.0
 
 
+def test_entropy_is_shannon_bits_and_agrees_with_the_jsonl_snapshot(
+    tmp_path, default_params, network_params
+):
+    """`BeliefMap.entropy()` was extracted out of `belief_snapshot` so the
+    formula has one owner. Both halves of that are pinned here: the VALUE
+    (a uniform 7x7 prior is log2(49) bits, so a base change to `ln` fails)
+    and the AGREEMENT of the two consumers on the same map."""
+    ctx = fx.honest_context(tmp_path, default_params, network_params)
+    ctx.brain = fx.belief_adapter(default_params)
+    cells = default_params.board_size**2
+    assert ctx.brain.belief.entropy() == pytest.approx(math.log2(cells))
+    entropy, argmax, _ = belief_snapshot(ctx)
+    view = build_local_view(ctx, HintHistory())
+    assert view.belief.entropy == entropy
+    assert view.belief.argmax == argmax
+
+
 def test_belief_and_scent_grids_are_dense_and_positional(
     tmp_path, default_params, network_params
 ):
-    """Coordinate-KEYED grids would put every cell on the board into the
-    view as a value, including the opponent's -- so both are densified to
-    row-major floats and nothing in them is a coordinate."""
+    """A coordinate-KEYED grid would put every cell on the board into the
+    view as a value, the opponent's true cell among them -- so both are
+    densified to row-major floats and nothing in them is a coordinate."""
     view = fx.honest_view(tmp_path, default_params, network_params)
     grids = (view.belief.rows, view.scent.own, view.scent.opponent)
     assert len(grids) == 3
@@ -98,7 +106,19 @@ def test_belief_and_scent_grids_are_dense_and_positional(
         assert len(grid) == view.board_size
         for row in grid:
             assert len(row) == view.board_size
-            assert all(isinstance(value, float) for value in row)
+            assert all(type(value) is float for value in row)
+
+
+def test_the_scent_grid_keeps_the_values_it_densified(
+    tmp_path, default_params, network_params
+):
+    """Counter-control for the densification: a builder returning an
+    all-zero board of the right SHAPE would satisfy the test above."""
+    view = fx.honest_view(tmp_path, default_params, network_params)
+    row, col = fx.OWN_CELL
+    assert view.scent.own[row][col] > 0.0
+    assert sum(sum(r) for r in view.scent.own) > 0.0
+    assert sum(sum(r) for r in view.belief.rows) == pytest.approx(1.0)
 
 
 def test_own_cell_follows_the_role_and_never_the_opponent(
@@ -109,61 +129,15 @@ def test_own_cell_follows_the_role_and_never_the_opponent(
     view = build_local_view(ctx, HintHistory())
     assert view.own_cell == fx.OPPONENT_CELL
     assert view.role == "thief"
+    assert view.scent is None
 
 
-def test_incoming_hints_are_recorded_with_the_senders_claimed_intent(
+def test_the_view_reports_the_machine_state_and_the_freeze_timer(
     tmp_path, default_params, network_params
 ):
     view = fx.honest_view(tmp_path, default_params, network_params)
-    assert len(view.hints) == 1
-    assert view.hints[0].sender == "thief"
-    assert view.hints[0].claimed_intent == "lie"
-    assert view.hints[0].text == fx.INCOMING_HINT["text"]
-
-
-def test_hint_history_is_append_only_and_deduplicated(
-    tmp_path, default_params, network_params
-):
-    """`ctx.incoming_hints` holds the LAST hint per sender and is never
-    cleared, so a refresh loop re-reads the same one every tick."""
-    ctx = fx.honest_context(tmp_path, default_params, network_params)
-    history = HintHistory()
-    for _ in range(3):
-        build_local_view(ctx, history)
-    assert len(history.entries) == 1
-    ctx.incoming_hints = {"thief": {"text": "second", "intent": "truth", "turn": 3}}
-    view = build_local_view(ctx, history)
-    assert [h.text for h in view.hints] == [fx.INCOMING_HINT["text"], "second"]
-
-
-def test_two_histories_in_one_interpreter_share_nothing(
-    tmp_path, default_params, network_params
-):
-    """NET-02 / rule 2: the accumulator is an instance the caller owns."""
-    ctx = fx.honest_context(tmp_path, default_params, network_params)
-    first, second = HintHistory(), HintHistory()
-    build_local_view(ctx, first)
-    assert first.entries and second.entries == []
-
-
-def test_recorded_outgoing_hints_join_the_same_log():
-    history = HintHistory()
-    history.record_outgoing(turn=5, text="I am heading south", intent="truth")
-    assert [(h.sender, h.claimed_intent) for h in history.entries] == [("self", "truth")]
-
-
-def test_hostile_hint_payloads_never_raise_and_never_fabricate(
-    tmp_path, default_params, network_params
-):
-    """Total over peer data: nothing here may raise, and a field we cannot
-    trust is dropped rather than coerced into something plausible."""
-    assert len(_HOSTILE_PAYLOADS) == 6
-    ctx = fx.honest_context(tmp_path, default_params, network_params)
-    for payload in _HOSTILE_PAYLOADS:
-        ctx.incoming_hints = {"thief": payload}
-        view = build_local_view(ctx, HintHistory())
-        assert all(isinstance(hint.text, str) for hint in view.hints)
-        assert all(hint.turn is None or isinstance(hint.turn, int) for hint in view.hints)
-        assert all(
-            hint.claimed_intent in (None, "truth", "lie") for hint in view.hints
-        )
+    assert view.machine_state == "handshake"
+    assert view.idle_seconds == fx.IDLE_SECONDS
+    assert view.turn == fx.TURN
+    assert view.declared_barriers == tuple(sorted(fx.BARRIERS))
+    assert view.barriers_placed == fx.BARRIERS_PLACED
