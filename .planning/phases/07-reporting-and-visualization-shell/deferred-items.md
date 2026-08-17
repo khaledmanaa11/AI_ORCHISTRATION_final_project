@@ -213,6 +213,22 @@ still **not** in `quality-gate.yml`, though it has existed since 03-10 and is ru
 in every plan's verification block. Pre-existing and unrelated to 07-03, so it is
 recorded here rather than silently added inside a commit about a different gate.
 
+### RESOLVED (07-09): wired into `quality-gate.yml` as its own job
+
+Fixed rather than carried into Phase 8. Job `no-llm-in-strategy`, shaped exactly like
+`local-truth`. Two things are recorded honestly with it:
+
+- **The two documents disagree about the sanction, and the CI comment says so.**
+  `docs/RULES.md:61` marks rule 25 **RECOMMENDED**, "No mandated sanction" — the book warns
+  that blind reliance invites hallucinations, illegal moves and technical loss and names no
+  penalty. CLAUDE.md's own binding list is stricter ("Never let the language model choose a
+  move"). The job enforces the stricter reading, which is the posture
+  `docs/SEGAL_GUIDELINES.md:182` asks for wherever the documents differ. An earlier draft of
+  that comment called rule 25 a disqualification flatly; it was corrected.
+- **The job is proven non-vacuous.** Probe 10: `from pursuit.services.llm import Gatekeeper`
+  planted in `src/pursuit/strategy/naive.py` → `VIOLATION ... imports 'pursuit.services.llm'
+  (STRAT-07 -- reaches an LLM via services)`, exit **1**. Reverted; exit 0 again.
+
 ---
 
 ## D7-7 · The whole 07-03 surface has no production caller until 07-06
@@ -475,6 +491,27 @@ in an artifact writer, and `game_id` is negotiated with the peer at handshake (D
 not ours alone to redefine. Until a series id exists, a production series contains one
 sub-game, which is *correct for a one-game series* and understates nothing.
 
+### ROUTED (07-09): not decidable from the book — 07-10 / Phase 8's league runner decides
+
+Examined against the documents rather than left silent, and the reasoning is recorded in
+`docs/phases/phase-7/GATE-7-MEASUREMENT.md` ("D7-17 in full"). Two book facts pull against
+each other:
+
+- `docs/PARAMETERS.md:86` (rule 52) — *"Against each opponent there is **one scoring game
+  only** — no rematches for points"*. A scored series therefore contains exactly one scoring
+  game, which is what production produces today and is **correct, understating nothing**.
+- `docs/PARAMETERS.md:72` (Table 17 row 5) settles ties on the "aggregate score across all
+  sub-games against one opponent", and `:168` calls `result_<game_id>.json` the summary
+  "across all sub-games". Those bind only if warm-up games (rule 52 permits and encourages
+  them) are meant to share the scored game's `game_id` — and **neither document says**.
+
+`game_id` is negotiated with the peer at handshake (D-61), so redefining it as
+series-scoped changes what two independently-written agents agree on. That is a protocol
+decision, not an artifact-writer one. **Three options with their costs are laid out in the
+gate document** — (a) leave it, (b) reuse one `game_id` per opponent by agreement, (c) add a
+local series id beside `game_id` — together with the cheapest correct move: **ask the
+lecturer**, because rule 38 territory is one misreported aggregate away.
+
 ---
 
 ## D7-18 · A `QuotaManager` path is unguarded against the shipped `config/` tree
@@ -494,6 +531,27 @@ Production is not affected: `end_of_game` passes `ctx.log_path.parent`, and
 the STRUCTURAL guard covers one writer while the rule ("no test writes the shipped config
 tree") is about the tree. Widening it means guarding `durable_write_json` at its own module,
 which is a change to a shared primitive and out of 07-07's scope.
+
+### RESOLVED (07-09): every binding guarded, and the list is derived rather than trusted
+
+`tests/_shipped_config_guard.install()` now wraps **all six** bindings of
+`durable_write_json` — `network/agent_step0_wiring`, `sdk/view_publish`,
+`security/step0_collect`, `services/reporting/artifacts`, `services/reporting/quota`, and
+the defining module `shared/durable_write` itself. Per module, because
+`from ... import durable_write_json` copies the function object: patching the definer alone
+would leave all five copies live.
+
+`tests/unit/test_shipped_config_guard.py` asserts two independent things, and neither
+substitutes for the other — an AST scan over `src/` that RE-DERIVES the binder list (so a
+seventh writer fails there rather than escaping), and a behavioural case per binding proving
+each is actually wrapped at run time.
+
+**Probe 9, the pre-07-09 behaviour restored** (`install` patching `step0_collect` alone):
+five of the six bindings **DID NOT RAISE**, and the write physically landed — 
+`config/police/guard_probe.json` and `guard_probe.prev.json` appeared in the SHIPPED config
+tree. The `step0_collect` case raised correctly and failed only on the leftover file an
+earlier unguarded binding had already written. Debris removed, probe reverted, 16 passed,
+`git status --short config/` empty.
 
 
 ---
@@ -525,3 +583,24 @@ files are real evidence and which are debris.
 directories (`log_55fa28cbef618a19_g01.json`, `result_55fa28cbef618a19.json`,
 `result_55fa28cbef618a19.prev.json` and `result_55fa28cbef618a19.eml`, per seat), none ignored by
 `git check-ignore`.
+
+### PARTIALLY CLOSED (07-09) — the provably-safe half fixed, the judgement half routed
+
+Ignoring `game_artifacts/` wholesale would undo D7-1; ignoring `game_artifacts/*/` would
+silently exclude the real per-role league artifacts 07-10 is about to produce. So only the
+two patterns that can **never** be one of rule 50's four artifacts are ignored:
+`game_artifacts/**/*.eml` (a dry run's rendered RFC 5322 message — not JSON, not one of the
+four names) and `game_artifacts/**/*.prev.json` (`durable_write_json`'s rotation generation
+— `.prev` is not a name `docs/PARAMETERS.md:165-168` gives). That halves the debris a
+`dev_launch` leaves, from 8 files to 4, and cannot hide evidence.
+
+`tests/unit/test_artifact_dir_hygiene.py` asserts **both halves**, because either alone is
+worthless: that the two debris patterns ARE ignored, and that all four required names and
+the directory itself are NOT. Probed both ways — removing the two patterns fails the two
+ignore cases; ignoring `game_artifacts/` wholesale fails the two not-ignored cases.
+
+The rule is now written where a person about to sweep the tree will read it:
+`game_artifacts/README.md` gains a "never `git add -A` here" section, and
+`docs/phases/phase-7/OAUTH-RUNBOOK.md` §6 repeats it at the moment it matters. **Which
+remaining files are real league evidence and which are debris stays 07-10's judgement** —
+that half is not automatable and is not pretended to be.
