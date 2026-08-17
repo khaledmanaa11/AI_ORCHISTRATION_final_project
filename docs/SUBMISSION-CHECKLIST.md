@@ -184,6 +184,15 @@ backticked repository path and every cited commit hash in the three documents �
    unchanged, the *magnitude* is not, and the cause was not established. **Correcting the
    three documents that quote the pair is a follow-up 08-09 did not own** — it belongs with
    whoever next touches the Phase-3 documents, and it is recorded here so it is not lost.
+   **CLOSED by 08-11, 2026-08-17.** All four sites — the log itself, `PRD.md`, `PLAN.md` and
+   the `PREFERRED` comment block in `shared/resolution.py` — now carry the reproducible
+   **32.0% → 7.5%**, name `scripts/sensitivity_reconcile.py` as the measuring script, keep
+   the superseded pair visible as a correction rather than erasing it, and state that the
+   cause was never established. Pinned by `tests/unit/test_sensitivity_correction.py`, which
+   reads both pairs out of `artifacts/sensitivity/reconcile.json` rather than typing them and
+   failed 3/7 against the pre-correction text. Act 4.3's table body is deliberately left
+   intact underneath its correction block: `sensitivity_reconcile.py` parses that table for
+   the claim it re-measures, so overwriting it would have broken the script that found this.
 2. **A vacuous test in its own work.** The first draft of the token-cost empty-evidence probe
    used a fixture with both token totals at zero, so deleting the guard it tested made it
    fail with `ZeroDivisionError` rather than the assertion — it would have kept passing if

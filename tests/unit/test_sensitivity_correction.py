@@ -45,7 +45,11 @@ MEASURING_SCRIPT = "scripts/sensitivity_reconcile.py"
 BOOK_ONLY_ARM = "run2/book_only/negotiated"
 SWAP_ARM = "run2/swap/negotiated"
 
-_NOT_ESTABLISHED = re.compile(r"cause was n(?:ot|ever) established", re.IGNORECASE)
+#: `[\s>]+` between the words, so a line-wrapped markdown blockquote still counts as
+#: the statement rather than as its absence. It does NOT relax the `not|ever`.
+_NOT_ESTABLISHED = re.compile(
+    r"cause[\s>]+was[\s>]+n(?:ot|ever)[\s>]+established", re.IGNORECASE
+)
 
 
 def measured_pair() -> tuple[str, str]:
@@ -119,4 +123,6 @@ def test_the_cause_phrase_detector_is_not_matching_everything() -> None:
     """Positive and negative control for the one regex the test above trusts."""
     assert _NOT_ESTABLISHED.search("the cause was never established by this sweep")
     assert _NOT_ESTABLISHED.search("The cause was not established.")
+    assert _NOT_ESTABLISHED.search("**The cause was\n> never established** -- the sweep")
     assert not _NOT_ESTABLISHED.search("the cause was established: the weights moved")
+    assert not _NOT_ESTABLISHED.search("the cause was firmly established")

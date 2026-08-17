@@ -128,10 +128,21 @@ in `artifacts/` for the report.
    that reaches Manhattan distance 1 wins outright. Our cop converts 100% against a naive
    thief; our thief's survival is where the remaining headroom is, and it is bounded by
    the rules rather than by the algorithm.
-3. **The negotiated rules change the game materially.** Making the swap a capture was
-   measured to drop thief survival against a barrier-blind chaser from **89% to 1%**. We
-   therefore propose the barrier race and decline the swap — a measured decision, recorded
-   in `resolution.py` and reversible if an opponent insists.
+3. **The negotiated rules change the game materially.** Making the swap a capture drops
+   thief survival against a barrier-blind chaser from **32.0% to 7.5%** (n=200 per arm,
+   shipped run-2 weights, negotiated opening; re-measured by
+   `scripts/sensitivity_reconcile.py`, artifact `artifacts/sensitivity/reconcile.json`).
+   We therefore propose the barrier race and decline the swap — a measured decision,
+   recorded in `resolution.py` and reversible if an opponent insists.
+
+   **Correction, 2026-08-17 (plan 08-11).** This paragraph read **“from 89% to 1%”** until
+   today, quoting `docs/phases/phase-3/ENGINEERING-LOG.md` Act 4.3. That pair does **not**
+   reproduce: 08-09's sweep re-measured all eight weights × rules × opening arms and the
+   highest is 52.5%, with none near 1%. The **direction is confirmed and unchanged** —
+   declining the swap is still worth ~25 points of thief survival and the cop seat converts
+   100% under all four rule combinations either way — but the magnitude was overstated and
+   **the cause was never established**: the engine moved through Phases 4–6 between the two
+   measurements and the sweep did not isolate which change is responsible.
 
 ## 8. Handoff to Phase 4 — read this before starting
 

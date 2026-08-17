@@ -152,9 +152,29 @@ worth more (20 points vs 10). Measuring it said otherwise:
 | swap counts as a capture | **1%** |
 | swap does not (book-only) | **89%** |
 
+> **CORRECTION, 2026-08-17 (plan 08-11) — the table above does not reproduce.**
+> The two percentages are left in place because they are what this log claimed on the day
+> and `scripts/sensitivity_reconcile.py` parses them out of this very table to compare
+> against; **they are superseded and must not be quoted as a current measurement.**
+> Re-measured by `scripts/sensitivity_reconcile.py` at n=200 per arm on the shipped
+> run-2 weights and the negotiated opening — the like-for-like setting this table
+> describes — the same matchup gives **32.0% book-only → 7.5% with the swap**
+> (`artifacts/sensitivity/reconcile.json`, rendered into `docs/SENSITIVITY.md`). All
+> eight weights × rules × opening arms were swept; the highest is 52.5% and none comes
+> near 1%. **The direction of the decision below is confirmed and does not change** —
+> declining the swap is still worth ~25 points of thief survival, and the cop seat still
+> converts 100% under all four rule combinations, so the swap still buys the cop nothing.
+> What changed is the *magnitude* (~88 points → ~25) and the claimed cause: the engine
+> moved through Phases 4–6 after this entry, and the sweep did **not** identify which
+> change is responsible. **The cause was never established**, and nothing here should be
+> read as if it had been. The same caveat applies to Act 4.2's `89% → 10%` line above,
+> which shares this baseline; that arm used a hand-tuned weight of 3.00 and was not
+> re-measured by the sweep at all.
+
 The cop seat was at 100% either way. So the swap predicate was worth ~88 points of thief
-survival and bought nothing. **We reversed the decision** and now propose the barrier race
-while declining the swap. The engine still implements both, because an opponent may propose
+survival **as measured on the day — read that figure through the correction above; the
+reproducible gap is ~25 points** — and bought nothing. **We reversed the decision** and now
+propose the barrier race while declining the swap. The engine still implements both, because an opponent may propose
 it and the search adapts — it expands through the live rules, so only positional judgement is
 baked into the weights.
 

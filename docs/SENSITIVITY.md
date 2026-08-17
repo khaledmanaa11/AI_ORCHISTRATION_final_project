@@ -239,6 +239,16 @@ this analysis did **not** re-derive which change is responsible, and says so rat
 guessing. Correcting the three documents that quote the pair is out of 08-09's scope and is
 recorded in `docs/SUBMISSION-CHECKLIST.md` as a follow-up.
 
+**Follow-up closed, 2026-08-17 (plan 08-11).** All four sites — `ENGINEERING-LOG.md` Act 4.3
+itself plus `docs/phases/phase-3/PRD.md`, `docs/phases/phase-3/PLAN.md` and
+`src/pursuit/shared/resolution.py` — now quote **32.0% → 7.5%**, name
+`scripts/sensitivity_reconcile.py`, keep the superseded pair visible as a correction rather
+than erasing it, and state that the cause was never established.
+`tests/unit/test_sensitivity_correction.py` holds all four to that, reading both pairs out of
+`artifacts/sensitivity/reconcile.json`. The generated block above is **not** affected: it
+renders from the artifact, and Act 4.3's table body was deliberately left intact under its
+correction so `sensitivity_reconcile.py` can keep parsing the claim it re-measures.
+
 ---
 
 ## Negotiable parameters this sweep could not measure

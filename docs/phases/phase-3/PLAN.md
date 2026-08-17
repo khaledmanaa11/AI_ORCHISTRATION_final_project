@@ -63,8 +63,16 @@ LP would return a vertex — a pure strategy — on the constant matrices that a
 the open early game, reintroducing the determinism the mover exists to remove.
 
 **ADR-05 — decline the swap predicate.** Measured, not assumed: making the swap a capture
-drops thief survival against a barrier-blind chaser from 89% to 1% and gains the cop seat
-nothing it does not already have. We propose the barrier race only.
+drops thief survival against a barrier-blind chaser from **32.0% to 7.5%** (n=200 per arm,
+shipped run-2 weights, negotiated opening — `scripts/sensitivity_reconcile.py`) and gains the
+cop seat nothing it does not already have. We propose the barrier race only.
+
+> **Correction, 2026-08-17 (plan 08-11).** This ADR read “from 89% to 1%” until today,
+> quoting `ENGINEERING-LOG.md` Act 4.3. That pair does not reproduce — the re-measurement
+> sweeps eight arms, the highest is 52.5% and none is near 1%. **The decision's direction is
+> confirmed and unchanged**; only the magnitude moves (~88 points → ~25). **The cause was
+> never established** — the engine moved through Phases 4–6 between the two measurements and
+> the sweep did not isolate which change is responsible.
 
 **ADR-06 — two optimisers, one shipped.** Outcome regression fits `P(cop wins)`, a proxy;
 `(1+λ)`-ES optimises league points directly with common random numbers. Which one ships is

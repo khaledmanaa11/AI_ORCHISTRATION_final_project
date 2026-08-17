@@ -36,9 +36,21 @@ BOOK_ONLY = ResolutionRules(capture_on_barrier_race=False, capture_on_swap=False
 
 #: What we propose in the pre-game declaration. MEASURED, not assumed -- see
 #: docs/phases/phase-3/RULES-RESOLUTION.md Sec5.1. Making the swap a capture costs
-#: the thief seat enormously (survival against a barrier-less chaser falls from
-#: 89% to 1%) and gains the cop seat nothing it does not already have, because the
-#: cop already converts 100% against a naive thief. So we propose the barrier race
+#: the thief seat (survival against a barrier-blind chaser falls from 32.0% to
+#: 7.5%, n=200 per arm on the shipped run-2 weights and the negotiated opening --
+#: re-measured by scripts/sensitivity_reconcile.py, artifact
+#: artifacts/sensitivity/reconcile.json) and gains the cop seat nothing it does not
+#: already have, because the cop already converts 100% against a naive thief.
+#:
+#: CORRECTION, 2026-08-17 (plan 08-11): this comment read "falls from 89% to 1%"
+#: until today, quoting docs/phases/phase-3/ENGINEERING-LOG.md Act 4.3. That pair
+#: does not reproduce -- the sweep covers eight arms, the highest is 52.5% and none
+#: is near 1%. THE DIRECTION BELOW IS CONFIRMED AND UNCHANGED; only the magnitude
+#: moves (~88 points of survival -> ~25). The cause was never established: the
+#: engine moved through Phases 4-6 between the two measurements and the sweep did
+#: not isolate which change is responsible.
+#:
+#: So we propose the barrier race
 #: -- which only ever fires on a cell the cop legitimately sealed -- and decline
 #: to propose the swap. Both remain supported; if an opponent proposes the swap we
 #: can accept it, and the search adapts because it expands through the live rules.
