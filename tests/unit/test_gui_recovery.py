@@ -69,6 +69,18 @@ def test_the_drawn_belief_support_is_exactly_the_published_support(drawn):
     assert len(lit) >= prod.display_floors().min_support_cells
 
 
+def test_the_drawn_scent_support_is_exactly_the_published_support(drawn):
+    """The same quantisation question of the scent panels, and THIS one bites
+    on production data. Measured on the view below: `scent.own` spans 0.08 to
+    1.8 (ratio 22.5) and `scent.opponent` 0.058 to 0.154 (2.66), against the
+    belief's 1.57 -- so a ramp that dropped its lowest bucket to the
+    background would lose cells here first, while the near-uniform belief
+    would hide the defect completely."""
+    own, opponent = render.scent_colours(drawn)
+    assert render.lit_cells(own) == prod.support_cells(drawn.scent.own)
+    assert render.lit_cells(opponent) == prod.support_cells(drawn.scent.opponent)
+
+
 def test_the_drawn_belief_does_not_invert_to_the_true_cell(drawn):
     """THE LOAD-BEARING ASSERTION, over the painted cells rather than the
     numbers behind them."""
@@ -110,8 +122,9 @@ def test_the_board_panel_paints_only_own_position_and_declared_barriers(drawn):
     knowledge. Nothing else on the board may be distinguishable."""
     colours = render.board_colours(drawn)
     assert colours[fx.OWN_CELL[0]][fx.OWN_CELL[1]] == render.OWN_COLOUR
-    for row, col in fx.BARRIERS:
-        assert colours[row][col] == render.BARRIER_COLOUR
+    # A SET COMPARISON, not a loop of asserts: an emptied `fx.BARRIERS` makes
+    # a loop body never run and pass, while `set() == {BARRIER_COLOUR}` fails.
+    assert {colours[row][col] for row, col in fx.BARRIERS} == {render.BARRIER_COLOUR}
     assert colours[fx.OPPONENT_CELL[0]][fx.OPPONENT_CELL[1]] == render.EMPTY_COLOUR
 
 

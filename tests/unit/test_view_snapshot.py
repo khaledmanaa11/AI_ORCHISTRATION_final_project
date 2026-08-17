@@ -8,6 +8,7 @@ otherwise pass silently.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
@@ -40,6 +41,17 @@ def test_a_belief_free_view_round_trips_as_none(tmp_path, default_params, networ
     assert restored == view and restored.belief is None
 
 
+def test_a_scent_free_view_round_trips_as_none(tmp_path, default_params, network_params):
+    """`LocalView.scent` is `ScentView | None` and the None is reachable:
+    `view_builder._scent_view` returns it whenever `ctx.scent_field` is
+    unset. Both scent panels then render blank rather than flat."""
+    view = dataclasses.replace(
+        fx.honest_view(tmp_path, default_params, network_params), scent=None
+    )
+    restored = decode_view(snapshot_payload(view))
+    assert restored == view and restored.scent is None
+
+
 def test_a_missing_snapshot_reads_as_none(tmp_path):
     assert read_snapshot(tmp_path / "never-written.view.json") is None
 
@@ -64,16 +76,15 @@ def test_a_snapshot_falls_back_to_its_previous_generation(tmp_path, default_para
     assert read_snapshot(path) is not None
 
 
-@pytest.mark.parametrize(
-    "payload",
-    [
-        None,
-        [],
-        {},
-        {"role": "police"},
-        {"board_size": "seven"},
-    ],
-)
+#: NAMED and floored below: an emptied parametrize table SKIPS silently.
+_NOT_A_VIEW = [None, [], {}, {"role": "police"}, {"board_size": "seven"}]
+
+
+def test_the_not_a_view_table_is_not_thinned():
+    assert len(_NOT_A_VIEW) == 5
+
+
+@pytest.mark.parametrize("payload", _NOT_A_VIEW)
 def test_a_payload_that_is_not_a_view_decodes_to_none(payload):
     assert decode_view(payload) is None
 

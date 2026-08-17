@@ -131,9 +131,16 @@ def test_the_same_scan_reports_a_leaky_published_file(tmp_path, default_params, 
         assert scan.coordinate_hits(leaky, fx.OPPONENT_CELL, payload["board_size"]), name
 
 
-@pytest.mark.parametrize(
-    ("watchdog", "expected"), [(_Ticking(), 2.5), (_Boolish(), None), (object(), None)]
-)
+#: The three watchdog shapes the publisher must survive. NAMED and floored
+#: below: a thinned table skips silently rather than failing.
+_IDLE_CASES = [(_Ticking(), 2.5), (_Boolish(), None), (object(), None)]
+
+
+def test_the_idle_case_table_is_not_thinned():
+    assert len(_IDLE_CASES) == 3, "a live reading, a bool, and no reading at all"
+
+
+@pytest.mark.parametrize(("watchdog", "expected"), _IDLE_CASES)
 def test_the_idle_reading_is_carried_or_honestly_absent(watchdog, expected):
     assert view_publish.idle_reading(watchdog) == expected
 

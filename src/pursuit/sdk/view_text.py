@@ -19,6 +19,7 @@ claim the agent had just been touched.
 from __future__ import annotations
 
 from pursuit.sdk.local_view import HintView, LocalView
+from pursuit.sdk.view_render import belief_colours, lit_cells
 
 #: Presentation only: how many decimals a float reading prints with.
 DECIMALS = 2
@@ -108,7 +109,16 @@ def _hint_line(hint: HintView) -> str:
 
 
 def _support(view: LocalView) -> int:
-    return sum(1 for row in view.belief.rows for value in row if value > 0.0)
+    """The cells the belief panel ACTUALLY LIGHTS, read off the same colour
+    grid the panel is painted from -- not a second count over the numbers.
+
+    The caption and the picture are then the same fact by construction, and
+    `test_the_lit_cell_count_matches_the_published_support` (which counts the
+    positive values independently) fails the moment a change to the heat ramp
+    makes them differ. That divergence is the rules 8-9 hazard quantisation
+    introduces, so it is worth a test that can see it.
+    """
+    return len(lit_cells(belief_colours(view)))
 
 
 def _cell(cell: tuple[int, int]) -> str:
