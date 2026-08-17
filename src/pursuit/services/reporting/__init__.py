@@ -33,6 +33,13 @@ from pursuit.services.reporting.artifact_declaration import (
     verify_embedded_declarations,
     write_declaration_artifact,
 )
+from pursuit.services.reporting.artifact_log import (
+    LogArtifactField,
+    build_log_artifact,
+    verify_log_artifact,
+    verify_log_turns,
+    write_log_artifact,
+)
 from pursuit.services.reporting.artifacts import (
     ArtifactField,
     ArtifactPrefix,
@@ -66,6 +73,7 @@ __all__ = (
     "DeclarationContext",
     "DosDetector",
     "DryRunSink",
+    "LogArtifactField",
     "MailSink",
     "QuotaField",
     "QuotaManager",
@@ -78,6 +86,7 @@ __all__ = (
     "artifact_header",
     "build_config_artifact",
     "build_declaration_artifact",
+    "build_log_artifact",
     "build_report_message",
     "config_filename",
     "declaration_filename",
@@ -88,8 +97,11 @@ __all__ = (
     "result_filename",
     "sub_game_suffix",
     "verify_embedded_declarations",
+    "verify_log_artifact",
+    "verify_log_turns",
     "write_artifact",
     "write_artifact_bytes",
     "write_config_artifact",
+    "write_log_artifact",
     "write_declaration_artifact",
 )
