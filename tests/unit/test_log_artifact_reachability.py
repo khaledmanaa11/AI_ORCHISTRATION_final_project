@@ -131,9 +131,14 @@ def test_the_builder_has_a_production_caller_and_it_is_the_game_end_hook(scan):
         "pursuit/services/reporting/artifact_log.py",  # the builder itself
         "pursuit/services/reporting/end_of_game.py",  # THE production caller
         "pursuit/services/reporting/log_join.py",  # the join, on log_read
+        "pursuit/services/reporting/replay_session.py",  # 07-08, key names only
+        "pursuit/services/reporting/replay_verify.py",  # 07-08, the replay READER
         "pursuit/services/reporting/result_agreement.py",  # rule 35, on log_read
     ]
     assert "write_log_artifact" in scan["pursuit/services/reporting/end_of_game.py"]
+    # 07-08's two entries are READERS -- key names and `verify_log_turns`, never
+    # the builder. That half is pinned by AST in
+    # `test_replay_verify_boundary.py`, which also carries its own control.
 
 
 def test_the_builder_never_reaches_for_the_ledger_reader_itself(scan):
