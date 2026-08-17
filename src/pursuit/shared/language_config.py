@@ -2,7 +2,7 @@
 
 load_language_config() is the single entry point for the LLM gatekeeper's rate-limit
 and budget numbers. Three JSON groups: `gatekeeper` (docs/PARAMETERS.md Table 19 --
-five MINIMUM-status rows floor-checked against _GATEKEEPER_MINIMA below, plus two
+five MINIMUM-status rows floor-checked against GATEKEEPER_MINIMA below, plus two
 NEGOTIABLE rows loaded with no floor), `budget` (Table 18 row 4's negotiable series
 ceiling, plus two engineering-default degrade thresholds -- D-18 discipline: neither
 threshold is a book value, both are labelled as such here, not in the loader body),
@@ -35,7 +35,7 @@ class LanguageKey(str, Enum):
     """Field names for config/{police,thief}/language.json.
 
     Structural only -- no numeric literal lives on this enum (D-05 discipline
-    extended to Phase 4); every number is in the JSON files or _GATEKEEPER_MINIMA.
+    extended to Phase 4); every number is in the JSON files or GATEKEEPER_MINIMA.
     """
 
     VERSION = "version"
@@ -81,7 +81,14 @@ class LanguageParams:
 # engineering defaults -- D-18 discipline). Config may raise these, never lower
 # them; load_language_config() enforces the floor and names the key on violation.
 # (field name, LanguageKey, Table 19 row #, minimum)
-_GATEKEEPER_MINIMA: tuple[tuple[str, LanguageKey, int, int], ...] = (
+#
+# PUBLIC since 07-01, and deliberately so: shared/reporting_config.py floor-checks
+# the SAME five rows for the mail gatekeeper (D-68 -- one gatekeeper class, two
+# instances), so the table has a second consumer and CLAUDE.md Table 5 says
+# extract at the second copy rather than duplicate. The floors live HERE, in the
+# loader that has always owned them, and shared/gatekeeper_params.py stays free
+# of every numeric literal.
+GATEKEEPER_MINIMA: tuple[tuple[str, LanguageKey, int, int], ...] = (
     ("requests_per_minute", LanguageKey.REQUESTS_PER_MINUTE, 1, 30),
     ("parallel_requests", LanguageKey.PARALLEL_REQUESTS, 2, 2),
     ("wait_after_error_seconds", LanguageKey.WAIT_AFTER_ERROR_SECONDS, 3, 5),
@@ -91,7 +98,7 @@ _GATEKEEPER_MINIMA: tuple[tuple[str, LanguageKey, int, int], ...] = (
 
 # Table 19's two NEGOTIABLE rows (6, 7) -- loaded with no floor check: any agreed
 # value is valid, the shipped file value is only the default absent an agreement.
-_GATEKEEPER_NEGOTIABLE: tuple[tuple[str, LanguageKey], ...] = (
+GATEKEEPER_NEGOTIABLE: tuple[tuple[str, LanguageKey], ...] = (
     ("response_timeout_seconds", LanguageKey.RESPONSE_TIMEOUT_SECONDS),
     ("watchdog_threshold_seconds", LanguageKey.WATCHDOG_THRESHOLD_SECONDS),
 )
@@ -128,7 +135,7 @@ def load_language_config(path: "Path | str") -> LanguageParams:
     validate_model_group(model, source=LANGUAGE_CONFIG_SOURCE)
 
     fields: dict[str, object] = {"version": version, "model": model}
-    for name, key, _row, minimum in _GATEKEEPER_MINIMA:
+    for name, key, _row, minimum in GATEKEEPER_MINIMA:
         value = require_int(gatekeeper, key.value, source=LANGUAGE_CONFIG_SOURCE)
         if value < minimum:
             raise ValueError(
@@ -136,7 +143,7 @@ def load_language_config(path: "Path | str") -> LanguageParams:
                 f"(docs/PARAMETERS.md Table 19 minimum), got {value}"
             )
         fields[name] = value
-    for name, key in _GATEKEEPER_NEGOTIABLE:
+    for name, key in GATEKEEPER_NEGOTIABLE:
         fields[name] = require_int(gatekeeper, key.value, source=LANGUAGE_CONFIG_SOURCE)
 
     fields["token_budget_per_series"] = require_int(

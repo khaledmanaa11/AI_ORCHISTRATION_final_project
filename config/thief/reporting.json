@@ -1,0 +1,36 @@
+{
+  "version": "1.00",
+  "_sources": {
+    "_note": "JSON carries no comment syntax, so every numeric leaf below is cited here instead. Nothing in this file is an engineering default and nothing is invented. Keys beginning with _ are documentation and are ignored by shared/reporting_config.py.",
+    "gatekeeper.requests_per_minute": "docs/PARAMETERS.md Table 19 row 1 -- 30, status MINIMUM. Same row the LLM gatekeeper uses; C and r for the mail token bucket are derived from it exactly as services/llm/gatekeeper.py documents (REPORT-03).",
+    "gatekeeper.parallel_requests": "docs/PARAMETERS.md Table 19 row 2 -- 2, status MINIMUM. OQ-3: docs/SEGAL_GUIDELINES.md:174 gives concurrent_max 5; fewer concurrent requests is the stricter reading (:182), so the Table-19 minimum of 2 stands.",
+    "gatekeeper.wait_after_error_seconds": "OQ-3, MAIL INSTANCE ONLY -- 30. docs/PARAMETERS.md Table 19 row 3 gives 5 sec as a MINIMUM (negotiable upward, never downward); docs/SEGAL_GUIDELINES.md:174 gives retry_after_seconds 30; :182 instructs to take the stricter value. 30 is upward of the Table-19 minimum and the stricter posture toward a third-party API, satisfying both documents. config/*/language.json keeps 5 and is NOT edited by this plan.",
+    "gatekeeper.retries_before_failure": "docs/PARAMETERS.md Table 19 row 4 -- 3, status MINIMUM. Equals docs/SEGAL_GUIDELINES.md:174's max_retries 3, so the two documents agree. Also the structural input to the DOS detector's latch (OQ-2).",
+    "gatekeeper.queue_depth": "docs/PARAMETERS.md Table 19 row 5 -- 100, status MINIMUM. The depth of the reporting chain's FIFO send queue; on overflow the chain queues and refuses, it never rejects and never crashes (docs/SEGAL_GUIDELINES.md:175-176, rules 28-29).",
+    "gatekeeper.response_timeout_seconds": "docs/PARAMETERS.md Table 19 row 6 -- 30 sec, status NEGOTIABLE.",
+    "gatekeeper.watchdog_threshold_seconds": "docs/PARAMETERS.md Table 19 row 7 -- 60 sec, status NEGOTIABLE.",
+    "gatekeeper.requests_per_hour": "OQ-1 -- docs/SEGAL_GUIDELINES.md:173 gives the generic API gatekeeper requests_per_hour 500. This SOURCED hourly bound is what the Quota Manager enforces. No document anywhere gives a DAILY figure, so none is written here; if a daily bound is ever structurally needed it is DERIVED as 24 x requests_per_hour and labelled derived, never presented as a book value.",
+    "reporting.mode": "dry_run writes the report to disk and TRANSMITS NOTHING. Every config this repository ships is dry_run; only the 07-10 human checkpoint flips one to live for a single supervised send, and flips it back (rules 31, 39-40).",
+    "reporting.recipient": "docs/PARAMETERS.md Addresses -- the single mandatory destination for game reports, FIXED status. shared/reporting_config.py rejects any other value.",
+    "reporting.artifact_dir": "07-01 decision, reasoned in shared/reporting_config.py's module docstring. NOT logs/: .gitignore ignores logs/ wholesale while rule 50 requires the four JSON artifacts to be committed. game_artifacts/ is verified not ignored.",
+    "reporting.credentials_env_var": "Rules 39-40 -- the NAME of an environment variable, never a credential and never a path in git. The loader rejects anything that is not a bare env-var name. 07-04 adds the dummy entry to .env-example; 07-10 is the only step that places a real file at the named path.",
+    "reporting.token_env_var": "Rules 39-40 -- same contract as credentials_env_var, for the OAuth token cache."
+  },
+  "gatekeeper": {
+    "requests_per_minute": 30,
+    "parallel_requests": 2,
+    "wait_after_error_seconds": 30,
+    "retries_before_failure": 3,
+    "queue_depth": 100,
+    "response_timeout_seconds": 30,
+    "watchdog_threshold_seconds": 60,
+    "requests_per_hour": 500
+  },
+  "reporting": {
+    "mode": "dry_run",
+    "recipient": "rmisegal+uoh26finalgame@gmail.com",
+    "artifact_dir": "game_artifacts",
+    "credentials_env_var": "PURSUIT_GMAIL_CREDENTIALS_PATH",
+    "token_env_var": "PURSUIT_GMAIL_TOKEN_PATH"
+  }
+}
