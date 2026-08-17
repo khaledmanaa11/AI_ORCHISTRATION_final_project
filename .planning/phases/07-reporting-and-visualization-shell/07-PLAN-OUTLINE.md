@@ -462,3 +462,54 @@ Recorded so the plans start from the tree, not the draft (CONTEXT files are draf
    touches the LLM path, so it is not a zero-risk addition.
 6. **`config/police/games_played.json` = 1881** — CONTEXT says nothing about it, and this is the
    phase that mails that number to the lecturer (OQ-5, rule 38).
+
+---
+
+## 5. Open questions — RESOLVED (2026-08-17, orchestrator)
+
+Every source quote below was re-verified against the file and line before deciding. **Zero
+numbers invented.** OQ-5 is the only one that stays with the human.
+
+**OQ-1 — daily send ceiling → use the SOURCED hourly bound; never invent a daily one.**
+`docs/SEGAL_GUIDELINES.md:173-174` supplies real values for the generic API gatekeeper:
+`requests_per_minute: 30`, `requests_per_hour: 500`, `max_retries: 3`. Those are sourced and are
+what the Quota Manager enforces. No document anywhere gives a *daily* figure, so none is written.
+If the chain must express a daily bound at all, it is **derived** as `24 x requests_per_hour` and
+labelled derived in both config and source — never presented as a book value. An engineering
+default is not needed here and is therefore not used.
+
+**OQ-2 — DOS detector → structural latch, zero new numbers.**
+Take the alternative the outline itself proposed rather than an engineering default: the detector
+latches when the token bucket has been continuously empty across `retries_before_failure` + 1
+attempts. Rule 29 is satisfied, and nothing is invented. Prefer this over a labelled default
+whenever a structural definition exists — a number nobody can source is a number nobody can
+defend.
+
+**OQ-3 — backoff → 30 s for the MAIL instance; the LLM instance is untouched.**
+`docs/PARAMETERS.md:95` Table 19 row 3 gives backoff **5 sec, "minimum"**, and CLAUDE.md's own
+rule is that minimums may be negotiated **upward, never downward**. `SEGAL_GUIDELINES.md:174`
+gives `retry_after_seconds: 30`, and `:182` instructs "where the two documents differ, take the
+stricter value". 30 s is upward of the Table-19 minimum *and* the stricter posture toward a
+third-party API, so it satisfies both documents at once. **This applies only to the new mail
+gatekeeper instance — Phase 4's LLM path keeps its existing configured value; this phase must not
+change shipped LLM behaviour.**
+
+Concurrency is unambiguous: `PARAMETERS.md:94` gives max concurrent **2, "minimum"**; SEGAL gives
+`concurrent_max: 5`. Fewer concurrent requests is the stricter reading, and 2 is exactly the
+required minimum. **Keep 2.**
+
+**OQ-4 — `result_` → one file per SERIES, rewritten and emailed after every sub-game.**
+Both documents are satisfied literally, and they are not in conflict. `PARAMETERS.md:168` names
+`result_<game_id>.json` with **no** `_g<NN>` suffix and defines it as "Final results summary
+across all sub-games. **This is the mandatory report emailed to the lecturer.**" — one aggregate
+file. Rule 32 (`RULES.md:73`) requires results reported automatically via mail, sanctioned
+**per game** ("No report -> the points from that game are disqualified"). So: one series file,
+durably rewritten (with `.prev` rotation) after each sub-game, and **emailed each time** — which
+is what makes rule 32's per-game sanction unreachable. Recorded as an INTERPRETATION, with both
+citations, because neither document states the rewrite-and-resend shape in as many words.
+
+**OQ-5 — the games-played value → stays with the human.** Closed as a *mechanism* by plan 07-00
+(suite delta now 0/0, one real game 1/1, the Phase-6 claim that certified the bug withdrawn). The
+**value** is set at 07-10 before any live send, from
+`docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md`. Inventing it would be the rule-38 violation
+07-00 exists to prevent.
