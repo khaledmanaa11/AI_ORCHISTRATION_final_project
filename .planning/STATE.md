@@ -3,77 +3,122 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 08-01, 08-02 and 08-04 are fully committed and closed, tree clean. NEXT IS
-  THE REST OF PHASE 8'S WAVE 1: 08-03 (publication hygiene, `LICENSE`, `CONTRIBUTING.md`,
-  packaging metadata) and 08-05 (deferred #13/#19). WHAT IS LEFT FOR THEM, WRITTEN DOWN RATHER
-  THAN REMEMBERED: `docs/SUBMISSION-CHECKLIST.md` is the gap register and it names the owning
-  plan for every one of its 32 GAPs. 08-03 inherits SEVEN -- `LICENSE` (blocked on OQ8-5, a
-  human names the licence), `CONTRIBUTING.md`, `pyproject.toml` `license`/`authors`, `__all__`
-  missing from 7 of 11 packages, `__version__` in ZERO `__init__.py`, no automated test-report
-  artifact, and TWO the outline never predicted: root-level `graph.json` and `graph.html` are
-  NOT gitignored (`git check-ignore -q` exits 1 for both, while `.gitignore:151-152` covers only
-  the `.planning/graphs/` copies and CLAUDE.md asserts they are ignored), and 4 of 26 tracked
-  config JSONs carry no `version` field (`config/{police,thief}/{resolution,role}.json`).
-  08-03 SHOULD RE-COUNT: 08-04 added `config/{police,thief}/league.json`, both carrying
-  `version` "1.00", so the tracked-config denominator is now 28. 08-04'S FINDING IS CLOSED --
-  `build_declaration_artifact` / `write_declaration_artifact` / `DeclarationContext` now have a
-  grep-proven production caller in `services/reporting/end_of_game_declaration.py`, and a real
-  `dev_launch` game (`game_id` `397b3503b1bfa996`, exit 0) wrote `declaration_<game_id>.json` on
-  BOTH seats; the two artifacts are kept at `docs/phases/phase-8/declaration-evidence/`.
-  08-11 still inherits T5-06: `version.py` reads `1.00` and `pyproject.toml` reads `1.00.0`, and
-  D-79 derives the tag name from the reconciled value. STILL OPEN AND STILL A HUMAN'S: OQ8-1
-  (D7-17 -- the question is DRAFTED and UNSENT at
+Resume file: None -- 08-01, 08-02, 08-03, 08-04 and 08-05 are all committed and closed, tree
+  clean (only untracked throwaway `game_artifacts/` from dev_launch runs, which must NEVER be
+  committed -- D7-19: a grader reads those filenames as league evidence). WAVE 1 OF PHASE 8 IS
+  COMPLETE. NEXT IS WAVE 2: 08-06 (the README rewrite -- the phase's largest document and an
+  honesty problem, not a formatting one), 08-07 (architecture docs, C4 x4, ISO 25010, extension
+  points), 08-08 (the three missing per-mechanism PRDs) and 08-09 (research and visualization).
+  All four depend only on 08-01 and share no files, so they are a genuine four-way fan-out --
+  and per the parallel-executor rule they need WORKTREES if run concurrently.
+  WHAT WAVE 2 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py` now exits 1
+  at 49 PASS / 24 GAP / 13 UNJUDGED (was 41/32/13). The 24 remaining GAPs belong to 08-06 (9
+  README rows), 08-07 (4), 08-08 (3), 08-09 (4), 08-11/08-12 (2: the tag G6-08 and T5-06's
+  version reconciliation) and 08-06+07-10 jointly (2 screenshot rows).
+  08-06 SHOULD KNOW: G1-05 and G1-06 are still GAP and that is DELIBERATE -- they judge the
+  README's own `contribut` / `license` HEADINGS, not the existence of the files. `CONTRIBUTING.md`
+  and `LICENSE` now both exist at the repo root, so those two rows close with two sections that
+  link to them. G1-08/G1-09 are the honesty rows: `README.md:7` still says the agent "decides
+  moves with a trained tabular Q-learning policy", which Phase 3 WITHDREW.
+  08-11 STILL OWNS T5-06: `version.py` reads `1.00` and `pyproject.toml` reads `1.00.0`, and
+  D-79 derives the tag name from the reconciled value. 08-03 had `pyproject.toml` open and did
+  NOT reconcile it, on purpose.
+  A NEW STANDING CONSTRAINT FROM 08-03: every package under `src/pursuit/` now declares `__all__`,
+  and `tests/unit/test_package_exports.py` DERIVES each inventory from `git ls-files`. A plan
+  that adds a module to any package MUST add its name to that package's `__all__` or that test
+  fails. It already caught 08-05's own new `turn_buffer_queue.py`.
+  STILL OPEN AND STILL A HUMAN'S: OQ8-1 (the D7-17 question, DRAFTED and UNSENT at
   `docs/phases/phase-8/D7-17-QUESTION-FOR-THE-LECTURER.md`), OQ8-2 (the games-played VALUE),
-  OQ8-5 (the licence), OQ8-6 (the two repo URLs, which 08-12 creates) and OQ8-7 (the agreed
-  token ceiling, shipped at the book's negotiable 200,000).
-  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 131 commits sit ahead of
+  OQ8-5 (**THE LICENCE -- now a prepared MIT file carrying a `PREPARED, NOT ADOPTED` block, with
+  `docs/SUBMISSION-CHECKLIST.md` reading `**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION`. A
+  BICONDITIONAL TEST binds the two, so the flag cannot be dropped by tidying either file. 08-12
+  MUST NOT PUBLISH until the owner confirms the licence, the copyright-holder line and the
+  year**), OQ8-6 (the two repo URLs) and OQ8-7 (the agreed token ceiling).
+  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 144 commits sit ahead of
   `origin/main`.
-stopped_at: PHASE 8 PLAN 04 EXECUTED (2026-08-17) -- THE MANDATORY DECLARATION ARTIFACT STOPS
-  BEING DEAD CODE, AND THE LEAGUE MACHINERY LANDS WITH RULE 38'S LINE UNMOVED. No `08-04-PLAN.md`
-  existed; executed from `08-PLAN-OUTLINE.md` Sec9's 08-04 entry. FIVE COMMITS, each atomic:
-  `4fbd4ed` league.json + loader (D-81), `e672838` the per-opponent ledger (D-80), `8c6fd1e` the
-  declaration artifact's FIRST production caller, `daf5654` the D7-17 draft + checklist closure,
-  `b32bf9d` the graph refresh. THE DEFECT IS CLOSED AND PROVEN BY A REAL GAME, not by a fixture:
-  `uv run python scripts/dev_launch.py` exited 0 and both seats wrote
-  `game_artifacts/<role>/declaration_397b3503b1bfa996.json` carrying `repo_urls` (rule 49's four
-  NAMED slots), `mcp_server_addresses`, `token_ceiling` 200000 (PARAMETERS:83 Table 18 row 4),
-  `start_time` / `end_time` read off each seat's OWN wire log, and BOTH signed Step-0 envelopes
-  embedded verbatim -- `peer_declaration_status` says "peer's own signed declaration embedded
-  verbatim" on both sides, so D-71's both-sides wrap is proven on a real handshake. The files are
-  committed as evidence at `docs/phases/phase-8/declaration-evidence/` with their keys tabled
-  against PARAMETERS:165. RULE 38 DID NOT MOVE: nothing sets, defaults or infers the games-played
-  value. The ledger derives TWO candidate counts and returns an UNSET marker for the declared
-  figure; the artifact's new top-level `games_played_declared` is UNPARAMETERISED -- there is no
-  argument for it, so a number is not representable until a human chooses one at 08-14 -- and it
-  says in the file that the embedded `games_played_so_far` (1922 police / 1915 thief) is the RAW
-  counter, which nothing in a grader-facing file had said before. RULE 49 DID NOT MOVE EITHER: all
-  four repo slots ship as JSON `null` and render as stated-absence markers naming 08-12; the loader
-  REFUSES an absence or a placeholder-shaped URL when `reporting.mode` is `live`. D7-17 IS DRAFTED,
-  NOT DECIDED -- `game_id` is peer-negotiated (D-61), so both PARAMETERS citations are quoted
-  verbatim (machine-checked against the document), the three costed options carried over, and the
-  mail addressed to `rmisegal@gmail.com` FOR A HUMAN TO SEND. EIGHT PROBES, each asserting the
-  mutation LANDED before the verdict was read and each reverted by REWRITING the file (never
-  `git checkout --`, which restores from the index): the live-mode absence refusal, the placeholder
-  token set, a planted `read_games_played` import, rule 52's rematch refusal, the FIXED max-games
-  bound, the whole `declare_game` call site (7 failures -- 5 integration, 2 structural), a
-  hardcoded `start_time`, and the containment's `except Exception`. PROBE E FOUND A HOLE IN THIS
-  PLAN'S OWN WORK: the max-games test built its loop from `MAX_GAMES_PER_TEAM`, so setting the
-  constant to 11 left the entire ledger suite GREEN -- a Table 18 row whose status is **fixed**,
-  enforced but unasserted. `tests/unit/test_league_bounds_against_the_book.py` now parses the value
-  out of `docs/PARAMETERS.md` itself, with a control on the parser. A SECOND VACUITY was caught
-  before commit: the D-80 seeding guard stripped docstrings with `source.split('\"\"\"')[-1]`, which
-  keeps only the file tail and searched almost nothing -- rewritten to strip by AST with a control
-  on the stripper. Gates: 2293 passed / 0 failed (baseline 2188), coverage 97.43% (from 97.37%),
-  ruff 0, line-limit 0 violations tree-wide, local-truth 7 modules, no-LLM OK,
-  `check_submission.py` exit 1 with 41 PASS / 32 GAP / 13 UNJUDGED -- UNCHANGED, as expected,
-  because the declaration finding was never a gate row. RULE-38 COUNTERS, ALL FOUR NUMBERS: full
-  `pytest --cov` moved police 1923 -> 1923 and thief 1916 -> 1916 (delta 0/0); the one real game
-  moved police 1922 -> 1923 and thief 1915 -> 1916 (delta +1/+1), which is 07-00's fixed mechanism
-  behaving exactly as specified. Two structural ledgers correctly flagged the new modules and were
-  updated honestly rather than exempted: `league_ledger` added to `DURABLE_WRITE_BINDERS`, and
-  `end_of_game_declaration` added to the log-artifact reacher list as a READER.
+stopped_at: PHASE 8 WAVE 1 CLOSED (2026-08-17) -- 08-03 CLOSED EIGHT Sec17 GAP ROWS AND 08-05
+  CLOSED BOTH DEFERRED ITEMS, WITH THE SHIPPED COMMIT-REVEAL PATH PROVEN BYTE-IDENTICAL. Neither
+  `08-03-PLAN.md` nor `08-05-PLAN.md` existed; both were executed from `08-PLAN-OUTLINE.md`
+  Sec9, and every finding was RE-DERIVED at HEAD. ELEVEN COMMITS, each atomic.
+  08-03 (7 commits): `6c44e5c` the root graph artifacts genuinely ignored, `589b094` Sec14
+  packaging, `fbad2a7` the four config version fields, `2fd8a2a` the CI test-report artifacts,
+  `43da1ea` CONTRIBUTING/metadata/LICENSE, `d257b8d` the RULES.md correction, `ae281de` the
+  re-measured register. THE GAP COUNT MOVED 32 -> 24, and EXACTLY the eight rows 08-03 owned:
+  G4-06/G4-07 (`git check-ignore -q graph.json` 1 -> 0, anchored `/graph.json` `/graph.html`;
+  CLAUDE.md:178 had ASSERTED they were ignored and it was FALSE), G4-21 (24/28 -> 28/28 config
+  files versioned; neither resolution.json nor role.json feeds a peer-compared digest, so rule
+  11 is untouched), G2-05 (4/11 -> 11/11 packages declare `__all__`), G2-06 (`__version__`
+  re-exported from shared/version.py, never re-typed), G3-03 (CI runs `--cov-report=xml
+  --junitxml` and uploads both; PROVEN by running the identical command locally -- coverage.xml
+  290597 B, reports/junit.xml 309353 B, neither in `git status`), G6-03 (LICENSE + pyproject
+  license/authors) and G1-15 (RULES.md rule 48 survival pair 10/5 -> 5/10). NO OTHER ROW MOVED
+  in either direction. NO FIXED VALUE WAS CHANGED by the RULES.md correction -- both numbers were
+  already on the line; only the ORDER was wrong, and the order is what says whose number it is.
+  It is recorded in a new "Corrections to this extract" section with BOTH citations and the
+  honest limit that the Hebrew book was NOT re-read.
+  08-05 (4 commits): `112e593` deferred #13, `12c3a0c` deferred #19, `89ccdf0` the records +
+  graph refresh, `120cf54` the summary. BOTH CLOSED, NEITHER ACCEPTED. #13: `send_move_only`
+  no longer reads `ctx.state.turn` after `maybe_resolve`; `take_my_turn` threads
+  `pre_turn_state.turn` through a REQUIRED KEYWORD-ONLY `played_turn`. THE SHIPPED
+  COMMIT-REVEAL-ON PATH IS BYTE-IDENTICAL, MEASURED: a nonce-pinned drive gave the same
+  fingerprint `c79f76aff77180...`, the same 3 pushes at turns [0,0,0], the same h_commit
+  `6a34ee5c...` and the same ledger record at turn 0, before and after -- so the D-59 hash input
+  and the D-64 join key were never in the change's path, and an AST guard
+  (`test_shipped_path_turn_source.py`) keeps it that way. #19: `await_move` returns ONLY a MOVE,
+  BUFFERS a FINAL_REVEAL (without that it would have become 05-17's defect on the same path) and
+  skips the rest; it has exactly ONE production caller, the toggle-off branch, so a
+  commit-reveal-ON game never reaches it. `turn_buffer.py` was SPLIT along the seam deferred #20
+  named itself (142 -> 114, new `turn_buffer_queue.py` at 93).
+  THREE SELF-INFLICTED DEFECTS FOUND AND CLOSED BEFORE COMMIT, plus one inherited:
+  (1) the CI-workflow test grepped the WHOLE file and the comment block quotes the flags, so
+  deleting them from the `run:` line left it GREEN -- now reads non-comment lines only;
+  (2) `str(Path('reports/junit.xml'))` is backslashed on Windows and reported an ignored file as
+  trackable; (3) the LICENCE biconditional first grepped the register and tripped on the
+  register's OWN PROSE -- now one anchored `**LICENCE STATUS:**` field; and (4) INHERITED --
+  05-18's #19 bookmark, written to FAIL on closure, DID NOT FIRE, because its `counts["off"] > 0`
+  counted all nine MessageType members and the nine include MOVE, whose fixture payload is
+  legitimately malformed. Nine = 1 buffered + 1 awaited + 7 FOREIGN; all seven closed, and the
+  test now derives that partition from MessageType.
+  ALSO LEARNED: the 150-line gate COUNTS DOCSTRING LINES AS CODE. #13's rationale in a docstring
+  took `turn_commit.py` 149 -> 163, a VIOLATION; the prose moved to `#` comments with no code
+  compressed. Recorded in deferred item #20.
+  GATES: 2342 passed / 0 failed (baseline 2293), coverage 97.44% (from 97.43%), ruff 0,
+  line-limit 0 tree-wide with every new file also checked BY PATH, local-truth 7 modules, no-LLM
+  OK, `uv sync` + `uv lock --check` exit 0, `check_submission.py` exit 1 at 49/24/13.
+  `git diff config/` EMPTY. RULE-38 COUNTERS, ALL FOUR, PER PLAN: 08-03 suite 1923->1923 /
+  1916->1916 (0/0) and one real game 1923->1924 / 1916->1917 (+1/+1), `game_id`
+  `117041920a949129`; 08-05 suite 1924->1924 / 1917->1917 (0/0) and one real game 1924->1925 /
+  1917->1918 (+1/+1), `game_id` `b995f351b3796e23`, BOTH seats `audit_verdict matched=true` at
+  turn 5, zero technical_win, zero watchdog_incident. Two real games were played across the two
+  plans, so the counters advanced by exactly two. NOTHING SETS THE GAMES-PLAYED VALUE.
+  Graph refreshed: 11332 nodes / 19921 edges / 638 communities; `graphify explain await_move`
+  independently resolves it to `turn_buffer_queue.py:66` with a `--> record_final_reveal()` edge.
   NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED.
 ---
+
+Last session: 2026-08-17T16:40:00+03:00
+Stopped at: Completed 08-03 and 08-05 in full -- WAVE 1 OF PHASE 8 IS CLOSED. Neither plan file
+  existed; both executed from `08-PLAN-OUTLINE.md` Sec9. Eleven atomic commits (7 + 4).
+  08-03 moved `check_submission.py` from 41 PASS / 32 GAP / 13 UNJUDGED to 49 / 24 / 13 -- eight
+  rows, exactly the eight it owned, no other row moving in either direction. 08-05 CLOSED both
+  phase-5 deferred items rather than accepting them, and proved the shipped commit-reveal-ON path
+  byte-identical with a nonce-pinned fingerprint (same h_commit, same push turns, same ledger
+  record) so the D-59 hash input and the D-64 join key are demonstrably untouched.
+  THE LICENCE IS PREPARED AND NOT ADOPTED, and that is enforced rather than merely written:
+  `LICENSE` carries a `PREPARED, NOT ADOPTED` block, `docs/SUBMISSION-CHECKLIST.md` carries
+  `**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION`, and a biconditional test fails if either
+  changes without the other. 08-12 must not publish until the owner confirms.
+  Three self-inflicted test defects were found by this session's own probes and closed before
+  commit, and one INHERITED bookmark (05-18's, written to fail on #19's closure) was found NOT to
+  fire and was repaired. Self-check PASSED for both plans: 13 created paths verified present AND
+  tracked AND not gitignored, 11 commits verified reachable.
+  NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED -- `git tag -l` is empty and 144 commits sit
+  ahead of `origin/main`.
+Resume file: None -- the tree is clean apart from untracked throwaway `game_artifacts/`, which
+  must never be committed. Next is `/gsd:execute-phase 8` continuing into WAVE 2: 08-06, 08-07,
+  08-08 and 08-09, a four-way fan-out over disjoint document sets (worktrees if run in parallel).
+---
+
 
 Last session: 2026-08-17T21:05:00+03:00
 Stopped at: Completed 08-04 in full. NO `08-04-PLAN.md` EXISTED -- the phase directory holds only
