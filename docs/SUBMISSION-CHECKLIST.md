@@ -1,7 +1,7 @@
 # Submission Checklist — the §17 + Table-5 gap register
 
-**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-06) ·
-**Status:** 15 GAP / 58 PASS / 13 UNJUDGED
+**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-08) ·
+**Status:** 8 GAP / 65 PASS / 13 UNJUDGED
 
 > **This file is a report, not a source.** Every number in it comes from
 > `uv run python scripts/check_submission.py`, which re-derives all 86 rows from the tree on
@@ -30,16 +30,16 @@ in their own column and never folded into the pass count.
 
 ## Measured state at HEAD
 
-| Group | PASS | GAP | UNJUDGED | GAP was (08-03) | GAP was (08-01) |
-|---|---:|---:|---:|---:|---:|
-| 1. Structure & documentation | 22 | 6 | 0 | 15 | 16 |
-| 2. Architecture & code | 7 | 0 | 3 | 0 | 2 |
-| 3. Testing & quality | 4 | 0 | 3 | 0 | 1 |
-| 4. Configuration & security | 15 | 0 | 0 | 0 | 3 |
-| 5. Research & visualization | 1 | 4 | 0 | 4 | 4 |
-| 6. Extensibility & standards | 2 | 4 | 2 | 4 | 5 |
-| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 |
-| **Total (86 rows, 73 judged)** | **58** | **15** | **13** | **24** | **32** |
+| Group | PASS | GAP | UNJUDGED | GAP was (08-06) | GAP was (08-03) | GAP was (08-01) |
+|---|---:|---:|---:|---:|---:|---:|
+| 1. Structure & documentation | 26 | 2 | 0 | 6 | 15 | 16 |
+| 2. Architecture & code | 7 | 0 | 3 | 0 | 0 | 2 |
+| 3. Testing & quality | 4 | 0 | 3 | 0 | 0 | 1 |
+| 4. Configuration & security | 15 | 0 | 0 | 0 | 0 | 3 |
+| 5. Research & visualization | 1 | 4 | 0 | 4 | 4 | 4 |
+| 6. Extensibility & standards | 5 | 1 | 2 | 4 | 4 | 5 |
+| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 | 1 |
+| **Total (86 rows, 73 judged)** | **65** | **8** | **13** | **15** | **24** | **32** |
 
 Evidence JSON: [`docs/phases/phase-8/submission_audit_evidence.json`](phases/phase-8/submission_audit_evidence.json).
 
@@ -110,9 +110,53 @@ rather than re-derive from the book; `docs/SEGAL_GUIDELINES.md`, `docs/RULES.md`
 therefore written in English on `08-CONTEXT.md`'s instruction, and that is recorded as an
 assumption rather than as a confirmation — the same treatment 08-03 gave rule 48's ordering.
 
+### What moved, row by row — 08-07, 2026-08-17
+
+**15 GAP → 11 GAP. Four rows, and exactly the four 08-07 owned.** No other row changed
+verdict in either direction — the same counter-control 08-03 and 08-06 each passed.
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **G1-13** | GAP | PASS | `docs/ARCHITECTURE.md` carries **six** rendered mermaid blocks — the repository's first. The gate counted **0** across every tracked doc before this, and its one grep hit was a table cell quoting the command |
+| **G6-01** | GAP | PASS | `docs/EXTENSION-POINTS.md`: five seams, each with contract, registration site, config key, current implementations and the test that proves it swaps — plus a table of what is deliberately **not** extensible |
+| **G6-02** | GAP | PASS | `docs/ARCHITECTURE.md` also carries §5.1 deployment instructions: the local two-process path, the league-day two-machine path, and both GUI processes |
+| **G6-05** | GAP | PASS | `docs/QUALITY-25010.md` maps all eight characteristics, **each in its own section with its own repo evidence**. The whole repository held one line on 25010 before this, `docs/PRD.md:94` |
+
+**The diagrams are checked twice, and the second check found the first defects.**
+`scripts/check_diagrams.py` parses every block (fence closure, diagram kind, quote-aware
+delimiter balance) and resolves every `src/pursuit/...` label against `git ls-files`;
+`tests/unit/test_architecture_contract.py` reads the container diagram **as a graph** and
+asserts symmetric peers, no node inside both processes, and the GUI outside both. A
+backtick-path citation check over the prose then caught **three fabrications in 08-07's own
+first draft**, one of them a script name that does not exist
+(`scripts/check_no_llm_in_move.py`; the real gate is `scripts/check_no_llm_in_strategy.py`).
+
+**Rendering was verified out of tree and once**, with `@mermaid-js/mermaid-cli` 11.16.0:
+all six blocks produced real SVGs and none contained a `Syntax error` box, while the two
+mutations the unit tests use — an unknown diagram kind and an unbalanced bracket — were
+**rejected by that renderer**. It is not wired into CI: mermaid-cli needs a headless
+Chromium and this suite is offline by rule.
+
+### What moved, row by row — 08-08, 2026-08-17
+
+**11 GAP → 8 GAP. Three rows, and exactly the three 08-08 owned.**
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **G1-M[src/pursuit/sdk]** | GAP | PASS | `docs/PRD_sdk.md`, cited from `docs/mechanism-prd-map.json` |
+| **G1-M[src/pursuit/gui]** | GAP | PASS | `docs/PRD_gui.md` existed at `aa75852` but the **register still answered `prds: []`**, so the row was still open. `docs/PRD_display_belief.md` is deliberately still not cited |
+| **G1-M-TUNNEL** | GAP | PASS | `docs/PRD_tunnel.md`. The row is derived, not asserted: `tunnel_manager.py` has to exist **and** `docs/PRD_mcp_transport.md` has to still declare tunneling out of scope |
+
+`tests/unit/test_mechanism_prd_contract.py` pins what the walk cannot see — no cited PRD
+may carry a SUPERSEDED banner, `PRD_rl_strategy.md`'s banner must still be intact and still
+point at `PRD_matrix_mover.md`, `PRD_mcp_transport.md` must still exclude the tunnel (the
+derivation `PRD_tunnel.md` rests on), and every backticked path in all three PRDs must be in
+`git ls-files`. That last rule caught a second fabricated script name
+(`scripts/check_publication_safety.py` never existed; the scan is `scripts/submission_scan.py`).
+
 ---
 
-## Group 1 — Structure & documentation · 6 GAP  *(was 15; nine README rows closed by 08-06)*
+## Group 1 — Structure & documentation · 2 GAP  *(was 6; G1-13 closed by 08-07, the three mechanism rows by 08-08)*
 
 ### The root README describes a system this repository does not ship
 
@@ -179,16 +223,18 @@ to).
 not answered for becomes a new GAP row by itself.
 
 - **`src/pursuit/sdk/`** — Table 5's first row and §4's mandated single entry point, 11
-  modules, no PRD. → `docs/PRD_sdk.md`
+  modules, no PRD. → `docs/PRD_sdk.md` — **CLOSED by 08-08.**
 - **`src/pursuit/gui/`** — 7 modules, no PRD. `docs/PRD_display_belief.md` is **not** coverage:
   it governs what a view may *contain* (rules 8–9), not how the six `gui/` files render or
   replay. Reading it as coverage would close this row with a document answering a different
-  question. → `docs/PRD_gui.md`
+  question. → `docs/PRD_gui.md` — **CLOSED by 08-08**, which supplied the register
+  entry the PRD's own commit (`aa75852`) had left empty.
 - **the tunnel** — `src/pursuit/network/tunnel_manager.py` is tracked, and
   `docs/PRD_mcp_transport.md:28` puts "ngrok/Localtonet tunneling" **out of scope in as many
   words**, so `network/`'s own PRD provably does not cover it. → `docs/PRD_tunnel.md`
+  — **CLOSED by 08-08.**
 
-**Owner: 08-08.**
+**Owner: 08-08 — all three CLOSED 2026-08-17.**
 
 ### Zero rendered diagrams anywhere in `docs/`
 
@@ -201,7 +247,13 @@ line, and finds **0 rendered mermaid blocks across every tracked doc**. Every di
 pins this discrimination end to end, and asserts the trap file still contains the string
 first so the test cannot pass by losing its subject.
 
-**Owner: 08-07.**
+**CLOSED by 08-07, 2026-08-17.** `docs/ARCHITECTURE.md` carries six rendered blocks —
+C4's four levels, a deployment view and the four-phase commit-reveal sequence — and the
+gate now reports **6 blocks in 1 file**. They are held to the tree by
+`scripts/check_diagrams.py` (29 distinct `src/pursuit` labels, all resolving) and by
+`tests/unit/test_architecture_contract.py`, which reads the container diagram as a graph.
+
+**Owner: 08-07 — CLOSED.**
 
 ### No prompt-engineering log
 
@@ -360,19 +412,20 @@ episode 1.
 
 ---
 
-## Group 6 — Extensibility & standards · 4 GAP  *(was 5; G6-03 closed by 08-03)*
+## Group 6 — Extensibility & standards · 1 GAP  *(was 4; G6-01, G6-02 and G6-05 closed by 08-07)*
 
 **PASS:** git history — **100%** of the last 200 commits carry a conventional prefix.
 
 | Row | Gap | Evidence | Fix lands in |
 |---|---|---|---|
-| G6-01 | no documented extension points | `docs/EXTENSION-POINTS.md` absent, though `BrainBase`, `MailSink` and the provider registry are real seams | `docs/EXTENSION-POINTS.md` |
-| G6-02 | no deployment instructions / architecture document | `docs/ARCHITECTURE.md` absent; deployment is one ASCII topology diagram in `docs/PLAN.md` | `docs/ARCHITECTURE.md` |
+| G6-01 | ~~no documented extension points~~ **CLOSED by 08-07** | `docs/EXTENSION-POINTS.md` documents five seams — `BrainBase`, `Provider`, `MailSink`, `ResolutionRules` and the MCP tool surface — each with its contract, registration site, config key and the test that proves it swaps | `docs/EXTENSION-POINTS.md` |
+| G6-02 | ~~no deployment instructions / architecture document~~ **CLOSED by 08-07** | `docs/ARCHITECTURE.md` §5 is a deployment diagram plus §5.1's three real command paths — local two-process, league-day two-machine, and both GUI processes | `docs/ARCHITECTURE.md` |
 | G6-03 | ~~no licence file~~ **CLOSED by 08-03 — PREPARED, `AWAITING OWNER CONFIRMATION`** | `LICENSE` now exists (MIT, the conventional academic default) and `pyproject.toml` declares `license = { file = "LICENSE" }` and `authors`. See the block below — this row is structurally closed and **legally open** | `LICENSE` |
-| G6-05 | ISO/IEC 25010 is not mapped | the eight characteristic names are parsed out of `docs/SEGAL_GUIDELINES.md` §13 by the gate; **no** tracked document names all eight *and* cites at least eight repo paths. The whole repo has one line of content, `docs/PRD.md:94` | `docs/QUALITY-25010.md` |
+| G6-05 | ~~ISO/IEC 25010 is not mapped~~ **CLOSED by 08-07** | the eight characteristic names are parsed out of `docs/SEGAL_GUIDELINES.md` §13 by the gate; **now** `docs/QUALITY-25010.md` does, giving each characteristic its **own section with its own repo evidence**; `tests/unit/test_quality_docs_contract.py` parses the eight names out of §13 rather than typing them, and fails on any cited path missing from `git ls-files`. Before 08-07 the whole repo had one line of content, `docs/PRD.md:94` | `docs/QUALITY-25010.md` |
 | G6-08 | no Git tag | `git tag -l` → empty. Rule 41. **The tag is cut in 08-11 and pushed by a HUMAN in 08-12 — this gate never creates or pushes one** | `docs/phases/phase-8/SUBMISSION-RUNBOOK.md` |
 
-**Owner: 08-07** (G6-01, G6-02, G6-05) · **08-03** (G6-03) · **08-11/08-12** (G6-08).
+**Owner: 08-07 (G6-01, G6-02, G6-05) — all three CLOSED 2026-08-17** · **08-03** (G6-03) ·
+**08-11/08-12** (G6-08).
 
 **UNJUDGED (2):** G6-04 thread safety · G6-07 building-block design.
 
