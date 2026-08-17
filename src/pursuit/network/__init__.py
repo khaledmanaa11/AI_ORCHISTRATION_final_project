@@ -16,7 +16,7 @@ __all__ = (
     "handshake_evaluate", "handshake_step0", "handshake_wire", "hint_payload",
     "language_wiring", "move_payload", "orchestrator", "peer_runtime",
     "secret_guard", "secret_wiring", "state_machine", "tools", "tunnel_manager",
-    "tunnel_wiring", "turn_actions",  "turn_buffer", "turn_commit",
+    "tunnel_wiring", "turn_actions",  "turn_buffer", "turn_buffer_queue", "turn_commit",
     "turn_commit_ledger", "turn_commit_pull", "turn_commit_send",
     "turn_commit_wait", "turn_commit_wait_reveal", "turn_events",
     "turn_hint_buffer", "turn_hint_store", "turn_language", "turn_language_io",

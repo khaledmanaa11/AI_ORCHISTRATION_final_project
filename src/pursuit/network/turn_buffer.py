@@ -18,23 +18,36 @@ inbound receipt-logging it gained. It is re-exported below, so
 `turn_buffer.record_hint` still resolves for every caller and every
 monkeypatch, exactly as `turn_resolve.py`'s own split left this file's
 API unchanged.
+
+08-05: the two INBOUND QUEUE READERS -- `await_move` and
+`drain_trailing_hint`, plus the `HintProtocolError` the first of them
+raises -- moved to the sibling `turn_buffer_queue.py`, along the seam
+deferred item #20 named three plans ago. Deferred item #19's repair
+(a type test on `await_move`, so the toggle-off wait stops handing a
+HANDSHAKE or a GAME_OVER to the move decoder) needed room this file did
+not have at 142/150. Re-exported below on the same rule as every split
+before it. What is left here is what the name still describes: the
+illegal-transition log line, the shared rules-13/14 rejection path, and
+the outbound hint push.
 """
 
 from __future__ import annotations
 
-import asyncio
-
 from pursuit.constants import Outcome
 from pursuit.network import hint_payload, turn_events
-from pursuit.network.deadline import call_with_retry, wait_for_opponent
-from pursuit.network.envelope import Envelope, EnvelopeKey, MessageType
+from pursuit.network.deadline import call_with_retry
+from pursuit.network.envelope import EnvelopeKey
 from pursuit.network.event_log import append_event
 from pursuit.network.final_reveal_buffer import record_final_reveal, take_final_reveal
 from pursuit.network.hint_payload import Intent
 from pursuit.network.orchestrator import AgentContext
 from pursuit.network.state_machine import State, TransitionResult
+from pursuit.network.turn_buffer_queue import (
+    HintProtocolError,
+    await_move,
+    drain_trailing_hint,
+)
 from pursuit.network.turn_hint_buffer import record_hint
-from pursuit.network.verdict import TechnicalWin
 
 # Re-exported (05-06): `record_hint` moved to turn_hint_buffer.py at the
 # 150-line gate. Named here so `turn_buffer.record_hint` keeps resolving
@@ -60,12 +73,6 @@ __all__ = [
     "send_hint",
     "take_final_reveal",
 ]
-
-
-class HintProtocolError(ValueError):
-    """A hint violated the Task-3 buffering rules (duplicate/late/an
-    unexpected non-hint trailer). The caller turns this into a technical
-    loss for the sender, same as any rules-13/14 violation -- never a crash."""
 
 
 def log_illegal(ctx: AgentContext, current: State, target: State, result: TransitionResult) -> None:
@@ -100,54 +107,6 @@ def reject_peer_payload(ctx: AgentContext, reason: str) -> Outcome:
     )
     ctx.machine.attempt(State.GAME_OVER)
     return Outcome.TECHNICAL_LOSS
-
-
-async def await_move(ctx: AgentContext) -> tuple[Envelope | None, TechnicalWin | None]:
-    """Bounded wait for the opponent's MOVE envelope, recording (never
-    blocking on) any HINT seen first -- a peer that never sends hints must
-    still be playable. Raises HintProtocolError on a buffering violation."""
-
-    # 05-16 (deferred item #10): the touch moved INSIDE the per-attempt
-    # closure, exactly as `turn_commit_wait.next_protocol_message`'s
-    # `on_attempt` hook does. The post-ladder touch below is kept. The
-    # anonymous lambda became a named closure only because a lambda cannot
-    # hold two statements -- the awaited call is byte-identical.
-    async def _pull() -> object:
-        ctx.watchdog.touch()
-        return await wait_for_opponent(ctx.runtime.queue, timeout=ctx.net.response_timeout)
-
-    for _ in range(2):
-        call_outcome = await call_with_retry(
-            _pull, timeout=ctx.net.response_timeout, retries=ctx.net.retry_count,
-            backoff=ctx.net.backoff_seconds,
-        )
-        ctx.watchdog.touch()
-        if not call_outcome.succeeded:
-            return None, call_outcome.verdict
-        queued = call_outcome.value
-        envelope = queued if isinstance(queued, Envelope) else Envelope.from_dict(queued)
-        if envelope.type is MessageType.HINT:
-            record_hint(ctx, envelope.sender, envelope.turn, envelope.payload)
-            continue
-        return envelope, None
-    raise HintProtocolError("opponent sent two consecutive hints with no move")
-
-
-def drain_trailing_hint(ctx: AgentContext) -> None:
-    """Non-blocking: record a hint ALREADY sitting on the queue right
-    behind the move just received; never waits for one that has not
-    arrived (Task 3 rule). A non-hint item found here (e.g. a future
-    turn's move arriving early) is put straight back untouched -- this
-    function only ever consumes an actual HINT."""
-    try:
-        raw = ctx.runtime.queue.get_nowait()
-    except asyncio.QueueEmpty:
-        return
-    envelope = raw if isinstance(raw, Envelope) else Envelope.from_dict(raw)
-    if envelope.type is not MessageType.HINT:
-        ctx.runtime.queue.put_nowait(raw)
-        return
-    record_hint(ctx, envelope.sender, envelope.turn, envelope.payload)
 
 
 async def send_hint(ctx: AgentContext, turn: int, *, text: str, intent: Intent) -> None:
