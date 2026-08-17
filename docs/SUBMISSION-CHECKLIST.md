@@ -1,7 +1,7 @@
 # Submission Checklist — the §17 + Table-5 gap register
 
-**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-03) ·
-**Status:** 24 GAP / 49 PASS / 13 UNJUDGED
+**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-06) ·
+**Status:** 15 GAP / 58 PASS / 13 UNJUDGED
 
 > **This file is a report, not a source.** Every number in it comes from
 > `uv run python scripts/check_submission.py`, which re-derives all 86 rows from the tree on
@@ -30,16 +30,16 @@ in their own column and never folded into the pass count.
 
 ## Measured state at HEAD
 
-| Group | PASS | GAP | UNJUDGED | GAP was (08-01) |
-|---|---:|---:|---:|---:|
-| 1. Structure & documentation | 13 | 15 | 0 | 16 |
-| 2. Architecture & code | 7 | 0 | 3 | 2 |
-| 3. Testing & quality | 4 | 0 | 3 | 1 |
-| 4. Configuration & security | 15 | 0 | 0 | 3 |
-| 5. Research & visualization | 1 | 4 | 0 | 4 |
-| 6. Extensibility & standards | 2 | 4 | 2 | 5 |
-| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 |
-| **Total (86 rows, 73 judged)** | **49** | **24** | **13** | **32** |
+| Group | PASS | GAP | UNJUDGED | GAP was (08-03) | GAP was (08-01) |
+|---|---:|---:|---:|---:|---:|
+| 1. Structure & documentation | 22 | 6 | 0 | 15 | 16 |
+| 2. Architecture & code | 7 | 0 | 3 | 0 | 2 |
+| 3. Testing & quality | 4 | 0 | 3 | 0 | 1 |
+| 4. Configuration & security | 15 | 0 | 0 | 0 | 3 |
+| 5. Research & visualization | 1 | 4 | 0 | 4 | 4 |
+| 6. Extensibility & standards | 2 | 4 | 2 | 4 | 5 |
+| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 |
+| **Total (86 rows, 73 judged)** | **58** | **15** | **13** | **24** | **32** |
 
 Evidence JSON: [`docs/phases/phase-8/submission_audit_evidence.json`](phases/phase-8/submission_audit_evidence.json).
 
@@ -60,10 +60,11 @@ it did not own would have changed something it did not measure.
 | **G4-21** | GAP | PASS | **28 of 28** tracked config JSONs carry `version` (was 24 of 28). Neither `resolution.json` nor `role.json` feeds a peer-compared digest — `config_digest` is taken over `game_params.json` only — so rule 11 is untouched |
 | **G6-03** | GAP | PASS | `LICENSE` exists, and `pyproject.toml` declares `license` and `authors`. **Structurally closed, legally open** — see the licence block below |
 
-**Group 4 is now 15 PASS / 0 GAP, and group 2 and group 3 are 0 GAP.** The 24 that remain
-belong to 08-06 (README, 9 rows), 08-07 (architecture/25010/extension points, 4), 08-08 (the
-three per-mechanism PRDs, 3), 08-09 (research and visualization, 4), 08-11/08-12 (the tag and
-T5-06's version reconciliation, 2), and 08-06+07-10 jointly (screenshots, 2).
+**Group 4 is now 15 PASS / 0 GAP, and group 2 and group 3 are 0 GAP.** The 24 that remained
+after 08-03 belonged to 08-06 (README, 9 rows), 08-07 (architecture/25010/extension points,
+4), 08-08 (the three per-mechanism PRDs, 3), 08-09 (research and visualization, 4),
+08-11/08-12 (the tag and T5-06's version reconciliation, 2), and 08-06+07-10 jointly
+(screenshots, 2). **08-06 has since closed its nine**, leaving 15 — see the next section.
 
 Two things 08-03 deliberately did **not** move:
 
@@ -76,13 +77,50 @@ Two things 08-03 deliberately did **not** move:
   derives the tag name from the reconciled value, so reconciling it is 08-11's, not a
   drive-by in a plan that was editing `pyproject.toml` anyway.
 
+### What moved, row by row — 08-06, 2026-08-17
+
+**24 GAP → 15 GAP. Nine rows, and exactly the nine 08-06 owned.** No other row changed
+verdict in either direction — same counter-control as 08-03's pass.
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **G1-01** | GAP | PASS | an `## Installation` section with prerequisites, a five-step block, environment setup and a six-row troubleshooting table. `--check-config` is documented as the install check and its real output is quoted |
+| **G1-02** | GAP | PASS | `## Usage — running a game`: the two-terminal league path, `dev_launch.py`, and both GUI processes, each with a flag table |
+| **G1-03** | GAP | PASS | `## Examples and screenshots`: an end-to-end run, a one-liner that prints the shipped weight vector, and the artifact inventory |
+| **G1-04** | GAP | PASS | `## Configuration guide`: all eleven per-role config files and the three rules that hold across them |
+| **G1-05** | GAP | PASS | a `## Contributing` section pointing at `CONTRIBUTING.md` — the row 08-03 deliberately left, closed by the rewrite that owned the file |
+| **G1-06** | GAP | PASS | a `## Licence` section stating **prepared, not adopted**, and that the repository is all-rights-reserved until the owner confirms. `**LICENCE STATUS:**` below is untouched |
+| **G1-07** | GAP | PASS | `## Credits and acknowledgements`: author and team code, the two source documents, third-party software, and an AI-assistance disclosure |
+| **G1-08** | GAP | PASS | **3 unqualified mentions of a superseded mechanism → 0.** The one remaining mention sits on a line that says it was *superseded* and *withdrawn*; the strategy section describes the matrix-game mover over a learned 15-weight evaluation that actually ships |
+| **G1-09** | GAP | PASS | the status table is rebuilt from the `NN-VERIFICATION.md` and `GATE-N-MEASUREMENT.md` files. Phase 3 no longer reads "in progress"; phases 4, 7 and 8 read `human_needed` / NOT verified / NOT verified, because that is what their artifacts say |
+
+**Two rows 08-06 could not close, and did not pretend to.**
+
+- **G1-03b and G5-04 stay GAP — the screenshots do not exist.** Both are produced by 07-10,
+  which has not run. The README carries two **marked-absent slots** naming the file each will
+  occupy and the plan that produces it. A placeholder image would have closed G1-03b with a
+  broken icon, so `tests/unit/test_readme_contract.py` now fails the moment any image link in
+  the README resolves to nothing — the slot cannot quietly become a fake asset.
+
+**OQ8-8 (README language) is NOT confirmed and is left open.** `08-CONTEXT.md` says English
+and instructs that the book be checked for a Hebrew mandate. `police_thief_p2p.pdf` is in
+Hebrew and CLAUDE.md's standing instruction is to work from the extracts and surface a gap
+rather than re-derive from the book; `docs/SEGAL_GUIDELINES.md`, `docs/RULES.md` and
+`docs/PROJECT_GUIDE.md` contain **no** language requirement for §9.4.2. The README is
+therefore written in English on `08-CONTEXT.md`'s instruction, and that is recorded as an
+assumption rather than as a confirmation — the same treatment 08-03 gave rule 48's ordering.
+
 ---
 
-## Group 1 — Structure & documentation · 15 GAP  *(was 16; G1-15 closed by 08-03)*
+## Group 1 — Structure & documentation · 6 GAP  *(was 15; nine README rows closed by 08-06)*
 
 ### The root README describes a system this repository does not ship
 
-**Rows G1-08, G1-09. This is an honesty defect under rule 42, not a copy-edit.**
+**Rows G1-08, G1-09 — CLOSED by 08-06, 2026-08-17.** The finding below is the state at 08-01
+and is retained rather than rewritten: a defect that was found and fixed is evidence, and
+deleting its description would leave the fix looking unmotivated.
+
+**This was an honesty defect under rule 42, not a copy-edit.**
 
 `README.md:7` says each agent "decides moves with a trained tabular **Q-learning** policy
 (Bayes + BFS fallback)". Phase 3 **withdrew** that mechanism as unsound under the book's
@@ -103,10 +141,20 @@ Roughly 90% of the file is a report on the *withdrawn* Q-learning training run.
 
 **Owner: 08-06** (rewrite). 08-01 only registers it.
 
+**CLOSED by 08-06, 2026-08-17.** Both rows PASS. The gate now finds **0** unqualified
+mentions, and the status table is derived from the verification and gate documents. Two
+further false statements the gate does not judge were found and fixed in the same pass: the
+README documented `uv run python training/plot_curves.py`, a file deleted with the run-1
+stack in `f3d9847`, and it presented run 1's figures as *the* learning curves. The figures
+for the mechanism that ships are now drawn by `scripts/plot_run2_curves.py` from tracked
+artefacts, and `tests/unit/test_readme_contract.py` fails on any repo path quoted in a
+command block that does not exist.
+
 ### The README fails all seven of §2.1's user-manual items
 
-**Rows G1-01 … G1-07, plus G1-03b.** Each is judged on its own — a "README.md exists" check
-would pass this file today.
+**Rows G1-01 … G1-07, plus G1-03b. G1-01 … G1-07 CLOSED by 08-06; G1-03b remains open on
+07-10's screenshots.** Each is judged on its own — a "README.md exists" check would have
+passed the file this table measured.
 
 | Row | §2.1 item | What the gate measured |
 |---|---|---|
@@ -119,8 +167,9 @@ would pass this file today.
 | G1-06 | license | no `license`/`licence` heading |
 | G1-07 | credits | no `credit`/`acknowledg`/`authors` heading |
 
-**Owner: 08-06** (G1-01…G1-07, G1-03b screenshots from 07-10) · **08-03** (`CONTRIBUTING.md`,
-`LICENSE` for G1-05/G1-06).
+**Owner: 08-06** (G1-01…G1-07 — all seven now PASS; G1-03b still open, its screenshots come
+from 07-10) · **08-03** (`CONTRIBUTING.md`, `LICENSE`, which G1-05/G1-06's new sections link
+to).
 
 ### Three central mechanisms have no per-mechanism PRD
 
@@ -304,7 +353,7 @@ episode 1.
 |---|---|---|---|
 | G5-02 | no sensitivity analysis | `docs/SENSITIVITY.md` absent | `docs/SENSITIVITY.md` |
 | G5-03 | no analysis notebook | **0** tracked `*.ipynb`; no `notebooks/` despite §2.4 | `notebooks/analysis.ipynb` |
-| G5-04 | no screenshots of the running system | 3 tracked images, **0** of them not a training curve. A learning curve satisfies rule 42 and §9.4.2 item 4; it is not a screenshot, and counting it as one would answer a different question | `docs/assets/` |
+| G5-04 | no screenshots of the running system | **5** tracked images (08-06 added the two run-2 curves), **0** of them not a training curve. A learning curve satisfies rule 42 and §9.4.2 item 4; it is not a screenshot, and counting it as one would answer a different question — which is why adding two curves moved the image count and left this row exactly where it was | `docs/assets/` |
 | G5-05 | no token-cost analysis or optimization strategy | `docs/TOKEN-COST.md` absent, though `TokenBudget.report()` already produces the data | `docs/TOKEN-COST.md` |
 
 **Owner: 08-09** (G5-02, G5-03, G5-05) · **08-06 with 07-10's screenshots** (G5-04).

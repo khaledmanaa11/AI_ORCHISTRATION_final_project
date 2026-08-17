@@ -416,9 +416,10 @@ uv run python scripts/check_submission.py    # 86 submission rows, re-derived
 uv lock --check                              # the lockfile is current
 ```
 
-Measured at the commit that introduced this README: **2349 passed, 0 failed**, coverage
-**97.44%**, ruff **0** violations, line-limit **0** violations, local-truth firewall OK over
-7 modules, rule-25 firewall OK. The same jobs run in CI
+Measured 2026-08-17: **2366 passed, 0 failed**, coverage **97.44%**, ruff **0** violations,
+line-limit **0** violations, local-truth firewall OK over 7 modules, rule-25 firewall OK.
+Every one of those numbers is reproducible by running the commands above — they are quoted
+here so a stale claim can be caught, not so they can be taken on trust. The same jobs run in CI
 ([`.github/workflows/quality-gate.yml`](.github/workflows/quality-gate.yml)) and the
 150-line check additionally runs as a pre-commit hook.
 
