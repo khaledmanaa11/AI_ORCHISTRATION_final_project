@@ -233,3 +233,36 @@ waved past:
   **5.6108** against `log2(49) = 5.6147` (and `ln(49) = 3.8918`), so production is
   provably on the log2 formula the extraction moved.
 * `local_view` — imported by `view_builder`, which is the module 07-06 consumes.
+
+---
+
+## D7-8 · `belief_snapshot` still writes the true argmax to the JSONL log
+
+**Found by:** 07-11 · **Owner:** 07-08 (replay viewer) · **Deliberately NOT fixed**
+
+`network/turn_language.belief_snapshot` returns `ctx.brain.belief.argmax()` — the strategy
+map, which on the cop seat is a delta on `ctx.state.thief`. Every `language_turn` record in
+`events.jsonl` therefore carries the thief's true cell.
+
+**This is correct and must stay.** The JSONL is the audit record (rule 38, and the
+Phase-6 final-reveal audit depends on it being complete); rules 8–9 govern the **live
+interface**, not the post-game log, and 07-11's own fix deliberately leaves the strategy
+belief untouched for the same reason — provenance is legitimate, display is what is
+regulated.
+
+**07-08 inherits the constraint, and it is not optional:** the replay viewer may not render
+`belief_argmax` (or anything derived from it) while a game is live, and if it renders it
+post-game it must be labelled as the audit record rather than as the peer's belief.
+`sdk/local_view.py` is the only shape a live panel may consume; the log is not one.
+
+## D7-9 · `scripts/check_local_truth.py` hardening, still open
+
+**Found by:** 07-11 (re-confirming 07-03's own non-goal) · **Owner:** 07-06
+
+Unchanged by this plan and restated because 07-11 proved the gate's blind spot is wider
+than filed: it is an import/attribute gate and **cannot** see a coordinate that is *drawn*
+rather than *named*. It returned `violations: []`, `OK: 1 module(s) scanned`, exit 0
+against a synthetic panel that markered `belief.argmax` and labelled the `scent.opponent`
+peak. Do not cite it as evidence about these panels. The attribute-chain indirection
+(alias/`getattr`/`asdict`), the `rglob('*.py')` `.pyw` blind spot and the empty-`__init__.py`
+anti-vacuity hole all remain 07-06's to close.

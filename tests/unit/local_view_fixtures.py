@@ -62,14 +62,25 @@ IDLE_SECONDS = 1.5
 INCOMING_HINT = {"text": "the north-west corner is empty", "intent": "lie", "turn": 2}
 
 
+def belief_config():
+    """The SHIPPED police belief config -- never a hand-built stand-in, so a
+    test cannot pass against numbers the agent does not actually run on."""
+    return load_belief_config(_CONFIG / "belief.json")
+
+
+def scent_model():
+    """The SHIPPED police scent model, for the same reason."""
+    return load_scent_model(_CONFIG / "scent.json")
+
+
 def belief_adapter(params):
     """A real `BeliefAdapter` -- the type `view_builder` isinstance-checks."""
     return BeliefAdapter(
         ChaserCop(role="cop", game_params=params),
         "cop",
         params,
-        load_belief_config(_CONFIG / "belief.json"),
-        load_scent_model(_CONFIG / "scent.json"),
+        belief_config(),
+        scent_model(),
         random.Random(0),
     )
 
@@ -81,9 +92,7 @@ def scent_field(params, cell=OWN_CELL):
     `BeliefAdapter.decide`, so a context with no adapter genuinely never
     grows one, and leaving that grid empty for `with_belief=False` is
     faithful rather than vacuous."""
-    field = ScentField(
-        model=load_scent_model(_CONFIG / "scent.json"), board_size=params.board_size
-    )
+    field = ScentField(model=scent_model(), board_size=params.board_size)
     field.emit_own(cell)
     return field
 

@@ -10,14 +10,28 @@ design: `GameState` (`shared/state.py`) is exactly
 `ctx.state.thief` legitimately from turn 1 (`turn_language.py:57`). The leak
 is therefore a FIELD READ, not an import, and no import rule can prevent it.
 
-THE MITIGATION IS THE FIELD SET. `LocalView` is a CLOSED set of frozen
-dataclasses that cannot express an opponent's true cell:
+THE FIELD SET IS HALF THE MITIGATION, AND UNTIL 07-11 THIS DOCSTRING CLAIMED
+IT WAS ALL OF IT. It used to say `LocalView` "is a CLOSED set of frozen
+dataclasses that cannot express an opponent's true cell". The field set is
+closed and frozen, and that claim was still FALSE: a dense probability grid
+expresses a cell perfectly well without any coordinate appearing in it.
+Measured through the shipped path, a cop's `belief.argmax` WAS the engine's
+`ctx.state.thief`; its support was the legal-move plus centred on that cell
+(5 of 49), which inverts back to it uniquely; and `scent.opponent`'s peak sat
+on it at the unmixed kernel source value. What a view MAY carry is therefore
+governed by `strategy/display_belief.py` (`docs/PRD_display_belief.md`), the
+one owner of that decision. The closed field set below is what keeps a whole
+`GameState` from arriving; it never was what kept the cell out.
+
+The closed set, with what each field is now guaranteed to be:
 
   * own position, the declared barriers and the barrier count -- barriers are
     declared on the wire (rule 22) and are shared knowledge on both sides;
-  * the belief grid over the opponent -- our own posterior, DENSE and
-    row-major, so no coordinate is ever a value in it;
-  * the sensed scent, both grids, densified for the same reason;
+  * the belief grid over the opponent -- DENSE and row-major, so no
+    coordinate is ever a value in it, AND (07-11) sourced from the display
+    map on any seat whose strategy map has taken an exact observation;
+  * the sensed scent: `own` is this peer's real trail, `opponent` is emitted
+    from that same display map, never from a revealed cell. Both densified;
   * the hint log, with each sender's SELF-DECLARED intent flag -- a claim we
     received, never a verified fact;
   * turn, state-machine state and the freeze timer.
@@ -47,9 +61,18 @@ Grid = tuple[tuple[float, ...], ...]
 
 @dataclass(frozen=True)
 class BeliefView:
-    """Our own posterior over where the opponent MIGHT be -- a belief, never
-    an observation. `argmax` is the cell this peer considers most likely and
-    is routinely wrong; that is exactly why it is legal to draw."""
+    """A posterior over where the opponent MIGHT be, chosen by
+    `strategy/display_belief.published_belief` -- the strategy map on a seat
+    that never took an exact observation, the display map otherwise.
+
+    07-11 corrected this docstring. It used to assert that `argmax` "is
+    routinely wrong; that is exactly why it is legal to draw", and on the cop
+    seat that was the opposite of the truth: `observe_exact(known_cell)` had
+    collapsed the map onto the engine's answer, so the argmax was RIGHT every
+    turn, by construction. It is routinely wrong again now because the map
+    behind it is never shown that answer -- and the floors in `belief.json`'s
+    `display` group are checked before publication rather than assumed.
+    """
 
     rows: Grid
     entropy: float
@@ -59,9 +82,20 @@ class BeliefView:
 
 @dataclass(frozen=True)
 class ScentView:
-    """Both scent grids this peer maintains (D-49). `opponent` is our own
-    RECONSTRUCTION of the opponent's trail from what the protocol revealed,
-    one turn behind -- not a live reading of where it is now."""
+    """Both scent grids (D-49). `own` is this peer's real trail -- local
+    truth, which is exactly what rule 8 asks for. `opponent` is emitted from
+    the published belief map, weighted cell by cell.
+
+    07-11 corrected this docstring too. It used to describe `opponent` as
+    "our own RECONSTRUCTION of the opponent's trail from what the protocol
+    revealed, one turn behind -- not a live reading of where it is now", and
+    every clause of that was wrong on the cop seat: `emit_opponent(known_cell)`
+    stamped the kernel on the true CURRENT cell at full source strength, so
+    its peak was a live reading, not a reconstruction and not one turn
+    behind. Worse, decay is a uniform scalar, so two consecutive published
+    snapshots subtract to recover the fresh deposit -- an animate-only GUI
+    would have leaked every turn.
+    """
 
     own: Grid
     opponent: Grid
