@@ -31,6 +31,7 @@ async def test_run_agent_happy_path_returns_the_turn_loop_outcome(monkeypatch) -
     assert order == [
         "declare_step0", "default_context", "start_server", "perform_handshake",
         "adopt_negotiated_game_id", "write_declaration", "run_turn_loop",
+        "record_completed_game",
         "stop_watchdog", "linger_for_peer", "stop_runtime",
     ]
 
@@ -39,7 +40,11 @@ async def test_run_agent_returns_none_when_handshake_does_not_agree(monkeypatch)
     """Error case: a disagreed handshake ends the game before the turn
     loop, but the FULL teardown always still runs (finally). Asserted as an
     exact list (05-04, a strengthening of the old "not in"/"[-1]" pair):
-    the old final element is no longer the last thing that runs."""
+    the old final element is no longer the last thing that runs.
+
+    07-00 (rules 37/38): the exact list is ALSO what proves a handshake
+    that never became a game is never counted as one -- "record_completed_game"
+    is absent, and an exact list is the only assertion shape that can say so."""
     order: list[str] = []
     _patch_common(monkeypatch, agreed=False, order=order)
 
@@ -68,6 +73,7 @@ async def test_run_agent_wraps_the_whole_play_in_the_tunnel(monkeypatch) -> None
     assert order == [
         "tunnel_start", "declare_step0", "default_context", "start_server", "perform_handshake",
         "adopt_negotiated_game_id", "write_declaration", "run_turn_loop",
+        "record_completed_game",
         "stop_watchdog", "linger_for_peer", "stop_runtime", "tunnel_stop",
     ]
 

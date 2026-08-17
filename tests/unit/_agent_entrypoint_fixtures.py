@@ -134,6 +134,18 @@ def _patch_common(
         order.append("run_final_audit")
         return None
 
+    # 07-00 (rules 37/38): `run_agent` now advances
+    # `cfg.config_dir/games_played.json` on its way out. Every case that
+    # takes `config_dir=None` drives it against the REAL `config/police`,
+    # so an unfaked call would advance the shipped, league-facing counter on
+    # every `pytest` run -- the exact defect 07-00 removes. Recording the
+    # step by name instead STRENGTHENS the order assertions, which now pin
+    # WHERE in the sequence a game gets counted; the real file effect is
+    # measured against `tmp_path` in `test_games_played_counter.py`, which
+    # restores this function deliberately after supplying a throwaway dir.
+    def _record_completed_game(cfg_arg, outcome):
+        order.append("record_completed_game")
+
     monkeypatch.setattr(agent_entrypoint, "default_context", _default_context)
     monkeypatch.setattr(agent_entrypoint, "start_server", _start_server)
     monkeypatch.setattr(agent_entrypoint, "perform_handshake", _perform_handshake)
@@ -145,4 +157,5 @@ def _patch_common(
     monkeypatch.setattr(agent_entrypoint, "declare_step0", _declare_step0)
     monkeypatch.setattr(agent_entrypoint, "write_declaration", _write_declaration)
     monkeypatch.setattr(agent_entrypoint, "run_final_audit", _run_final_audit)
+    monkeypatch.setattr(agent_entrypoint, "record_completed_game", _record_completed_game)
     return cfg

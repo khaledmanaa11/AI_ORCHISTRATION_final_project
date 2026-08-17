@@ -42,6 +42,12 @@ from pursuit.security import step0_collect
 from tests import _shipped_config_guard as guard
 
 _SACRIFICE = "__guard_probe_never_read_by_production__.json"
+_PROBE_RETRIES, _PROBE_BACKOFF = 1, 0.0
+"""`durable_write_json`'s two keyword-only knobs. Supplied so the probe
+below drives a write that WOULD SUCCEED if the guard were absent -- omit
+them and the call dies of TypeError instead, which makes the case pass for
+a reason that has nothing to do with the guard. Found by running the
+silent-redirect probe, not by reading the test."""
 
 
 def test_the_guard_covers_both_real_counter_paths():
@@ -63,22 +69,52 @@ def test_the_guard_resolves_relative_and_dotdot_paths():
     assert not guard.is_shipped_config_path(guard.REPO_ROOT / "logs")
 
 
-def test_a_write_into_the_shipped_config_tree_fails_loudly(tmp_path):
+def test_a_write_into_the_shipped_config_tree_fails_loudly():
     """The mechanism must RAISE, not quietly redirect. A redirect would
     make the suite green while hiding the NEXT production path that writes
     the config tree at the wrong moment -- which is precisely how this
     defect survived from Phase 6 into Phase 7 with a document certifying it
     as correct behaviour (`docs/phases/phase-6/GATE-6-MEASUREMENT.md`).
 
-    Aimed at a sacrificial name, never at the real counter; the trailing
-    assertion proves the guard refused BEFORE any byte was written."""
+    Aimed at a sacrificial name, never at the real counter, and driven with
+    arguments a real write would accept, so a guard that had been removed
+    or turned into a redirect is caught by the ASSERTIONS rather than by an
+    incidental TypeError. `not target.exists()` is the half that separates
+    "refused before writing" from "wrote, then complained"; the `finally`
+    keeps a regression from leaving the tree dirty."""
     target = guard.SHIPPED_CONFIG_ROOT / "police" / _SACRIFICE
+    try:
+        with pytest.raises(guard.ShippedConfigWriteError) as excinfo:
+            step0_collect.durable_write_json(
+                target, {"games_played": 1},
+                retries=_PROBE_RETRIES, backoff=_PROBE_BACKOFF,
+            )
 
-    with pytest.raises(guard.ShippedConfigWriteError) as excinfo:
-        step0_collect.durable_write_json(target, {"games_played": 1})
+        assert not target.exists(), "the guard raised only AFTER writing -- too late"
+        assert "games_played" in str(excinfo.value)
+    finally:
+        for stray in target.parent.glob(f"{_SACRIFICE}*"):
+            stray.unlink()
 
-    assert not target.exists(), "the guard raised only AFTER writing -- too late"
-    assert "games_played" in str(excinfo.value)
+
+def test_the_snapshot_can_actually_see_a_change(tmp_path, monkeypatch):
+    """The session assertion in `conftest.py` compares two `read_counters()`
+    dicts. If that function could not observe a write, the comparison would
+    be vacuous and the whole second half of the seam would be decoration.
+    Pinned against throwaway files, so the real counters are never touched:
+    the point is that the OBSERVER works, not where it points."""
+    fake = tmp_path / "games_played.json"
+    fake.write_text('{"games_played": 41}', encoding="utf-8")
+    monkeypatch.setattr(guard, "SHIPPED_COUNTERS", (fake,))
+
+    before = guard.read_counters()
+    fake.write_text('{"games_played": 42}', encoding="utf-8")
+    after = guard.read_counters()
+
+    assert before != after
+    assert (before[str(fake)], after[str(fake)]) == (
+        '{"games_played": 41}', '{"games_played": 42}',
+    )
 
 
 def test_the_guard_lets_a_throwaway_path_through(tmp_path):

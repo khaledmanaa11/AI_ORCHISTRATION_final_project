@@ -17,6 +17,11 @@ Reproduced below with a throwaway config directory seeded at 7:
 `test_write_declaration_does_not_touch_the_counter` measured **7 -> 8** at
 HEAD, for a call that plays no game whatsoever.
 
+The same three exits driven END TO END through the real `run_agent` live in
+the sibling `test_games_played_at_game_end.py`, split off at the 150-line
+gate; it imports `_SEED` and `_seeded` from here so the two files cannot
+drift on what a seeded config directory is.
+
 The SCOPE half of the same defect -- that a `pytest` run writes the SHIPPED
 counter -- is measured in `test_shipped_counter_isolation.py`.
 """
@@ -24,12 +29,19 @@ counter -- is measured in `test_shipped_counter_isolation.py`.
 from __future__ import annotations
 
 import json
+import shutil
 
 import pytest
 
 from pursuit.constants import Outcome
-from pursuit.network import agent_entrypoint, agent_step0_wiring
+from pursuit.network import agent_step0_wiring
 from pursuit.security import step0_collect
+from tests import _shipped_config_guard as guard
+
+_GAME_PARAMS = guard.SHIPPED_CONFIG_ROOT / "police" / "game_params.json"
+"""Copied into every throwaway config dir because `run_agent` digests it at
+`agent_entrypoint.py:80`. Copied, never read in place: a test that pointed
+`cfg.config_dir` at the real tree is the defect this file exists to remove."""
 
 _SEED = 7
 """An arbitrary non-zero start, so a fix that resets or zeroes the file is
@@ -60,6 +72,7 @@ def _seeded(tmp_path):
     config_dir, log_dir = tmp_path / "config", tmp_path / "logs"
     config_dir.mkdir()
     log_dir.mkdir()
+    shutil.copy(_GAME_PARAMS, config_dir / _GAME_PARAMS.name)
     counter = config_dir / agent_step0_wiring._COUNTER_FILENAME
     counter.write_text(json.dumps({"games_played": _SEED}), encoding="utf-8")
     return config_dir, log_dir, counter
@@ -110,51 +123,3 @@ def test_a_game_that_never_produced_an_outcome_records_nothing(tmp_path):
     agent_step0_wiring.record_completed_game(_Cfg(config_dir), None)
 
     assert step0_collect.read_games_played(counter) == _SEED
-
-
-async def _counter_after_one_run(monkeypatch, tmp_path, *, agreed, outcome):
-    """Drive the REAL `run_agent` -- collaborators faked, zero sockets --
-    against a THROWAWAY config dir, and return what the counter reads
-    afterwards. The real `record_completed_game` is restored deliberately:
-    this is the one case that must exercise the production file write."""
-    from tests.unit._agent_entrypoint_fixtures import _patch_common
-
-    config_dir, _, counter = _seeded(tmp_path)
-    order: list[str] = []
-    _patch_common(monkeypatch, agreed=agreed, order=order, config_dir=config_dir)
-    monkeypatch.setattr(
-        agent_entrypoint, "record_completed_game", agent_step0_wiring.record_completed_game,
-    )
-
-    async def _turn_loop(ctx):
-        order.append("run_turn_loop")
-        return outcome
-
-    monkeypatch.setattr(agent_entrypoint, "run_turn_loop", _turn_loop)
-    await agent_entrypoint.run_agent(str(config_dir))
-    return step0_collect.read_games_played(counter), order
-
-
-async def test_run_agent_counts_a_game_that_ended(monkeypatch, tmp_path):
-    """End to end through the production entry point, all three exits."""
-    count, order = await _counter_after_one_run(
-        monkeypatch, tmp_path, agreed=True, outcome=Outcome.CAPTURE,
-    )
-    assert "run_turn_loop" in order, "the turn loop never ran -- the case proves nothing"
-    assert count == _SEED + 1
-
-
-async def test_run_agent_counts_nothing_when_the_handshake_never_agreed(monkeypatch, tmp_path):
-    count, order = await _counter_after_one_run(
-        monkeypatch, tmp_path, agreed=False, outcome=Outcome.CAPTURE,
-    )
-    assert "run_turn_loop" not in order, "a disagreed handshake must not reach the turn loop"
-    assert count == _SEED
-
-
-async def test_run_agent_counts_nothing_when_the_game_never_resolved(monkeypatch, tmp_path):
-    count, order = await _counter_after_one_run(
-        monkeypatch, tmp_path, agreed=True, outcome=None,
-    )
-    assert "run_turn_loop" in order
-    assert count == _SEED

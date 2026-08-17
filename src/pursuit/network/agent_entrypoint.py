@@ -45,6 +45,7 @@ from pursuit.network.agent_lifecycle import (
     stop_runtime,
     stop_watchdog,
 )
+from pursuit.network.agent_step0_wiring import record_completed_game
 from pursuit.network.agent_teardown import linger_for_peer
 from pursuit.network.agent_wiring import load_agent_config
 from pursuit.network.config_hash import config_digest
@@ -121,6 +122,14 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
                     )
                 if audit_outcome is not None:
                     outcome = audit_outcome
+            # 07-00, rules 37/38: THE game-end increment, and the ONLY one.
+            # It sits here, not in write_declaration where it used to live,
+            # because this is the single point at which the game's result
+            # is known and final -- after the turn loop AND after an audit
+            # that may override it. `record_completed_game` decides what
+            # "completed" means and records why; a false games-played
+            # declaration is an absolute disqualification (docs/RULES.md:79).
+            record_completed_game(cfg, outcome)
             return outcome
         finally:
             # 05-04: shutdown_cleanly's two halves, with a bounded grace
