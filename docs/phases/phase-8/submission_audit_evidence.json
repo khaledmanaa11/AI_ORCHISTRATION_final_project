@@ -1,15 +1,15 @@
 {
   "counts": {
-    "gap": 4,
+    "gap": 3,
     "judged": 73,
-    "pass": 69,
+    "pass": 70,
     "total": 86,
     "unjudged": 13
   },
   "empty_evidence_reasons": [],
   "exit_code": 1,
   "gate": "Segal Sec17 final checklist + Sec19.1 Table 5",
-  "generated_at": "2026-08-17T17:31:03.293596+00:00",
+  "generated_at": "2026-08-17T19:48:43.452596+00:00",
   "mechanisms_discovered": 10,
   "readme_rows": 10,
   "rows": [
@@ -254,7 +254,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 532 (a zero count is a vacuous pass and fails this row)",
+      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 543 (a zero count is a vacuous pass and fails this row)",
       "fix_path": "scripts/check_line_limit.sh",
       "group": "2. Architecture & code",
       "id": "G2-03",
@@ -342,7 +342,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked files under tests/: 318",
+      "evidence": "tracked files under tests/: 329",
       "fix_path": "tests/",
       "group": "3. Testing & quality",
       "id": "G3-04",
@@ -382,7 +382,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 976; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
+      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 1008; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-02",
@@ -502,7 +502,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "docs/SENSITIVITY.md tracked with 212 non-blank lines (floor 20)",
+      "evidence": "docs/SENSITIVITY.md tracked with 221 non-blank lines (floor 20)",
       "fix_path": "docs/SENSITIVITY.md",
       "group": "5. Research & visualization",
       "id": "G5-02",
@@ -638,12 +638,12 @@
       "verdict": "UNJUDGED"
     },
     {
-      "evidence": "src/pursuit/shared/version.py VERSION = '1.00'; pyproject.toml version = '1.00.0'; Table 5 baseline '1.00'",
+      "evidence": "src/pursuit/shared/version.py VERSION = '1.00'; pyproject.toml version = '1.00'; Table 5 baseline '1.00'",
       "fix_path": "pyproject.toml",
       "group": "T5. Table 5 (Sec19.1)",
       "id": "T5-06",
       "requirement": "Version control -- starts at 1.00 and the two sources agree",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "from G3-06=UNJUDGED",
@@ -703,6 +703,6 @@
     }
   ],
   "suite_was_run": false,
-  "tracked_files": 1008,
+  "tracked_files": 1040,
   "verdict": "GAPS_FOUND"
 }
