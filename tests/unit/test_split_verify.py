@@ -17,6 +17,7 @@ that must flip it.
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 
 from tests.unit.submission_gate_helpers import REPO_ROOT, load
@@ -29,10 +30,13 @@ def _init(root):
 
 
 def _tree(tmp_path, committed: bool):
+    """A tree carrying the REAL gate script, so its exit code is a real one."""
     root = tmp_path / "tree"
     (root / "src" / "pursuit").mkdir(parents=True)
+    (root / "scripts").mkdir(parents=True)
     (root / "src" / "pursuit" / "mod.py").write_text("VALUE = 1\n", encoding="utf-8")
     (root / "README.md").write_text("# T\n", encoding="utf-8")
+    shutil.copy2(REPO_ROOT / "scripts" / "check_line_limit.sh", root / "scripts")
     _init(root)
     if committed:
         subprocess.run(["git", "add", "-f", "src", "README.md"], cwd=root,
@@ -52,6 +56,7 @@ def test_the_scanned_count_is_zero_before_the_first_commit(tmp_path) -> None:
     root = _tree(tmp_path, committed=False)
     assert verify_mod.line_limit_scope(root) == ()
     row = verify_mod.line_limit_row(root)
+    assert row.detail.startswith("exit 0"), "the shell gate is expected to pass VACUOUSLY here"
     assert row.ok is False
     assert "scanned 0" in row.detail
 
