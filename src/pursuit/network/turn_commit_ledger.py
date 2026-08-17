@@ -30,10 +30,24 @@ from pursuit.security.ledger import CommitLedger
 from pursuit.security.state_record import build_state_record
 
 
+def ledger_path_for(log_path: Path) -> Path:
+    """D-64's `<log-file-stem>.ledger.jsonl` sibling convention, expressed over
+    a PATH rather than a context -- e.g. `logs/police/<uid>.jsonl` ->
+    `logs/police/<uid>.ledger.jsonl`.
+
+    Extracted for 07-05's `log_` artifact builder, which joins a finished
+    game's wire log to its ledger and has a path but no live `AgentContext`.
+    Extracted rather than copied: this module's docstring records that this
+    convention already existed as two private copies once, and the whole point
+    of folding them in was that the writer and the readers can never drift
+    apart on where a game's nonces live.
+    """
+    return log_path.parent / f"{log_path.stem}.ledger.jsonl"
+
+
 def ledger_path(ctx: AgentContext) -> Path:
-    """D-64's `<log-file-stem>.ledger.jsonl` sibling convention -- e.g.
-    `logs/police/<uid>.jsonl` -> `logs/police/<uid>.ledger.jsonl`."""
-    return ctx.log_path.parent / f"{ctx.log_path.stem}.ledger.jsonl"
+    """`ledger_path_for` over the live context's own log path."""
+    return ledger_path_for(ctx.log_path)
 
 
 def build_action_payload(pre_cell: Coord, dest: Coord, barrier: Coord | None) -> dict:
