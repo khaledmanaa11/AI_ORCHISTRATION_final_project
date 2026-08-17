@@ -21,11 +21,11 @@ fail.
 from __future__ import annotations
 
 import ast
-import importlib.util
 import pathlib
 
-_SCRIPT = pathlib.Path(__file__).parents[2] / "scripts" / "check_local_truth.py"
-GUI_ROOT = pathlib.Path(__file__).parents[2] / "src" / "pursuit" / "gui"
+from tests.unit.local_truth_helpers import gui_trees as _gui_trees
+from tests.unit.local_truth_helpers import load_gate as _check
+from tests.unit.local_truth_helpers import write_tree as _tree
 
 #: The panel a debugging shortcut produces, in the three encodings 07-06
 #: measured passing the gate before it was hardened.
@@ -45,27 +45,6 @@ _ARITHMETIC_OPS = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, a
 _STRING_BUILDERS = ("join", "format")
 _ALLOWED_PACKAGES = ("pursuit.sdk", "pursuit.gui")
 _MIN_GUI_MODULES = 2
-
-
-def _check():
-    spec = importlib.util.spec_from_file_location("check_local_truth", _SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def _tree(root: pathlib.Path, sources: dict) -> pathlib.Path:
-    root.mkdir(parents=True, exist_ok=True)
-    for name, source in sources.items():
-        (root / name).write_text(source, encoding="utf-8")
-    return root
-
-
-def _gui_trees() -> dict:
-    return {
-        path: ast.parse(path.read_text(encoding="utf-8"))
-        for path in sorted(GUI_ROOT.rglob("*.py"))
-    }
 
 
 def _arithmetic(tree: ast.AST) -> list[str]:
@@ -168,7 +147,17 @@ def test_both_logic_scans_are_not_no_ops(tmp_path):
 
 
 def test_gui_imports_only_the_sdk_read_model_and_its_own_package():
+    """The allowlisted service path is READ FROM THE GATE, never copied.
+
+    `check_local_truth.ALLOWED_SERVICE_MODULES` is the one place that decision
+    is made (07-06 wrote it there for 07-08's replay verifier), and a second
+    hardcoded copy here would be free to drift from it. It is pinned to
+    exactly that one module below, so widening the gate stays a deliberate act
+    that fails a test rather than a quiet way to let a mail sink into a view.
+    """
     check = _check()
+    assert check.ALLOWED_SERVICE_MODULES == ("pursuit.services.reporting.replay_verify",)
+    allowed = _ALLOWED_PACKAGES + tuple(check.ALLOWED_SERVICE_MODULES)
     checked = 0
     for path, tree in _gui_trees().items():
         if check.scan.is_package_marker(tree):
@@ -176,6 +165,19 @@ def test_gui_imports_only_the_sdk_read_model_and_its_own_package():
         bound = [n for n in check.scan.bound_module_names(tree) if n.startswith("pursuit")]
         assert bound, f"{path.name} binds no pursuit name at all"
         for name in bound:
-            assert name.startswith(_ALLOWED_PACKAGES), f"{path.name} imports {name}"
+            assert name.startswith(allowed), f"{path.name} imports {name}"
         checked += 1
     assert checked >= _MIN_GUI_MODULES, "the import scan visited almost nothing"
+
+
+def test_a_gui_module_reaching_any_other_service_is_still_reported(tmp_path):
+    """The counter-control for the widened allowlist: it admits the replay
+    verifier and NOTHING else under `pursuit.services`."""
+    check = _check()
+    root = _tree(tmp_path / "gui", {
+        "replay.py": "from pursuit.services.reporting.replay_verify import open_replay\n",
+        "leaky.py": "from pursuit.services.reporting.gmail_sink import GmailSink\n",
+        "greedy.py": "import pursuit.services\n",
+    })
+    reported = {pathlib.Path(v.split(": ")[0]).name for v in check.find_violations(root=root)}
+    assert reported == {"leaky.py", "greedy.py"}

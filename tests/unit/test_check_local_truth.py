@@ -15,12 +15,12 @@ and a root that exists with zero modules in it.
 
 from __future__ import annotations
 
-import importlib.util
 import pathlib
 
 import pytest
 
-_SCRIPT = pathlib.Path(__file__).parents[2] / "scripts" / "check_local_truth.py"
+from tests.unit.local_truth_helpers import load_gate as _check
+from tests.unit.local_truth_helpers import write_tree as _tree
 
 _LEAKY_MODULES = {
     "imports_engine.py": "from pursuit.sdk import engine\n",
@@ -38,20 +38,6 @@ _CLEAN_MODULE = (
     "def render(view: LocalView):\n"
     "    return view.own_cell, view.machine_state, verify\n"
 )
-
-
-def _check():
-    spec = importlib.util.spec_from_file_location("check_local_truth", _SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def _tree(root: pathlib.Path, sources: dict) -> pathlib.Path:
-    root.mkdir(parents=True, exist_ok=True)
-    for name, source in sources.items():
-        (root / name).write_text(source, encoding="utf-8")
-    return root
 
 
 def test_a_missing_root_is_an_error_not_an_ok(tmp_path, capsys):
