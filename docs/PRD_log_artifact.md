@@ -145,7 +145,35 @@ It is floored at >100 files scanned and carries a control that finds an import
 that really is there (D7-6's standard: a gate reporting OK for having looked at
 nothing is worse than no gate).
 
-## 7. Zero numeric values introduced
+## 7. D-61 — one log can legitimately carry two game ids
+
+Found while building the artifact from a real `dev_launch` game, by a check
+that was written to catch the opposite mistake.
+
+`agent_lifecycle` mints a process-local `secrets.token_hex(8)` and opens the log
+**before** the handshake; `game_identity.adopt_negotiated_game_id` then renames
+the log to the negotiated id (D-61, closing 05-UAT G2). Any record written
+before that rename keeps the pre-negotiation stamp.
+
+Measured on `logs/thief/521519a78f96c255.jsonl`: **42 records, two game_uids.**
+The single pre-negotiation `illegal_transition` (D7-5's known recoverable one)
+carries `3c0c5fd8f6705a3b`; the other 41 carry the negotiated
+`521519a78f96c255`, which is also the filename. The police-side log of the same
+game carries one uid, because the negotiated id is the police's own.
+
+A builder that took "the log's game_uid" to be the first record's would have
+**refused the thief an artifact in every game.** So:
+
+* the caller supplies the **negotiated** id (07-07 passes `ctx.game_uid`);
+* it must appear **somewhere** in the log — otherwise this is a different
+  game's log and the artifact would be named for a game it does not contain;
+* every other id found is carried in `prior_game_uids`, **inside the seal**.
+
+Dropping the older id would have hidden the exact fact 05-UAT G2 exists to make
+visible. `prior_game_uids` is `[]` on the police seat and one entry on the
+thief's.
+
+## 8. Zero numeric values introduced
 
 Turn indices come from the records themselves. The filename and `<NN>` come from
 07-02's `log_filename` / `next_sub_game_index`, which read them off

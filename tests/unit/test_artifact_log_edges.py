@@ -100,6 +100,37 @@ def test_an_empty_log_and_ledger_join_to_an_empty_game(tmp_path):
     log_path = write_jsonl(tmp_path / "empty.jsonl", [])
     joined = join_game(log_path)
     assert joined.turns == []
-    assert joined.game_uid is None and joined.role is None
+    assert joined.game_uids == () and joined.role is None
     assert joined.outcome is None and joined.audit_verdict is None
     assert joined.truncated_tail == {"log": False, "ledger": False}
+
+
+def test_a_pre_negotiation_game_uid_is_carried_not_refused(tmp_path):
+    """D-61, measured on a real thief-side log: `adopt_negotiated_game_id`
+    renames the log mid-stream, so the one record written before the handshake
+    keeps its process-local id. A builder that took the FIRST record's uid as
+    "the log's uid" would have refused the thief an artifact in every game."""
+    log_path = write_game(tmp_path)
+    lines = log_path.read_text(encoding="utf-8").splitlines()
+    stale = json.loads(lines[0])
+    stale["game_uid"] = "prenegotiation01"
+    log_path.write_text(
+        "".join(f"{line}\n" for line in [json.dumps(stale), *lines]), encoding="utf-8"
+    )
+    assert join_game(log_path).game_uids == ("prenegotiation01", GAME_UID)
+
+    artifact = artifact_log.build_log_artifact(
+        log_path, game_uid=GAME_UID, game_id=GAME_ID, sub_game_index=SUB_GAME_INDEX
+    )
+    assert artifact[artifact_log.LogArtifactField.PRIOR_GAME_UIDS] == ["prenegotiation01"]
+    assert artifact_log.verify_log_turns(artifact) == (len(GAME_TURNS), len(GAME_TURNS))
+
+
+def test_a_log_holding_none_of_the_requested_uid_is_still_refused(tmp_path):
+    """The check the D-61 tolerance must not have softened away."""
+    log_path = write_game(tmp_path)
+    with pytest.raises(ValueError, match="not the requested"):
+        artifact_log.build_log_artifact(
+            log_path, game_uid="anothergame00000", game_id=GAME_ID,
+            sub_game_index=SUB_GAME_INDEX,
+        )

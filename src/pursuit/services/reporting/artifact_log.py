@@ -41,12 +41,18 @@ from pursuit.services.reporting.artifacts import (
     log_filename,
     write_artifact,
 )
+from pursuit.services.reporting.log_artifact_fields import (
+    SEALED_FIELDS,
+    LogArtifactField,
+    sealed_body,
+)
 from pursuit.services.reporting.log_join import join_game
 from pursuit.services.reporting.log_turn_fields import TurnField
 
 __all__ = (
     "SEALED_FIELDS",
     "LogArtifactField",
+    "sealed_body",
     "build_log_artifact",
     "verify_log_artifact",
     "verify_log_turns",
@@ -54,56 +60,33 @@ __all__ = (
 )
 
 
-class LogArtifactField:
-    """Key names for the log artifact -- structural, avoids magic strings."""
-
-    ROLE = "role"
-    TURNS = "turns"
-    OUTCOME = "outcome"
-    AUDIT_VERDICT = "audit_verdict"
-    TRUNCATED_TAIL = "truncated_tail"
-    LOG_DIGEST = "log_digest"
-
-
-# What the seal covers. `truncated_tail` is INSIDE it deliberately: whether a
-# game's tail was lost is part of the record's provenance, and a marker outside
-# the seal could be flipped without breaking it.
-SEALED_FIELDS = (
-    LogArtifactField.TURNS,
-    LogArtifactField.OUTCOME,
-    LogArtifactField.AUDIT_VERDICT,
-    LogArtifactField.TRUNCATED_TAIL,
-)
-
-
-def _sealed_body(artifact: dict) -> dict:
-    """The sealed sub-object, named ONCE so the builder and the verifier can
-    never drift apart on what the digest covers."""
-    return {name: artifact[name] for name in SEALED_FIELDS}
-
-
 def build_log_artifact(
     log_path: Path | str, *, game_uid: str, game_id: str, sub_game_index: int
 ) -> dict:
     """Join one finished game's wire log to its ledger and seal the result.
 
-    The log's own `game_uid` must agree with the caller's: an artifact named
-    for one game and filled from another's log is the failure this check
-    exists for, and it is cheap because both sources are already open.
+    The caller's `game_uid` is the negotiated one (D-61) and must appear in the
+    log, or this is another game's log and the artifact would be named for a
+    game it does not contain. It need not be the ONLY one: `prior_game_uids`
+    carries any pre-negotiation id the log also holds, rather than dropping the
+    fact -- un-joinable ids across four artifacts is exactly 05-UAT G2.
     """
     joined = join_game(log_path)
-    if joined.game_uid is not None and joined.game_uid != game_uid:
+    if joined.game_uids and game_uid not in joined.game_uids:
         raise ValueError(
-            f"log at {log_path} carries game_uid {joined.game_uid!r}, "
+            f"log at {log_path} carries game_uid(s) {list(joined.game_uids)}, "
             f"not the requested {game_uid!r}"
         )
     artifact = artifact_header(game_uid=game_uid, game_id=game_id, sub_game_index=sub_game_index)
     artifact[LogArtifactField.ROLE] = joined.role
+    artifact[LogArtifactField.PRIOR_GAME_UIDS] = [
+        uid for uid in joined.game_uids if uid != game_uid
+    ]
     artifact[LogArtifactField.TURNS] = joined.turns
     artifact[LogArtifactField.OUTCOME] = joined.outcome
     artifact[LogArtifactField.AUDIT_VERDICT] = joined.audit_verdict
     artifact[LogArtifactField.TRUNCATED_TAIL] = joined.truncated_tail
-    artifact[LogArtifactField.LOG_DIGEST] = artifact_digest(_sealed_body(artifact))
+    artifact[LogArtifactField.LOG_DIGEST] = artifact_digest(sealed_body(artifact))
     return artifact
 
 
@@ -115,7 +98,7 @@ def verify_log_artifact(path: Path | str) -> bool:
     `verify_config_artifact` makes, for the same reason.
     """
     artifact = json.loads(Path(path).read_text(encoding="utf-8"))
-    return artifact_digest_matches(_sealed_body(artifact), artifact[LogArtifactField.LOG_DIGEST])
+    return artifact_digest_matches(sealed_body(artifact), artifact[LogArtifactField.LOG_DIGEST])
 
 
 def verify_log_turns(artifact: dict) -> tuple[int, int]:

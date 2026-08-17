@@ -20,9 +20,9 @@ tail is reported in this module's `truncated_tail`, never swallowed.
 
 TWO EVENT NAMES ARE NOT `EventType` MEMBERS. `turn_events.language_turn_record`
 and `game_over_record` set `EventField.EVENT` to the bare strings
-`"language_turn"` and `"game_over"` because `EventType` has no member for
-either. `EventType(record[EVENT])` would raise on them and a membership test
-would drop them silently, so every filter below is on the STRING.
+`"language_turn"` and `"game_over"`; `EventType(record[EVENT])` would raise on
+them and a membership test would drop them silently, so every filter below is
+on the STRING. Full reasoning: `docs/PRD_log_artifact.md` Sec4.
 """
 
 from __future__ import annotations
@@ -72,9 +72,15 @@ def peer_claimed_turn(record: dict) -> int | None:
 
 @dataclass(frozen=True)
 class JoinedGame:
-    """One finished game, joined. `turns` is sorted by local turn."""
+    """One finished game, joined. `turns` is sorted by local turn.
 
-    game_uid: str | None
+    `game_uids` is a TUPLE in first-appearance order, not one string, because
+    D-61's `adopt_negotiated_game_id` renames this side's log mid-stream and a
+    record written before the handshake keeps its pre-negotiation id. Measured
+    on a real game and reasoned in `docs/PRD_log_artifact.md` Sec7.
+    """
+
+    game_uids: tuple[str, ...]
     role: str | None
     turns: list[dict]
     outcome: dict | None
@@ -119,11 +125,14 @@ def join_game(log_path: Path | str) -> JoinedGame:
     ledger = {r.get(LedgerField.TURN): r for r in ledger_lines if _is_turn(r.get(LedgerField.TURN))}
     wire: dict = {}
     language: dict = {}
-    game_uid = role = outcome = verdict_record = None
+    uids: dict[str, None] = {}
+    role = outcome = verdict_record = None
 
     for record in records:
         event, turn = record.get(EventField.EVENT), local_turn(record)
-        game_uid = game_uid or record.get(EventField.GAME_UID)
+        uid = record.get(EventField.GAME_UID)
+        if isinstance(uid, str):
+            uids[uid] = None
         if not _is_turn(turn):
             continue
         if event == EventType.MESSAGE_SENT.value:
@@ -159,7 +168,7 @@ def join_game(log_path: Path | str) -> JoinedGame:
             TurnField.TURN: local_turn(verdict_record),
         }
     return JoinedGame(
-        game_uid=game_uid,
+        game_uids=tuple(uids),
         role=role,
         turns=turns,
         outcome=outcome,
