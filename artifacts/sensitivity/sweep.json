@@ -1,0 +1,548 @@
+{
+  "baseline": {
+    "barrier_quota": 14,
+    "board_size": 7,
+    "cop_start": [
+      0,
+      0
+    ],
+    "equilibrium_iterations": 200,
+    "horizon": "35/35",
+    "resolution_rules": "race=true,swap=false",
+    "thief_start": [
+      3,
+      3
+    ],
+    "weights": "run2"
+  },
+  "cells": [
+    {
+      "is_baseline": true,
+      "knob": "baseline",
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.392680149390323,
+          "ci_low": 0.263915714943814,
+          "games": 200,
+          "points_per_game": 6.625,
+          "rate": 0.325,
+          "seat": "thief",
+          "wins": 65
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6462640088852563,
+          "ci_low": 0.5107207388477095,
+          "games": 200,
+          "points_per_game": 7.9,
+          "rate": 0.58,
+          "seat": "thief",
+          "wins": 116
+        }
+      },
+      "value": "shipped"
+    },
+    {
+      "is_baseline": false,
+      "knob": "board_size",
+      "labels": [
+        "board size"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.5686391409273217,
+          "ci_low": 0.4313608590726783,
+          "games": 200,
+          "points_per_game": 7.5,
+          "rate": 0.5,
+          "seat": "thief",
+          "wins": 100
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.7453767905394755,
+          "ci_low": 0.6176504385930084,
+          "games": 200,
+          "points_per_game": 8.425,
+          "rate": 0.685,
+          "seat": "thief",
+          "wins": 137
+        }
+      },
+      "note": "cop stays in the corner, thief re-centred (Table 13 rows 5-6)",
+      "source": "",
+      "status": "minimum",
+      "value": "9"
+    },
+    {
+      "is_baseline": false,
+      "knob": "board_size",
+      "labels": [
+        "board size"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.7360842850561861,
+          "ci_low": 0.607319850609677,
+          "games": 200,
+          "points_per_game": 8.375,
+          "rate": 0.675,
+          "seat": "thief",
+          "wins": 135
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.9055342957203134,
+          "ci_low": 0.8107086158113437,
+          "games": 200,
+          "points_per_game": 9.325,
+          "rate": 0.865,
+          "seat": "thief",
+          "wins": 173
+        }
+      },
+      "note": "cop stays in the corner, thief re-centred (Table 13 rows 5-6)",
+      "source": "",
+      "status": "minimum",
+      "value": "11"
+    },
+    {
+      "is_baseline": false,
+      "knob": "barrier_quota",
+      "labels": [
+        "barrier quota"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.3823495614069917,
+          "ci_low": 0.2546232094605245,
+          "games": 200,
+          "points_per_game": 6.575,
+          "rate": 0.315,
+          "seat": "thief",
+          "wins": 63
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6366567771715163,
+          "ci_low": 0.5007048770948289,
+          "games": 200,
+          "points_per_game": 7.85,
+          "rate": 0.57,
+          "seat": "thief",
+          "wins": 114
+        }
+      },
+      "note": "",
+      "source": "",
+      "status": "minimum",
+      "value": "21"
+    },
+    {
+      "is_baseline": false,
+      "knob": "barrier_quota",
+      "labels": [
+        "barrier quota"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.3615871457932609,
+          "ci_low": 0.2361394381410138,
+          "games": 200,
+          "points_per_game": 6.475,
+          "rate": 0.295,
+          "seat": "thief",
+          "wins": 59
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6318427454810106,
+          "ci_low": 0.49570736205202415,
+          "games": 200,
+          "points_per_game": 7.825,
+          "rate": 0.565,
+          "seat": "thief",
+          "wins": 113
+        }
+      },
+      "note": "",
+      "source": "",
+      "status": "minimum",
+      "value": "28"
+    },
+    {
+      "is_baseline": false,
+      "knob": "horizon",
+      "labels": [
+        "move ceiling",
+        "survival threshold"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.2984136893603518,
+          "ci_low": 0.18157433377419852,
+          "games": 200,
+          "points_per_game": 6.175,
+          "rate": 0.235,
+          "seat": "thief",
+          "wins": 47
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.47923541021236327,
+          "ci_low": 0.3441567485880499,
+          "games": 200,
+          "points_per_game": 7.05,
+          "rate": 0.41,
+          "seat": "thief",
+          "wins": 82
+        }
+      },
+      "note": "swept jointly: the shipped config sets them equal",
+      "source": "",
+      "status": "minimum",
+      "value": "50/50"
+    },
+    {
+      "is_baseline": false,
+      "knob": "horizon",
+      "labels": [
+        "move ceiling",
+        "survival threshold"
+      ],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.3143409836577504,
+          "ci_low": 0.195081679676731,
+          "games": 200,
+          "points_per_game": 6.25,
+          "rate": 0.25,
+          "seat": "thief",
+          "wins": 50
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.35637478155403235,
+          "ci_low": 0.23154025564693193,
+          "games": 200,
+          "points_per_game": 6.45,
+          "rate": 0.29,
+          "seat": "thief",
+          "wins": 58
+        }
+      },
+      "note": "swept jointly: the shipped config sets them equal",
+      "source": "",
+      "status": "minimum",
+      "value": "70/70"
+    },
+    {
+      "is_baseline": false,
+      "knob": "equilibrium_iterations",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.3406833941201153,
+          "ci_low": 0.21779700288091797,
+          "games": 200,
+          "points_per_game": 6.375,
+          "rate": 0.275,
+          "seat": "thief",
+          "wins": 55
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6125178074172186,
+          "ci_low": 0.4757861131825747,
+          "games": 200,
+          "points_per_game": 7.725,
+          "rate": 0.545,
+          "seat": "thief",
+          "wins": 109
+        }
+      },
+      "note": "regret-matching iterations; the docstring calls 200 converged",
+      "source": "src/pursuit/strategy/valuebrain.py:29-32",
+      "status": "engineering default",
+      "value": "50"
+    },
+    {
+      "is_baseline": false,
+      "knob": "equilibrium_iterations",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.3719855215282907,
+          "ci_low": 0.24536415587260474,
+          "games": 200,
+          "points_per_game": 6.525,
+          "rate": 0.305,
+          "seat": "thief",
+          "wins": 61
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.5882083367417456,
+          "ci_low": 0.4510378501914959,
+          "games": 200,
+          "points_per_game": 7.6,
+          "rate": 0.52,
+          "seat": "thief",
+          "wins": 104
+        }
+      },
+      "note": "regret-matching iterations; the docstring calls 200 converged",
+      "source": "src/pursuit/strategy/valuebrain.py:29-32",
+      "status": "engineering default",
+      "value": "800"
+    },
+    {
+      "is_baseline": false,
+      "knob": "resolution_rules",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.38751898489132125,
+          "ci_low": 0.2592653327095053,
+          "games": 200,
+          "points_per_game": 6.6,
+          "rate": 0.32,
+          "seat": "thief",
+          "wins": 64
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.689145631894754,
+          "ci_low": 0.5561430364380053,
+          "games": 200,
+          "points_per_game": 8.125,
+          "rate": 0.625,
+          "seat": "thief",
+          "wins": 125
+        }
+      },
+      "note": "negotiated per pair of teams; NOT an Appendix F row",
+      "source": "src/pursuit/shared/resolution.py:1-13",
+      "status": "engineering default",
+      "value": "race=false,swap=false"
+    },
+    {
+      "is_baseline": false,
+      "knob": "resolution_rules",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.12004361066028794,
+          "ci_low": 0.04597491700833055,
+          "games": 200,
+          "points_per_game": 5.375,
+          "rate": 0.075,
+          "seat": "thief",
+          "wins": 15
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6653942148238507,
+          "ci_low": 0.5308367198423567,
+          "games": 200,
+          "points_per_game": 8.0,
+          "rate": 0.6,
+          "seat": "thief",
+          "wins": 120
+        }
+      },
+      "note": "negotiated per pair of teams; NOT an Appendix F row",
+      "source": "src/pursuit/shared/resolution.py:1-13",
+      "status": "engineering default",
+      "value": "race=false,swap=true"
+    },
+    {
+      "is_baseline": false,
+      "knob": "resolution_rules",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.12598948869705723,
+          "ci_low": 0.049840585704871626,
+          "games": 200,
+          "points_per_game": 5.4,
+          "rate": 0.08,
+          "seat": "thief",
+          "wins": 16
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.6221939904825959,
+          "ci_low": 0.4857330235838182,
+          "games": 200,
+          "points_per_game": 7.775,
+          "rate": 0.555,
+          "seat": "thief",
+          "wins": 111
+        }
+      },
+      "note": "negotiated per pair of teams; NOT an Appendix F row",
+      "source": "src/pursuit/shared/resolution.py:1-13",
+      "status": "engineering default",
+      "value": "race=true,swap=true"
+    },
+    {
+      "is_baseline": false,
+      "knob": "weights",
+      "labels": [],
+      "matchups": {
+        "cop vs greedy evader": {
+          "ci_high": 0.9999999999999999,
+          "ci_low": 0.9811546733310369,
+          "games": 200,
+          "points_per_game": 20.0,
+          "rate": 1.0,
+          "seat": "cop",
+          "wins": 200
+        },
+        "thief vs chaser cop (no seals)": {
+          "ci_high": 0.20048667579611365,
+          "ci_low": 0.10289350613884998,
+          "games": 200,
+          "points_per_game": 5.725,
+          "rate": 0.145,
+          "seat": "thief",
+          "wins": 29
+        },
+        "thief vs chaser cop (seals)": {
+          "ci_high": 0.5042926379479757,
+          "ci_low": 0.3681572545189893,
+          "games": 200,
+          "points_per_game": 7.175,
+          "rate": 0.435,
+          "seat": "thief",
+          "wins": 87
+        }
+      },
+      "note": "the fitted vector against the hand-written prior",
+      "source": "artifacts/run2/weights.json",
+      "status": "engineering default",
+      "value": "prior"
+    }
+  ],
+  "eval_seed": 90210,
+  "fixed_parameters_not_varied": [
+    "number of agents",
+    "movement range",
+    "scent strength at source",
+    "scent decay rate",
+    "scent field size",
+    "capture score \u2013 cop",
+    "capture score \u2013 thief",
+    "survival score \u2013 cop",
+    "survival score \u2013 thief",
+    "tie score",
+    "number of opponents",
+    "diversity reward",
+    "minimum games",
+    "max games per team"
+  ],
+  "games_per_matchup": 200,
+  "inputs": [
+    "config/police/game_params.json",
+    "config/police/resolution.json",
+    "artifacts/run2/weights.json"
+  ],
+  "wall_time_seconds": 755.6
+}

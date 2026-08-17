@@ -1,0 +1,67 @@
+{
+  "arms": {
+    "prior/book_only/negotiated": {
+      "ci_high": 0.1948988091418585,
+      "ci_low": 0.09866982605979482,
+      "games": 200,
+      "rate": 0.14,
+      "wins": 28
+    },
+    "prior/book_only/randomised": {
+      "ci_high": 0.5192438491585296,
+      "ci_low": 0.38264068350836655,
+      "games": 200,
+      "rate": 0.45,
+      "wins": 90
+    },
+    "prior/swap/negotiated": {
+      "ci_high": 0.08957814852860962,
+      "ci_low": 0.027382645473457017,
+      "games": 200,
+      "rate": 0.05,
+      "wins": 10
+    },
+    "prior/swap/randomised": {
+      "ci_high": 0.38751898489132125,
+      "ci_low": 0.2592653327095053,
+      "games": 200,
+      "rate": 0.32,
+      "wins": 64
+    },
+    "run2/book_only/negotiated": {
+      "ci_high": 0.38751898489132125,
+      "ci_low": 0.2592653327095053,
+      "games": 200,
+      "rate": 0.32,
+      "wins": 64
+    },
+    "run2/book_only/randomised": {
+      "ci_high": 0.5930837740575835,
+      "ci_low": 0.45597395960896836,
+      "games": 200,
+      "rate": 0.525,
+      "wins": 105
+    },
+    "run2/swap/negotiated": {
+      "ci_high": 0.12004361066028794,
+      "ci_low": 0.04597491700833055,
+      "games": 200,
+      "rate": 0.075,
+      "wins": 15
+    },
+    "run2/swap/randomised": {
+      "ci_high": 0.38751898489132125,
+      "ci_low": 0.2592653327095053,
+      "games": 200,
+      "rate": 0.32,
+      "wins": 64
+    }
+  },
+  "eval_seed": 90210,
+  "games_per_arm": 200,
+  "recorded_claim": {
+    "book_only_percent": 89,
+    "source": "docs/phases/phase-3/ENGINEERING-LOG.md Act 4.3",
+    "swap_percent": 1
+  }
+}
