@@ -3,132 +3,124 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 08-09 is committed and closed; the tree is clean apart from untracked
-  throwaway `game_artifacts/`, which must NEVER be committed (D7-19). **WAVE 2 IS COMPLETE.**
-  Next is wave 3's **08-10** (the two-repo split, built LOCALLY, nothing pushed).
-  WHAT 08-10 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py` now exits 1 at
-  **69 PASS / 4 GAP / 13 UNJUDGED** (was 65/8/13). All four remaining GAPs are somebody else's:
-  G1-03b and G5-04 (the screenshots -- 08-06 with 07-10's material, still MARKED-ABSENT SLOTS
-  and not to be faked), G6-08 (the tag, 08-11/08-12) and T5-06 (the `version.py` 1.00 vs
-  `pyproject.toml` 1.00.0 reconciliation, 08-11, and D-79 derives the tag name from it).
-  **`notebooks/` IS A NEW TOP-LEVEL DIRECTORY** and must survive the split. `analysis.ipynb`
-  reads FOUR tracked artifacts under `artifacts/`; a split that drops `artifacts/` leaves it
-  unable to execute, and `tests/unit/test_notebook_offline.py` FAILS inside that tree rather
-  than passing quietly. **THREE NEW DEV DEPENDENCIES** (nbconvert, ipykernel, nbformat) are in
-  `pyproject.toml`, so `uv sync` inside each split output must still resolve them.
-  ONE TEST SKIPS BY DESIGN IN A SPLIT TREE:
-  `test_research_docs.py::test_every_cited_commit_hash_resolves` skips when
-  `git rev-list --count HEAD` is under 50, because 08-10's outputs have ONE initial commit and a
-  hash from this repo cannot exist there. The skip NAMES its reason; every other test in that
-  file runs there and must pass.
-  THE STANDING CITATION CONSTRAINT NOW GOVERNS NINE DOCUMENTS: a backticked repository path in
-  `ARCHITECTURE.md`, `QUALITY-25010.md`, `EXTENSION-POINTS.md`, `PRD_sdk.md`, `PRD_tunnel.md`,
-  `PRD_gui.md`, `SENSITIVITY.md`, `TOKEN-COST.md` or `PROMPT_LOG.md` is a CLAIM THAT THE PATH
-  EXISTS NOW. `tests/unit/doc_citation_helpers.py` enforces the first six against `git ls-files`;
-  `tests/unit/test_research_docs.py` enforces the last three against the filesystem AND resolves
-  every cited 7-hex commit hash. Reference a deleted file UNBACKTICKED. FIVE fabricated or
-  unresolvable citations have now been caught this phase, one of them in 08-09's own first draft.
-  A NEW OPEN CORRECTION, AND IT IS NOT 08-09'S TO MAKE: the sweep contradicts
-  `docs/phases/phase-3/ENGINEERING-LOG.md` Act 4.3. The log records thief survival against a
-  barrier-blind chaser as **89% -> 1%** across the swap decision, and `phase-3/PRD.md`,
-  `phase-3/PLAN.md` and `src/pursuit/shared/resolution.py`'s `PREFERRED` docstring all quote it.
-  Measured at HEAD: **32.0% -> 7.5%**. `scripts/sensitivity_reconcile.py` parses the old pair OUT
-  OF THE LOG and re-measures all eight weights x rules x opening arms at n=200; the highest is
-  52.5% and none approaches 1%. **The DIRECTION of the shipped decision is confirmed and needs no
-  change** (the swap still costs the thief ~25pp and the cop seat is 100% under all four rule
-  combinations) -- but "89% to 1%" MUST NOT be quoted as a current measurement. The CAUSE WAS NOT
-  ESTABLISHED and no document pretends otherwise. Recorded in `docs/SUBMISSION-CHECKLIST.md`.
+Resume file: None -- 08-10 is committed and closed; the tree is clean apart from the untracked
+  throwaway `game_artifacts/`, which must NEVER be committed (D7-19). **WAVE 3 IS COMPLETE.**
+  Next is wave 4's **08-11** (tag prepared and NOT pushed, graph refresh, GATE-8, three runbooks,
+  self-assessment evidence).
+  WHAT 08-11 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: two split repositories exist on disk
+  at `C:\Users\Hp\pursuit-split-repos\pursuit-police` (`99d6d5f`) and `...\pursuit-thief`
+  (`580acae`), built from source commit `8aa02ea`, **12/12 rows each**, **zero remotes**, one
+  commit apiece, histories disjoint from this repository. **THEY ARE ONE COMMIT STALE** -- the
+  08-10 summary, `STATE.md` and `SPLIT-VERIFICATION.md` land after `8aa02ea`. D-79 cuts the tag
+  ON THE OUTPUTS, so 08-11 should REBUILD FIRST; the build is idempotent and is one command,
+  recorded in `docs/phases/phase-8/SPLIT-RUNBOOK.md`:
+  `uv run python scripts/build_split_repos.py --dest C:/Users/Hp/pursuit-split-repos --replace
+  --gates --json docs/phases/phase-8/split_build_evidence.json` (exit 0 = every row passed).
+  **THE SUITE NOW PASSES ON A FRESH CLONE, WHICH IT DID NOT BEFORE 08-10.** Four tests asserted
+  the developer's untracked files rather than the repository and failed inside both splits -- and
+  therefore on any grader's clone. All four fixed with mutation probes. The worst of them: the
+  rule-38 README leak detector globbed `config/*/games_played.json`, so in every clone and every
+  CI checkout it searched an EMPTY value set and returned `[]` unconditionally. **A CI job
+  guarding an absolute-disqualification rule was guarding nothing.**
+  A MEASURED GIT QUIRK WORTH NOT REDISCOVERING (git 2.53.0.windows.2): `git check-ignore` reports
+  EVERY non-existent path ending in `/` as ignored, matching a blank line -- `README.md/` comes
+  back ignored too. Never ask the ignore question with a trailing slash; ask about a path INSIDE
+  the directory. `tests/unit/gitignore_probe.as_probe_path` is the shared answer.
+  ONE TEST SKIPS BY DESIGN IN A SPLIT TREE, AS 08-09 PREDICTED:
+  `test_research_docs.py::test_every_cited_commit_hash_resolves` (1 skipped, 2533 passed).
+  `check_submission.py` re-run at HEAD: **69 PASS / 4 GAP / 13 UNJUDGED**, exit 1 -- UNCHANGED by
+  this plan, which is the counter-control. The four GAPs are still G1-03b and G5-04 (screenshots,
+  07-10's material, MARKED-ABSENT SLOTS and not to be faked), G6-08 (the tag, 08-11/08-12) and
+  T5-06 (`version.py` 1.00 vs `pyproject.toml` 1.00.0 -- 08-11 reconciles it and D-79 DERIVES the
+  tag name from the result).
   STILL OPEN AND STILL A HUMAN'S: OQ8-1 (D7-17, DRAFTED and UNSENT), OQ8-2 (the games-played
   VALUE), OQ8-3 (where the form lives), OQ8-4 (the self-assessment SCORE), OQ8-5 (THE LICENCE --
-  still PREPARED, NOT ADOPTED), OQ8-6 (the two repo URLs), OQ8-7 (the token ceiling), OQ8-8
-  (README language, recorded as an ASSUMPTION), OQ8-9 (is `origin` public?).
-  **OQ8-9 REMAINS URGENT AND UNANSWERED.** THIS AGENT PUSHED NOTHING and issued NO remote command
-  of any kind, but the ref has moved on its own before (19:04 on 08-14, 13:35 and 17:14 on 08-16,
-  and `acc5913` six minutes after it was committed). No corrective remote action was taken -- a
-  force-push is itself touching the remote. `git tag -l` is still EMPTY.
-stopped_at: 08-09 CLOSED (2026-08-17) -- THE REPOSITORY HAD NO SENSITIVITY ANALYSIS, NO
-  NOTEBOOK, NO TOKEN-COST ANALYSIS AND NO PROMPT LOG. No plan file existed; executed from
-  `08-PLAN-OUTLINE.md` Sec9, the same way 08-07 and 08-08 were. SEVEN ATOMIC COMMITS:
-  `32440b4` the three dev deps, `486a01a` the sweep + its refusals + both artifacts, `a8931b7`
-  the token-cost readers, `bcce41b` the executed notebook, `32535b7` the three documents,
-  `112bd6f` the register and trackers, `aac4cf8` the self-audit fixes.
-  GAP MOVEMENT: 65/8/13 -> **69/4/13**. FOUR rows, EXACTLY the four 08-09 owned (G1-14, G5-02,
-  G5-03, G5-05); NO other row moved in either direction, which is the counter-control. The gate's
-  own empty state re-observed at exit **2**.
-  EVERY PUBLISHED NUMBER IS RENDERED FROM A COMMITTED ARTIFACT, and
-  `tests/unit/test_research_docs.py` re-renders all FOUR generated blocks and compares them
-  against the committed documents -- so a figure edited in by hand fails the suite instead of
-  reaching a grader. Verified at HEAD: 5008 / 1014 / 2093 / 930 characters, all four present
-  verbatim; `artifacts/token_cost/token_cost.json` rebuilds BYTE-IDENTICAL (sha256 693efe19...);
-  the sweep's baseline cell reproduces exactly on a fresh 200-game run (116/200, 65/200,
-  200/200).
-  THE SWEEP CANNOT TOUCH A FIXED PARAMETER, AND THAT IS A PARSE RATHER THAN A PROMISE.
-  `scripts/sensitivity_status.py` reads `docs/PARAMETERS.md`'s Status column (32 rows, 14 fixed);
-  `refuse_fixed` fails on a fixed row, an unknown row, or a status the extract contradicts, and
-  `refuse_downward` fails a `minimum` swept below the shipped value. The fixed list the document
-  PRINTS comes from that same parse. 13 configurations x 3 matchups x 200 games, 755.6s, fully
-  offline through `training/arena.run_match`.
-  SEPARABLE FINDINGS (non-overlapping 95% Wilson, `arena.compare`'s conservative rule): board 11
-  **+35.0pp** thief survival, horizon 70/70 **-29.0pp**, swap-as-capture **-25.0pp**, the prior
-  instead of the fitted vector **-18.0pp**. Search depth (50 vs 200 vs 800 iterations) and extra
-  barriers (21, 28) move NOTHING separably. The cop matchup is 200/200 at baseline and is flagged
-  **SATURATED** in the document, the notebook and the renderer -- the effect ranking refuses to
-  rank a knob on it at all.
-  TOKEN COST, FROM THE ONE LIVE GAME AND LABELLED n=1 EVERYWHERE: input is **96.4%** of spend;
-  the system prompts are **91-96%** of each call's input CHARACTERS and are re-sent every call;
-  `_estimate_tokens` **over-reserves 1.35x** and the cause is located (the `max_tokens=300`
-  ceiling is 42.5% of the reservation while real output averaged 19.1 tokens/call); and a
-  **10-game series -- the FIXED maximum, Table 18 row 5 -- projects to 301,800 tokens against a
-  200,000 budget and DOES NOT FIT**, so the ladder reaches TEMPLATE_ONLY at ~6.0 games and the
-  language layer goes dark for the last four of a maximal series. Nobody had written that down.
-  The mocked run transfers on CALLS (1.643 vs 1.662) and is **9.83x** away on TOKENS; pooling
-  them would have corrupted every projection.
-  THE PROMPT LOG CARRIES A MEASURED REVISION, not an anecdote: `bluff_prompt.py` said "phrasing a
-  claim FOR a player" and produced "The player is currently positioned near the eastern edge of
-  the grid." on 2026-08-13; `50ac2fe` put the model in the seat; the tracked wire logs show
-  **1 third-person sentence in the 10 hints before and 0 in the 69 after**. The 10-hint
-  before-sample is stated as a limit IN the entry, and the third-person rule is labelled a narrow
-  mechanical proxy where it prints.
-  THREE VACUITIES FOUND IN 08-09'S OWN TESTS, all by probing rather than reading, all fixed:
-  (1) `test_every_cited_commit_hash_resolves` was parametrized over three documents and only ONE
-  cites a commit, so two of three parametrizations iterated an EMPTY SET and passed having
-  checked nothing; (2) `test_no_document_claims_a_league_result`'s disjunct had a TRIVIAL branch
-  that `PROMPT_LOG.md` takes, so deleting the disclaimer from all three documents AND every
-  mention of the league with it would have passed; (3) the token-cost empty-evidence fixture
-  zeroed BOTH totals, so removing the guard failed on `ZeroDivisionError` rather than the
-  assertion -- it would have kept passing if anyone had guarded the division instead of the
-  evidence. All three probed RED after the fix and reverted.
-  SIX MUTATIONS PROVEN TO LAND BEFORE BEING TRUSTED (the odd-quote lesson from 08-07): the FIXED
-  refusal -> `pass` (2 failed/12 passed), the empty-spend guard deleted (1 failed, DID NOT RAISE),
-  a notebook input repointed at `logs/` (2 failed/3 passed plus the notebook's own in-cell
-  assertion), `50ac2fe` -> `dead1ee` (1 failed), both league disclaimers removed (1 failed), and
-  a `96.4%` -> `99.9%` tamper asserted in-test. Every one reverted and the suite re-run green.
-  WHAT THESE DOCUMENTS DELIBERATELY DO NOT CLAIM: **NO league game has been played** and all three
-  say so in their own limits sections; mail is `dry_run` and NOTHING HAS EVER BEEN DELIVERED;
-  phase 4 is `human_needed`; phases 7 AND 8 are NOT verified; the games-played VALUE is
-  deliberately unset and nothing here sets or infers one; every token figure is n=1 and every
-  per-game projection is labelled an EXTRAPOLATION from a game that ended at turn 14 of 35;
-  `TOKEN-COST.md`'s S2 is recorded as BLOCKED on a named missing measurement rather than given an
-  invented number; and the Phase-4 belief on/off comparison (3 seeds per arm) is deliberately NOT
-  plotted, with the reason written into the notebook.
-  GATES: **2455 passed / 0 failed** (baseline 2413; +46 new, -4 from de-parametrising two tests
-  during the self-audit), coverage **97.44% UNCHANGED** (the new code is in `scripts/`, outside
-  the coverage source list, and is measured by tests loaded BY PATH), ruff **0** tree-wide (it
-  lints the notebook too -- one SIM300 was found there and the notebook re-executed after the
-  fix), line-limit **0** with all nine new `scripts/*.py` ALSO checked explicitly by path,
-  local-truth OK (7), no-LLM OK, `check_submission` exit 1 at 69/4/13, `--empty-probe` exit 2,
-  `jupyter nbconvert --execute` exit 0 in 4.6s with 3 embedded figures.
-  RULE-38 COUNTERS: suite **1927->1927 / 1920->1920 (0/0)**. **NO REAL GAME WAS PLAYED BY 08-09**
-  -- it delivers documents, nothing in it needs a game, and advancing the shipped counter to
-  demonstrate a delta would be a state change with no deliverable behind it. The +1/+1 contract
-  is INHERITED from 08-07/08-08's measurement (1926->1927 / 1919->1920, `game_id`
-  `2582a94c8a5ec618`) and was NOT re-measured here; it is recorded as inherited, never claimed as
-  measured. `git diff config/` EMPTY -- the counters are gitignored at `.gitignore:90`.
-  SELF-CHECK PASSED: 25 of 25 `key-files` paths exist, 7 of 7 commit hashes resolve via
-  `git cat-file -e`, 37 of 37 repository paths cited across the three new documents resolve, and
-  all 5 published commands run to exit 0.
-  NOTHING WAS PUSHED BY THIS AGENT, NO TAG WAS CREATED, NO REMOTE COMMAND OF ANY KIND WAS
-  ISSUED.
+  still PREPARED, NOT ADOPTED), OQ8-6 (the two repo URLs -- both written as stated-absent markers
+  in the split READMEs and in `league.json`, never placeholders), OQ8-7 (the token ceiling), OQ8-8
+  (README language), OQ8-9 (is `origin` public?).
+  **OQ8-9 REMAINS URGENT AND UNANSWERED.** THIS AGENT PUSHED NOTHING, CREATED NO REPOSITORY,
+  ADDED NO REMOTE, CUT NO TAG and issued NO remote or `gh` command of any kind. `git tag -l` is
+  still EMPTY here and both split outputs report zero remotes.
+  ONE DEFERRED ITEM LOGGED: `test_belief_policy.py`'s per-turn decision-budget test is
+  load-sensitive (one 57ms sample vs a 50ms budget in a run made right after two split suites;
+  3/3 twice on a quiet machine, and green inside both splits). Out of 08-10's scope, the file was
+  explicitly out of bounds, and no config value was touched.
+stopped_at: 08-10 CLOSED (2026-08-17) -- **TWO SUBMISSION REPOSITORIES EXIST ON DISK, AND
+  NOTHING WAS PUSHED.** No plan file existed; executed from `08-PLAN-OUTLINE.md` Sec9, the same
+  way 08-07, 08-08 and 08-09 were. TWENTY-ONE ATOMIC COMMITS, seven of them TDD RED tests
+  committed before their implementation.
+  BUILT AND MEASURED: `pursuit-police` (`99d6d5f`) and `pursuit-thief` (`580acae`) under
+  `C:\Users\Hp\pursuit-split-repos\`, from `git ls-files` (D-76) into a destination OUTSIDE
+  this tree, 1025 tracked files each (1024 + the generated `docs/REPO-SPLIT.md`), one commit,
+  zero remotes, `main`. **12/12 rows PASS in each**, driver exit 0: `uv sync` 0 -- `ruff check .`
+  0 -- `pytest --cov` **2533 passed / 0 failed at 97.44%** (identical to this repository's, so the
+  split measures no less than its source) -- line-limit **539 files scanned, 0 violations**.
+  The two trees differ in EXACTLY two files (`README.md`'s rule-49 banner and
+  `docs/REPO-SPLIT.md`), checked with `diff -rq`.
+  D-77 VERIFIED BY RUNNING THE GATES, NOT BY REASONING: both outputs ship BOTH `config/police/`
+  and `config/thief/` (14 tracked files each) and NEITHER counter (0 carried, absent on disk and
+  untracked). The exclusion list in the evidence JSON is EMPTY and that is the honest result --
+  the counters are gitignored so `git ls-files` never offered them; the build subtracts them by
+  name anyway and `test_split_manifest.py` proves the subtraction on a PLANTED input.
+  THE PUBLICATION PROBE: an untracked, NON-IGNORED `secret.txt` was planted at this repository's
+  root and left there for the whole build. It appears in NEITHER output -- absent from disk,
+  absent from the tracked set, and `grep -r` for its contents returns 0 files in both. `.env` and
+  `police_thief_p2p.pdf` are absent by the same mechanism, and `requirements.txt` does not exist.
+  THE NAMED VACUITY IS PINNED, NOT AVOIDED: `check_line_limit.sh`'s no-argument form enumerates
+  through `git ls-files`, EMPTY in a fresh `git init`ed tree. `tests/unit/test_split_verify.py`
+  BUILDS that tree and asserts both halves -- the shell gate returns **exit 0** while the row
+  returns **False** with `scanned 0`. Every row this plan added reports a count.
+  FOUR TESTS THE SPLIT FOUND THAT NOTHING ELSE COULD, all of which also failed on any fresh
+  clone: the CLAUDE.md gitignore claim (asked as `Path('graphify-out/')`, which drops the slash);
+  two tests requiring the gitignored counters to exist; and the rule-38 README leak detector,
+  which searched an empty value set in every clone and so **guarded nothing**. The FIRST fix for
+  the first one was itself vacuous -- asking with the slash, which this git answers "ignored" for
+  every non-existent path -- and the mutation probe caught it before commit.
+  FOUR DEVIATIONS, all Rule 1/3 and all found by running the thing rather than reading it:
+  `--replace` died with WinError 5 half-way through deleting `.git/objects` (git writes loose
+  objects read-only); the manifest was re-derived PER ROLE, minutes apart with a full `pytest`
+  between, so a mid-build edit would have landed in one repository only; `docs/` was not created
+  before the provenance file was written; plus the four test fixes above.
+  RULE-38 COUNTERS: suite **1927->1927 / 1920->1920 (0/0)**, measured across a full
+  `uv run pytest --cov`. **NO REAL GAME WAS PLAYED BY 08-10** -- it delivers repositories and
+  tooling, nothing in it needs a game, and advancing the shipped counter to demonstrate a delta
+  would be a state change with no deliverable behind it. The +1/+1 contract is INHERITED from
+  08-07/08-08 and recorded as inherited, never claimed as measured here.
+  `check_submission.py` re-run at HEAD: 69/4/13, exit 1 -- UNCHANGED, the counter-control.
+  Knowledge graph refreshed: 12199 nodes, 21112 edges, 679 communities.
+  SELF-CHECK PASSED: 25 of 25 `key-files` paths exist AND are tracked, 21 of 21 commit hashes
+  resolve, both built repositories exist with the quoted HEADs and 0 remotes, and `99d6d5f` /
+  `580acae` resolve in their own repositories and DO NOT resolve in this one.
+  NOTHING WAS PUSHED BY THIS AGENT, NO REPOSITORY WAS CREATED, NO REMOTE WAS ADDED, NO TAG WAS
+  CUT, AND NO REMOTE OR `gh` COMMAND OF ANY KIND WAS ISSUED.
+---
+
+Last session: 2026-08-17T22:40:00+03:00
+Stopped at: Completed 08-10 in full -- the two-repo split, built and verified LOCALLY, nothing
+  pushed. Twenty-one atomic commits (`d4d2284` .. `3f37b66`), seven of them TDD RED tests
+  committed before their implementation. `pursuit-police` (`99d6d5f`) and `pursuit-thief`
+  (`580acae`) under `C:\Users\Hp\pursuit-split-repos\`, built from `git ls-files` at
+  `8aa02ea` into a destination OUTSIDE this tree, **12/12 rows each**: ruff 0, `uv sync` 0,
+  **2533 passed / 0 failed at 97.44%** inside each output, line-limit **539 scanned / 0
+  violations**, one commit, zero remotes, histories disjoint from this repository.
+  D-77 verified by RUNNING the gates: both seats' config in both outputs (14 files each), zero
+  counters. The planted untracked `secret.txt`, `.env` and the book PDF proven absent from both.
+  Both rule-49 URLs written as stated-absent markers, with a test asserting the banner carries no
+  URL shape at all.
+  **THE SPLIT FOUND FOUR TESTS THAT ASSERTED THE DEVELOPER'S TREE** and therefore failed on any
+  fresh clone -- worst of them, the rule-38 README leak detector, which searched an EMPTY value
+  set in every clone and so guarded nothing. All four fixed with mutation probes; this plan's own
+  first fix for one of them was itself vacuous and the probe caught it.
+  Counters: suite 1927->1927 / 1920->1920 (0/0). NO real game was played; the +1/+1 contract is
+  recorded as INHERITED. `check_submission.py` 69/4/13 UNCHANGED -- the counter-control. Graph
+  refreshed (12199 nodes). One deferred item logged (a load-sensitive timing test, out of scope,
+  no config value touched). Nothing pushed, no repository created, no remote added, no tag, no
+  remote command of any kind. **Wave 3 is complete; next is 08-11.**
+Resume file: None -- the tree is clean and 08-10 is closed. 08-11 should REBUILD the two outputs
+  before cutting its tag (D-79 tags the OUTPUTS, never this repository): they are one commit
+  stale by construction, and the rebuild is one idempotent command in
+  `docs/phases/phase-8/SPLIT-RUNBOOK.md`. The tag name is DERIVED from the reconciled
+  `version.py` / `pyproject.toml` pair (T5-06 is still a GAP and is 08-11's).
 ---
 
 Last session: 2026-08-17T23:59:00+03:00
