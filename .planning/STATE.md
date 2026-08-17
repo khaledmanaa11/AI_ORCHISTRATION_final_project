@@ -3,88 +3,122 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 08-01 and 08-02 are fully committed and closed, tree clean. NEXT IS THE
-  REST OF PHASE 8'S WAVE 1: 08-03 (publication hygiene, `LICENSE`, `CONTRIBUTING.md`, packaging
-  metadata), 08-04 (league ledger + `league.json` + the declaration artifact's FIRST production
-  caller) and 08-05 (deferred #13/#19). WHAT 08-01 AND 08-02 LEAVE FOR THEM, AND IT IS WRITTEN
-  DOWN RATHER THAN REMEMBERED: `docs/SUBMISSION-CHECKLIST.md` is the gap register and it names
-  the owning plan for every one of its 32 GAPs. 08-03 inherits SEVEN of them -- `LICENSE`
-  (blocked on OQ8-5, a human names the licence), `CONTRIBUTING.md`, `pyproject.toml`
-  `license`/`authors`, `__all__` missing from 7 of 11 packages, `__version__` in ZERO
-  `__init__.py`, no automated test-report artifact, and TWO the outline never predicted:
-  root-level `graph.json` and `graph.html` are NOT gitignored (`git check-ignore -q` exits 1 for
-  both, while `.gitignore:151-152` covers only the `.planning/graphs/` copies and CLAUDE.md
-  asserts they are ignored), and 4 of 26 tracked config JSONs carry no `version` field
-  (`config/{police,thief}/{resolution,role}.json`). 08-04 inherits the one finding a
-  path-and-pattern gate cannot express as a row: `build_declaration_artifact` /
-  `write_declaration_artifact` / `DeclarationContext` have ZERO production callers, re-derived
-  at HEAD -- only their own module, a docstring mention at `artifact_config.py:151`, the
-  `__init__` re-export, and tests. 08-11 inherits T5-06: `version.py` reads `1.00` and
-  `pyproject.toml` reads `1.00.0`, and D-79 derives the tag name from the reconciled value.
-  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 125 commits sit ahead of
-  `origin/main`. The two new gates make only local git reads (`ls-files`, `log`, `tag -l`,
-  `check-ignore`).
-stopped_at: PHASE 8 PLANS 01 AND 02 EXECUTED (2026-08-17) -- THE SEC17 AUDIT BUILT AS A GATE
-  THAT CAN FAIL, AND EVERY TRACKER RECONCILED IN ONE PASS. Neither plan file existed; both were
-  executed from `08-PLAN-OUTLINE.md` Sec9, with every predicted finding RE-DERIVED against the
-  tree rather than inherited. 08-01: `scripts/check_submission.py` + 12 siblings, 86 rows,
-  41 PASS / 32 GAP / 13 UNJUDGED, exit 0 all-pass / 1 any GAP / 2 on an evidence set that judged
-  NOTHING. UNJUDGED IS NOT A PASS -- Table 5's own `Enforced by` column marks OOP, TDD and
-  hardcoded values `Code review`/`Work process`, so 13 rows carry it and are counted apart. The
-  mechanism inventory is WALKED from `git ls-files` (10 packages) and ANSWERED from
-  `docs/mechanism-prd-map.json`, never from a `docs/PRD_*.md` glob, and a SUPERSEDED PRD is
-  refused as coverage by name. The README is judged on Sec2.1's SEVEN items individually plus
-  two DERIVED rule-42 honesty rows -- 3 unqualified mentions of `Q-Learning`, the term extracted
-  from the superseded PRD's own H1, and Phase 3 still shown "in progress" against a `passed`
-  verification. THIRTEEN PROBES, each asserting the mutation LANDED before the verdict was read
-  and each reverted with the tree verified clean: `--empty-probe` exits 2; a FULL 86-row set with
-  `mechanism_count=0` also exits 2, so EMPTY_EVIDENCE OUTRANKS 32 real GAPs; one counter-control
-  per group flipped exactly its own row (docs/PLAN.md, a docstring-less module, the CI workflow,
-  `.env-example`, 3 of 4 curve artifacts, and a POSITIVE control that turned ISO-25010 green and
-  back); a planted empty package adds exactly one GAP row; a 161-line file trips G2-03 AND its
-  T5-08 citation; a stale allowlist entry and a provider key planted INSIDE an allowlisted file
-  both fail G4-02. THE GATE FOUND TWO DEFECTS IN ITS OWN WORK: probe 11 exposed POSITIONAL row
-  ids, so inserting one package renumbered every row after it -- rows are now identified by the
-  path they judge; and a test mutation exposed a VACUOUS TEST OF MINE, a mermaid check asserting
-  only `.match`, which anchors regardless of the pattern and passed under a deliberately weakened
-  regex -- it now asserts `.search` too and adds an end-to-end row over the real trap file which
-  first asserts the trap still exists. 08-02: `.planning/REQUIREMENTS.md` header 74 -> 77
-  (counted, not asserted -- the per-family breakdown always summed to 77), 6 -> 48 ticks, and
-  EVERY tick cites a path plus a VERBATIM QUOTE that `scripts/check_requirements_ledger.py` reads
-  back; all ten traceability rows carry an evidenced verdict and ONE surviving `Pending` that
-  says why; STRAT-01/02/06 reworded from the WITHDRAWN tabular Q-learning to the matrix mover,
-  honouring `03-VERIFICATION.md`'s "OPEN, flagged not fixed" hand-off; `docs/TODO.md`,
-  `.planning/ROADMAP.md` Progress and `docs/phases/phase-1/TODO.md` moved in the SAME commit,
-  because fixing one misdescribes the repo in the other direction. PHASES 4, 7 AND 8 ARE SHOWN
-  INCOMPLETE BECAUSE THAT IS WHAT THEIR ARTIFACTS SAY: LANG-01/LANG-06 held open (no live GATE-4;
-  responder side unmeasured since 05-06), ALL NINE REPORT-* held open (gate-measured is NOT
-  phase-verified -- no `07-VERIFICATION.md` exists at all), all twelve SUB-* open, and four QUAL
-  rows open because Table 5 itself marks them unjudgeable. THE FLIP PROBE FOUND A HOLE IN THE
-  LEDGER GATE AND IT WAS CLOSED, NOT REPORTED: flipping SUB-05 first produced EXIT 0, because an
-  open row legitimately cites the artifact explaining why it is open and a path-and-quote check
-  cannot tell that from proof of completion -- one character produced a green ledger claiming a
-  Git tag existed while `git tag -l` is empty. Closed by two independent rules: an evidence
-  marker that now means SATISFIED and appears only on ticked rows while open rows carry a status
-  marker, and a per-family declared tick count on every traceability row which the gate counts
-  and compares, catching a flip in EITHER direction (probe 4 un-ticks SEC-04 and trips three
-  rules). The header-total rule also caught an ARITHMETIC ERROR IN MY OWN SUMMARY PROSE -- 47 vs
-  the real 48 ticks -- corrected before commit. Gates: 2188 passed / 0 failed against the 2153
-  baseline (+35 tests); coverage 97.37% (baseline 97.37%, UNCHANGED -- `scripts/` is on neither
-  the coverage source list nor `check_line_limit.sh`'s glob, which is exactly why 35 tests load
-  those modules BY PATH); ruff 0 violations; `check_line_limit.sh` exit 0 with all twenty new
-  `.py` files ALSO checked explicitly by path, and TWO files SPLIT rather than compressed --
-  `submission_readme.py` at 168 and `requirements_ledger.py` at 149 of 150, split at 149 because
-  a file one line from the gate is a trap for the next editor; `check_local_truth.py` OK 7
-  modules; `check_no_llm_in_strategy` OK; `check_requirements_ledger.py` exit 0 with 48 citations
-  resolved to real quotes; `check_submission.py` exit 1 with 32 GAPs, unchanged by the
-  reconciliation -- which closed no Sec17 gap and claimed none. Rule-38 counters, both plans: the
-  full suite moved police 1922->1922 and thief 1915->1915, DELTA 0/0; `git diff config/` EMPTY.
-  Every new file confirmed NOT gitignored (D7-10's guard), and every touched file confirmed at
-  CR=0. One correction worth carrying forward: `git checkout -- <file>` on a probe restores from
-  the INDEX, so a mutation that was `git add`ed survives the revert -- the post-revert grep
-  caught a planted provider-key shape still sitting in `tests/unit/test_step0_sign.py`, fixed
-  with `git checkout HEAD -- <file>`. A post-revert ASSERTION is the only reason that was noticed.
+Resume file: None -- 08-01, 08-02 and 08-04 are fully committed and closed, tree clean. NEXT IS
+  THE REST OF PHASE 8'S WAVE 1: 08-03 (publication hygiene, `LICENSE`, `CONTRIBUTING.md`,
+  packaging metadata) and 08-05 (deferred #13/#19). WHAT IS LEFT FOR THEM, WRITTEN DOWN RATHER
+  THAN REMEMBERED: `docs/SUBMISSION-CHECKLIST.md` is the gap register and it names the owning
+  plan for every one of its 32 GAPs. 08-03 inherits SEVEN -- `LICENSE` (blocked on OQ8-5, a
+  human names the licence), `CONTRIBUTING.md`, `pyproject.toml` `license`/`authors`, `__all__`
+  missing from 7 of 11 packages, `__version__` in ZERO `__init__.py`, no automated test-report
+  artifact, and TWO the outline never predicted: root-level `graph.json` and `graph.html` are
+  NOT gitignored (`git check-ignore -q` exits 1 for both, while `.gitignore:151-152` covers only
+  the `.planning/graphs/` copies and CLAUDE.md asserts they are ignored), and 4 of 26 tracked
+  config JSONs carry no `version` field (`config/{police,thief}/{resolution,role}.json`).
+  08-03 SHOULD RE-COUNT: 08-04 added `config/{police,thief}/league.json`, both carrying
+  `version` "1.00", so the tracked-config denominator is now 28. 08-04'S FINDING IS CLOSED --
+  `build_declaration_artifact` / `write_declaration_artifact` / `DeclarationContext` now have a
+  grep-proven production caller in `services/reporting/end_of_game_declaration.py`, and a real
+  `dev_launch` game (`game_id` `397b3503b1bfa996`, exit 0) wrote `declaration_<game_id>.json` on
+  BOTH seats; the two artifacts are kept at `docs/phases/phase-8/declaration-evidence/`.
+  08-11 still inherits T5-06: `version.py` reads `1.00` and `pyproject.toml` reads `1.00.0`, and
+  D-79 derives the tag name from the reconciled value. STILL OPEN AND STILL A HUMAN'S: OQ8-1
+  (D7-17 -- the question is DRAFTED and UNSENT at
+  `docs/phases/phase-8/D7-17-QUESTION-FOR-THE-LECTURER.md`), OQ8-2 (the games-played VALUE),
+  OQ8-5 (the licence), OQ8-6 (the two repo URLs, which 08-12 creates) and OQ8-7 (the agreed
+  token ceiling, shipped at the book's negotiable 200,000).
+  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 131 commits sit ahead of
+  `origin/main`.
+stopped_at: PHASE 8 PLAN 04 EXECUTED (2026-08-17) -- THE MANDATORY DECLARATION ARTIFACT STOPS
+  BEING DEAD CODE, AND THE LEAGUE MACHINERY LANDS WITH RULE 38'S LINE UNMOVED. No `08-04-PLAN.md`
+  existed; executed from `08-PLAN-OUTLINE.md` Sec9's 08-04 entry. FIVE COMMITS, each atomic:
+  `4fbd4ed` league.json + loader (D-81), `e672838` the per-opponent ledger (D-80), `8c6fd1e` the
+  declaration artifact's FIRST production caller, `daf5654` the D7-17 draft + checklist closure,
+  `b32bf9d` the graph refresh. THE DEFECT IS CLOSED AND PROVEN BY A REAL GAME, not by a fixture:
+  `uv run python scripts/dev_launch.py` exited 0 and both seats wrote
+  `game_artifacts/<role>/declaration_397b3503b1bfa996.json` carrying `repo_urls` (rule 49's four
+  NAMED slots), `mcp_server_addresses`, `token_ceiling` 200000 (PARAMETERS:83 Table 18 row 4),
+  `start_time` / `end_time` read off each seat's OWN wire log, and BOTH signed Step-0 envelopes
+  embedded verbatim -- `peer_declaration_status` says "peer's own signed declaration embedded
+  verbatim" on both sides, so D-71's both-sides wrap is proven on a real handshake. The files are
+  committed as evidence at `docs/phases/phase-8/declaration-evidence/` with their keys tabled
+  against PARAMETERS:165. RULE 38 DID NOT MOVE: nothing sets, defaults or infers the games-played
+  value. The ledger derives TWO candidate counts and returns an UNSET marker for the declared
+  figure; the artifact's new top-level `games_played_declared` is UNPARAMETERISED -- there is no
+  argument for it, so a number is not representable until a human chooses one at 08-14 -- and it
+  says in the file that the embedded `games_played_so_far` (1922 police / 1915 thief) is the RAW
+  counter, which nothing in a grader-facing file had said before. RULE 49 DID NOT MOVE EITHER: all
+  four repo slots ship as JSON `null` and render as stated-absence markers naming 08-12; the loader
+  REFUSES an absence or a placeholder-shaped URL when `reporting.mode` is `live`. D7-17 IS DRAFTED,
+  NOT DECIDED -- `game_id` is peer-negotiated (D-61), so both PARAMETERS citations are quoted
+  verbatim (machine-checked against the document), the three costed options carried over, and the
+  mail addressed to `rmisegal@gmail.com` FOR A HUMAN TO SEND. EIGHT PROBES, each asserting the
+  mutation LANDED before the verdict was read and each reverted by REWRITING the file (never
+  `git checkout --`, which restores from the index): the live-mode absence refusal, the placeholder
+  token set, a planted `read_games_played` import, rule 52's rematch refusal, the FIXED max-games
+  bound, the whole `declare_game` call site (7 failures -- 5 integration, 2 structural), a
+  hardcoded `start_time`, and the containment's `except Exception`. PROBE E FOUND A HOLE IN THIS
+  PLAN'S OWN WORK: the max-games test built its loop from `MAX_GAMES_PER_TEAM`, so setting the
+  constant to 11 left the entire ledger suite GREEN -- a Table 18 row whose status is **fixed**,
+  enforced but unasserted. `tests/unit/test_league_bounds_against_the_book.py` now parses the value
+  out of `docs/PARAMETERS.md` itself, with a control on the parser. A SECOND VACUITY was caught
+  before commit: the D-80 seeding guard stripped docstrings with `source.split('\"\"\"')[-1]`, which
+  keeps only the file tail and searched almost nothing -- rewritten to strip by AST with a control
+  on the stripper. Gates: 2293 passed / 0 failed (baseline 2188), coverage 97.43% (from 97.37%),
+  ruff 0, line-limit 0 violations tree-wide, local-truth 7 modules, no-LLM OK,
+  `check_submission.py` exit 1 with 41 PASS / 32 GAP / 13 UNJUDGED -- UNCHANGED, as expected,
+  because the declaration finding was never a gate row. RULE-38 COUNTERS, ALL FOUR NUMBERS: full
+  `pytest --cov` moved police 1923 -> 1923 and thief 1916 -> 1916 (delta 0/0); the one real game
+  moved police 1922 -> 1923 and thief 1915 -> 1916 (delta +1/+1), which is 07-00's fixed mechanism
+  behaving exactly as specified. Two structural ledgers correctly flagged the new modules and were
+  updated honestly rather than exempted: `league_ledger` added to `DURABLE_WRITE_BINDERS`, and
+  `end_of_game_declaration` added to the log-artifact reacher list as a READER.
+  NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED.
 ---
+
+Last session: 2026-08-17T21:05:00+03:00
+Stopped at: Completed 08-04 in full. NO `08-04-PLAN.md` EXISTED -- the phase directory holds only
+  `08-CONTEXT.md` and `08-PLAN-OUTLINE.md`, so the plan was executed from the outline's Sec9
+  08-04 entry, and every finding it predicted was RE-DERIVED at HEAD rather than inherited. Five
+  atomic commits: `4fbd4ed` (config/{police,thief}/league.json + shared/league_config{,_fields}.py
+  + shared/absent.py, D-81), `e672838` (services/reporting/league_ledger{,_fields,_bounds}.py,
+  D-80), `8c6fd1e` (services/reporting/end_of_game_declaration.py -- THE first production caller),
+  `daf5654` (the D7-17 draft and the checklist finding recorded CLOSED) and `b32bf9d` (graph
+  refresh, 11097 nodes / 19646 edges; `graph.html` skipped, over the 5000-node viz limit).
+  THE DEFECT: `build_declaration_artifact` / `write_declaration_artifact` / `DeclarationContext`
+  had ZERO production callers, so `declaration_<game_id>.json` -- one of rule 50's FOUR MANDATORY
+  artifacts -- had never been written by a game. CLOSED, and proven by a REAL `dev_launch` run
+  (exit 0, `game_id` `397b3503b1bfa996`): both seats wrote the artifact with `repo_urls`,
+  `mcp_server_addresses`, `token_ceiling` 200000, `start_time`/`end_time` taken from each seat's
+  OWN wire log, and BOTH signed Step-0 envelopes embedded verbatim. Evidence committed at
+  `docs/phases/phase-8/declaration-evidence/`. The call sits in `end_of_game._report` after both
+  sealed artifacts and BEFORE the chain, contained SEPARATELY from the mail send -- rules 32/35
+  make an unreported game cost BOTH teams everything, so a broken declaration returns None and
+  logs while `EndOfGameReport.declaration_artifact` keeps the failure observable.
+  RULE 38 UNMOVED: no games-played value set, defaulted or inferred. The ledger returns BOTH
+  candidate counts plus an UNSET marker; the artifact's new `games_played_declared` is
+  UNPARAMETERISED and names `GAMES-PLAYED-RECONSTRUCTION.md`; `league.json` carries no
+  games-played leaf and a test asserts its absence. RULE 49 UNMOVED: four `null` slots rendered as
+  stated-absence markers naming 08-12, with a live-mode refusal. D7-17 DRAFTED AND UNSENT.
+  EIGHT PROBES, each asserted landed then reverted by rewriting the file. PROBE E FOUND A HOLE IN
+  MY OWN WORK -- the max-games test moved with its own constant, so `MAX_GAMES_PER_TEAM = 11` left
+  the ledger suite green on a **fixed** Table 18 row; closed by parsing the value out of
+  `docs/PARAMETERS.md`. A second vacuity (a docstring stripper using `split('\"\"\"')[-1]`) was
+  caught and closed before commit. Probe F removed the `declare_game` call site entirely and 7
+  tests failed. Gates: 2293 passed / 0 failed (baseline 2188), coverage 97.43% (from 97.37%),
+  ruff 0, line-limit 0 tree-wide with every new file also checked by path, local-truth 7 modules,
+  no-LLM OK, `check_submission.py` exit 1 at 41/32/13 (unchanged -- the finding was never a row).
+  Counters: suite 1923->1923 / 1916->1916 (0/0); one real game 1922->1923 / 1915->1916 (+1/+1).
+  Two structural ledgers (`DURABLE_WRITE_BINDERS`, the log-artifact reacher list) and one test
+  fixture correctly flagged the new modules and were updated honestly, not exempted.
+  Self-check PASSED: 23 created paths verified present and tracked, five commits verified
+  reachable. NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED -- `git tag -l` is empty and 131
+  commits sit ahead of `origin/main`.
+Resume file: None -- the tree is clean and 08-04 is closed. Next is `/gsd:execute-phase 8`
+  continuing wave 1: 08-03 (publication hygiene -- seven registered GAPs, `LICENSE` blocked on
+  OQ8-5, and it should re-count the tracked config JSONs now that league.json added two) and
+  08-05 (deferred #13/#19, where `turn_buffer.py` sits at 146/150 and needs a SPLIT).
+---
+
 
 Last session: 2026-08-17T18:40:00+03:00
 Stopped at: Completed 08-01 and 08-02 in full. NEITHER PLAN FILE EXISTED -- the phase directory
