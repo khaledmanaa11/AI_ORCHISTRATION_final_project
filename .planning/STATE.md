@@ -3,93 +3,109 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 7 PLAN 02 EXECUTED (2026-08-17) -- THE ARTIFACT SPINE IS BUILT AND D7-1 IS
-  RESOLVED BY MOVING THE ARTIFACT, NOT BY NARROWING THE IGNORE RULE. docs/PARAMETERS.md:165-168
-  fixes four filenames a grader will diff character by character, and one of them sits a single
-  field away from aborting every game at the handshake. THE NAMES ARE PINNED TO THE DOCUMENT,
-  not to another copy of themselves -- `tests/unit/test_artifact_names.py` transcribes the table
-  as literals, asserts it still has four rows, and carries BOTH negative halves (adding `_g01`
-  to `declaration_`/`result_` and dropping it from `config_`/`log_` must each fail the same
-  assertion, or the check is shape-only). `<NN>` is a per-game_id 01-based sub-game index
-  derived from the artifact directory and nothing else (D-72); `games_played.json` is neither
-  read nor written by the spine or anything it calls, and the width 2 and base 1 are cited to
-  `<NN>` and "the match number" as structural, never invented. D7-1, THE DECISION AND ITS
-  REASONING: narrowing the `logs/` rule was rejected because git CANNOT re-include a file whose
-  parent directory is excluded, so a negation beneath `logs/` is a silent no-op and real
-  narrowing means a `logs/**`-plus-negations restructure the next editor can break with no
-  signal -- returning the repo to exactly this bug, unnoticed -- and because `logs/`
-  deliberately holds the bulky per-run wire logs and nonce ledgers that must stay out of git.
-  AND THE PRECURSOR COULD NEVER HAVE BEEN THE ARTIFACT: `write_declaration` runs at handshake
-  time, before move 1, while PARAMETERS:165 requires `declaration_<game_id>.json` to carry the
-  END TIME plus repo URLs, MCP addresses and the agreed token ceiling. So the deliverable is
-  07-02's D-71 wrapper in `game_artifacts/`, a strict superset of the precursor. Made real in
-  the tree, not just in prose: `artifacts.write_artifact` REFUSES any path with a `logs`
-  component (ValueError naming D7-1, inherited by both artifact writers); the .gitignore
-  COMMENT that asserted the opposite of the tree was corrected with ZERO patterns changed
-  (verified by a comments-stripped diff reporting IDENTICAL); `game_artifacts/README.md` records
-  it where a grader will look. PHASE-5 RETAINED EVIDENCE VERIFIED, NOT ASSUMED -- all 42
-  remote-round files still tracked, all 19 `declaration_*.json` among them still un-ignored,
-  `git status --untracked-files=all logs/` EMPTY, and after the real game
-  `logs/police/declaration_4b6f019a96265cd6.json` is IGNORED as designed, being the precursor.
-  CONFIG ARTIFACT MEASURED ON BOTH ROLES: embedded game_params recomputes to
-  23f86a93589131ae... and scent to c0e63220b31f5b82..., each EQUAL to the digest
-  `agent_entrypoint.py:80` puts on the handshake wire; both roles produce a byte-identical
-  1526-byte file, proved by writing both and diffing bytes rather than trusting the builder.
-  network.json is excluded (D-04 -- `config_hash.py:13-16` says hashing it would abort every
-  game), as are role.json, reporting.json's SECOND Table-19 instance and every policy file,
-  each exclusion reasoned in the module docstring; `handshake_digests` carries only the two
-  digests actually exchanged, and language.json deliberately gets none because claiming one
-  would assert an agreement never made. THE D-71 CONTROL HELD: `git diff HEAD` over
-  `src/pursuit/security/` and `src/pursuit/network/` is EMPTY, every Phase-6 Step-0 test passes
-  UNMODIFIED, and dev_launch logs zero STEP0_MISMATCH -- the declaration was completed without
-  the signed payload being touched. EIGHTEEN REVERT PROBES with real counts, e.g. a field
-  injected INSIDE the signature (the exact D-71 mistake) -> 7 failed/30 passed; the D7-1 logs
-  guard removed -> 5 failed/41; an empty peer declaration fabricated instead of an honest null
-  -> 6 failed/31; network.json embedded in config_ -> 5 failed/13. THREE HOLES THE SELF-AUDIT
-  FOUND IN ITS OWN WORK: the regex-escaping probe first returned 0 failed because the test ran
-  the hazard backwards (it must plant `config_axc_g07.json` and search for `a.c`, which
-  unescaped returns 8 instead of 1) -- now fails 1; `artifact_digest_matches` had TEST-ONLY
-  reachability, dead code by the exact standard 07-01 filed D7-3 for, fixed rather than excused
-  by having `write_config_artifact` read the file back and re-check its own seal, raising rather
-  than returning a path it could not verify; and the game_uid join test was near-tautological,
-  replaced by a name-against-header cross-check that took its probe from 0 failed to 4. An AST
-  scan over all 16 parametrize sites in this plan's six test files found EVERY named source
-  GUARDED by a length assertion; collected counts 30/16/17/5/16/21 = 105, equal to the suite
-  delta exactly. FOUR SPLITS AT THE GATE, never compressions -- `artifacts.py` measured 167/150
-  and `artifact_declaration.py` 156/150, and three test files exceeded too; two test-fixture
-  modules were extracted at the second consumer rather than duplicated. GATES: ruff 0,
-  line-limit exit 0 including all 14 new paths checked EXPLICITLY (the no-arg form enumerates
-  via `git ls-files` and passes vacuously on an untracked file), 1794 passed from a 1689
-  baseline, coverage 96.90% from 96.80%, all six new modules at 100%, check_no_llm_in_strategy
-  OK, dev_launch exit 0 with both sides `audit_verdict matched=true`, capture at turn 5, zero
-  technical_win. SECRETS, rules 39-40: both artifacts searched against the REAL values loaded
-  from .env (the first attempt searched an empty set because no key was exported), zero leaks,
-  and the control finds a planted token -- no artifact sample is committed. GAMES-PLAYED, rule
-  38: full suite 1912/1905 -> 1912/1905 DELTA 0/0; one real game 1912/1905 -> 1913/1906 DELTA
-  1/1. The VALUE remains deliberately unset and is the human's at 07-10. Commits 9ac7fdb /
-  4f90fd7 / 042c0ac / 7bd0d01 / e2bb0ee.
-Resume file: None -- 07-02 is fully committed and closed, tree clean. **Next is 07-03 (LocalView
-  firewall)**, the last wave-1 plan, `autonomous: true` and independent of both 07-01 and 07-02;
-  after it, wave 2 is 07-04 (mail transport, depends_on 07-01 + 07-02), 07-05 (log_ builder) and
-  07-06 (live GUI). Running any two in parallel needs WORKTREES -- the shared git index mixes
-  commits and the whole-tree pre-commit hook blocks everyone. WHAT 07-02 LEAVES FOR ITS
-  CONSUMERS: `log_filename`, `next_sub_game_index` and `result_filename` are the three public
-  names with no in-package caller (07-05 and 07-07 own them), and the whole spine has no
-  PRODUCTION caller yet -- structurally, not by omission, because `write_declaration_artifact`
-  needs the END TIME that only exists at game end (07-07) and `write_config_artifact` needs the
-  artifact directory from `load_reporting_config`, which no production path loads yet. Five
-  deferred items are filed in the phase's `deferred-items.md`: **D7-1 RESOLVED** with its
-  reasoning recorded; **D7-2** the durable-write retry/backoff constants still in three places,
-  deliberately not folded into `step0_collect.py` (the rule-38 write path 07-00 just certified);
-  **D7-3** extended to the artifact spine, owned by 07-04/07-05/07-07; **D7-4** the declaration
-  envelope key is an inline literal on the signed path with no `SignKey` member, deliberately
-  not folded in because the D-71 control IS the empty git diff over that file; **D7-5** a
-  pre-existing recoverable illegal handshake-to-handshake transition on every dev_launch run,
-  present in runs predating this plan, logged not fixed per the scope boundary. OQ-1/OQ-2/OQ-3
-  are CLOSED in code with citations; OQ-4 (result_ per-series vs per-game) is resolved in the
-  outline but not yet implemented; OQ-5 -- the games-played VALUE -- remains the human's at
-  07-10, before any live send. Nothing in this repo transmits: every shipped config carries
-  reporting.mode dry_run.
+stopped_at: PHASE 7 PLAN 03 EXECUTED (2026-08-17) -- THE RULES 8-9 FIREWALL IS BUILT, AND ITS
+  COUNTER-CONTROLS ARE MEASURED RATHER THAN ASSERTED. Rule 9 (docs/RULES.md:30) makes displaying
+  the objective board state in the live interface a PROJECT DISQUALIFICATION and RULES.md:115
+  ranks it third among the cheapest ways to score zero. AN IMPORT BOUNDARY IS NOT THE FIREWALL:
+  GameState is exactly {cop, thief, barriers, barriers_placed, turn} and turn_language.py:57
+  reads ctx.state.thief on every cop turn from turn 1, so a gui/ module could import nothing
+  forbidden and still read the opponent's true cell -- the leak is a FIELD READ. THE MITIGATION
+  IS A CLOSED FIELD SET: sdk/local_view.py is four FROZEN dataclasses with twelve LocalView
+  fields pinned by name (role, board_size, turn, own_cell, declared_barriers, barriers_placed,
+  belief, scent, hints, machine_state, idle_seconds, watchdog_threshold_seconds) -- no
+  GameState, no AgentContext, no free-form dict, no extras. They live in sdk/ and NOT gui/,
+  because pyproject.toml:38 omits */gui/* from coverage and redaction logic there would be
+  invisible to the gate; no logic was put in scripts/ either, which is scanned by NEITHER gate.
+  THE DENSIFICATION IS THE NON-OBVIOUS HALF: ScentField keys its grids by coordinate, so handing
+  those to a view would put EVERY cell on the board into it as a VALUE, the opponent's among
+  them -- both scent grids and the belief posterior are positional row-major floats instead
+  (reverting: belief 7 failed, scent 6 failed). THE VACUITY WAS DEMONSTRATED, NOT ASSUMED: with
+  coordinate_hits mutated to always return clean, the absence test STILL PASSES 2/2 while
+  exactly the three counter-controls fail -- which is why (b) the leaky-view control and (c) the
+  anti-vacuity control exist. LeakyLocalView (an honest view with the true cell bolted on, never
+  importable from pursuit) is REPORTED with the hit path naming true_opponent_cell, all five
+  planted encodings are reported, and the same scanner over the HONEST payload finds all four
+  cells the view may legally carry. Coordinates chosen, not arbitrary: OPPONENT_CELL (5,3)
+  differs from own (0,0), both barriers and the belief argmax (6,6), and its flat indices 38/26
+  differ from every other integer in the view. THE CI GATE FAILS LOUDLY ON AN EMPTY SCAN:
+  check_no_llm_in_strategy.py's rglob shape returns [] for a missing root and prints OK, and
+  src/pursuit/gui/ does not exist until 07-06 -- so gui_module_paths raises EmptyScanError,
+  main returns ExitCode.EMPTY_SCAN (2), and the OK line prints the module count. Measured today:
+  exit=2, "local-truth gate scanned nothing: <repo>/src/pursuit/gui does not exist." The
+  workflow job is therefore RED until 07-06, DELIBERATELY -- skipping when the directory is
+  missing is the same vacuity moved from the script into the workflow (filed D7-6 with the
+  rejected alternatives). THIRTY REVERT PROBES, every count real: view carries the opponent cell
+  3 failed; extras field 1; coordinate-keyed belief 7; coordinate-keyed scent 6; scanner always
+  clean 3; each scanner branch 1/1/1; never descends 3; fabricated belief 1; bool stamp guard 2;
+  coerced intent 3; unguarded peer payload 1; dedupe removed 1; MODULE-LEVEL GLOBAL history 5;
+  gate missing-root 1; zero-module root 1; ImportFrom hole 1; field-chain check 3; allowlist
+  emptied 2; module count dropped 1; log2 -> ln 1; engine_agent inverted 3; a NEW sdk module
+  reading ctx.state.thief 1; dict-typed field 1; stray GUI_ROOT 1; unfrozen dataclass 1;
+  import check removed 1; bare startswith 3; two thinned literal sets 1 and 2. FOUR HOLES THE
+  SELF-AUDIT FOUND IN ITS OWN WORK: probe 15 first returned 0 failed because the mutation only
+  DECLARED two globals and never wired them into the dataclass defaults -- the hazard ran not at
+  all, the 07-02 lesson repeating on my own first probe; probe 24 ran halfway, aliasing one
+  ctx.state read while ctx.state.barriers two lines below kept the AST chain alive; the entropy
+  extraction had NO PINNED VALUE, the only assertions in the whole repo being >= 0.0 and is not
+  None, both of which hold under ln as readily as log2 -- now pinned at exactly log2(49) with
+  both consumers asserted to agree, and confirmed live (turn-0 entropy 5.6108 vs log2(49)
+  5.6147, ln(49) 3.8918); and two tests were shape-only plus one loop vacuous, all three now
+  pinned on values. An AST scan found ONE parametrize site in the plan's five test files
+  (already guarded) but two unguarded module-level literal tuples iterated in assert-bearing
+  loops -- both now counted. TWO EXTRACTIONS, each because the alternative was a second copy:
+  shared/roles.py takes engine_agent/opponent_role out of network/orchestrator.py (sdk/ and the
+  07-06 gui/ both need the vocabulary and NEITHER may import pursuit.network) re-exported so no
+  call site changed; BeliefMap.entropy() takes the Shannon formula to the object owning the grid
+  at its second consumer. PRODUCTION READERS OF THE TRUE POSITION, GREPPED EXHAUSTIVELY:
+  turn_actions:184, turn_commit_ledger:66, turn_language:57/78/90/93 (all the turn loop) and
+  sdk/view_builder:95/101/102 -- the only new one, asserted by an AST scan of src/pursuit/sdk/
+  on every run with its own counter-control and a forward probe (a planted leaky_panel.py fails
+  it). SCOPE: nine files outside tests/, git diff over src/pursuit/security/,
+  agent_step0_wiring.py, handshake_evaluate.py, agent_wiring.py, turn_actions.py, turn_commit.py
+  and ALL of config/ is EMPTY; the workflow edit is +18/-0. GATES: ruff 0, line-limit exit 0
+  including all 12 new/edited paths checked EXPLICITLY, 1826 passed from a 1794 baseline,
+  coverage 96.95% from 96.90%, local_view/view_builder/roles/belief/turn_language all 100%,
+  check_no_llm_in_strategy OK, check_local_truth exit 2 as designed, dev_launch exit 0 with
+  outcome capture, audit_verdict matched=true, zero technical_*, zero STEP0_MISMATCH and the one
+  pre-existing D7-5 illegal transition. GAMES-PLAYED, rule 38: full suite 1913/1906 -> 1913/1906
+  DELTA 0/0; one real game 1913/1906 -> 1914/1907 DELTA 1/1. Nothing here reads, writes,
+  defaults or reads around the counter; the VALUE remains the human's at 07-10. Commits 70df24a
+  / f7d21c6 / 1ccd4ea / 094eb12 / 7c69f81.
+Resume file: None -- 07-03 is fully committed and closed, tree clean. **WAVE 1 IS COMPLETE**
+  (07-01, 07-02, 07-03 all executed and summarised). Next is WAVE 2: 07-04 (mail transport,
+  depends_on 07-01 + 07-02), 07-05 (log_ builder) and 07-06 (live GUI, the consumer side of
+  D-74). Running any two in parallel needs WORKTREES -- the shared git index mixes commits and
+  the whole-tree pre-commit hook blocks everyone. WHAT 07-03 LEAVES FOR 07-06, AND IT IS TWO
+  THINGS NOT ONE: (1) the whole 07-03 surface -- build_local_view, HintHistory, LocalView -- has
+  no PRODUCTION caller yet and HintHistory.record_outgoing has none at all, structurally rather
+  than by omission since this plan's non-goals exclude every line of Tkinter (D7-7, the third
+  occurrence of D7-3); and (2) THE local-truth CI JOB IS RED UNTIL 07-06 CREATES
+  src/pursuit/gui/, by construction -- 07-06 turns it green by writing modules that pass the
+  check, and must not be tempted to soften the gate instead (D7-6). Seven deferred items now sit
+  in the phase's deferred-items.md: D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, and the two new ones.
+  Also recorded in D7-6 and NOT fixed per the scope boundary: check_no_llm_in_strategy.sh has
+  been absent from quality-gate.yml since 03-10 and still is -- pre-existing and unrelated,
+  so not slipped into a commit about a different gate. OQ-1/OQ-2/OQ-3 are CLOSED in code with
+  citations; OQ-4 is resolved in the outline but not implemented; OQ-5 -- the games-played
+  VALUE -- remains the human's at 07-10, before any live send. Nothing in this repo transmits:
+  every shipped config carries reporting.mode dry_run.
+---
+
+Last session: 2026-08-17T05:40:00+03:00
+Stopped at: Completed 07-03-PLAN.md (the rules 8-9 local-truth firewall) in full. Three
+  tasks, each committed atomically: Task 1 the RED tests taken BEFORE the fix (`70df24a`
+  -- two collection ERRORs naming the missing modules and 8 failures naming the missing
+  script, quoted verbatim in the commit message), Task 2 `LocalView` + `view_builder`
+  outside `gui/` (`f7d21c6`), Task 3 the CI gate wired and loud on an empty scan
+  (`1ccd4ea`). Two further commits closed self-audit findings in my own work: the
+  unpinned entropy value plus the 150-line test split (`094eb12`), and the two unguarded
+  literal sets plus an unreachable `None` annotation (`7c69f81`). `07-03-SUMMARY.md`
+  written with the three pre-fix failures verbatim, the production-caller grep, the
+  thirty probe counts and the noted absence of `check_no_llm_in_strategy.sh` from CI.
+  `docs/phases/phase-7/TODO.md` row 07-03 ticked with its measured evidence; D7-6 and
+  D7-7 filed in the phase's `deferred-items.md`.
+Resume file: None -- wave 1 of phase 7 is complete and the tree is clean. Next is
+  `/gsd:execute-phase 7` continuing into wave 2 (07-04, 07-05, 07-06).
 ---
 
 Last session: 2026-08-04T12:31:00+03:00

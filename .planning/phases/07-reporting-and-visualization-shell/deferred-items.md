@@ -172,3 +172,64 @@ marks it `recoverable`.
 Logged rather than fixed, per the executor scope boundary: it is in the handshake path
 07-02's D-71 control requires to stay byte-unchanged, and chasing it here would have traded
 the control for a benign log line.
+
+---
+
+## D7-6 · The `local-truth` CI job is RED until 07-06 creates `src/pursuit/gui/`
+
+**Found by:** 07-03 Task 3 (by construction, not by accident) · **Owner:** 07-06 (live GUI)
+
+`scripts/check_local_truth.py` exits **2** when its scan root is missing or holds zero
+modules, and `.github/workflows/quality-gate.yml` now runs it as its own job. Measured
+today:
+
+```
+$ uv run python scripts/check_local_truth.py
+ERROR: local-truth gate scanned nothing: ...\src\pursuit\gui does not exist.
+       07-06 creates it; until then this gate cannot vouch for anything.
+exit=2
+```
+
+**Deliberate, and not softened.** The alternative wirings were each considered and
+rejected:
+
+* *Skip the job when the directory is missing* — that is exactly the vacuity the gate
+  exists to prevent, moved from the script into the workflow. A gate that reports OK for
+  having looked at nothing is worse than no gate, and `check_no_llm_in_strategy.py`'s
+  `rglob` shape would have shipped precisely that.
+* *Wire it at 07-06 instead* — leaves the enforcement out of CI for three more plans,
+  during which `gui/` gets written.
+
+A red job that says "the package this rule governs does not exist yet" is a true
+statement. **07-06 turns it green** by creating `src/pursuit/gui/` with modules that pass
+the check; nothing else needs to change.
+
+**Also noted, not fixed (scope boundary):** `scripts/check_no_llm_in_strategy.sh` is
+still **not** in `quality-gate.yml`, though it has existed since 03-10 and is run by hand
+in every plan's verification block. Pre-existing and unrelated to 07-03, so it is
+recorded here rather than silently added inside a commit about a different gate.
+
+---
+
+## D7-7 · The whole 07-03 surface has no production caller until 07-06
+
+**Found by:** 07-03 self-audit · **Owner:** 07-06 (live GUI) · **The same finding as D7-3,
+third occurrence**
+
+Grepped, not assumed. `build_local_view` / `HintHistory` / `LocalView` are imported by
+tests only; `HintHistory.record_outgoing` has no caller at all. Structural, exactly like
+D7-3: this plan's `<non_goals>` exclude every line of Tkinter, and 07-06 declares the
+consumer side of D-74.
+
+Everything that COULD be wired now is wired now, and that half was checked rather than
+waved past:
+
+* `shared/roles.py` — `engine_agent`/`opponent_role` reach production through
+  `network/orchestrator.py`'s re-export, so every pre-existing caller
+  (`turn_actions`, `turn_commit`, `capture_declaration`, `agent_audit_wiring`,
+  `agent_lifecycle`) exercises them unchanged.
+* `BeliefMap.entropy()` — called by `network/turn_language.belief_snapshot` on the live
+  path. Verified in a real game: six `language_turn` records, turn-0 entropy
+  **5.6108** against `log2(49) = 5.6147` (and `ln(49) = 3.8918`), so production is
+  provably on the log2 formula the extraction moved.
+* `local_view` — imported by `view_builder`, which is the module 07-06 consumes.
