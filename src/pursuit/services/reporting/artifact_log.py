@@ -3,28 +3,29 @@ hints, verdicts, nonce and hash. Enables full cryptographic verification in the
 replay simulator" (docs/PARAMETERS.md:167, and rule 20 makes that verifying
 replay a threshold condition for approving the project).
 
+THE FULL RATIONALE IS `docs/PRD_log_artifact.md` -- the per-mechanism PRD
+CLAUDE.md Sec2.3 requires for a central mechanism, and where this module's
+reasoning moved when the docstring took this file to 151/150 (split, never
+compressed; the `strategy/display_belief.py` precedent). What follows is the
+contract; the PRD carries the measurements and the rejected alternatives.
+
 GAME END ONLY -- D-64 AND SEC-04, AND THIS IS NOT A CONVENTION BUT A RULE.
 `security/ledger.py` states its file "is never read or written by anything on
-the wire path (D-64)", and rule 18 keeps every nonce secret for exactly as long
-as the game is live. Only SEC-04's end-of-game publication makes the ledger
-readable at all, so this builder must be reachable ONLY from a game-end path
-(07-07 wires it) and never from the turn loop. Nothing in `src/` imports it
-today; 07-05's Task 3 records the grep.
+the wire path (D-64)"; rule 18 keeps every nonce secret while the game is live,
+and only SEC-04's end-of-game publication makes the ledger readable. So this
+builder is reachable ONLY from a game-end path (07-07 wires it), never from the
+turn loop -- enforced as a scan on every suite run by
+`tests/unit/test_log_artifact_reachability.py`, not recorded as a grep.
 
 SELF-CONTAINED, OR IT IS NOT AN ARTIFACT. The viewer never opens the `.jsonl`
 or the `.ledger.jsonl`: every turn carries the five `commit_pack.verify_reveal`
-inputs at its top level, so a third party with only this file recomputes every
-hash. `tests/integration/test_log_artifact_roundtrip.py` proves it by DELETING
-both sources before verifying.
+inputs at its top level. `tests/integration/test_log_artifact_roundtrip.py`
+proves it by DELETING both sources before verifying.
 
-RE-HASHING GOES THROUGH `commit_pack`, NEVER A FRESH `json.dumps`. That module
-forbids a second canonical serializer in as many words (D-59), and the seal
-below goes through `artifacts.artifact_digest`, which is `config_hash`'s one
-`canonical_json`. A second serializer would produce false FAILED verdicts on
-the one screen the grader inspects.
-
-WIRE TRUTH ONLY -- no belief, no scent, nothing derived from `ctx.state`. See
-`log_turn_fields.py`, which owns that boundary and the rules 8-9 reasoning.
+RE-HASHING GOES THROUGH `commit_pack`, NEVER A FRESH `json.dumps` (D-59), and
+the seal goes through `artifacts.artifact_digest`, which is `config_hash`'s one
+`canonical_json`. WIRE TRUTH ONLY -- no belief, no scent, nothing derived from
+`ctx.state`; `log_turn_fields.py` owns that boundary.
 """
 
 from __future__ import annotations
