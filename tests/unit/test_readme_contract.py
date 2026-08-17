@@ -113,7 +113,22 @@ def test_no_games_played_counter_value_appears_in_the_readme():
     assert checks.games_played_leaks(readme()) == []
 
 
-def test_the_counter_check_fires_when_a_value_is_written_in():
+def counter_value() -> str:
+    """The shipped counter's value here, or a same-shaped stand-in.
+
+    `config/*/games_played.json` is gitignored live state (D-77): it does not
+    exist in a fresh clone, and it does not exist in either split repository.
+    Until 08-10 this test read it unconditionally and failed in both -- an
+    assertion about the DETECTOR that could not run wherever the development
+    machine's untracked files were missing. The real value is still preferred
+    whenever it is present, so the detector goes on being proven against the
+    number actually on disk here.
+    """
     leaked = checks.REPO_ROOT / "config" / "police" / "games_played.json"
-    value = leaked.read_text(encoding="utf-8").split(":")[1].strip(" }\n")
-    assert checks.games_played_leaks(f"we have played {value} games")
+    if leaked.is_file():
+        return leaked.read_text(encoding="utf-8").split(":")[1].strip(" }\n")
+    return "1234"
+
+
+def test_the_counter_check_fires_when_a_value_is_written_in():
+    assert checks.games_played_leaks(f"we have played {counter_value()} games")

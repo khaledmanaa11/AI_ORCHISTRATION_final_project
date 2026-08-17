@@ -130,15 +130,45 @@ def test_the_guard_lets_a_throwaway_path_through(tmp_path):
     assert not guard.is_shipped_config_path(counter)
 
 
-def test_the_session_snapshot_reads_the_real_files():
+def test_the_session_snapshot_covers_both_shipped_counters():
     """The second, independent half of the seam: `conftest.py` snapshots
     both counters at session start and re-reads them at session end, so a
     write that reaches them by a route the patch does NOT cover is still
-    caught -- late, but caught. Pinned because a snapshot that silently
-    read nothing would make that assertion vacuous."""
+    caught -- late, but caught.
+
+    WHAT THIS ASSERTS AND WHAT IT NO LONGER ASSUMES (08-10). It asserts the
+    snapshot covers exactly the two shipped counters, and that every one of
+    them that EXISTS was actually read. It no longer requires both files to
+    exist: they are gitignored live state, so a fresh clone has neither and
+    neither split repository ships them -- and the old form failed in both,
+    for a property of the developer's untracked files rather than of the
+    seam. The read-versus-absent discrimination it was standing in for is
+    proven directly in the test below."""
+    snapshot = guard.read_counters()
+    on_disk = [path for path in guard.SHIPPED_COUNTERS if path.is_file()]
+
+    assert len(snapshot) == len(guard.SHIPPED_COUNTERS) == 2
+    assert set(snapshot) == {str(path) for path in guard.SHIPPED_COUNTERS}
+    assert all(snapshot[str(path)] is not None for path in on_disk), (
+        f"a counter present on disk was snapshotted as absent: {on_disk}"
+    )
+
+
+def test_the_session_snapshot_distinguishes_a_read_from_an_absence(tmp_path,
+                                                                   monkeypatch):
+    """The anti-vacuity control the assertion above used to carry implicitly.
+
+    A snapshot that silently read nothing would return None for everything and
+    the session-end comparison would still pass, having compared two empty
+    answers. So point the snapshot at one file that exists and one that does
+    not, and require it to tell them apart -- which is a property of
+    `read_counters`, true on every machine, rather than of this checkout."""
+    present = tmp_path / "police.json"
+    absent = tmp_path / "thief.json"
+    present.write_text('{"games_played": 7}', encoding="utf-8")
+    monkeypatch.setattr(guard, "SHIPPED_COUNTERS", (present, absent))
+
     snapshot = guard.read_counters()
 
-    assert set(snapshot) == {str(path) for path in guard.SHIPPED_COUNTERS}
-    assert all(value is not None for value in snapshot.values()), (
-        "both shipped counters must exist for the session assertion to mean anything"
-    )
+    assert snapshot[str(present)] == '{"games_played": 7}'
+    assert snapshot[str(absent)] is None

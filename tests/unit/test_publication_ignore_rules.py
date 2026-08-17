@@ -22,7 +22,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from tests.unit.gitignore_probe import REPO_ROOT, git_available, git_ignored
+from tests.unit.gitignore_probe import (
+    REPO_ROOT,
+    as_probe_path,
+    git_available,
+    git_ignored,
+)
 
 CLAUDE_MD = REPO_ROOT / "CLAUDE.md"
 #: The claim this test holds git to, quoted from CLAUDE.md rather than restated.
@@ -57,16 +62,39 @@ def test_claude_md_still_carries_the_claim_this_test_checks() -> None:
 
 
 def test_git_agrees_with_every_artifact_claude_md_calls_gitignored() -> None:
+    """Each claim asked as a path git can answer about -- see `as_probe_path`.
+
+    Until 08-10 the names were wrapped in `Path`, which drops `graphify-out/`'s
+    trailing slash; the directory-only rule then matched only because the
+    directory happens to exist here. The same question answered NOT IGNORED
+    inside a freshly built split repository, and would answer the same on any
+    fresh clone -- including a grader's.
+    """
     assert git_available(), "git is not on PATH; this check cannot be run"
     claimed = claimed_ignored_paths()
     assert claimed, "parsed no artifact names out of CLAUDE.md"
-    ignored = set(git_ignored([Path(name) for name in claimed]))
-    missing = [name for name in claimed if name.rstrip("/") not in
-               {entry.rstrip("/") for entry in ignored}]
+    asked = {name: as_probe_path(name) for name in claimed}
+    ignored = set(git_ignored(list(asked.values())))
+    missing = [name for name, probe in asked.items() if probe not in ignored]
     assert not missing, (
         f"CLAUDE.md:178 claims these are gitignored build artifacts, and git "
         f"disagrees: {missing}. Either .gitignore or the sentence is wrong."
     )
+
+
+def test_the_directory_probe_discriminates_between_ignored_and_tracked_trees() -> None:
+    """The control for the directory branch, and the reason it is not a slash.
+
+    `git check-ignore` reports EVERY non-existent path ending in `/` as ignored
+    -- `README.md/` and `definitely-not-ignored-xyz/` both come back ignored,
+    matching a blank line. A test asking the slash question would therefore pass
+    no matter what `.gitignore` said. These two assertions fail if the probe ever
+    stops discriminating.
+    """
+    assert git_available(), "git is not on PATH; this check cannot be run"
+    assert git_ignored([as_probe_path("graphify-out/")]) == \
+        [as_probe_path("graphify-out/")]
+    assert git_ignored([as_probe_path("src/")]) == []
 
 
 def test_the_probe_discriminates_and_does_not_call_everything_ignored() -> None:
