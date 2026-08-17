@@ -1,0 +1,148 @@
+[
+  {
+    "commit": "99d6d5fd5104b1a890b29f869d5487a00dbf8525",
+    "copied": 1024,
+    "excluded": [],
+    "generated": "2026-08-17T18:50:29Z",
+    "path": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-police",
+    "role": "police",
+    "rows": [
+      {
+        "detail": "rev-list --count HEAD = 1",
+        "name": "exactly one commit",
+        "ok": true
+      },
+      {
+        "detail": "0 remote(s) []",
+        "name": "zero remotes",
+        "ok": true
+      },
+      {
+        "detail": "commit 99d6d5f is not an object in the source repository; a shared commit would mean an inherited history",
+        "name": "history disjoint from the source repository",
+        "ok": true
+      },
+      {
+        "detail": "README.md carries the split banner for role=police (31347 bytes read)",
+        "name": "rule-49 cross-link block present",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; scanned 539 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
+        "name": "line-limit (<=150 code lines)",
+        "ok": true
+      },
+      {
+        "detail": "7 names checked; 0 present on disk []; 0 tracked []",
+        "name": "forbidden paths absent",
+        "ok": true
+      },
+      {
+        "detail": "tracked config files: police 14; thief 14; counters carried: 0",
+        "name": "both seats' config shipped (D-77)",
+        "ok": true
+      },
+      {
+        "detail": "README 1; config 28; PRD 16; PLAN 103; TODO 10",
+        "name": "rule 50 inventory",
+        "ok": true
+      },
+      {
+        "detail": "1 workflow file(s); 3 scripts/ path(s) referenced; 0 missing []",
+        "name": "CI workflows reference only paths that ship",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; last line: '+ zipp==4.1.0'",
+        "name": "uv sync",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; last line: 'warning: `VIRTUAL_ENV=C:\\\\Users\\\\Hp\\\\OneDrive\\\\Desktop\\\\Semester6\\\\ORCHISTRATION_AI\\\\final_project\\\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead'",
+        "name": "ruff check .",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; 2533 passed, 0 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
+        "name": "pytest --cov",
+        "ok": true
+      }
+    ],
+    "source_commit": "8aa02ea",
+    "staged": 1025,
+    "verdict": "pass"
+  },
+  {
+    "commit": "580acae420b8458c94065676bcee49b8f1f4fa9f",
+    "copied": 1024,
+    "excluded": [],
+    "generated": "2026-08-17T18:50:29Z",
+    "path": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-thief",
+    "role": "thief",
+    "rows": [
+      {
+        "detail": "rev-list --count HEAD = 1",
+        "name": "exactly one commit",
+        "ok": true
+      },
+      {
+        "detail": "0 remote(s) []",
+        "name": "zero remotes",
+        "ok": true
+      },
+      {
+        "detail": "commit 580acae is not an object in the source repository; a shared commit would mean an inherited history",
+        "name": "history disjoint from the source repository",
+        "ok": true
+      },
+      {
+        "detail": "README.md carries the split banner for role=thief (31346 bytes read)",
+        "name": "rule-49 cross-link block present",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; scanned 539 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
+        "name": "line-limit (<=150 code lines)",
+        "ok": true
+      },
+      {
+        "detail": "7 names checked; 0 present on disk []; 0 tracked []",
+        "name": "forbidden paths absent",
+        "ok": true
+      },
+      {
+        "detail": "tracked config files: police 14; thief 14; counters carried: 0",
+        "name": "both seats' config shipped (D-77)",
+        "ok": true
+      },
+      {
+        "detail": "README 1; config 28; PRD 16; PLAN 103; TODO 10",
+        "name": "rule 50 inventory",
+        "ok": true
+      },
+      {
+        "detail": "1 workflow file(s); 3 scripts/ path(s) referenced; 0 missing []",
+        "name": "CI workflows reference only paths that ship",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; last line: '+ zipp==4.1.0'",
+        "name": "uv sync",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; last line: 'warning: `VIRTUAL_ENV=C:\\\\Users\\\\Hp\\\\OneDrive\\\\Desktop\\\\Semester6\\\\ORCHISTRATION_AI\\\\final_project\\\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead'",
+        "name": "ruff check .",
+        "ok": true
+      },
+      {
+        "detail": "exit 0; 2533 passed, 0 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
+        "name": "pytest --cov",
+        "ok": true
+      }
+    ],
+    "source_commit": "8aa02ea",
+    "staged": 1025,
+    "verdict": "pass"
+  }
+]
