@@ -3,65 +3,107 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-08 is fully committed and closed, tree clean. NEXT IS 07-09 (GATE-7
-  measurement, docs/PRD_gatekeeper.md and OAUTH-RUNBOOK.md), then 07-10 (the one autonomous-false
-  plan -- OAuth consent, one live send, screenshots, and the games-played VALUE decision, OQ-5).
-  WHAT 07-08 LEAVES FOR THE PLANS THAT OWN IT, AND IT IS FIVE THINGS -- (1) 07-09 must take
-  criterion-3 evidence through `open_replay(path).verdict`, which IS the value the banner renders;
-  there is deliberately NO one-call `verdict_for(artifact)` wrapper, because the production-caller
-  grep found it TEST-ONLY in this plan's own work and it was removed rather than excused;
-  (2) ALL THREE verdict states must appear in the GATE-7 report, not only the OK one -- a run that
-  can only ever show `Verified OK` proves nothing, so feed it the tampered artifact and the
-  zero-turn one as well, exactly as tests/integration/test_replay_roundtrip.py does; (3) the replay
-  app REFUSES any path not named `log_`, so `<uid>.jsonl`, `<uid>.ledger.jsonl`, `result_` and
-  `declaration_` each get exit 2 and a message naming rule 18 -- the in-progress-game question is
-  decided BY REFUSAL rather than by convention, and main() verifies before it builds a Tk root;
-  (4) `--step-ms` is required with NO default anywhere in src/ (OQ-6 a second time), so 07-10 must
-  state the value it screenshots with; (5) the three banner colours are pinned by test, so a
-  screenshot showing green is showing OK. Eighteen deferred items still sit in the phase's
-  deferred-items.md, unchanged by this plan except that D7-8's constraint is now satisfied by
-  ABSENCE -- the artifact carries no belief_argmax at all, and a render-time scan asserts the
-  viewer does not reintroduce one, with a control proving the scan can find a planted name. Still
-  open and NOT fixed per the scope boundary -- check_no_llm_in_strategy.sh has been absent from
-  quality-gate.yml since 03-10, and D7-5's recoverable handshake transition still fires once per
-  run. OQ-1/OQ-2/OQ-3 are CLOSED in code with citations; OQ-4 is CLOSED by 07-07; OQ-6 is CLOSED
-  structurally by 07-06 and re-applied here. OQ-5 -- the games-played VALUE -- remains the human's
-  at 07-10, before any live send. NOTHING IN THIS REPO TRANSMITS -- the replay viewer opens one
-  local file and draws it, both shipped reporting.json files still read mode dry_run, and
-  git diff config/ is empty.
-stopped_at: PHASE 7 PLAN 08 EXECUTED (2026-08-17) -- THE REPLAY VIEWER, AND THE MEASUREMENT THAT
-  MAKES ITS BANNER WORTH ANYTHING. On the real dev_launch game 55fa28cbef618a19, with BOTH
-  `<uid>.jsonl` AND `<uid>.ledger.jsonl` MOVED OFF DISK on both seats FIRST, both seats show
-  `Verified OK` at 5/5 committed turns re-hashed -- read back off the RENDERED Tk widget rather
-  than off the model that fed it. THREE VERDICT STATES, NOT TWO, AND THE THIRD IS THE WHOLE PLAN.
-  security/audit_record.py says its verdict is 'vacuously True for an empty list', which is right
-  for the AUDIT and a lie on a SCREEN, so the non-zero-committed-turn guard runs BEFORE any
-  aggregate -- dropping it makes an empty artifact read `Verified OK` (probe 2, 4 failed), and a
-  zero-turn file reads `Nothing to verify` instead. THE SECOND-SERIALIZER MEASUREMENT IS THE ONE
-  THAT MATTERS -- the worst failure of this screen is not a missed forgery but a FALSE FAILED,
-  which accuses an honest opponent of our own formatting, and replacing verify_reveal with a fresh
-  json.dumps(sort_keys=True) re-hash reports FALSE FAILED on 5 of 5 committed turns on BOTH seats
-  of the real game, 10 of 10 (probe 1, 15 failed). grep json.dumps over services/reporting/ returns
-  five hits and every one is inside a docstring forbidding it. FOUR SINGLE-FIELD TAMPERS ARE FOUR
-  TESTS, never one parametrize case, each RESEALED first so the verdict is earned by the per-turn
-  re-hash and not by the artifact seal, each asserted to name the tampered turn and explicitly NOT
-  turn 0; mutation shapes reused from scripts/gate6_tamper.py rather than invented. On the real
-  game a barrier turn's move was flipped stay->south and the banner read
-  'FAILED -- turn 4 re-hash does not match h_commit' at 4/5. A FIFTH TAMPER IS GENUINELY ADDITIVE
-  -- outcome sits inside the seal and inside no commit hash, so every turn still re-hashes 4/4 and
-  the artifact is still FAILED, which is why the seal check is not redundant. THE IN-PROGRESS-GAME
-  QUESTION IS DECIDED BY REFUSAL, for two independent reasons -- the artifact does not exist during
-  play (D-64/SEC-04, enforced by the reachability scan), and load_artifact rejects any path not
-  named `log_`. gui/ stays logic-free (2 files, 181 code lines, zero BinOps, zero f-strings) and
-  check_local_truth.py reports OK 7 modules scanned, exit 0, grown by exactly two -- the gate
-  needed NO widening because 07-06 had already pre-authorised
-  pursuit.services.reporting.replay_verify as the one service path a view may reach.
-  test_gui_structural.py now READS that allowlist instead of keeping a second hardcoded copy, and
-  the gate loader was extracted to tests/unit/local_truth_helpers.py rather than copied a third
-  time. Seven revert probes, every count real, anchor asserted present and mutation asserted landed
-  before each run. Two holes found in my own work -- banner_colour measured 98% because its only
-  caller lives in the coverage-omitted gui/ (07-06's lit_cells finding again, tested rather than
-  excused), and verdict_for had TEST-ONLY reachability and was REMOVED.
+Resume file: None -- 07-09 is fully committed and closed, tree clean. NEXT AND LAST IN PHASE 7
+  IS 07-10, the phase's single `autonomous: false` plan, and its procedure is already written:
+  `docs/phases/phase-7/OAUTH-RUNBOOK.md`. WHAT 07-09 LEAVES FOR IT, AND IT IS FIVE THINGS --
+  (1) criterion 1's LIVE half is PENDING and must not be flipped on the strength of a dry run;
+  the four items that flip it are enumerated in `GATE-7-MEASUREMENT.md` and in the evidence
+  field `live_send.evidence_07_10_must_attach` (message id, an arrival screenshot showing the
+  ATTACHMENT, the config diff proving live->dry_run was reversed, and OQ-5 in writing BEFORE the
+  send); (2) OQ-5, the games-played VALUE, is still human-only and the files now read 1922 /
+  1915, both known-wrong -- `GAMES-PLAYED-RECONSTRUCTION.md` Sec8's five boxes are the decision;
+  (3) D7-17 is ROUTED, not decided -- `PARAMETERS.md:86` (rule 52, one scoring game per opponent)
+  pulls against `:72`/`:168` (aggregate across sub-games), `game_id` is peer-negotiated (D-61) so
+  redefining it is a PROTOCOL decision, and three costed options plus asking the lecturer are in
+  the gate document; (4) D7-19's judgement half is 07-10's -- the two provably-safe patterns
+  (`*.eml`, `*.prev.json`) are ignored and a real `dev_launch` now leaves 4 untracked files
+  instead of 8, but WHICH of those four are league evidence is not automatable; (5) both OQ-6
+  intervals must be RECORDED beside the screenshots -- `--refresh-ms` and `--step-ms` are still
+  required with no default anywhere in `src/`, and this plan stated its own (500 ms, 400 ms) in
+  `scripts/` rather than in the repository. D7-18 is CLOSED and so is the rule-25 CI gap.
+  NOTHING IN THIS REPO TRANSMITS -- both shipped `reporting.json` files still read `dry_run`,
+  `git diff config/` is empty, and `measure_gate7.py` clears BOTH Gmail credential environment
+  variables at import so it cannot have sent anything.
+stopped_at: PHASE 7 PLAN 09 EXECUTED (2026-08-17) -- GATE-7 MEASURED, AND CRITERION 1 SPLIT
+  HONESTLY RATHER THAN CLOSED. Criteria 2 and 3 PASS; criterion 1 is `dry_run` PASS + live
+  PENDING as TWO NAMED FIELDS, and the criterion-level `verdict` is the STRING joining them, so a
+  grep for a bare PASS verdict over the evidence returns criteria 2 and 3 and CANNOT return
+  criterion 1. THE POINT OF A GATE SCRIPT IS THAT IT CAN FAIL, so five mutation probes broke the
+  real subject in `src/` and were reverted with `git diff` clean: the attachment retyped
+  `octet-stream` -> c1 FAIL; the rule-30 guard weakened to accept a superset -> c1 FAIL; a
+  forbidden import planted in `gui/widgets.py` -> c2 FAIL at 2 violations; the non-zero-committed
+  guard dropped -> THE EMPTY ARTIFACT READS `Verified OK` and c3 FAILs; the per-turn re-hash
+  removed -> THE TAMPERED ARTIFACT READS `Verified OK` at 5/5 and c3 FAILs. An emptied evidence
+  set exits 2 (`EMPTY_EVIDENCE`), never 0. THE GATE FOUND A DEFECT IN ITS OWN WORK, on the one
+  rule-38 surface in this phase: `counter_snapshot` keyed on `path.name`, so both roles collapsed
+  onto the single key `games_played.json` and the evidence reported `unchanged: true` while
+  watching ONE counter and naming two -- keyed on `<role>/<filename>` now, and `exit_code`
+  refuses a snapshot under two entries (probe 6). CRITERION 2 records BOTH counts because a
+  zero/zero scan is a FAIL: 7 modules, 0 violations, the empty-scan control at exit 2 in both its
+  forms, both seats' published snapshots free of `cop`/`thief`/`barriers`, and both live-app
+  `--once` launches exit 0 AS SUBPROCESSES -- no `gui` import at module scope anywhere, because
+  `tkinter.Tk()` raises with no display and one criterion's environment must not fail the whole
+  gate. What is machine-verified and what is a HUMAN AESTHETIC CALL are stated apart, and what
+  the gate cannot see -- a coordinate DRAWN rather than NAMED -- names `test_gui_recovery.py` and
+  `test_local_truth_recovery.py` instead of pretending. CRITERION 3 shows THREE verdicts on one
+  real game (`gate7measure`, `capture` both seats) with both sources deleted first: `Verified OK`
+  5/5, a RESEALED single-field tamper `FAILED -- turn 4: re-hash does not match h_commit` at 4/5
+  naming turn 4 and explicitly NOT turn 0, and a zero-turn artifact reading `Nothing to verify`.
+  THREE ROUTED FINDINGS CLOSED OR COSTED, none left silent: D7-18 CLOSED -- all six
+  `durable_write_json` bindings guarded, the binder list RE-DERIVED BY AST so a seventh writer
+  fails a test, and probe 9 restoring the pre-07-09 guard let five of six writes LAND in
+  `config/police/` (`guard_probe.json` + `.prev` appeared in the SHIPPED tree, removed);
+  D7-19 HALF-closed where it is provably safe (`*.eml` and `*.prev.json` are never one of rule
+  50's four artifacts) and MEASURED -- a real `dev_launch` leaves 8 files and 4 untracked, exactly
+  halved -- with both halves asserted and both probed; `check_no_llm_in_strategy.sh` WIRED INTO
+  CI after being absent since 03-10, with the documents' disagreement recorded rather than
+  overstated (`RULES.md:61` marks rule 25 RECOMMENDED with NO mandated sanction; CLAUDE.md is
+  stricter; the job enforces the stricter reading per SEGAL:182) and probe 10 proving it exits 1;
+  D7-17 ROUTED with the book examined and three options costed. `PRD_gatekeeper.md` sources every
+  number to a file and line -- TWO of its own citations were WRONG and are corrected, not left --
+  and NAMES the two with no book source: OQ-1 (no daily ceiling exists anywhere, so none is
+  written) and OQ-2 (a structural latch, so the DOS detector carries no number at all).
+---
+
+Last session: 2026-08-17T13:35:00+03:00
+Stopped at: Completed 07-09-PLAN.md (GATE-7 measurement + `docs/PRD_gatekeeper.md` +
+  `OAUTH-RUNBOOK.md`) in full. Six commits, each atomic: Task 1 `measure_gate7.py` and its six
+  siblings (`08705d9`); Task 2 the per-mechanism gatekeeper PRD (`ba72c8a`); a self-audit fix for
+  the one-counter defect the gate found in its own work (`9e044d5`); the three routed findings --
+  D7-18, D7-19 and the rule-25 CI job (`96495d4`); Task 3 the gate record and the runbook
+  (`88d21fb`); Task 4 the graph refresh (`bb8b1da`). Gates: `ruff check .` 0 violations;
+  2153 passed / 0 failed against the 2130 baseline; coverage 97.37% (baseline 97.37%, unchanged
+  -- this plan adds tests, not source); `check_line_limit.sh` exit 0 with all ten new `.py` files
+  ALSO checked explicitly by path (`scripts/` is NOT enumerated by the no-arg form, which is the
+  point); `check_local_truth.py` -> `OK: 7 module(s) scanned`, exit 0;
+  `check_no_llm_in_strategy.py` OK and now a CI job too; every new `.py` confirmed NOT ignored by
+  git (D7-10's guard); `measure_gate7.py` exit 0, run twice with a byte-identical summary;
+  `scripts/dev_launch.py` exit 0, game `6694ec24875b4208`, 11 matched=true audit records per
+  seat, one `audit_verdict` and one `game_over` per seat, ZERO `technical_win`, ZERO
+  `watchdog_incident`; `git diff config/` EMPTY and both `reporting.json` files still `dry_run`.
+  Rule-38 counters, all four: the full suite moved police 1921->1921 and thief 1914->1914 (delta
+  0/0); one real game moved 1921->1922 and 1914->1915 (delta 1/1) -- and the gate script now reads
+  BOTH counters itself, before and after, because it plays a real game. Secret scan over every
+  new doc, script and the evidence JSON: clean. Two things are NOT byte-identical across gate
+  runs and both are recorded rather than smoothed -- `generated_at`, and the local-truth gate's
+  own two ERROR diagnostics from the empty-scan control, which echo the throwaway temp directory;
+  the replay refusal's temp path is redacted to `<tmp>` in a field whose NAME says so, which also
+  keeps a local username out of a file bound for a public repo (rule 49). One correction worth
+  carrying: `git checkout --` on a probe reverts the FILE, not the probe, and it wiped
+  uncommitted D7-18 work once; later probes reverted by inverse edit. A first reading of probe 9
+  was also wrong (a truncated pytest tail) and was re-run cleanly for an accurate record.
+  `GRAPH_REPORT.md` is a COMMUNITY DIGEST, not a node listing, so grepping it for a module path
+  proves nothing -- verified by querying instead: `publish_view` at `view_publish.py:90` (degree
+  17), `open_replay` at `replay_verify.py:163` (degree 12), `build_reporting_chain` at
+  `end_of_game_chain.py:97` (degree 16), `LiveDashboard` at `live_app.py:47` (degree 8). Graph
+  refreshed: 10473 nodes / 18679 edges / 597 communities. `07-09-SUMMARY.md` written with every
+  number from a command run in this session, self-check PASSED (24 paths verified present AND
+  tracked AND not gitignored, 6 commits verified reachable, and two citation errors CORRECTED
+  rather than left). `docs/phases/phase-7/TODO.md` gains a ticked 07-09 row and a ticked 07-96.
+Resume file: None -- the tree is clean and 07-09 is closed. Next is 07-10, the phase's ONE
+  `autonomous: false` plan: OAuth consent, one live send, the two README screenshots, and the
+  OQ-5 games-played VALUE decision. Its procedure is `docs/phases/phase-7/OAUTH-RUNBOOK.md`,
+  which states plainly that Claude must not enter credentials and must not click consent.
 ---
 
 Last session: 2026-08-17T12:20:00+03:00
