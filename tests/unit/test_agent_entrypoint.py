@@ -5,6 +5,12 @@ MODULE's own namespace (the real functions are bound there by `from ...
 import`, so patching agent_lifecycle/handshake/etc. directly would not
 reach these call sites) -- zero real sockets, zero real handshake, matching
 this codebase's DI-with-fakes house style.
+
+The fakes and the `_patch_common` driver moved to
+`_agent_entrypoint_fixtures.py` (07-00) when this file reached 148/150 code
+lines and a second consumer appeared. Split, never compressed: nothing in
+the four cases below was edited, and `_FakeTunnel`/`_patch_common` are
+imported back so they read exactly as they did.
 """
 
 import asyncio
@@ -12,120 +18,7 @@ import asyncio
 import pytest
 
 from pursuit.network import agent_entrypoint
-from pursuit.shared.network_config import load_network_config
-from pursuit.shared.tunnel_config import load_tunnel_config
-
-_TUNNEL_PARAMS = load_tunnel_config("config/police/tunnel.json")
-_NETWORK_PARAMS = load_network_config("config/police/network.json")
-
-
-class _FakeClient:
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, *exc):
-        return False
-
-
-class _FakeSecurity:
-    def __init__(self, commit_reveal: bool = False) -> None:
-        self.commit_reveal = commit_reveal
-
-
-class _FakeCtx:
-    def __init__(self):
-        self.runtime = type("R", (), {"client": lambda self: _FakeClient()})()
-        self.watchdog = type("W", (), {"start": lambda self: None})()
-        self.machine = object()
-        self.reporter = object()
-        self.role = "police"
-        self.security = _FakeSecurity()  # commit_reveal off -- run_final_audit never fires
-
-
-class _FakeTunnel:
-    def __init__(self, order: list[str]) -> None:
-        self._order = order
-        self.public_url = "https://peer.ngrok-free.app"
-        self.params = _TUNNEL_PARAMS
-        self.network_params = _NETWORK_PARAMS  # the 05-11 watch reads its cadence
-
-    def start(self) -> None:
-        self._order.append("tunnel_start")
-
-    def stop(self) -> None:
-        self._order.append("tunnel_stop")
-
-
-class _HandshakeResult:
-    def __init__(self, agreed: bool) -> None:
-        self.agreed = agreed
-
-
-def _patch_common(monkeypatch, *, agreed: bool, order: list[str], tunnel=None):
-    cfg = agent_entrypoint.load_agent_config("config/police")
-    monkeypatch.setattr(agent_entrypoint, "load_agent_config", lambda config_dir: cfg)
-    monkeypatch.setattr(agent_entrypoint, "build_tunnel_manager", lambda config_dir, net: tunnel)
-    monkeypatch.setattr(agent_entrypoint, "make_client_caller", lambda client: object())
-
-    def _default_context(
-        cfg_arg, *, game_uid=None, local_step0_digest=None, local_game_id=None,
-        local_step0_declaration=None,
-    ):
-        order.append("default_context")
-        return _FakeCtx()
-
-    async def _start_server(ctx):
-        order.append("start_server")
-
-    async def _perform_handshake(**kwargs):
-        order.append("perform_handshake")
-        return _HandshakeResult(agreed)
-
-    async def _run_turn_loop(ctx):
-        order.append("run_turn_loop")
-        return "OUTCOME"
-
-    # 05-04: teardown is three named steps, not one shutdown_cleanly call.
-    # They are module-level helpers precisely so they stay patchable HERE
-    # (a `ctx.watchdog.stop()` method call could not be), which also lets
-    # this order list and test_late_peer_teardown.py's harness assert the
-    # SAME named sequence rather than two parallel descriptions of it.
-    def _stop_watchdog(ctx):
-        order.append("stop_watchdog")
-
-    async def _linger_for_peer(ctx):
-        order.append("linger_for_peer")
-
-    async def _stop_runtime(ctx):
-        order.append("stop_runtime")
-
-    async def _declare_step0(cfg_arg):
-        order.append("declare_step0")
-        return "fake-step0-digest", {"declaration": {}, "digest": "fake-step0-digest"}
-
-    # 05-05: adoption sits between the handshake and write_declaration --
-    # the D-64 ledger stem and every hashed commit derive from what it sets.
-    def _adopt_negotiated_game_id(ctx, result):
-        order.append("adopt_negotiated_game_id")
-
-    def _write_declaration(ctx, cfg_arg, result, envelope):
-        order.append("write_declaration")
-
-    async def _run_final_audit(ctx):
-        order.append("run_final_audit")
-        return None
-
-    monkeypatch.setattr(agent_entrypoint, "default_context", _default_context)
-    monkeypatch.setattr(agent_entrypoint, "start_server", _start_server)
-    monkeypatch.setattr(agent_entrypoint, "perform_handshake", _perform_handshake)
-    monkeypatch.setattr(agent_entrypoint, "run_turn_loop", _run_turn_loop)
-    monkeypatch.setattr(agent_entrypoint, "stop_watchdog", _stop_watchdog)
-    monkeypatch.setattr(agent_entrypoint, "linger_for_peer", _linger_for_peer)
-    monkeypatch.setattr(agent_entrypoint, "stop_runtime", _stop_runtime)
-    monkeypatch.setattr(agent_entrypoint, "adopt_negotiated_game_id", _adopt_negotiated_game_id)
-    monkeypatch.setattr(agent_entrypoint, "declare_step0", _declare_step0)
-    monkeypatch.setattr(agent_entrypoint, "write_declaration", _write_declaration)
-    monkeypatch.setattr(agent_entrypoint, "run_final_audit", _run_final_audit)
+from tests.unit._agent_entrypoint_fixtures import _FakeTunnel, _patch_common
 
 
 async def test_run_agent_happy_path_returns_the_turn_loop_outcome(monkeypatch) -> None:

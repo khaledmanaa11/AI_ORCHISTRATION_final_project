@@ -9,7 +9,8 @@ it, a failed own final-reveal push accuses a peer that answered us (05-UAT.md G1
 
 Sibling of `test_agent_entrypoint.py`, split at the 150-code-line gate (that file is at 145).
 Its fakes are imported rather than re-derived, so the two files cannot drift on what `run_agent`
-is being driven with.
+is being driven with. 07-00 moved those fakes on again, from `test_agent_entrypoint.py` into
+`_agent_entrypoint_fixtures.py`; this file's import line is the only thing that changed.
 
 The assertion is on VALUE IDENTITY, not on the kwarg's presence: `board_outcome` must be
 `run_turn_loop`'s OWN return value, so the test fails against a version that passes the argument
@@ -20,7 +21,7 @@ from __future__ import annotations
 
 from pursuit.constants import Outcome
 from pursuit.network import agent_entrypoint
-from tests.unit.test_agent_entrypoint import _FakeCtx, _FakeSecurity, _patch_common
+from tests.unit._agent_entrypoint_fixtures import _FakeCtx, _FakeSecurity, _patch_common
 
 _BOARD_OUTCOME = object()
 """A unique sentinel rather than a reused string, so `is` -- not `==` -- decides. Nothing else
