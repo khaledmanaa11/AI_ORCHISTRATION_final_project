@@ -3,110 +3,159 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 08-07 and 08-08 are committed and closed; the tree is clean apart from
-  untracked throwaway `game_artifacts/`, which must NEVER be committed (D7-19). WAVE 2 HAS ONE
-  PLAN LEFT: **08-09** (sensitivity analysis, offline notebook, token-cost analysis, prompt log).
-  Then wave 3's 08-10 (the two-repo split, built LOCALLY, nothing pushed).
-  WHAT 08-09 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py` now exits 1 at
-  **65 PASS / 8 GAP / 13 UNJUDGED** (was 58/15/13). The 8 remaining belong to 08-09 (4: G1-14
-  PROMPT_LOG, G5-02 SENSITIVITY, G5-03 the notebook, G5-05 TOKEN-COST), 08-11/08-12 (2: G6-08 the
-  tag and T5-06's version reconciliation) and 08-06+07-10 jointly (2: G1-03b and G5-04, the
-  screenshots, still MARKED-ABSENT SLOTS and not to be faked).
-  A NEW STANDING CONSTRAINT FROM 08-07, and it now governs six documents: **a backticked
-  repository path in `ARCHITECTURE.md`, `QUALITY-25010.md`, `EXTENSION-POINTS.md`, `PRD_sdk.md`,
-  `PRD_tunnel.md` or `PRD_gui.md` is a CLAIM THAT THE PATH EXISTS NOW**, enforced by
-  `tests/unit/doc_citation_helpers.py` against `git ls-files`. Reference a deleted file
-  UNBACKTICKED. This check caught FOUR fabricated or unresolvable citations in 08-07/08-08's own
-  first drafts, two of them script names that do not exist -- `scripts/check_no_llm_in_move.py`
-  (the real gate is `scripts/check_no_llm_in_strategy.py`) and `scripts/check_publication_safety.py`
-  (the real scan is `scripts/submission_scan.py`, and the 08 outline's PREDICTED filename is what
-  was cited). **Do not cite the outline's prediction as if it were the tree.**
-  DIAGRAMS ARE NOW MACHINE-CHECKED, TWICE. `uv run python scripts/check_diagrams.py` exits 0/1/2
-  and resolves every `src/pursuit` label against `git ls-files`;
-  `tests/unit/test_architecture_contract.py` reads the container diagram AS A GRAPH and asserts
-  symmetric peers, no node id inside both processes (rule 2) and the `gui` node outside both
-  (D-76). A new diagram must carry an `<!-- diagram: NAME -->` marker on the line above its
-  fence. Rendering is NOT in CI -- mermaid-cli needs a headless Chromium and the suite is offline
-  by rule; 08-07 rendered all six blocks once, out of tree, and recorded it.
-  A LESSON WORTH NOT RE-LEARNING: **`docs/PRD_gui.md` shipped at `aa75852` and its gate row stayed
-  GAP**, because `docs/mechanism-prd-map.json` still answered `prds: []`. Writing the document is
-  not answering for the package. The register is walked from `git ls-files`, so a NEW package
-  becomes a GAP row by itself.
+Resume file: None -- 08-09 is committed and closed; the tree is clean apart from untracked
+  throwaway `game_artifacts/`, which must NEVER be committed (D7-19). **WAVE 2 IS COMPLETE.**
+  Next is wave 3's **08-10** (the two-repo split, built LOCALLY, nothing pushed).
+  WHAT 08-10 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py` now exits 1 at
+  **69 PASS / 4 GAP / 13 UNJUDGED** (was 65/8/13). All four remaining GAPs are somebody else's:
+  G1-03b and G5-04 (the screenshots -- 08-06 with 07-10's material, still MARKED-ABSENT SLOTS
+  and not to be faked), G6-08 (the tag, 08-11/08-12) and T5-06 (the `version.py` 1.00 vs
+  `pyproject.toml` 1.00.0 reconciliation, 08-11, and D-79 derives the tag name from it).
+  **`notebooks/` IS A NEW TOP-LEVEL DIRECTORY** and must survive the split. `analysis.ipynb`
+  reads FOUR tracked artifacts under `artifacts/`; a split that drops `artifacts/` leaves it
+  unable to execute, and `tests/unit/test_notebook_offline.py` FAILS inside that tree rather
+  than passing quietly. **THREE NEW DEV DEPENDENCIES** (nbconvert, ipykernel, nbformat) are in
+  `pyproject.toml`, so `uv sync` inside each split output must still resolve them.
+  ONE TEST SKIPS BY DESIGN IN A SPLIT TREE:
+  `test_research_docs.py::test_every_cited_commit_hash_resolves` skips when
+  `git rev-list --count HEAD` is under 50, because 08-10's outputs have ONE initial commit and a
+  hash from this repo cannot exist there. The skip NAMES its reason; every other test in that
+  file runs there and must pass.
+  THE STANDING CITATION CONSTRAINT NOW GOVERNS NINE DOCUMENTS: a backticked repository path in
+  `ARCHITECTURE.md`, `QUALITY-25010.md`, `EXTENSION-POINTS.md`, `PRD_sdk.md`, `PRD_tunnel.md`,
+  `PRD_gui.md`, `SENSITIVITY.md`, `TOKEN-COST.md` or `PROMPT_LOG.md` is a CLAIM THAT THE PATH
+  EXISTS NOW. `tests/unit/doc_citation_helpers.py` enforces the first six against `git ls-files`;
+  `tests/unit/test_research_docs.py` enforces the last three against the filesystem AND resolves
+  every cited 7-hex commit hash. Reference a deleted file UNBACKTICKED. FIVE fabricated or
+  unresolvable citations have now been caught this phase, one of them in 08-09's own first draft.
+  A NEW OPEN CORRECTION, AND IT IS NOT 08-09'S TO MAKE: the sweep contradicts
+  `docs/phases/phase-3/ENGINEERING-LOG.md` Act 4.3. The log records thief survival against a
+  barrier-blind chaser as **89% -> 1%** across the swap decision, and `phase-3/PRD.md`,
+  `phase-3/PLAN.md` and `src/pursuit/shared/resolution.py`'s `PREFERRED` docstring all quote it.
+  Measured at HEAD: **32.0% -> 7.5%**. `scripts/sensitivity_reconcile.py` parses the old pair OUT
+  OF THE LOG and re-measures all eight weights x rules x opening arms at n=200; the highest is
+  52.5% and none approaches 1%. **The DIRECTION of the shipped decision is confirmed and needs no
+  change** (the swap still costs the thief ~25pp and the cop seat is 100% under all four rule
+  combinations) -- but "89% to 1%" MUST NOT be quoted as a current measurement. The CAUSE WAS NOT
+  ESTABLISHED and no document pretends otherwise. Recorded in `docs/SUBMISSION-CHECKLIST.md`.
   STILL OPEN AND STILL A HUMAN'S: OQ8-1 (D7-17, DRAFTED and UNSENT), OQ8-2 (the games-played
   VALUE), OQ8-3 (where the form lives), OQ8-4 (the self-assessment SCORE), OQ8-5 (THE LICENCE --
   still PREPARED, NOT ADOPTED), OQ8-6 (the two repo URLs), OQ8-7 (the token ceiling), OQ8-8
   (README language, recorded as an ASSUMPTION), OQ8-9 (is `origin` public?).
-  **OQ8-9 IS NOW URGENT, AND THE ANSWER IS PROBABLY YES.** THIS AGENT PUSHED NOTHING -- but
-  `origin/main` MOVED TO `acc5913`, this session's own first commit, at 19:10:14, SIX MINUTES
-  AFTER it was made. The only git hook here is `scripts/hooks/pre-commit` (line-limit + ruff, no
-  push), and `codex.exe` (PID 21568) is running on this machine although CLAUDE.md retires Codex
-  for this user. The reflog shows the same commit-then-push pattern for `2f9e9c5`, `0437559`,
-  `e5d4b39` and `0632e04`. **Something outside the GSD agents is pushing to the public remote.**
-  No corrective remote action was taken -- a force-push is itself touching the remote. The three
-  later commits (`072d61d`, `5687c39`, `f176923`) are NOT on `origin/main`. `git tag -l` is EMPTY.
-stopped_at: 08-07 AND 08-08 CLOSED (2026-08-17) -- THE REPOSITORY HAD ZERO RENDERED DIAGRAMS AND
-  THREE MECHANISMS WITH NO PRD. Neither plan file existed; both executed from
-  `08-PLAN-OUTLINE.md` Sec9. FOUR COMMITS, each atomic: `acc5913` the mermaid checker and its 15
-  counter-controls (the gate exits **2** at that commit -- nothing to judge), `072d61d`
-  `docs/ARCHITECTURE.md` + the graph contract, `5687c39` `QUALITY-25010.md` +
-  `EXTENSION-POINTS.md`, `f176923` `PRD_sdk.md` + `PRD_tunnel.md` + the register.
-  SIX RENDERED DIAGRAMS, the repository's first: C4 context/container/component/code, a
-  deployment view and the four-phase commit-reveal sequence. The three facts CLAUDE.md makes
-  BINDING are carried as GRAPH STRUCTURE, not prose -- identical module sets plus an edge each way
-  (symmetric peers), no node id inside both subgraphs (rule 2), the `gui` node outside both
-  (D-76) -- and each is an assertion in `tests/unit/test_architecture_contract.py`.
-  RENDERING PROVEN, NOT ASSUMED: all six blocks rendered to real SVGs (22931-57123 bytes) with
-  `@mermaid-js/mermaid-cli` 11.16.0 out of tree, none containing a `Syntax error` box, and the two
-  mutations the unit tests use -- an unknown diagram kind and a dropped bracket -- were REJECTED
-  by that renderer (`UnknownDiagramError` / `Parse error on line 3`). The container and sequence
-  diagrams were also rendered to PNG and read back visually.
-  ASSERTIONS PROVEN RED ON THE PRE-CHANGE DOCUMENTS, not asserted to be: **16 failed / 4 passed**
-  for 08-07's two contract files with the three documents absent, and **5 failed / 6 passed** for
-  08-08's before the register moved. The four and six that passed are honestly VACUOUS guards
-  (an empty document has no unresolved citation) and are reported as guards, each bracketed by a
-  row that DID fail.
-  GAP MOVEMENT: 58/15/13 -> **62/11/13** (08-07: G1-13, G6-01, G6-02, G6-05) -> **65/8/13**
-  (08-08: the sdk, gui and tunnel mechanism rows). SEVEN rows, EXACTLY the seven these two plans
-  owned; NO other row moved in either direction, which is the counter-control.
-  SIX DEVIATIONS ACROSS THE TWO PLANS, AND FIVE WERE DEFECTS IN THIS SESSION'S OWN WORK, found
-  before commit: (1) `scripts/check_no_llm_in_move.py` cited and does not exist;
-  (2) `scripts/check_publication_safety.py` cited and does not exist -- it is the 08 OUTLINE'S
-  PREDICTED filename, while 08-03 shipped `scripts/submission_scan.py`; (3) `resolve_turn`,
-  `terminal_outcome` and `build_local_view` written with wrong signatures, and a
-  `config/police/display.json` that does not exist (the floors live in `belief.json`'s `display`
-  block) -- all four corrected FROM THE SOURCE; (4) GATE-5's "five D-05 tool names" quoted
-  unqualified when `tools.py` has carried NINE since Phase 6; (5) one of my own mermaid
-  counter-controls did not fire (the odd-quote mutation left an EVEN quote count) -- found by
-  running the controls, not by reading them. (6) mermaid-cli's Chromium would not launch and
-  needed `--no-sandbox`; nothing was added to `pyproject.toml` or CI.
-  ONE FINDING WORTH CARRYING: **`docs/PRD_gui.md` shipped at `aa75852` and its gate row stayed
-  GAP**, because `docs/mechanism-prd-map.json` still answered `prds: []`. The gate was right and
-  the register was updated -- the tempting reading ("the PRD exists, so the row is stale") would
-  have weakened a gate that is doing its job.
-  WHAT THESE DOCUMENTS DELIBERATELY DO NOT CLAIM: mail is `dry_run` and NOTHING HAS EVER BEEN
-  DELIVERED, phase 4 is `human_needed`, phases 7 AND 8 are NOT verified, NO league game has been
-  played, the games-played VALUE is deliberately unset, the 05-11 tunnel repair path HAS NEVER
-  FIRED IN A LIVE GAME (copied from GATE-5, not softened), attempt 4's second game is a
-  DETERMINISTIC REPLAY, GATE-5 was our own second machine and not another team's agent, and
-  `PRD_sdk.md` records as OPEN that nothing automated stops a future rule landing in `network/`.
-  GATES: 2413 passed / 0 failed (baseline 2366; +47), coverage 97.44% UNCHANGED (the new code is
-  in `scripts/`, outside the coverage source list, and is measured by tests loaded BY PATH), ruff
-  0, line-limit 0 tree-wide with all seven new `.py` files ALSO checked by path, `check_diagrams`
-  exit 0 (6 blocks, 29 labels, all resolving), `check_submission` exit 1 at 65/8/13. Graph
-  refreshed: 11646 nodes / 20310 edges / 660 communities (was 11097/19646); `parse_flowchart`
-  resolves at `scripts/diagram_graph.py:70`.
-  RULE-38 COUNTERS, ALL FOUR: suite 1926->1926 / 1919->1919 (0/0); one real game 1926->1927 /
-  1919->1920 (+1/+1), `game_id` `2582a94c8a5ec618`, BOTH seats `audit_verdict matched=true` at
-  turn 5, thief seat `agreed: true`, and the artifact's `games_played_declared` carrying
-  `present: false` -- DELIBERATELY UNSET. `git diff config/` EMPTY: the counters are gitignored
-  at `.gitignore:90`.
-  SELF-CHECK PASSED for both plans: 13 paths verified present AND tracked AND not gitignored, all
-  four commits verified reachable, and the diagram/label counts re-read from the gate's own
-  output rather than counted by hand.
-  NOTHING WAS PUSHED BY THIS AGENT, NO TAG WAS CREATED, NO REMOTE COMMAND WAS ISSUED -- but see
-  the Resume note: `origin/main` moved to `acc5913` six minutes after that commit, by something
-  outside these agents.
+  **OQ8-9 REMAINS URGENT AND UNANSWERED.** THIS AGENT PUSHED NOTHING and issued NO remote command
+  of any kind, but the ref has moved on its own before (19:04 on 08-14, 13:35 and 17:14 on 08-16,
+  and `acc5913` six minutes after it was committed). No corrective remote action was taken -- a
+  force-push is itself touching the remote. `git tag -l` is still EMPTY.
+stopped_at: 08-09 CLOSED (2026-08-17) -- THE REPOSITORY HAD NO SENSITIVITY ANALYSIS, NO
+  NOTEBOOK, NO TOKEN-COST ANALYSIS AND NO PROMPT LOG. No plan file existed; executed from
+  `08-PLAN-OUTLINE.md` Sec9, the same way 08-07 and 08-08 were. SEVEN ATOMIC COMMITS:
+  `32440b4` the three dev deps, `486a01a` the sweep + its refusals + both artifacts, `a8931b7`
+  the token-cost readers, `bcce41b` the executed notebook, `32535b7` the three documents,
+  `112bd6f` the register and trackers, `aac4cf8` the self-audit fixes.
+  GAP MOVEMENT: 65/8/13 -> **69/4/13**. FOUR rows, EXACTLY the four 08-09 owned (G1-14, G5-02,
+  G5-03, G5-05); NO other row moved in either direction, which is the counter-control. The gate's
+  own empty state re-observed at exit **2**.
+  EVERY PUBLISHED NUMBER IS RENDERED FROM A COMMITTED ARTIFACT, and
+  `tests/unit/test_research_docs.py` re-renders all FOUR generated blocks and compares them
+  against the committed documents -- so a figure edited in by hand fails the suite instead of
+  reaching a grader. Verified at HEAD: 5008 / 1014 / 2093 / 930 characters, all four present
+  verbatim; `artifacts/token_cost/token_cost.json` rebuilds BYTE-IDENTICAL (sha256 693efe19...);
+  the sweep's baseline cell reproduces exactly on a fresh 200-game run (116/200, 65/200,
+  200/200).
+  THE SWEEP CANNOT TOUCH A FIXED PARAMETER, AND THAT IS A PARSE RATHER THAN A PROMISE.
+  `scripts/sensitivity_status.py` reads `docs/PARAMETERS.md`'s Status column (32 rows, 14 fixed);
+  `refuse_fixed` fails on a fixed row, an unknown row, or a status the extract contradicts, and
+  `refuse_downward` fails a `minimum` swept below the shipped value. The fixed list the document
+  PRINTS comes from that same parse. 13 configurations x 3 matchups x 200 games, 755.6s, fully
+  offline through `training/arena.run_match`.
+  SEPARABLE FINDINGS (non-overlapping 95% Wilson, `arena.compare`'s conservative rule): board 11
+  **+35.0pp** thief survival, horizon 70/70 **-29.0pp**, swap-as-capture **-25.0pp**, the prior
+  instead of the fitted vector **-18.0pp**. Search depth (50 vs 200 vs 800 iterations) and extra
+  barriers (21, 28) move NOTHING separably. The cop matchup is 200/200 at baseline and is flagged
+  **SATURATED** in the document, the notebook and the renderer -- the effect ranking refuses to
+  rank a knob on it at all.
+  TOKEN COST, FROM THE ONE LIVE GAME AND LABELLED n=1 EVERYWHERE: input is **96.4%** of spend;
+  the system prompts are **91-96%** of each call's input CHARACTERS and are re-sent every call;
+  `_estimate_tokens` **over-reserves 1.35x** and the cause is located (the `max_tokens=300`
+  ceiling is 42.5% of the reservation while real output averaged 19.1 tokens/call); and a
+  **10-game series -- the FIXED maximum, Table 18 row 5 -- projects to 301,800 tokens against a
+  200,000 budget and DOES NOT FIT**, so the ladder reaches TEMPLATE_ONLY at ~6.0 games and the
+  language layer goes dark for the last four of a maximal series. Nobody had written that down.
+  The mocked run transfers on CALLS (1.643 vs 1.662) and is **9.83x** away on TOKENS; pooling
+  them would have corrupted every projection.
+  THE PROMPT LOG CARRIES A MEASURED REVISION, not an anecdote: `bluff_prompt.py` said "phrasing a
+  claim FOR a player" and produced "The player is currently positioned near the eastern edge of
+  the grid." on 2026-08-13; `50ac2fe` put the model in the seat; the tracked wire logs show
+  **1 third-person sentence in the 10 hints before and 0 in the 69 after**. The 10-hint
+  before-sample is stated as a limit IN the entry, and the third-person rule is labelled a narrow
+  mechanical proxy where it prints.
+  THREE VACUITIES FOUND IN 08-09'S OWN TESTS, all by probing rather than reading, all fixed:
+  (1) `test_every_cited_commit_hash_resolves` was parametrized over three documents and only ONE
+  cites a commit, so two of three parametrizations iterated an EMPTY SET and passed having
+  checked nothing; (2) `test_no_document_claims_a_league_result`'s disjunct had a TRIVIAL branch
+  that `PROMPT_LOG.md` takes, so deleting the disclaimer from all three documents AND every
+  mention of the league with it would have passed; (3) the token-cost empty-evidence fixture
+  zeroed BOTH totals, so removing the guard failed on `ZeroDivisionError` rather than the
+  assertion -- it would have kept passing if anyone had guarded the division instead of the
+  evidence. All three probed RED after the fix and reverted.
+  SIX MUTATIONS PROVEN TO LAND BEFORE BEING TRUSTED (the odd-quote lesson from 08-07): the FIXED
+  refusal -> `pass` (2 failed/12 passed), the empty-spend guard deleted (1 failed, DID NOT RAISE),
+  a notebook input repointed at `logs/` (2 failed/3 passed plus the notebook's own in-cell
+  assertion), `50ac2fe` -> `dead1ee` (1 failed), both league disclaimers removed (1 failed), and
+  a `96.4%` -> `99.9%` tamper asserted in-test. Every one reverted and the suite re-run green.
+  WHAT THESE DOCUMENTS DELIBERATELY DO NOT CLAIM: **NO league game has been played** and all three
+  say so in their own limits sections; mail is `dry_run` and NOTHING HAS EVER BEEN DELIVERED;
+  phase 4 is `human_needed`; phases 7 AND 8 are NOT verified; the games-played VALUE is
+  deliberately unset and nothing here sets or infers one; every token figure is n=1 and every
+  per-game projection is labelled an EXTRAPOLATION from a game that ended at turn 14 of 35;
+  `TOKEN-COST.md`'s S2 is recorded as BLOCKED on a named missing measurement rather than given an
+  invented number; and the Phase-4 belief on/off comparison (3 seeds per arm) is deliberately NOT
+  plotted, with the reason written into the notebook.
+  GATES: **2455 passed / 0 failed** (baseline 2413; +46 new, -4 from de-parametrising two tests
+  during the self-audit), coverage **97.44% UNCHANGED** (the new code is in `scripts/`, outside
+  the coverage source list, and is measured by tests loaded BY PATH), ruff **0** tree-wide (it
+  lints the notebook too -- one SIM300 was found there and the notebook re-executed after the
+  fix), line-limit **0** with all nine new `scripts/*.py` ALSO checked explicitly by path,
+  local-truth OK (7), no-LLM OK, `check_submission` exit 1 at 69/4/13, `--empty-probe` exit 2,
+  `jupyter nbconvert --execute` exit 0 in 4.6s with 3 embedded figures.
+  RULE-38 COUNTERS: suite **1927->1927 / 1920->1920 (0/0)**. **NO REAL GAME WAS PLAYED BY 08-09**
+  -- it delivers documents, nothing in it needs a game, and advancing the shipped counter to
+  demonstrate a delta would be a state change with no deliverable behind it. The +1/+1 contract
+  is INHERITED from 08-07/08-08's measurement (1926->1927 / 1919->1920, `game_id`
+  `2582a94c8a5ec618`) and was NOT re-measured here; it is recorded as inherited, never claimed as
+  measured. `git diff config/` EMPTY -- the counters are gitignored at `.gitignore:90`.
+  SELF-CHECK PASSED: 25 of 25 `key-files` paths exist, 7 of 7 commit hashes resolve via
+  `git cat-file -e`, 37 of 37 repository paths cited across the three new documents resolve, and
+  all 5 published commands run to exit 0.
+  NOTHING WAS PUSHED BY THIS AGENT, NO TAG WAS CREATED, NO REMOTE COMMAND OF ANY KIND WAS
+  ISSUED.
 ---
+
+Last session: 2026-08-17T23:59:00+03:00
+Stopped at: Completed 08-09 in full -- the four Sec17 research artifacts the repository had
+  none of. Seven atomic commits (`32440b4`, `486a01a`, `a8931b7`, `bcce41b`, `32535b7`,
+  `112bd6f`, `aac4cf8`). `docs/SENSITIVITY.md`, `docs/TOKEN-COST.md`, `docs/PROMPT_LOG.md` and
+  `notebooks/analysis.ipynb` -- the repository's FIRST tracked notebook, executing offline with
+  three committed figures. `check_submission.py` 65/8/13 -> **69 PASS / 4 GAP / 13 UNJUDGED**,
+  exactly the four rows this plan owns, no other row moving in either direction.
+  EVERY PUBLISHED NUMBER IS RENDERED FROM A COMMITTED ARTIFACT and re-rendered by
+  `tests/unit/test_research_docs.py` for comparison, so a hand-edited figure fails the suite.
+  The sweep varies ONLY parameters `docs/PARAMETERS.md` marks `minimum` (upward) or
+  `negotiable`, plus three labelled engineering defaults -- and that is a PARSE of the Status
+  column, not a promise. Separable at 95% Wilson: board 11 +35.0pp, horizon 70 -29.0pp,
+  swap-as-capture -25.0pp, the fitted vector +18.0pp; search depth and extra barriers move
+  nothing separably, and the saturated cop matchup is flagged rather than read as evidence.
+  TWO HONEST FINDINGS KEPT RATHER THAN SMOOTHED: the sweep contradicts ENGINEERING-LOG Act
+  4.3's 89%/1% pair (measured 32.0%/7.5%, eight arms re-measured, CAUSE NOT ESTABLISHED, the
+  shipped decision's direction unchanged), and three vacuities were found in this plan's OWN
+  tests by probing -- two parametrizations that iterated an empty set, a disjunct whose trivial
+  branch was the one being taken, and a fixture that failed on ZeroDivisionError rather than its
+  assertion. All fixed, all probed RED, all reverted.
+  Counters: suite 1927->1927 / 1920->1920 (0/0). NO real game was played -- 08-09 delivers
+  documents, and the +1/+1 contract is recorded as INHERITED from 08-07/08-08, never claimed as
+  measured here. Suite 2455 passed, coverage 97.44% unchanged, ruff 0, line-limit 0. Nothing
+  pushed, no tag, no remote command of any kind. **Wave 2 is complete; next is 08-10.**
+
 
 Last session: 2026-08-17T19:45:00+03:00
 Stopped at: Completed 08-07 and 08-08 in full. Four atomic commits (`acc5913`, `072d61d`,
