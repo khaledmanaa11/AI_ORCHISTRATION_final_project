@@ -3,66 +3,122 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-09 is fully committed and closed, tree clean. NEXT AND LAST IN PHASE 7
-  IS 07-10, the phase's single `autonomous: false` plan, and its procedure is already written:
-  `docs/phases/phase-7/OAUTH-RUNBOOK.md`. WHAT 07-09 LEAVES FOR IT, AND IT IS FIVE THINGS --
-  (1) criterion 1's LIVE half is PENDING and must not be flipped on the strength of a dry run;
-  the four items that flip it are enumerated in `GATE-7-MEASUREMENT.md` and in the evidence
-  field `live_send.evidence_07_10_must_attach` (message id, an arrival screenshot showing the
-  ATTACHMENT, the config diff proving live->dry_run was reversed, and OQ-5 in writing BEFORE the
-  send); (2) OQ-5, the games-played VALUE, is still human-only and the files now read 1922 /
-  1915, both known-wrong -- `GAMES-PLAYED-RECONSTRUCTION.md` Sec8's five boxes are the decision;
-  (3) D7-17 is ROUTED, not decided -- `PARAMETERS.md:86` (rule 52, one scoring game per opponent)
-  pulls against `:72`/`:168` (aggregate across sub-games), `game_id` is peer-negotiated (D-61) so
-  redefining it is a PROTOCOL decision, and three costed options plus asking the lecturer are in
-  the gate document; (4) D7-19's judgement half is 07-10's -- the two provably-safe patterns
-  (`*.eml`, `*.prev.json`) are ignored and a real `dev_launch` now leaves 4 untracked files
-  instead of 8, but WHICH of those four are league evidence is not automatable; (5) both OQ-6
-  intervals must be RECORDED beside the screenshots -- `--refresh-ms` and `--step-ms` are still
-  required with no default anywhere in `src/`, and this plan stated its own (500 ms, 400 ms) in
-  `scripts/` rather than in the repository. D7-18 is CLOSED and so is the rule-25 CI gap.
-  NOTHING IN THIS REPO TRANSMITS -- both shipped `reporting.json` files still read `dry_run`,
-  `git diff config/` is empty, and `measure_gate7.py` clears BOTH Gmail credential environment
-  variables at import so it cannot have sent anything.
-stopped_at: PHASE 7 PLAN 09 EXECUTED (2026-08-17) -- GATE-7 MEASURED, AND CRITERION 1 SPLIT
-  HONESTLY RATHER THAN CLOSED. Criteria 2 and 3 PASS; criterion 1 is `dry_run` PASS + live
-  PENDING as TWO NAMED FIELDS, and the criterion-level `verdict` is the STRING joining them, so a
-  grep for a bare PASS verdict over the evidence returns criteria 2 and 3 and CANNOT return
-  criterion 1. THE POINT OF A GATE SCRIPT IS THAT IT CAN FAIL, so five mutation probes broke the
-  real subject in `src/` and were reverted with `git diff` clean: the attachment retyped
-  `octet-stream` -> c1 FAIL; the rule-30 guard weakened to accept a superset -> c1 FAIL; a
-  forbidden import planted in `gui/widgets.py` -> c2 FAIL at 2 violations; the non-zero-committed
-  guard dropped -> THE EMPTY ARTIFACT READS `Verified OK` and c3 FAILs; the per-turn re-hash
-  removed -> THE TAMPERED ARTIFACT READS `Verified OK` at 5/5 and c3 FAILs. An emptied evidence
-  set exits 2 (`EMPTY_EVIDENCE`), never 0. THE GATE FOUND A DEFECT IN ITS OWN WORK, on the one
-  rule-38 surface in this phase: `counter_snapshot` keyed on `path.name`, so both roles collapsed
-  onto the single key `games_played.json` and the evidence reported `unchanged: true` while
-  watching ONE counter and naming two -- keyed on `<role>/<filename>` now, and `exit_code`
-  refuses a snapshot under two entries (probe 6). CRITERION 2 records BOTH counts because a
-  zero/zero scan is a FAIL: 7 modules, 0 violations, the empty-scan control at exit 2 in both its
-  forms, both seats' published snapshots free of `cop`/`thief`/`barriers`, and both live-app
-  `--once` launches exit 0 AS SUBPROCESSES -- no `gui` import at module scope anywhere, because
-  `tkinter.Tk()` raises with no display and one criterion's environment must not fail the whole
-  gate. What is machine-verified and what is a HUMAN AESTHETIC CALL are stated apart, and what
-  the gate cannot see -- a coordinate DRAWN rather than NAMED -- names `test_gui_recovery.py` and
-  `test_local_truth_recovery.py` instead of pretending. CRITERION 3 shows THREE verdicts on one
-  real game (`gate7measure`, `capture` both seats) with both sources deleted first: `Verified OK`
-  5/5, a RESEALED single-field tamper `FAILED -- turn 4: re-hash does not match h_commit` at 4/5
-  naming turn 4 and explicitly NOT turn 0, and a zero-turn artifact reading `Nothing to verify`.
-  THREE ROUTED FINDINGS CLOSED OR COSTED, none left silent: D7-18 CLOSED -- all six
-  `durable_write_json` bindings guarded, the binder list RE-DERIVED BY AST so a seventh writer
-  fails a test, and probe 9 restoring the pre-07-09 guard let five of six writes LAND in
-  `config/police/` (`guard_probe.json` + `.prev` appeared in the SHIPPED tree, removed);
-  D7-19 HALF-closed where it is provably safe (`*.eml` and `*.prev.json` are never one of rule
-  50's four artifacts) and MEASURED -- a real `dev_launch` leaves 8 files and 4 untracked, exactly
-  halved -- with both halves asserted and both probed; `check_no_llm_in_strategy.sh` WIRED INTO
-  CI after being absent since 03-10, with the documents' disagreement recorded rather than
-  overstated (`RULES.md:61` marks rule 25 RECOMMENDED with NO mandated sanction; CLAUDE.md is
-  stricter; the job enforces the stricter reading per SEGAL:182) and probe 10 proving it exits 1;
-  D7-17 ROUTED with the book examined and three options costed. `PRD_gatekeeper.md` sources every
-  number to a file and line -- TWO of its own citations were WRONG and are corrected, not left --
-  and NAMES the two with no book source: OQ-1 (no daily ceiling exists anywhere, so none is
-  written) and OQ-2 (a structural latch, so the DOS detector carries no number at all).
+Resume file: None -- 08-01 and 08-02 are fully committed and closed, tree clean. NEXT IS THE
+  REST OF PHASE 8'S WAVE 1: 08-03 (publication hygiene, `LICENSE`, `CONTRIBUTING.md`, packaging
+  metadata), 08-04 (league ledger + `league.json` + the declaration artifact's FIRST production
+  caller) and 08-05 (deferred #13/#19). WHAT 08-01 AND 08-02 LEAVE FOR THEM, AND IT IS WRITTEN
+  DOWN RATHER THAN REMEMBERED: `docs/SUBMISSION-CHECKLIST.md` is the gap register and it names
+  the owning plan for every one of its 32 GAPs. 08-03 inherits SEVEN of them -- `LICENSE`
+  (blocked on OQ8-5, a human names the licence), `CONTRIBUTING.md`, `pyproject.toml`
+  `license`/`authors`, `__all__` missing from 7 of 11 packages, `__version__` in ZERO
+  `__init__.py`, no automated test-report artifact, and TWO the outline never predicted:
+  root-level `graph.json` and `graph.html` are NOT gitignored (`git check-ignore -q` exits 1 for
+  both, while `.gitignore:151-152` covers only the `.planning/graphs/` copies and CLAUDE.md
+  asserts they are ignored), and 4 of 26 tracked config JSONs carry no `version` field
+  (`config/{police,thief}/{resolution,role}.json`). 08-04 inherits the one finding a
+  path-and-pattern gate cannot express as a row: `build_declaration_artifact` /
+  `write_declaration_artifact` / `DeclarationContext` have ZERO production callers, re-derived
+  at HEAD -- only their own module, a docstring mention at `artifact_config.py:151`, the
+  `__init__` re-export, and tests. 08-11 inherits T5-06: `version.py` reads `1.00` and
+  `pyproject.toml` reads `1.00.0`, and D-79 derives the tag name from the reconciled value.
+  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 125 commits sit ahead of
+  `origin/main`. The two new gates make only local git reads (`ls-files`, `log`, `tag -l`,
+  `check-ignore`).
+stopped_at: PHASE 8 PLANS 01 AND 02 EXECUTED (2026-08-17) -- THE SEC17 AUDIT BUILT AS A GATE
+  THAT CAN FAIL, AND EVERY TRACKER RECONCILED IN ONE PASS. Neither plan file existed; both were
+  executed from `08-PLAN-OUTLINE.md` Sec9, with every predicted finding RE-DERIVED against the
+  tree rather than inherited. 08-01: `scripts/check_submission.py` + 12 siblings, 86 rows,
+  41 PASS / 32 GAP / 13 UNJUDGED, exit 0 all-pass / 1 any GAP / 2 on an evidence set that judged
+  NOTHING. UNJUDGED IS NOT A PASS -- Table 5's own `Enforced by` column marks OOP, TDD and
+  hardcoded values `Code review`/`Work process`, so 13 rows carry it and are counted apart. The
+  mechanism inventory is WALKED from `git ls-files` (10 packages) and ANSWERED from
+  `docs/mechanism-prd-map.json`, never from a `docs/PRD_*.md` glob, and a SUPERSEDED PRD is
+  refused as coverage by name. The README is judged on Sec2.1's SEVEN items individually plus
+  two DERIVED rule-42 honesty rows -- 3 unqualified mentions of `Q-Learning`, the term extracted
+  from the superseded PRD's own H1, and Phase 3 still shown "in progress" against a `passed`
+  verification. THIRTEEN PROBES, each asserting the mutation LANDED before the verdict was read
+  and each reverted with the tree verified clean: `--empty-probe` exits 2; a FULL 86-row set with
+  `mechanism_count=0` also exits 2, so EMPTY_EVIDENCE OUTRANKS 32 real GAPs; one counter-control
+  per group flipped exactly its own row (docs/PLAN.md, a docstring-less module, the CI workflow,
+  `.env-example`, 3 of 4 curve artifacts, and a POSITIVE control that turned ISO-25010 green and
+  back); a planted empty package adds exactly one GAP row; a 161-line file trips G2-03 AND its
+  T5-08 citation; a stale allowlist entry and a provider key planted INSIDE an allowlisted file
+  both fail G4-02. THE GATE FOUND TWO DEFECTS IN ITS OWN WORK: probe 11 exposed POSITIONAL row
+  ids, so inserting one package renumbered every row after it -- rows are now identified by the
+  path they judge; and a test mutation exposed a VACUOUS TEST OF MINE, a mermaid check asserting
+  only `.match`, which anchors regardless of the pattern and passed under a deliberately weakened
+  regex -- it now asserts `.search` too and adds an end-to-end row over the real trap file which
+  first asserts the trap still exists. 08-02: `.planning/REQUIREMENTS.md` header 74 -> 77
+  (counted, not asserted -- the per-family breakdown always summed to 77), 6 -> 48 ticks, and
+  EVERY tick cites a path plus a VERBATIM QUOTE that `scripts/check_requirements_ledger.py` reads
+  back; all ten traceability rows carry an evidenced verdict and ONE surviving `Pending` that
+  says why; STRAT-01/02/06 reworded from the WITHDRAWN tabular Q-learning to the matrix mover,
+  honouring `03-VERIFICATION.md`'s "OPEN, flagged not fixed" hand-off; `docs/TODO.md`,
+  `.planning/ROADMAP.md` Progress and `docs/phases/phase-1/TODO.md` moved in the SAME commit,
+  because fixing one misdescribes the repo in the other direction. PHASES 4, 7 AND 8 ARE SHOWN
+  INCOMPLETE BECAUSE THAT IS WHAT THEIR ARTIFACTS SAY: LANG-01/LANG-06 held open (no live GATE-4;
+  responder side unmeasured since 05-06), ALL NINE REPORT-* held open (gate-measured is NOT
+  phase-verified -- no `07-VERIFICATION.md` exists at all), all twelve SUB-* open, and four QUAL
+  rows open because Table 5 itself marks them unjudgeable. THE FLIP PROBE FOUND A HOLE IN THE
+  LEDGER GATE AND IT WAS CLOSED, NOT REPORTED: flipping SUB-05 first produced EXIT 0, because an
+  open row legitimately cites the artifact explaining why it is open and a path-and-quote check
+  cannot tell that from proof of completion -- one character produced a green ledger claiming a
+  Git tag existed while `git tag -l` is empty. Closed by two independent rules: an evidence
+  marker that now means SATISFIED and appears only on ticked rows while open rows carry a status
+  marker, and a per-family declared tick count on every traceability row which the gate counts
+  and compares, catching a flip in EITHER direction (probe 4 un-ticks SEC-04 and trips three
+  rules). The header-total rule also caught an ARITHMETIC ERROR IN MY OWN SUMMARY PROSE -- 47 vs
+  the real 48 ticks -- corrected before commit. Gates: 2188 passed / 0 failed against the 2153
+  baseline (+35 tests); coverage 97.37% (baseline 97.37%, UNCHANGED -- `scripts/` is on neither
+  the coverage source list nor `check_line_limit.sh`'s glob, which is exactly why 35 tests load
+  those modules BY PATH); ruff 0 violations; `check_line_limit.sh` exit 0 with all twenty new
+  `.py` files ALSO checked explicitly by path, and TWO files SPLIT rather than compressed --
+  `submission_readme.py` at 168 and `requirements_ledger.py` at 149 of 150, split at 149 because
+  a file one line from the gate is a trap for the next editor; `check_local_truth.py` OK 7
+  modules; `check_no_llm_in_strategy` OK; `check_requirements_ledger.py` exit 0 with 48 citations
+  resolved to real quotes; `check_submission.py` exit 1 with 32 GAPs, unchanged by the
+  reconciliation -- which closed no Sec17 gap and claimed none. Rule-38 counters, both plans: the
+  full suite moved police 1922->1922 and thief 1915->1915, DELTA 0/0; `git diff config/` EMPTY.
+  Every new file confirmed NOT gitignored (D7-10's guard), and every touched file confirmed at
+  CR=0. One correction worth carrying forward: `git checkout -- <file>` on a probe restores from
+  the INDEX, so a mutation that was `git add`ed survives the revert -- the post-revert grep
+  caught a planted provider-key shape still sitting in `tests/unit/test_step0_sign.py`, fixed
+  with `git checkout HEAD -- <file>`. A post-revert ASSERTION is the only reason that was noticed.
+---
+
+Last session: 2026-08-17T18:40:00+03:00
+Stopped at: Completed 08-01 and 08-02 in full. NEITHER PLAN FILE EXISTED -- the phase directory
+  holds only `08-CONTEXT.md` and `08-PLAN-OUTLINE.md`, so both were executed from the outline's
+  Sec9 entries, and every finding the outline predicted was RE-DERIVED against the tree rather
+  than inherited. Two commits, each atomic: 08-01 the Sec17 + Table-5 audit gate (`4b63ee7`,
+  21 files) and 08-02 the project-wide tracker reconciliation (`aeb7272`, 10 files, ONE commit
+  by design). 08-01 delivers `scripts/check_submission.py` + 12 siblings and
+  `docs/SUBMISSION-CHECKLIST.md`: 86 rows re-derived from the tree on every run, 41 PASS /
+  32 GAP / 13 UNJUDGED, exit 0/1/2 with 2 meaning the evidence set judged NOTHING and OUTRANKING
+  a run that found 32 real gaps. Thirteen probes, one counter-control per group, each asserting
+  the mutation LANDED first; probe 11 and a test mutation each found a defect in this plan's own
+  work (positional row ids, and a mermaid test that `.match`'s own anchoring made vacuous), both
+  fixed rather than reported. 08-02 rebuilt `.planning/REQUIREMENTS.md` from the verification
+  artifacts -- header 74 -> 77 counted, 6 -> 48 ticks each citing a verbatim quote the new
+  `check_requirements_ledger.py` reads back -- and moved `docs/TODO.md`, the ROADMAP Progress
+  table, `docs/phases/phase-1/TODO.md` and `docs/phases/phase-8/TODO.md` in the same commit.
+  Phases 4, 7 and 8 are shown INCOMPLETE because that is what their artifacts say. The flip probe
+  found a hole in the ledger gate -- an open row's own citation made a `[ ]` -> `[x]` flip pass --
+  closed by an evidence/status marker split plus a per-family declared-tick-count cross-check
+  that catches a flip in either direction. Gates: 2188 passed / 0 failed (baseline 2153),
+  coverage 97.37% unchanged, ruff 0, line limit exit 0 including all twenty new `.py` files by
+  path, local-truth 7 modules, no-LLM OK, ledger gate exit 0, audit gate exit 1 with its 32
+  registered gaps. Rule-38 counters: police 1922 -> 1922, thief 1915 -> 1915, delta 0/0;
+  `git diff config/` empty. Both summaries written with every number taken from a command run in
+  this session; self-check PASSED for both (32 paths verified present AND tracked AND not
+  gitignored, both commits verified reachable, and three numbers in `SUBMISSION-CHECKLIST.md`
+  CORRECTED rather than left -- they were probe-state values, not HEAD values).
+  NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED: `git tag -l` is empty and 125 commits sit
+  ahead of `origin/main`.
+Resume file: None -- the tree is clean and both plans are closed. Next is `/gsd:execute-phase 8`
+  continuing into the rest of wave 1: 08-03 (publication hygiene -- it inherits seven registered
+  GAPs including two the outline never predicted, and `LICENSE` is blocked on OQ8-5), 08-04
+  (the league ledger and the declaration artifact's first production caller) and 08-05.
 ---
 
 Last session: 2026-08-17T13:35:00+03:00
