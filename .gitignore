@@ -146,8 +146,18 @@ software_submission_guidelines-V3.pdf
 # every refresh and produce diffs no human can read. Only GRAPH_REPORT.md
 # (~68 KB markdown) is committed, so a fresh clone — and the grader — still gets
 # the navigable map. See CLAUDE.md "Knowledge graph (graphify)".
+#
+# THE ROOT-LEVEL PAIR WAS NOT COVERED UNTIL 08-03. `graphify update .` writes
+# `graphify-out/` AND drops `graph.json` / `graph.html` at the repository root;
+# only the `graphify-out/` and `.planning/graphs/` copies were ignored, so
+# `git check-ignore -q graph.json` exited 1 while CLAUDE.md stated in as many
+# words that both are gitignored build artifacts. The rules below are anchored
+# with a leading slash so they cover exactly those two root artifacts and cannot
+# hide a `graph.json` that some future subdirectory legitimately tracks.
 # ---------------------------------------------------------------------------
 graphify-out/
+/graph.json
+/graph.html
 .planning/graphs/graph.json
 .planning/graphs/graph.html
 
