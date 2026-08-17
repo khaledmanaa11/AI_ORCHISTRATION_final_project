@@ -17,6 +17,7 @@ exit codes, for the same reason.
 
 from __future__ import annotations
 
+import stat
 import subprocess
 
 import pytest
@@ -65,6 +66,18 @@ def test_an_existing_destination_is_replaced_only_on_request(tmp_path) -> None:
         build_mod.prepare_destination(dest, REPO_ROOT, replace=False)
     build_mod.prepare_destination(dest, REPO_ROOT, replace=True)
     assert not (dest / "stale.txt").exists()
+
+
+def test_replace_removes_a_tree_holding_read_only_files(tmp_path) -> None:
+    """Git writes its objects read-only; the first real rebuild died on WinError 5."""
+    dest = tmp_path / "pursuit-police"
+    (dest / "objects").mkdir(parents=True)
+    victim = dest / "objects" / "blob"
+    victim.write_text("x", encoding="utf-8")
+    victim.chmod(stat.S_IREAD)
+    build_mod.prepare_destination(dest, REPO_ROOT, replace=True)
+    assert dest.is_dir()
+    assert not any(dest.iterdir())
 
 
 def test_copy_files_copies_every_listed_path_and_counts_them(tmp_path) -> None:

@@ -14,6 +14,7 @@ leave nothing behind.
 
 from __future__ import annotations
 
+import json
 import subprocess
 
 from tests.unit.submission_gate_helpers import REPO_ROOT, load
@@ -40,7 +41,8 @@ def _mini_source(tmp_path):
 
 def test_build_one_produces_a_committed_repository_with_the_banner(tmp_path) -> None:
     source = _mini_source(tmp_path)
-    built = driver.build_one(source, tmp_path / "out-police", "police", replace=False)
+    plan = driver.plan_build(source)
+    built = driver.build_one(source, tmp_path / "out-police", "police", False, plan)
     dest = tmp_path / "out-police"
     assert built["copied"] == 4, built
     assert built["staged"] == 5, "the provenance document must be staged too"
@@ -56,7 +58,7 @@ def test_build_one_produces_a_committed_repository_with_the_banner(tmp_path) -> 
 
 def test_the_built_repository_has_one_commit_and_no_remote(tmp_path) -> None:
     source = _mini_source(tmp_path)
-    driver.build_one(source, tmp_path / "out-thief", "thief", replace=False)
+    driver.build_one(source, tmp_path / "out-thief", "thief", False, driver.plan_build(source))
     dest = tmp_path / "out-thief"
     count = subprocess.run(["git", "rev-list", "--count", "HEAD"], cwd=dest,
                            capture_output=True, text=True, check=True).stdout.strip()
@@ -68,12 +70,27 @@ def test_the_built_repository_has_one_commit_and_no_remote(tmp_path) -> None:
 
 def test_verify_one_returns_a_row_per_property_and_never_an_empty_list(tmp_path) -> None:
     source = _mini_source(tmp_path)
-    driver.build_one(source, tmp_path / "out", "police", replace=False)
+    driver.build_one(source, tmp_path / "out", "police", False, driver.plan_build(source))
     rows = driver.verify_one(tmp_path / "out", source, "police", with_gates=False)
     assert len(rows) == 9
     names = [row.name for row in rows]
     assert len(set(names)) == len(names)
     assert not driver.overall(())
+
+
+def test_both_outputs_are_built_from_one_manifest_and_one_timestamp(tmp_path) -> None:
+    """Re-deriving per role would let a mid-build edit land in one repo only."""
+    source = _mini_source(tmp_path)
+    out = tmp_path / "both"
+    code = driver.main(["--dest", str(out), "--source", str(source),
+                        "--json", str(tmp_path / "evidence.json")])
+    evidence = json.loads((tmp_path / "evidence.json").read_text(encoding="utf-8"))
+    assert code == 1, "a miniature source cannot satisfy rule 50 -- an honest FAIL"
+    assert [entry["role"] for entry in evidence] == ["police", "thief"]
+    assert len({entry["source_commit"] for entry in evidence}) == 1
+    assert len({entry["generated"] for entry in evidence}) == 1
+    assert len({entry["staged"] for entry in evidence}) == 1
+    assert len({entry["commit"] for entry in evidence}) == 2
 
 
 def test_a_destination_inside_this_repository_exits_2_and_builds_nothing(capsys) -> None:

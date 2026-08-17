@@ -21,8 +21,10 @@ and a stray file in the destination cannot join the commit by accident.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -38,6 +40,20 @@ class UnsafeDestinationError(RuntimeError):
 
 class RemoteFoundError(RuntimeError):
     """A built repository has a remote. It must have none until a human adds one."""
+
+
+def _force_writable(func, path, _exc_info) -> None:
+    """Retry a failed removal after clearing the read-only bit.
+
+    MEASURED, NOT DEFENSIVE. Git writes every loose object read-only, and on
+    Windows `os.unlink` then raises `PermissionError: [WinError 5]` -- the first
+    real `--replace` rebuild died part-way through deleting `.git/objects/` and
+    left a destination that was neither the old tree nor the new one. A
+    half-deleted repository is the worst possible state for something a human is
+    about to publish.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 
 def _run(root: Path, *args: str) -> str:
@@ -75,7 +91,7 @@ def prepare_destination(dest: Path, source_root: Path, replace: bool = False) ->
                 f"{dest} already exists and is not empty. Pass replace=True to rebuild it, "
                 "so that a stale tree can never be mistaken for a fresh build."
             )
-        shutil.rmtree(dest)
+        shutil.rmtree(dest, onerror=_force_writable)
     dest.mkdir(parents=True, exist_ok=True)
     return dest
 

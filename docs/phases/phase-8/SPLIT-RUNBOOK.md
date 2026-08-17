@@ -21,6 +21,12 @@ uv run python scripts/build_split_repos.py --dest C:/Users/Hp/pursuit-split-repo
 | `--replace` | rebuild over an existing output tree; without it, a non-empty destination is refused |
 | `--gates` | also run `uv sync`, `ruff check .` and `pytest --cov` **inside each output** |
 | `--json PATH` | write the full evidence, row by row |
+| `--source DIR` | the repository to split (default: the one the script lives in) |
+
+Both outputs are built from **one** manifest, **one** source commit and **one** timestamp,
+derived before the first repository is created. Re-deriving per role would read the working
+tree twice — minutes apart, with a full `pytest --cov` in between — and anything that changed
+in the gap would land in the second repository and not the first.
 
 **Exit contract** (`check_submission.py`'s, D-82): `0` every row of every output passed · `1`
 any row failed · `2` nothing was built or nothing was checked. Two is not a pass; a build that

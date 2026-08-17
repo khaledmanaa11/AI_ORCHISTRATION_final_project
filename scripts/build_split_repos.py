@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,15 +65,35 @@ PROVENANCE = "docs/REPO-SPLIT.md"
 NAME_TEMPLATE = "pursuit-{role}"
 
 
-def _stamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+@dataclass(frozen=True)
+class BuildPlan:
+    """One file list, one source commit, one timestamp -- shared by BOTH outputs.
+
+    DERIVED ONCE, ON PURPOSE. Re-deriving the manifest per role reads the working
+    tree twice, minutes apart with a full `pytest --cov` in between; anything that
+    changed in the gap would land in the second repository and not the first, and
+    two submission repositories that disagree about their own contents is a defect
+    no reader could diagnose from either one.
+    """
+
+    manifest: object
+    source_commit: str
+    stamp: str
 
 
-def build_one(source_root: Path, dest_root: Path, role: str, replace: bool) -> dict:
+def plan_build(source_root: Path) -> BuildPlan:
+    """The single manifest, commit and timestamp every output is built from."""
+    return BuildPlan(
+        manifest_for(source_root),
+        git_out(source_root, "rev-parse", "--short", "HEAD").strip(),
+        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )
+
+
+def build_one(source_root: Path, dest_root: Path, role: str, replace: bool,
+              plan: BuildPlan) -> dict:
     """Materialise one role's repository and return what was built, in numbers."""
-    manifest = manifest_for(source_root)
-    stamp = _stamp()
-    source_commit = git_out(source_root, "rev-parse", "--short", "HEAD").strip()
+    manifest, source_commit, stamp = plan.manifest, plan.source_commit, plan.stamp
     dest = prepare_destination(dest_root, source_root, replace=replace)
     copied = copy_files(source_root, dest, manifest.included)
 
@@ -124,14 +145,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gates", action="store_true",
                         help="also run uv sync, ruff and pytest --cov inside each output")
     parser.add_argument("--json", type=Path, default=None, help="write the evidence here")
+    parser.add_argument("--source", type=Path, default=None,
+                        help="the repository to split (default: the one this script lives in)")
     args = parser.parse_args(argv)
 
-    source_root = Path(__file__).resolve().parent.parent
+    source_root = (args.source or Path(__file__).resolve().parent.parent).resolve()
+    plan = plan_build(source_root)
     evidence, failures, checked = [], 0, 0
     for role in args.roles:
         try:
             built = build_one(source_root, args.dest / NAME_TEMPLATE.format(role=role),
-                              role, args.replace)
+                              role, args.replace, plan)
         except UnsafeDestinationError as exc:
             print(f"REFUSED: {exc}")
             return 2
