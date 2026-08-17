@@ -16,7 +16,7 @@
           "urls_in_banner": []
         },
         "exists": true,
-        "head": "4897b48",
+        "head": "daa16a7",
         "remote_count": 0,
         "role": "police",
         "root": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-police",
@@ -40,10 +40,10 @@
           "name": "v1.00",
           "points_at_head": true,
           "pushed": false,
-          "target_commit": "4897b48205caf16fb4e223e29dbfc0b102706f85",
-          "tree_file_count": 1043
+          "target_commit": "daa16a76ac0a9c27c23b2f3d603367b9d7b6c8c3",
+          "tree_file_count": 1046
         },
-        "tracked_file_count": 1043
+        "tracked_file_count": 1046
       },
       "thief": {
         "clean_worktree": true,
@@ -56,7 +56,7 @@
           "urls_in_banner": []
         },
         "exists": true,
-        "head": "18d904c",
+        "head": "b0cb27b",
         "remote_count": 0,
         "role": "thief",
         "root": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-thief",
@@ -80,10 +80,10 @@
           "name": "v1.00",
           "points_at_head": true,
           "pushed": false,
-          "target_commit": "18d904cf4978b6ba43071cca837cfc859c2ea5f6",
-          "tree_file_count": 1043
+          "target_commit": "b0cb27b9dae7bf2baca70f5f41bdfd65bb680f7a",
+          "tree_file_count": 1046
         },
-        "tracked_file_count": 1043
+        "tracked_file_count": 1046
       }
     },
     "published": {
@@ -214,7 +214,7 @@
     "unchanged_by_this_measurement": true
   },
   "gate": "GATE-8 (submission gate, .planning/ROADMAP.md Phase 8)",
-  "generated_at": "2026-08-17T20:02:13.089885+00:00",
+  "generated_at": "2026-08-17T20:24:40.427680+00:00",
   "no_remote_command_was_issued": {
     "clean": true,
     "network_verb_hits_in_this_package": {}

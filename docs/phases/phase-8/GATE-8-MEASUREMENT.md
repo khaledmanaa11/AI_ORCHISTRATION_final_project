@@ -80,26 +80,52 @@ uv run python scripts/measure_gate8.py
 | `tag.tree_file_count` | **equal to `tracked_file_count`** — a tag on the wrong commit is what this row exists to catch |
 | `tag.pushed` | **false** |
 
-**Measured — 2026-08-17.** `built_and_tagged_verdict: PASS`, `published_verdict: PENDING`.
+**Measured — 2026-08-17, against the FINAL rebuild at source commit `99a8959`.**
+`built_and_tagged_verdict: PASS`, `published_verdict: PENDING`.
 
 | Field | `pursuit-police` | `pursuit-thief` |
 |---|---|---|
 | Root | `C:\Users\Hp\pursuit-split-repos\pursuit-police` | `...\pursuit-thief` |
-| HEAD | `4897b48` | `18d904c` |
+| HEAD | `daa16a7` | `b0cb27b` |
 | Commits · clean worktree | 1 · yes | 1 · yes |
-| Tracked files | **1043** | **1043** |
+| Tracked files | **1046** | **1046** |
 | **Remotes** | **0** | **0** |
 | rule 50 | README 1 · config 28 · PRD 16 · PLAN 103 · TODO 10 | identical |
 | Cross-link banner | present, 25 lines, names the other repository, **0 URLs** | identical |
-| **Tag** | **`v1.00`**, annotated, at `4897b48205caf16fb4e223e29dbfc0b102706f85` | **`v1.00`**, annotated, at `18d904cf4978b6ba43071cca837cfc859c2ea5f6` |
-| Tag tree file count | **1043** — equal to `git ls-files` | **1043** — equal |
+| **Tag** | **`v1.00`**, annotated, at `daa16a76ac0a9c27c23b2f3d603367b9d7b6c8c3` | **`v1.00`**, annotated, at `b0cb27b9dae7bf2baca70f5f41bdfd65bb680f7a` |
+| Tag tree file count | **1046** — equal to `git ls-files` | **1046** — equal |
 | **Pushed** | **no** | **no** |
 
-Gates **inside each output** (`split_build_evidence.json`): `uv sync` exit 0 · `ruff check .`
-exit 0 · line-limit **544 tracked `.py` files scanned, 0 violations** · forbidden paths **7
-names checked, 0 present, 0 tracked** · both seats' config present (14 files each) with **0
-counters carried** · history disjoint from this repository · `pytest --cov` **2574 passed,
-coverage 97.44%** against `fail_under = 85`.
+Gates **inside each output**, every row a **count** and not only an exit code
+(`split_build_evidence.json`, `verdict: pass`, **12/12 rows in each**): `uv sync` exit 0 ·
+`ruff check .` exit 0 · line-limit exit 0 with **545 tracked `.py` files scanned under
+`src/ tests/ training/`, 0 violations** — *a freshly `git init`ed tree exits 0 having scanned
+**zero** files, which is why this row fails on a scan of 0* · forbidden paths **7 names
+checked, 0 present on disk, 0 tracked** · both seats' config present (**police 14, thief 14**)
+with **0 counters carried** · history disjoint from this repository · rule-49 banner **31347 /
+31346 bytes read** · CI workflows **1 file, 3 `scripts/` paths referenced, 0 missing** ·
+`pytest --cov` exit 0, **2582 passed, 0 failed, coverage 97.44%** against `fail_under = 85`.
+
+Spot-checked inside the tag itself rather than beside it: `git show v1.00:pyproject.toml`
+reads `version = "1.00"`, `git show v1.00:src/pursuit/shared/resolution.py` and
+`v1.00:docs/phases/phase-3/PRD.md` both carry the corrected `32.0% → 7.5%` pair, and all five
+of this plan's documents are in `git ls-tree -r v1.00`. Each of the seven forbidden names was
+checked **exactly** against that tree — `.env`, `police_thief_p2p.pdf`, `requirements.txt` and
+the four `games_played*.json` — and all seven are **absent**. (A substring grep for them
+returns two hits, both of which are test *modules* named after the counter —
+`tests/unit/test_games_played_counter.py` and `test_games_played_at_game_end.py` — which is
+why the check is an exact match on the seven names and not a `grep`.)
+
+> **This table was re-measured once, and the superseded numbers are recorded rather than
+> quietly overwritten.** An earlier build measured the tag at police `4897b48` / thief
+> `18d904c` with **1043** tracked files, and that build reported **11/12** rows: `pytest --cov`
+> came back `2574 passed, 1 failed`, the single failure being **this plan's own deliberate RED
+> test**, `test_every_path_each_runbook_cites_resolves`, which was red precisely because the
+> document you are reading did not exist yet. Writing it closed the assertion; the rebuild
+> above then passed 12/12. `--replace` recreates both `.git` directories, so the tags were
+> re-cut on the new HEADs — **which is why `PUBLISH-RUNBOOK.md` step 2 tells the human to
+> re-cut the tag after any rebuild.** Both sets of figures are true of the builds they
+> describe.
 
 **The tag name is derived, not chosen (D-79).** `v` + `src/pursuit/shared/version.py`'s
 `VERSION`. Until this plan, `pyproject.toml` disagreed with that file (`1.00.0` against

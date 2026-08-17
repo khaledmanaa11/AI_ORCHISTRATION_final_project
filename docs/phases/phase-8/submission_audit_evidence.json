@@ -9,7 +9,7 @@
   "empty_evidence_reasons": [],
   "exit_code": 1,
   "gate": "Segal Sec17 final checklist + Sec19.1 Table 5",
-  "generated_at": "2026-08-17T19:48:43.452596+00:00",
+  "generated_at": "2026-08-17T20:26:25.290575+00:00",
   "mechanisms_discovered": 10,
   "readme_rows": 10,
   "rows": [
@@ -254,7 +254,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 543 (a zero count is a vacuous pass and fails this row)",
+      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 545 (a zero count is a vacuous pass and fails this row)",
       "fix_path": "scripts/check_line_limit.sh",
       "group": "2. Architecture & code",
       "id": "G2-03",
@@ -342,7 +342,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked files under tests/: 329",
+      "evidence": "tracked files under tests/: 331",
       "fix_path": "tests/",
       "group": "3. Testing & quality",
       "id": "G3-04",
@@ -382,7 +382,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 1008; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
+      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 1013; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-02",
@@ -703,6 +703,6 @@
     }
   ],
   "suite_was_run": false,
-  "tracked_files": 1040,
+  "tracked_files": 1045,
   "verdict": "GAPS_FOUND"
 }
