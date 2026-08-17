@@ -1,36 +1,33 @@
 """THE game-end hook: build `log_`, build `result_`, send it through the
 Figure-13 chain -- and change nothing about the game because it ran.
 
+THE FULL RATIONALE IS `docs/PRD_end_of_game.md` -- the per-mechanism PRD
+CLAUDE.md Sec2.3 requires, and where this module's reasoning moved when the
+docstring took the file past 150 (the `PRD_log_artifact.md` precedent). It
+carries the containment argument, the watchdog arithmetic, the rule-35 defect
+a real game exposed, and the rule-21 asymmetry. What follows is the contract.
+
 A SEPARATE MODULE RATHER THAN GROWTH IN `agent_entrypoint.py`, following the
 `agent_audit_wiring -> agent_audit_exchange -> agent_audit_verdict` precedent.
-That file is a thin caller by design and was at 103/150 before this plan.
 
-A REPORTING FAILURE MUST NOT FORGE A TECHNICAL LOSS. Measured:
-`agent_entrypoint.py:132-133` runs `record_completed_game(cfg, outcome)` and
-then `return outcome`, INSIDE the try whose `finally` tears the runtime down.
-An exception raised there propagates out of `_play`, through `run_with_tunnel`
-and `run_agent`, to `main.py:58`'s `asyncio.run` -- and since 06-05 a non-zero
-exit code MEANS an audit mismatch (`main.py:25-29`). So this hook is contained
-at its own boundary, exactly as `capture_declaration` swallows `ToolError`,
-and never touches `outcome`, the exit code, or `ctx.state`.
+A REPORTING FAILURE MUST NOT FORGE A TECHNICAL LOSS. The hook runs inside the
+try whose `finally` tears the runtime down, one line before `return outcome`;
+an exception there reaches `main.py:58`'s `asyncio.run` and exits non-zero,
+which since 06-05 MEANS an audit mismatch. So it is contained at its own
+boundary and never touches `outcome`, `ctx.state` or the exit code.
+`except Exception`, NEVER `BaseException`: `CancelledError` must still
+propagate, which is the reason `run_agent`'s own `try/finally` exists.
 
-`except Exception`, NEVER `BaseException`: `CancelledError` is a
-`BaseException` and swallowing it here would leak the server task and the
-bound port on Ctrl-C, which is the reason `run_agent`'s own `try/finally`
-exists.
+THE ARTIFACT DIRECTORY IS PER ROLE -- `<artifact_dir>/<role>/`, the split
+`agent_lifecycle` already uses for `logs/<role>/`. One real `dev_launch.py`
+game proved why: two processes sharing one repository shared one
+`artifact_dir`, and the second seat's rewrite ATE the first seat's report
+(PRD Sec4). `reporting.json` is not edited; its value is the artifact ROOT.
 
-THE WATCHDOG ARITHMETIC IS `end_of_game_chain.py` -- 210 s of mail ladder
-inside a 60 s freeze threshold, contained by a touch per bounded attempt.
-
-WIRE TRUTH ONLY. Everything reported is read from this side's own JSONL, its
-ledger and its Step-0 declaration. No belief, no scent, nothing derived from
-`ctx.state` -- 07-11 closed a rules 8-9 leak and a report field must not
-reopen it. The `audit_verdict` is lifted out of the `log_` artifact this hook
-has just written, so the two artifacts cannot disagree about the verdict.
-
-ORDER IS LOAD-BEARING: both artifacts are written BEFORE the chain is built,
-so a transport that refuses to construct still leaves rule 50's committable
-files on disk.
+WIRE TRUTH ONLY, and the `audit_verdict` is lifted out of the `log_` artifact
+this hook has just written, so the two artifacts cannot disagree about it.
+Both artifacts are written BEFORE the chain is built, so a transport that
+refuses to construct still leaves rule 50's committable files on disk.
 """
 
 from __future__ import annotations
@@ -101,6 +98,10 @@ async def report_game_end(
 ) -> EndOfGameReport | None:
     """Report this game. Returns; never raises; never changes the game.
 
+    `artifact_dir` names the artifact ROOT; this side's files land in
+    `<root>/<ctx.role>/` (see the module docstring for the real game that
+    proved why). It defaults to `reporting.json`'s `artifact_dir`.
+
     `None` for a game that produced no outcome -- the same definition of
     "completed" `record_completed_game` states beside this call site, and for
     the same reason: a handshake that never became a game is not a game to
@@ -133,7 +134,8 @@ async def _report(
 ) -> EndOfGameReport:
     """The uncontained sequence. Every failure here is caught by the caller."""
     params = load_reporting_config(Path(cfg.config_dir) / REPORTING_CONFIG_SOURCE)
-    directory = Path(artifact_dir) if artifact_dir is not None else Path(params.artifact_dir)
+    root = Path(artifact_dir) if artifact_dir is not None else Path(params.artifact_dir)
+    directory = root / ctx.role
     game_id = ctx.game_uid
     index = next_sub_game_index(directory, game_id)
 

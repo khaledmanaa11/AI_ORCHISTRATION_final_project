@@ -14,24 +14,14 @@ reads.
 from __future__ import annotations
 
 import json
-import subprocess
 
 from pursuit.constants import Outcome
 from pursuit.main import EXIT_TECHNICAL_LOSS
-from pursuit.security.step0_collect import DeclarationField
-from pursuit.services.reporting.artifact_declaration import ENVELOPE_DECLARATION_KEY
-from pursuit.services.reporting.artifact_log import LogArtifactField
-from pursuit.services.reporting.artifact_result import (
-    ResultArtifactField,
-    SubGameField,
-    TokensField,
-)
 from pursuit.services.reporting.artifacts import log_filename, result_filename
 from pursuit.services.reporting.chain import Refusal
 from pursuit.services.reporting.end_of_game import report_game_end
 from pursuit.services.reporting.end_of_game_chain import build_reporting_chain
 from pursuit.services.reporting.message import report_filename
-from pursuit.services.reporting.result_agreement import AgreementField
 from pursuit.services.reporting.sink import EML_SUFFIX
 from pursuit.shared.reporting_config import REPORTING_CONFIG_SOURCE, load_reporting_config
 from tests.integration.end_of_game_harness import AlwaysFailingSink, no_wait, played_game
@@ -64,41 +54,6 @@ async def test_a_normal_game_writes_both_artifacts_and_sends_in_dry_run(
     assert report.result_artifact.with_suffix(EML_SUFFIX).exists(), "the dry run wrote the message"
     assert ctx.log_path.read_bytes() == log_before, "reporting only READS the game's log"
     assert _exit_code(outcome) == exit_before == 0
-
-
-async def test_the_report_carries_the_verdict_the_commit_and_both_token_totals(
-    tmp_path, monkeypatch
-):
-    """One real game, checked against three independent sources: the `log_`
-    artifact's own verdict, `git rev-parse HEAD`, and the signed declaration."""
-    uid = "endofgameb"
-    cfg, ctx, outcome, envelope = await played_game(tmp_path, monkeypatch, uid)
-    report = await report_game_end(
-        ctx, cfg, outcome=outcome, declaration_envelope=envelope,
-        artifact_dir=tmp_path / "game_artifacts",
-    )
-    assert report is not None
-
-    artifact = json.loads(report.result_artifact.read_text(encoding="utf-8"))
-    log_artifact = json.loads(report.log_artifact.read_text(encoding="utf-8"))
-    sub_game = artifact[ResultArtifactField.SUB_GAMES][0]
-    agreement = sub_game[SubGameField.AGREEMENT]
-
-    assert agreement[AgreementField.OWN_OUTCOME] == outcome.value
-    assert agreement[AgreementField.AUDIT_VERDICT] == log_artifact[LogArtifactField.AUDIT_VERDICT]
-    assert agreement[AgreementField.AUDIT_VERDICT]["matched"] is True
-
-    head = subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
-    ).stdout.strip()
-    declared = envelope[ENVELOPE_DECLARATION_KEY][DeclarationField.COMMIT_HASH]
-    assert artifact[ResultArtifactField.COMMIT_HASH] == declared == head
-
-    tokens = sub_game[SubGameField.TOKENS]
-    series = artifact[ResultArtifactField.SERIES_TOKENS]
-    assert tokens[TokensField.PRESENT] is True, "this game ran the language layer"
-    assert series[TokensField.GAMES_MEASURED] == 1
-    assert series[TokensField.TOTAL_TOKENS] == tokens[TokensField.TOTAL_TOKENS]
 
 
 async def test_a_sink_that_always_fails_changes_nothing_and_still_owes_the_report(

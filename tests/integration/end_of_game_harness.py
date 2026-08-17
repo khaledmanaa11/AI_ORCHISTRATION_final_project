@@ -40,11 +40,13 @@ async def no_wait(_seconds: float) -> None:
     return None
 
 
-async def played_game(tmp_path, monkeypatch, uid):
-    """A finished, audited game on the shipped police config.
+async def played_seats(tmp_path, monkeypatch, uid):
+    """A finished, audited game, from BOTH seats.
 
-    Returns `(cfg, ctx, outcome, declaration_envelope)` -- the four things
-    `agent_entrypoint.run_agent` holds at the moment it calls the hook.
+    Returns `[(cfg, ctx, outcome, declaration_envelope), ...]` -- police
+    first -- i.e. what each of the two `agent_entrypoint.run_agent` processes
+    holds at the moment it calls the hook. Both seats are needed because they
+    share a repository, and therefore a configured artifact directory.
     """
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     cfg_a, cfg_b = load_agent_config("config/police"), load_agent_config("config/thief")
@@ -56,5 +58,13 @@ async def played_game(tmp_path, monkeypatch, uid):
         run_final_audit(ctx_a, board_outcome=outcome_a),
         run_final_audit(ctx_b, board_outcome=outcome_b),
     )
-    _digest, envelope = await declare_step0(cfg_a)
-    return cfg_a, ctx_a, outcome_a, envelope
+    envelopes = [(await declare_step0(cfg))[1] for cfg in (cfg_a, cfg_b)]
+    return [
+        (cfg_a, ctx_a, outcome_a, envelopes[0]),
+        (cfg_b, ctx_b, outcome_b, envelopes[1]),
+    ]
+
+
+async def played_game(tmp_path, monkeypatch, uid):
+    """The police seat of `played_seats` -- the four things one process holds."""
+    return (await played_seats(tmp_path, monkeypatch, uid))[0]
