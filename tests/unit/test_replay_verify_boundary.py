@@ -27,7 +27,6 @@ from pursuit.services.reporting.replay_verify import (
     load_artifact,
     open_replay,
     seal_matches,
-    verdict_for,
 )
 from tests.unit import replay_fixtures as fx
 
@@ -60,17 +59,17 @@ def _assert_contained(verdict) -> None:
 
 def test_an_intent_outside_truth_or_lie_is_a_named_failure_not_a_crash():
     """`ValueError` -- audit boundary-rule instance 5, verbatim."""
-    _assert_contained(verdict_for(_broken(fx.TurnField.INTENT, "maybe")))
+    _assert_contained(fx.verdict(_broken(fx.TurnField.INTENT, "maybe")))
 
 
 def test_a_state_that_is_not_an_object_is_a_named_failure_not_a_crash():
     """`TypeError` -- boundary-rule instance 3."""
-    _assert_contained(verdict_for(_broken(fx.TurnField.STATE, "not-a-dict")))
+    _assert_contained(fx.verdict(_broken(fx.TurnField.STATE, "not-a-dict")))
 
 
 def test_an_empty_nonce_is_a_named_failure_not_a_crash():
     """`ValueError` again, by the other half of instance 5."""
-    _assert_contained(verdict_for(_broken(fx.TurnField.NONCE, "")))
+    _assert_contained(fx.verdict(_broken(fx.TurnField.NONCE, "")))
 
 
 def test_a_payload_key_removed_altogether_is_a_named_failure_not_a_crash():
@@ -78,20 +77,20 @@ def test_a_payload_key_removed_altogether_is_a_named_failure_not_a_crash():
     file that drops one is malformed, not unverifiable-and-therefore-fine."""
     body = fx.artifact()
     del body[fx.LogArtifactField.TURNS][TAMPER_INDEX][fx.TurnField.MOVE]
-    _assert_contained(verdict_for(fx.reseal(body)))
+    _assert_contained(fx.verdict(fx.reseal(body)))
 
 
 def test_a_turn_record_that_is_not_an_object_cannot_read_as_ok():
     body = fx.artifact()
     body[fx.LogArtifactField.TURNS][TAMPER_INDEX] = "not-a-turn"
-    verdict = verdict_for(fx.reseal(body))
+    verdict = fx.verdict(fx.reseal(body))
     assert verdict.state is VerdictState.FAILED and verdict.banner != VERIFIED_OK
 
 
 def test_a_turns_value_that_is_not_a_list_is_nothing_to_verify_never_ok():
     body = fx.artifact()
     body[fx.LogArtifactField.TURNS] = {"turn": 0}
-    verdict = verdict_for(fx.reseal(body))
+    verdict = fx.verdict(fx.reseal(body))
     assert verdict.state is VerdictState.NOTHING_TO_VERIFY
     assert verdict.banner != VERIFIED_OK
 
@@ -109,7 +108,7 @@ def test_a_field_outside_the_committed_payloads_still_fails_the_verdict():
     turn still re-hashes, and the artifact is still FAILED."""
     body = fx.artifact()
     body[fx.LogArtifactField.OUTCOME] = {"outcome": "survival", fx.TurnField.TURN: 99}
-    verdict = verdict_for(body)
+    verdict = fx.verdict(body)
     assert verdict.verified == verdict.committed == fx.COMMITTED_TURNS
     assert verdict.state is VerdictState.FAILED and verdict.banner != VERIFIED_OK
     assert "seal" in verdict.banner

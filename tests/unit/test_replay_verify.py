@@ -20,7 +20,6 @@ from pursuit.services.reporting.replay_verify import (
     VERIFIED_OK,
     VerdictState,
     check_turns,
-    verdict_for,
 )
 from tests.unit import replay_fixtures as fx
 
@@ -34,7 +33,7 @@ FIRST_TURN = 0
 def _tampered(field: str):
     """One field flipped, then RESEALED -- so the verdict below is earned by
     the per-turn re-hash and not by the artifact seal (see the fixtures)."""
-    return verdict_for(fx.reseal(fx.tamper(fx.artifact(), field, index=TAMPER_INDEX)))
+    return fx.verdict(fx.reseal(fx.tamper(fx.artifact(), field, index=TAMPER_INDEX)))
 
 
 def _assert_names_the_tampered_turn(verdict) -> None:
@@ -49,7 +48,7 @@ def _assert_names_the_tampered_turn(verdict) -> None:
 def test_a_clean_artifact_shows_the_words_the_gate_quotes():
     """Sec10.4 criterion 3, verbatim -- equality, not a substring, so a
     banner that merely CONTAINED the phrase would fail here."""
-    verdict = verdict_for(fx.artifact())
+    verdict = fx.verdict(fx.artifact())
     assert verdict.banner == VERIFIED_OK
     assert verdict.state is VerdictState.OK and verdict.is_ok
     assert verdict.committed == fx.COMMITTED_TURNS > 0, "a zero-turn OK proves nothing"
@@ -84,7 +83,7 @@ def test_an_artifact_with_no_committed_turn_is_neither_ok_nor_failed():
     """`all_matched([])` is True and so is `all(...)` over nothing. The state
     is asserted specifically, not merely `!= OK`: a viewer that reported
     FAILED here would be accusing an opponent of a game that has no turns."""
-    verdict = verdict_for(fx.artifact(committed=0))
+    verdict = fx.verdict(fx.artifact(committed=0))
     assert verdict.state is VerdictState.NOTHING_TO_VERIFY
     assert verdict.banner == NOTHING_TO_VERIFY
     assert verdict.banner != VERIFIED_OK and not verdict.is_ok
@@ -92,7 +91,7 @@ def test_an_artifact_with_no_committed_turn_is_neither_ok_nor_failed():
 
 
 def test_an_artifact_with_an_empty_turns_list_is_nothing_to_verify():
-    verdict = verdict_for(fx.empty_artifact())
+    verdict = fx.verdict(fx.empty_artifact())
     assert verdict.state is VerdictState.NOTHING_TO_VERIFY
     assert verdict.banner != VERIFIED_OK
 
@@ -101,9 +100,9 @@ def test_the_three_banners_are_three_distinct_strings():
     """The counter-control for every `!= VERIFIED_OK` above: they differ
     because the states differ, not because one of them is empty."""
     banners = {
-        verdict_for(fx.artifact()).banner,
-        verdict_for(fx.reseal(fx.tamper(fx.artifact(), fx.TurnField.NONCE))).banner,
-        verdict_for(fx.artifact(committed=0)).banner,
+        fx.verdict(fx.artifact()).banner,
+        fx.verdict(fx.reseal(fx.tamper(fx.artifact(), fx.TurnField.NONCE))).banner,
+        fx.verdict(fx.artifact(committed=0)).banner,
     }
     assert len(banners) == 3
     assert all(banner for banner in banners), "an empty banner is not a verdict"
@@ -126,8 +125,8 @@ def test_the_verdict_agrees_with_the_builders_own_counter():
     a clean artifact and a tampered one, so neither can drift alone."""
     clean = fx.artifact()
     assert verify_log_turns(clean) == (
-        verdict_for(clean).verified, verdict_for(clean).committed,
+        fx.verdict(clean).verified, fx.verdict(clean).committed,
     )
     broken = fx.reseal(fx.tamper(fx.artifact(), fx.TurnField.MOVE, index=TAMPER_INDEX))
-    assert verify_log_turns(broken) == (verdict_for(broken).verified, verdict_for(broken).committed)
+    assert verify_log_turns(broken) == (fx.verdict(broken).verified, fx.verdict(broken).committed)
     assert verify_log_turns(broken)[0] < verify_log_turns(broken)[1], "the tamper did not land"

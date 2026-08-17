@@ -74,7 +74,6 @@ __all__ = (
     "load_artifact",
     "open_replay",
     "seal_matches",
-    "verdict_for",
     "verdict_from",
 )
 
@@ -152,10 +151,13 @@ def verdict_from(artifact: dict, checks: tuple[TurnCheck, ...]) -> ReplayVerdict
     return ReplayVerdict(VerdictState.FAILED, banner, detail, verified, len(committed))
 
 
-def verdict_for(artifact: dict) -> ReplayVerdict:
-    """`verdict_from` over freshly made checks -- the whole answer in one
-    call, for a caller that is not stepping through the game."""
-    return verdict_from(artifact, check_turns(artifact))
+#: THERE IS DELIBERATELY NO ONE-CALL `verdict_for(artifact)` CONVENIENCE
+#: WRAPPER. It was written, and the production-caller grep found it reachable
+#: from tests only -- D7-3's finding, in this plan's own work. Rather than ship
+#: a second entry point that nothing on the screen's path uses, callers who
+#: want a whole-file answer use `open_replay(path).verdict`, which is the
+#: EXACT value the banner renders. A measurement taken through a parallel
+#: helper would be evidence about the helper.
 
 
 def open_replay(path: Path | str) -> ReplaySession:

@@ -31,6 +31,7 @@ from pursuit.services.reporting.artifacts import (
 )
 from pursuit.services.reporting.log_artifact_fields import LogArtifactField, sealed_body
 from pursuit.services.reporting.log_turn_fields import TurnField, WireSide
+from pursuit.services.reporting.replay_verify import check_turns, verdict_from
 from pursuit.shared.deception_types import Intent
 
 GAME_UID = "replayfixtureuid"
@@ -175,3 +176,11 @@ def write(directory: Path, body: dict) -> Path:
     """The artifact on disk, through the ONE gated write site (`write_artifact`
     and its D7-1 `logs/` refusal), under its `docs/PARAMETERS.md:167` name."""
     return write_artifact(Path(directory), log_filename(GAME_ID, SUB_GAME_INDEX), body)
+
+
+def verdict(body: dict):
+    """The whole-file verdict for a fixture, taken the way `open_replay`
+    takes it -- `check_turns` once, then `verdict_from`. Written here rather
+    than as a `verdict_for(artifact)` wrapper in `src/`, because that wrapper
+    had a production caller in no module at all (D7-3)."""
+    return verdict_from(body, check_turns(body))
