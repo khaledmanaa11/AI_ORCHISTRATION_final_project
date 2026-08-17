@@ -3,49 +3,80 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: PHASE 7 PLAN 00 EXECUTED (2026-08-17) -- THE ONE NUMBER WHOSE SANCTION IS
-  ABSOLUTE DISQUALIFICATION WAS FALSE, AND PHASE 7 WAS ABOUT TO TRANSMIT IT. Rule 38
-  (docs/RULES.md:79) makes a false games-played declaration an absolute disqualification, and
-  it ships inside declaration_<game_id>.json. Measured before any change: police 1881, thief
-  1874, and ONE `uv run pytest tests/` run advanced each by exactly 14 (-> 1895/1888). So ~1881
-  was on the order of 134 test runs of phantom games plus dev launches and gate measurements;
-  independent proof it never counted games is that two agents which only ever played EACH OTHER
-  stood 7 apart. TWO DEFECTS, the first stated by the code against itself:
-  `step0_collect.record_game_played`'s docstring has always read 'increment by exactly one,
-  durably, AT GAME END ONLY' while it was called from `agent_step0_wiring.py:93` inside the
-  Step-0 DECLARATION path, which runs at game START -- so aborted handshakes and watchdog kills
-  counted. The second is scope: the path derives from `cfg.config_dir` and the suite runs
-  against the real `config/police/`, so every pytest run mutated production state.
-  `record_completed_game(cfg, outcome)` is now a SEPARATE function from `declare_step0`, so rule
-  38's WRITE and the declaration's READ cannot be conflated again, and `tests/_shipped_config_guard.py`
-  closes the test seam STRUCTURALLY -- a test reaching for the shipped counter FAILS LOUDLY
-  rather than being silently redirected, because a silent redirect would hide the next instance
-  of this same bug. HEADLINE MEASUREMENTS, re-run by the orchestrator rather than inherited:
-  full suite 1910/1903 -> 1910/1903, DELTA 0/0 (1557 passed, 96.65%); one real game via
-  dev_launch.py 1910/1903 -> 1911/1904, DELTA 1/1, exit 0. WHAT KEPT THE BUG ALIVE:
-  GATE-6-MEASUREMENT.md:178-184 certified the inflation as 'the shipped, correct behavior of the
-  counter, not a bug this script introduces' -- a document asserting a bug is intentional turns
-  every future reader away at the door. Withdrawn in place with a dated correction; the original
-  paragraph is preserved byte-for-byte beneath it and nothing else measured there is affected.
-  THE VALUE IS DELIBERATELY UNSET. Whether a 'game played' means league games only, any real
-  two-machine round, or local self-play is a judgement about how the USER is represented to the
-  league; being wrong in either direction is the same rule-38 breach, the file is gitignored so
-  git cannot settle it, and inventing a number would BE the violation this plan prevents.
-  `docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md` gives the evidence and the candidate
-  readings and states 'No option is selected here.' The human sets it at 07-10, BEFORE ANY LIVE
-  SEND. Commits 8e1f355 / 51b1f9b / ab50b6b. DEVIATION: the executing agent was killed by
-  ECONNRESET during its final gate run, after all three task commits had landed with a clean
-  tree; the orchestrator re-measured both headline numbers from scratch, confirmed the two
-  document corrections on disk, and wrote the SUMMARY and this entry. No task was re-executed.
-Resume file: None -- 07-00 is fully committed and closed. **Next step is the phase-7 plan
-  set**: `07-PLAN-OUTLINE.md` defines 10 plans across 5 waves (07-01..07-10), of which only
-  07-10 is `autonomous: false` (OAuth consent, one live send, presentation screenshots, and
-  the games-played value decision). Plans 07-01..07-09 are not written yet. Wave 1 is a
-  genuine three-way fan-out (07-01/07-02/07-03, no shared files) and would need WORKTREES to
-  run in parallel -- the shared git index otherwise mixes commits. Four open questions from
-  the outline still need deciding from the book/PARAMETERS rather than invented: OQ-1 daily
-  send ceiling, OQ-2 DOS trip threshold, OQ-3 backoff 'stricter value' ambiguity, OQ-4
-  result_ per-series vs per-game. OQ-5 was this plan.
+stopped_at: PHASE 7 PLAN 01 EXECUTED (2026-08-17) -- ONE GATEKEEPER CLASS NOW SERVES BOTH
+  CALLERS, AND PHASE 4'S LLM INSTANCE IS PROVEN BYTE-UNCHANGED. Rules 28-29 require a token
+  bucket and a DOS detector on the outgoing mail path and SEGAL Sec4 forbids a second
+  gatekeeper, so this plan EXTENDED shipped, tested Phase-4 code -- which is what made it
+  risky. THE OUTLINE'S LINE BUDGET WAS WRONG AND IT DECIDED THE SHAPE: 07-PLAN-OUTLINE.md
+  Sec5 claims `gatekeeper.py` "is at 89 counted lines with room for the GatekeeperParams
+  extraction"; measured first with the gate's own awk it is 135/150, `language_config.py`
+  139/150, `language_wiring.py` 129/150. Neither host had room, so `GatekeeperParams` landed
+  in a new `shared/gatekeeper_params.py` -- and the edit still did not fit: D-68's optional
+  budget plus D-69's `bucket_ready` seam took `gatekeeper.py` to 153/150, so `CallResult` and
+  `GatekeeperOverflow` (the two types a CALLER imports) split into `gatekeeper_types.py`, the
+  04-06 language_model_config.py precedent. Split, never compressed; no docstring trimmed.
+  THE CONTROL THAT MATTERED MOST: OQ-3 negotiates the MAIL instance's backoff up to 30 s
+  (PARAMETERS:95's 5 s minimum raised toward SEGAL:174's 30, per :182's stricter rule), and a
+  silent retune of the LLM instance would have been a Phase-4 regression inside a Phase-7
+  commit that no existing test could see -- the shipped gatekeeper tests build their own
+  `_params()` doubles and never read `config/`. The LLM gatekeeper's effective parameters were
+  dumped through the real construction path before any change and again at the end: police 22
+  and thief 22 parameters, IDENTICAL = True, LLM backoff still 5 s while the mail instance
+  ships 30 s, `git diff config/*/language.json` EMPTY, every pre-existing Phase-4
+  gatekeeper/budget/bucket test passing UNMODIFIED. `submit()`'s statement ORDER is untouched:
+  `reserve()` still above the queue-depth check and `settle()` still on the success path only,
+  the D-35 contract that had no test and now has four. ZERO NUMBERS INVENTED: OQ-1 enforces
+  SEGAL:173's sourced requests_per_hour 500 and writes NO daily leaf because no document gives
+  one; OQ-2's DOS detector latches on a strict `>` against the INJECTED
+  `retries_before_failure` so it owns no threshold at all; the five Table-19 minima are
+  IMPORTED from `language_config.GATEKEEPER_MINIMA` (now public at its second consumer) rather
+  than re-declared, so a floor cannot drift between the two instances; and `reporting.json`
+  carries a `_sources` object citing every numeric leaf to a file and line, with a test
+  asserting every numeric leaf HAS a citation. THIRTEEN REVERT PROBES, each with real counts,
+  e.g. `reserve()` moved below the queue check -> 1 failed/50 passed (the only test in the repo
+  that can see that move); quota counted in memory instead of durably -> 7 failed/25 passed;
+  chain propagating a failed send instead of queueing -> 4 failed/28 passed. TWO HOLES THE
+  SELF-AUDIT FOUND IN ITS OWN WORK: probe 9 first returned 0 failed/32 passed because
+  `test_a_latched_lock_never_clears` only checked `locked` while the deleted line was a
+  short-circuit, not the latch -- the latch survived but the EVIDENCE of the run was silently
+  zeroed; and an AST scan over every `parametrize` in tests/ caught
+  `test_gatekeeper_llm_unchanged.py` iterating two tables with nothing asserting they still had
+  rows, which would have SKIPPED silently and left this plan's most important control reading
+  green while asserting nothing. Both fixed and re-probed. ARTIFACT DIRECTORY decided
+  deliberately: `game_artifacts/`, verified not gitignored -- NOT `logs/`, which .gitignore
+  ignores wholesale immediately beneath its own comment claiming the four required artifacts
+  are kept out of the list, while `write_declaration` writes into `logs/<role>/`, so the one
+  artifact this project already produces is unreachable to git today (D7-1, for 07-02).
+  GATES: ruff 0, line-limit exit 0 including all 16 new paths checked EXPLICITLY (the no-arg
+  form enumerates via `git ls-files` and passes vacuously on an untracked file), 1689 passed
+  from a 1557 baseline, coverage 96.80% from 96.65%, check_no_llm_in_strategy OK, dev_launch
+  exit 0 with both sides `audit_verdict matched=true` over 5 turns and zero technical_win.
+  GAMES-PLAYED, rule 38: full suite 1911/1904 -> 1911/1904 DELTA 0/0; one real game
+  1911/1904 -> 1912/1905 DELTA 1/1. 07-00's guarantee holds under these changes. Commits
+  c43ca63 / c6c5a98 / dfcb62a / d528517 / 8f89125. DEVIATION: the executing agent was killed by
+  ECONNRESET after Task 4's verification block and before the self-audit, with three commits
+  landed and the reporting package written but uncommitted; on resume the tree was READ BACK
+  and verified rather than redone blind, and the production-caller grep, vacuity scan,
+  collected-test counts, LLM parameter pin, full suite with counters and dev_launch were all
+  re-run from scratch. Nothing was half-written.
+Resume file: None -- 07-01 is fully committed and closed, tree clean. **Next is the rest of
+  wave 1: 07-02 (artifact spine) and 07-03 (LocalView firewall)**, both `autonomous: true`,
+  both independent of 07-01 and of each other -- a genuine three-way fan-out that needs
+  WORKTREES to run in parallel, since the shared git index otherwise mixes commits and the
+  whole-tree pre-commit hook blocks everyone. 07-04 and 07-07 are the plans that WIRE this
+  one: `ReportingChain` and `load_reporting_config` deliberately have no production caller
+  yet (D7-3), which is by design -- 07-01's non_goals exclude the wiring. Three deferred
+  items are filed in the phase's `deferred-items.md`: **D7-1** .gitignore ignores `logs/`
+  wholesale while rule 50 requires the four JSON artifacts committed, and
+  `agent_step0_wiring.write_declaration` writes `declaration_<game_id>.json` into
+  `logs/<role>/` -- 07-02 must move the writer's output OR narrow the ignore rule, not both
+  and not neither; **D7-2** the durable-write retry/backoff constants now exist in three
+  places, extracted to `shared/durable_write.py` but not folded into `step0_collect.py`
+  (deliberately -- it is the rule-38 write path 07-00 just certified); **D7-3** above.
+  OQ-1/OQ-2/OQ-3 are CLOSED in code with their citations; OQ-4 (result_ per-series vs
+  per-game) is resolved in the outline but not yet implemented, and OQ-5 -- the games-played
+  VALUE -- remains the human's at 07-10, before any live send. Nothing in this repo
+  transmits: every shipped config carries `reporting.mode = dry_run`.
 ---
 
 Last session: 2026-08-04T12:31:00+03:00
