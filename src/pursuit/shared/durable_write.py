@@ -22,6 +22,20 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# The retry/backoff pair for a SMALL, LOCAL, crash-safe JSON write. An
+# ENGINEERING DEFAULT under the D-18 discipline -- NOT a book value, and not a
+# docs/PARAMETERS.md Table 19 row (those govern outgoing NETWORK requests; this
+# is os.replace() losing a race with OneDrive or Defender). First measured by
+# 03-05 for QTable.save() ("_SAVE_RETRIES=3/_SAVE_BACKOFF_SECONDS=0.1s"), then
+# copied into security/step0_collect.py:29-34 for the games-played counter.
+# 07-01's QuotaManager is the THIRD consumer, so the pair is extracted here, to
+# the module that owns the write scheme (CLAUDE.md Table 5: extract at 2+
+# copies). The two earlier copies still hold their own locals; folding them
+# onto these names is logged in the phase's deferred-items.md rather than done
+# as a drive-by edit to code 07-00 has just certified.
+DURABLE_WRITE_RETRIES = 3
+DURABLE_WRITE_BACKOFF_SECONDS = 0.1
+
 
 def _tmp_path(target: Path) -> Path:
     return target.with_name(f"{target.stem}.tmp{target.suffix}")
