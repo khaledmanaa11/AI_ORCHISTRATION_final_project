@@ -239,13 +239,15 @@
   "env_vars_required": [],
   "games_played_counter": {
     "after": {
-      "games_played.json": "{\"games_played\": 1914}"
+      "police/games_played.json": "{\"games_played\": 1921}",
+      "thief/games_played.json": "{\"games_played\": 1914}"
     },
     "before": {
-      "games_played.json": "{\"games_played\": 1914}"
+      "police/games_played.json": "{\"games_played\": 1921}",
+      "thief/games_played.json": "{\"games_played\": 1914}"
     },
     "unchanged_by_this_measurement": true
   },
   "gate": "GATE-7 (book Sec10.4 milestone 7)",
-  "generated_at": "2026-08-17T09:41:42.775369+00:00"
+  "generated_at": "2026-08-17T09:47:46.437679+00:00"
 }

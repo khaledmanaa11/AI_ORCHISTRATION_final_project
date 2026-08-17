@@ -62,9 +62,20 @@ def load_configs() -> tuple[AgentConfig, AgentConfig]:
 
 
 def counter_snapshot() -> dict[str, str | None]:
-    """Raw text of both shipped games-played counters, or None when absent."""
+    """Raw text of BOTH shipped games-played counters, or None when absent.
+
+    Keyed by `<role>/<filename>` and NOT by `path.name`: the first draft of
+    this function keyed on the bare filename, both roles collapsed onto the one
+    key `games_played.json`, and the evidence silently reported a single
+    counter -- thief's, because it was written last. A rule-38 measurement that
+    watches one of the two files it claims to watch is worth nothing, and
+    `gate7_report.exit_code` now refuses a snapshot holding fewer than
+    `len(SHIPPED_COUNTERS)` entries for exactly that reason.
+    """
     return {
-        path.name: (path.read_text(encoding="utf-8") if path.is_file() else None)
+        f"{path.parent.name}/{path.name}": (
+            path.read_text(encoding="utf-8") if path.is_file() else None
+        )
         for path in SHIPPED_COUNTERS
     }
 

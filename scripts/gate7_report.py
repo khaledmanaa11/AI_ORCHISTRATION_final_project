@@ -25,6 +25,8 @@ DRY_RUN_PASS = "PASS"
 LIVE_PENDING = "PENDING"
 PASS = "PASS"
 FAIL = "FAIL"
+#: One rule-37/38 counter per role -- `gate7_common.SHIPPED_COUNTERS`.
+EXPECTED_COUNTER_FILES = 2
 
 
 class GateExit(IntEnum):
@@ -133,11 +135,28 @@ def build_report(criterion_1: dict, criterion_2: dict, criterion_3: dict, counte
     }
 
 
+def _evidence_is_empty(report: dict) -> bool:
+    """A scan that judged nothing, in either of the two places one can hide.
+
+    `modules_scanned == 0` is 07-03's own empty-scan case. The counter check is
+    here because the FIRST draft of `counter_snapshot` keyed both roles onto one
+    filename and reported a single counter as though it were two -- an
+    `unchanged` claim over an under-populated dict is exactly the vacuous PASS
+    this gate exists to refuse.
+    """
+    counters = report["games_played_counter"]
+    return (
+        not report["criterion_2_live_gui_local_truth_only"]["structural_gate"]["modules_scanned"]
+        or len(counters["before"]) < EXPECTED_COUNTER_FILES
+        or len(counters["after"]) < EXPECTED_COUNTER_FILES
+    )
+
+
 def exit_code(report: dict) -> int:
     """0 only when both machine-closable criteria PASS and criterion 1's
     dry-run half PASSes. The live half is PENDING by design and does not make
     this non-zero -- the GATE DOCUMENT carries that, not this exit code."""
-    if not report["criterion_2_live_gui_local_truth_only"]["structural_gate"]["modules_scanned"]:
+    if _evidence_is_empty(report):
         return int(GateExit.EMPTY_EVIDENCE)
     verdicts = (
         report["criterion_1_game_summary_sent_by_mail"]["dry_run_verdict"],
