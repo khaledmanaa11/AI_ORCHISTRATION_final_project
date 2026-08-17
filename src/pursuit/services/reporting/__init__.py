@@ -40,6 +40,17 @@ from pursuit.services.reporting.artifact_log import (
     verify_log_turns,
     write_log_artifact,
 )
+from pursuit.services.reporting.artifact_result import (
+    ResultArtifactField,
+    SubGameField,
+    TokensField,
+    build_result_artifact,
+    game_tokens,
+    read_series,
+    record_sub_game,
+    verify_result_artifact,
+    write_result_artifact,
+)
 from pursuit.services.reporting.artifacts import (
     ArtifactField,
     ArtifactPrefix,
@@ -68,9 +79,16 @@ from pursuit.services.reporting.result_agreement import (
     AgreementRecord,
     build_agreement,
 )
+from pursuit.services.reporting.result_artifact_fields import (
+    GAMES_PLAYED_UNSET,
+    TOKENS_ABSENT,
+    empty_series,
+)
 from pursuit.services.reporting.sink import DryRunSink, MailSink, SendReceipt
 
 __all__ = (
+    "GAMES_PLAYED_UNSET",
+    "TOKENS_ABSENT",
     "AgreementField",
     "AgreementRecord",
     "ArtifactField",
@@ -86,8 +104,11 @@ __all__ = (
     "QuotaManager",
     "Refusal",
     "ReportingChain",
+    "ResultArtifactField",
     "SendOutcome",
     "SendReceipt",
+    "SubGameField",
+    "TokensField",
     "artifact_digest",
     "artifact_digest_matches",
     "artifact_header",
@@ -96,10 +117,15 @@ __all__ = (
     "build_declaration_artifact",
     "build_log_artifact",
     "build_report_message",
+    "build_result_artifact",
     "config_filename",
     "declaration_filename",
+    "empty_series",
+    "game_tokens",
     "log_filename",
     "next_sub_game_index",
+    "read_series",
+    "record_sub_game",
     "render_message",
     "report_filename",
     "result_filename",
@@ -107,9 +133,11 @@ __all__ = (
     "verify_embedded_declarations",
     "verify_log_artifact",
     "verify_log_turns",
+    "verify_result_artifact",
     "write_artifact",
     "write_artifact_bytes",
     "write_config_artifact",
     "write_log_artifact",
     "write_declaration_artifact",
+    "write_result_artifact",
 )
