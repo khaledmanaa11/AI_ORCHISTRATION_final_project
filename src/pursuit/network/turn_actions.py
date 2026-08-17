@@ -114,7 +114,16 @@ async def take_my_turn(ctx: AgentContext) -> Outcome | None:
     record_action(ctx, ctx.role, dest, barrier)
     outcome = maybe_resolve(ctx)
 
-    result = await turn_commit.initiate(ctx, current, pre_cell, dest, barrier, plan)
+    # `played_turn=pre_turn_state.turn` (08-05, deferred item #13). The SAME
+    # pre-resolve snapshot the hint stamp below already uses, by the SAME rule,
+    # threaded through `initiate` to the toggle-off MOVE send. `ctx.state.turn`
+    # is the wrong number HERE for the same reason it was the wrong number for
+    # the hint: `maybe_resolve` two lines up may already have advanced it.
+    # `GameState` is `@dataclass(frozen=True)` and `maybe_resolve` REBINDS
+    # `ctx.state`, so the snapshot captured above still holds the played turn.
+    result = await turn_commit.initiate(
+        ctx, current, pre_cell, dest, barrier, plan, played_turn=pre_turn_state.turn,
+    )
     if result is not None:
         return result
 

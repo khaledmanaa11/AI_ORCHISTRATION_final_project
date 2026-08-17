@@ -85,7 +85,7 @@ def _in_game_ctx(tmp_path, default_params, network_params, label, build_exceptio
 async def _take_one_turn(ctx, default_params):
     """The real in-game initiator path: commit, then push the COMMIT envelope."""
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
-    return await turn_commit.initiate(ctx, ctx.machine.state, ctx.state.cop, dest, None, None)
+    return await turn_commit.initiate(ctx, ctx.machine.state, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
 
 
 async def test_in_game_a_dropped_connection_is_a_recorded_technical_win_not_a_crash(

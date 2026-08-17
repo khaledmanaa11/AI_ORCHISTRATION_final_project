@@ -75,7 +75,9 @@ async def test_a_stalled_peer_costs_the_move_push_a_ladder_and_not_the_process(
     start = ctx.state.cop
     dest = orchestrator.first_legal_move(ctx.state, "cop", ctx.params)
 
-    outcome = await turn_commit_send.send_move_only(ctx, State.MY_TURN, start, dest)
+    outcome = await turn_commit_send.send_move_only(
+        ctx, State.MY_TURN, start, dest, ctx.state.turn,
+    )
 
     assert_ladder_survived(armed, len(client.calls), network_params)
     assert outcome is Outcome.TECHNICAL_LOSS, "the exhausted ladder was never recorded"

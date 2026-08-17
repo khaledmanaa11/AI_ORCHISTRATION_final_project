@@ -120,10 +120,36 @@ def technical_loss(ctx: AgentContext, verdict: TechnicalWin) -> Outcome:
     return Outcome.TECHNICAL_LOSS
 
 
-async def send_move_only(ctx: AgentContext, current: State, pre_cell: Coord, dest: Coord) -> Outcome | None:
-    """Toggle-off byte-equivalence: the exact pre-Phase-6 single MOVE send."""
+async def send_move_only(
+    ctx: AgentContext, current: State, pre_cell: Coord, dest: Coord, played_turn: int,
+) -> Outcome | None:
+    """Toggle-off byte-equivalence: the exact pre-Phase-6 single MOVE send,
+    stamped with the turn the caller ACTUALLY played (08-05, deferred #13)."""
+    # *played_turn* is supplied by `take_my_turn`, captured BEFORE its own
+    # `record_action`/`maybe_resolve`, and is deliberately NOT read off
+    # `ctx.state` here. That read is the whole of deferred item #13.
+    #
+    # Both sites below used to read `ctx.state.turn`. On the SECOND mover that
+    # read happens AFTER `take_my_turn`'s `maybe_resolve` has advanced
+    # N -> N+1, so every MOVE this side sent claimed a turn one into the
+    # future. MEASURED by 05-14 over one full toggle-off 16-turn game:
+    #
+    #     police (first mover):  moves=[0..15]
+    #     thief  (second mover): moves=[1..16]     <- turn 16 was never played
+    #
+    # Nothing on the receiving side catches it: `log_received` keys on the
+    # receiver's OWN turn (06-UAT Gap 1) and `await_move` never compares the
+    # peer's declared turn. So the damage is SILENT corruption of what a replay
+    # says we claimed (rule 20) rather than a loud rejection -- which is what
+    # makes it worth closing on a path no league game runs. The identical
+    # defect on the HINT channel one line away was closed by 05-14; this door
+    # stayed open because the repair changes a public entry point's signature.
+    #
+    # `played_turn` is positional and REQUIRED at the one production call site.
+    # A default of `ctx.state.turn` was the tempting alternative and is refused:
+    # it would let the next caller reintroduce the defect by omission.
     envelope = Envelope(
-        type=MessageType.MOVE, turn=ctx.state.turn, sender=ctx.role,
+        type=MessageType.MOVE, turn=played_turn, sender=ctx.role,
         payload=move_payload.encode(pre_cell, dest, move_payload.ActionKind.MOVE),
     )
     args = {k: v for k, v in envelope.to_dict().items() if k != EnvelopeKey.TYPE}
@@ -144,7 +170,7 @@ async def send_move_only(ctx: AgentContext, current: State, pre_cell: Coord, des
     append_event(
         ctx.log_path,
         turn_events.turn_record(
-            game_uid=ctx.game_uid, turn=ctx.state.turn, event="message_sent", sender=ctx.role,
+            game_uid=ctx.game_uid, turn=played_turn, event="message_sent", sender=ctx.role,
             state_from=current, state_to=State.WAIT_OPPONENT, envelope=envelope.to_dict(),
         ),
     )

@@ -31,7 +31,7 @@ async def test_initiate_reports_technical_loss_when_the_commit_push_fails(
     current = ctx.machine.state
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
-    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None)
+    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
 
     assert result is Outcome.TECHNICAL_LOSS
     assert ctx.machine.state is State.GAME_OVER
@@ -49,7 +49,7 @@ async def test_initiate_reports_technical_loss_when_the_opponent_never_answers(
     current = ctx.machine.state
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
-    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None)
+    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
 
     assert result is Outcome.TECHNICAL_LOSS
     assert ctx.machine.state is State.GAME_OVER
@@ -68,7 +68,7 @@ async def test_initiate_reports_technical_loss_when_acking_the_opponents_commit_
     current = ctx.machine.state
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
-    task = asyncio.create_task(turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None))
+    task = asyncio.create_task(turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn))
     await _pump()
     ctx.runtime.queue.put_nowait(
         Envelope(type=MessageType.COMMIT, turn=0, sender="thief", payload={"h_commit": "b" * 64}),
@@ -92,7 +92,7 @@ async def test_initiate_reports_technical_loss_when_the_reveal_push_fails(
     current = ctx.machine.state
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
-    task = asyncio.create_task(turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None))
+    task = asyncio.create_task(turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn))
     await _pump()
     h_commit = client.calls[0][1]["payload"]["h_commit"]
     ctx.runtime.queue.put_nowait(

@@ -40,7 +40,7 @@ async def test_initiate_toggle_off_is_byte_equivalent_to_pre_phase_6(
     current = ctx.machine.state
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
-    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None)
+    result = await turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
 
     assert result is None
     assert [name for name, _args in ctx.runtime.client().calls] == ["receive_move"]
@@ -70,7 +70,7 @@ async def test_initiate_on_toggle_commits_then_reveals_with_ledger_before_any_se
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
     task = asyncio.create_task(
-        turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None)
+        turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
     )
     await _pump()
 
@@ -114,7 +114,7 @@ async def test_initiate_drops_a_duplicate_ack_and_commit_without_raising(
     dest = engine.legal_moves(ctx.state, "cop", default_params)[0]
 
     task = asyncio.create_task(
-        turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None)
+        turn_commit.initiate(ctx, current, ctx.state.cop, dest, None, None, played_turn=ctx.state.turn)
     )
     await _pump()
     h_commit = ctx.runtime.client().calls[0][1]["payload"]["h_commit"]

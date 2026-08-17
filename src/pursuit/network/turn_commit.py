@@ -54,13 +54,32 @@ from pursuit.shared.inference import NO_EVIDENCE
 
 async def initiate(
     ctx: AgentContext, current: State, pre_cell: Coord, dest: Coord,
-    barrier: Coord | None, plan: object | None,
+    barrier: Coord | None, plan: object | None, *, played_turn: int,
 ) -> Outcome | None:
     """D-58 initiator path (police, design note 7's "sends first"): commit
     -> send COMMIT -> wait for BOTH our own ACK and the opponent's COMMIT
     (ACKing theirs the instant it arrives) -> send REVEAL."""
+    # *played_turn* (08-05, deferred item #13) is the turn the caller actually
+    # played this action on, captured BEFORE its own `record_action`/
+    # `maybe_resolve`. It is consumed by the TOGGLE-OFF branch below and by
+    # nothing else. Required and keyword-only: a default would let the next
+    # caller reintroduce #13 by omission, which is how this one survived 05-14,
+    # the plan that fixed its twin on the hint channel one line away.
+    #
+    # THE COMMIT-REVEAL-ON PATH BELOW IS DELIBERATELY UNTOUCHED. `turn` is still
+    # `ctx.state.turn`, read at the same point, and it is that value -- never
+    # `played_turn` -- that feeds `commit_own_action`'s D-59 hash input and the
+    # D-64 ledger join key. On this path the two are provably equal (with the
+    # toggle ON the responder never calls `record_action`, so the initiator's own
+    # `maybe_resolve` cannot fire and `ctx.state.turn` cannot have advanced), but
+    # "provably equal" is an argument and byte-identity is a fact. A rules-19/22
+    # technical loss is what a wrong number here costs, so the repair takes the
+    # fact: MEASURED before and after on a nonce-pinned ON-path drive, the same
+    # three pushes at turns [0,0,0], the same h_commit 6a34ee5c..., the same
+    # single ledger record at turn 0, one identical fingerprint.
+    # `tests/unit/test_shipped_path_turn_source.py` pins both halves structurally.
     if not ctx.security.commit_reveal:
-        return await send_move_only(ctx, current, pre_cell, dest)
+        return await send_move_only(ctx, current, pre_cell, dest, played_turn)
 
     intent = plan.intent.value if plan is not None else Intent.TRUTH.value
     turn = ctx.state.turn
