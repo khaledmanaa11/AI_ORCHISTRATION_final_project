@@ -16,6 +16,10 @@
   "hint_likelihood": {
     "weight": 0.3
   },
+  "display": {
+    "min_entropy_bits": 1.0,
+    "min_support_cells": 6
+  },
   "belief": {
     "enabled": true,
     "seed": 20260809

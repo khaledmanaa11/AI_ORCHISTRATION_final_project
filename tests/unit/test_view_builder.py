@@ -18,6 +18,7 @@ import pytest
 from pursuit.network.turn_language import belief_snapshot
 from pursuit.sdk.view_builder import HintHistory, build_local_view
 from tests.unit import local_view_fixtures as fx
+from tests.unit import local_view_production as prod
 from tests.unit._fakes_agent import make_ctx
 
 _SDK_ROOT = pathlib.Path(__file__).parents[2] / "src" / "pursuit" / "sdk"
@@ -69,11 +70,19 @@ def test_belief_disabled_builds_a_none_belief_and_fabricates_nothing(
 def test_belief_view_carries_the_posterior_argmax_and_reliability(
     tmp_path, default_params, network_params
 ):
+    """07-11: what a cop publishes is the map that clears `belief.json`'s
+    `display` floors, not the strategy posterior `observe_exact` collapsed to
+    a delta on the engine's truth. The two assertions this test used to make
+    -- `argmax == BELIEF_ARGMAX` and `entropy == 0.0` -- described precisely
+    that delta, and were only ever green because the fixture seeded it with a
+    cell production never supplies."""
     view = fx.honest_view(tmp_path, default_params, network_params)
-    assert view.belief.argmax == fx.BELIEF_ARGMAX
+    floors = prod.display_floors()
+    assert view.belief.argmax != fx.OPPONENT_CELL
     assert len(view.belief.rows) == view.board_size
     assert all(len(row) == view.board_size for row in view.belief.rows)
-    assert view.belief.entropy == pytest.approx(0.0)
+    assert view.belief.entropy >= floors.min_entropy_bits
+    assert len(prod.support_cells(view.belief.rows)) >= floors.min_support_cells
     assert 0.0 <= view.belief.reliability <= 1.0
 
 

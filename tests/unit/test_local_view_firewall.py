@@ -16,6 +16,16 @@ Three tests carry the weight and none of them works alone:
   (c) the same scanner, over the same honest payload, DOES find the cells
       the view is entitled to carry -- so (a) cannot be passing because the
       walker never reached the data.
+
+AND NONE OF THE THREE IS SUFFICIENT EITHER. Every function here asks whether
+the true cell appears as a VALUE. A belief heatmap can DRAW a cell without
+any integer pair appearing anywhere, and 07-11 measured exactly that through
+this file's own fixtures: with the fixtures corrected to model production,
+assertion (a) FAILED at `$.belief.argmax: pair [5, 3]` -- and deleting that
+one field would have made (a) pass again with the leak untouched, because
+the published support still inverts to the true cell geometrically. The
+recovery question lives in `test_local_truth_recovery.py`; both files are
+load-bearing and neither replaces the other.
 """
 
 from __future__ import annotations
@@ -26,6 +36,7 @@ import pytest
 
 from pursuit.sdk.local_view import BeliefView, HintView, LocalView, ScentView
 from tests.unit import local_view_fixtures as fx
+from tests.unit import local_view_scanner as scan
 
 _SERIALISED_FORMS = ("asdict", "json")
 
@@ -59,20 +70,30 @@ def test_opponent_true_cell_is_absent_from_the_serialised_view(view, form):
     """(a) The load-bearing assertion. The context this view was built from
     holds `thief=(5, 3)`; the view must not express it in any encoding."""
     assert len(_SERIALISED_FORMS) == 2, "a thinned form list would skip silently"
-    payload = fx.payloads(view)[form]
-    hits = fx.coordinate_hits(payload, fx.OPPONENT_CELL, view.board_size)
+    payload = scan.payloads(view)[form]
+    hits = scan.coordinate_hits(payload, fx.OPPONENT_CELL, view.board_size)
     assert hits == [], f"rule 9 leak in the {form} view: {hits}"
 
 
 def test_the_same_scanner_finds_the_cells_the_view_may_carry(view):
-    """(c) Anti-vacuity. Own cell, every declared barrier and the belief
-    argmax are all legitimately displayable, and the scanner finds each of
-    them in the very payload test (a) reports clean."""
-    payload = fx.payloads(view)["asdict"]
-    legal = (fx.OWN_CELL, fx.BELIEF_ARGMAX, *sorted(fx.BARRIERS))
+    """(c) Anti-vacuity. Own cell, every declared barrier and the PUBLISHED
+    belief argmax are all legitimately displayable, and the scanner finds
+    each of them in the very payload test (a) reports clean.
+
+    07-11 replaced the fixed `BELIEF_ARGMAX` constant with the argmax the
+    shipped pipeline actually publishes: the constant was seeded by an
+    `observe_exact` call production never makes, and with the fixture
+    corrected to model production the real argmax WAS the true cell. The
+    guard below is what keeps this test from measuring a coincidence -- an
+    argmax equal to the opponent's cell would satisfy (c) while breaking
+    (a), so it is asserted distinct here as well."""
+    payload = scan.payloads(view)["asdict"]
+    published_argmax = view.belief.argmax
+    assert published_argmax != fx.OPPONENT_CELL, "a leaked argmax is not a legal cell"
+    legal = (fx.OWN_CELL, published_argmax, *sorted(fx.BARRIERS))
     assert len(legal) == 4
     for cell in legal:
-        assert fx.coordinate_hits(payload, cell, view.board_size), (
+        assert scan.coordinate_hits(payload, cell, view.board_size), (
             f"the scanner never reached {cell}, so its clean verdict proves nothing"
         )
 
@@ -80,8 +101,8 @@ def test_the_same_scanner_finds_the_cells_the_view_may_carry(view):
 def test_a_leaky_view_is_reported_by_the_identical_scanner(view):
     """(b) THE COUNTER-CONTROL. The honest view with the true opponent cell
     bolted on -- the tempting debugging shortcut -- must be caught."""
-    leaky = fx.LeakyLocalView(honest=view, true_opponent_cell=fx.OPPONENT_CELL)
-    hits = fx.coordinate_hits(
+    leaky = scan.LeakyLocalView(honest=view, true_opponent_cell=fx.OPPONENT_CELL)
+    hits = scan.coordinate_hits(
         dataclasses.asdict(leaky), fx.OPPONENT_CELL, view.board_size
     )
     assert hits, "the scanner cannot see a leak, so its clean verdicts are worthless"
@@ -92,11 +113,11 @@ def test_every_leak_encoding_the_scanner_claims_is_actually_reported(view):
     """Per-branch counter-control: each encoding `coordinate_hits` claims to
     catch is planted and must be caught. Looped, not parametrised, so a
     thinned variant set FAILS the count instead of silently skipping."""
-    tree = fx.payloads(view)["asdict"]
-    variants = fx.leak_variants(tree, fx.OPPONENT_CELL, view.board_size)
+    tree = scan.payloads(view)["asdict"]
+    variants = scan.leak_variants(tree, fx.OPPONENT_CELL, view.board_size)
     assert len(variants) == 5, "a thinned encoding set would prove less than it claims"
     for name, leaky in variants.items():
-        hits = fx.coordinate_hits(leaky, fx.OPPONENT_CELL, view.board_size)
+        hits = scan.coordinate_hits(leaky, fx.OPPONENT_CELL, view.board_size)
         assert hits, f"encoding {name!r} slipped past the scanner"
 
 
