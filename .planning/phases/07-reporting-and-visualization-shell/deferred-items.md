@@ -178,6 +178,10 @@ the control for a benign log line.
 ## D7-6 · The `local-truth` CI job is RED until 07-06 creates `src/pursuit/gui/`
 
 **Found by:** 07-03 Task 3 (by construction, not by accident) · **Owner:** 07-06 (live GUI)
+· **RESOLVED by 07-06** — `src/pursuit/gui/` now holds five real modules and the gate prints
+`OK: 5 module(s) scanned`, exit 0. Turned green by CODE, never by softening: the gate was
+HARDENED in the same commit (see D7-9), and `test_gui_structural.py` asserts a non-zero module
+count beside every clean verdict.
 
 `scripts/check_local_truth.py` exits **2** when its scan root is missing or holds zero
 modules, and `.github/workflows/quality-gate.yml` now runs it as its own job. Measured
@@ -214,7 +218,12 @@ recorded here rather than silently added inside a commit about a different gate.
 ## D7-7 · The whole 07-03 surface has no production caller until 07-06
 
 **Found by:** 07-03 self-audit · **Owner:** 07-06 (live GUI) · **The same finding as D7-3,
-third occurrence**
+third occurrence** · **RESOLVED by 07-06.** Grepped again, not assumed: `build_local_view` ←
+`sdk/view_publish.publish_view` ← `network/turn_resolve.maybe_resolve`; `HintHistory` ←
+`AgentContext.view_history` (per-instance via `default_factory`, so NET-02 holds); `HintHistory.observe`
+← `build_local_view`; and **`HintHistory.record_outgoing`, which had no caller at all**, ←
+`network/turn_language_io.compose_and_send_hint`, called after the hint actually goes out. The live
+sidebar therefore shows one peer's whole conversation rather than half of it.
 
 Grepped, not assumed. `build_local_view` / `HintHistory` / `LocalView` are imported by
 tests only; `HintHistory.record_outgoing` has no caller at all. Structural, exactly like
@@ -258,6 +267,26 @@ post-game it must be labelled as the audit record rather than as the peer's beli
 ## D7-9 · `scripts/check_local_truth.py` hardening, still open
 
 **Found by:** 07-11 (re-confirming 07-03's own non-goal) · **Owner:** 07-06
+· **RESOLVED by 07-06.** All three holes were MEASURED OPEN before being closed, and none of
+them was closed by weakening anything:
+
+| Hole | At HEAD | After |
+|---|---|---|
+| a root holding one bare `__init__.py` | `OK: 1 module(s) scanned`, **exit 0** | `EmptyScanError`, **exit 2** |
+| `panel.pyw` reading `ctx.state.thief` | **never scanned** (`rglob('*.py')`) | scanned and **reported** |
+| `s = ctx.state; s.thief` + `getattr(ctx.state, 'thief')` + `asdict(s)['cop']` | `violations=[]`, **exit 0** | **3 violations**, exit 1 |
+
+The dynamic-key check is on the KEY rather than on what it is applied to, which makes it total
+over indirections nobody has thought of yet. The gate reached 198 code lines and was SPLIT into
+`scripts/local_truth_ast.py`, loaded by file path so 07-03's standalone property (never imports
+`pursuit`) survives; both halves are checked explicitly against the 150-line gate, which skips
+`scripts/` in its no-argument form.
+
+**What is still NOT closed, and is stated rather than papered over:** a parameter named `state`
+(`def render(state): ...`) is outside what a single-module AST walk can resolve, and the gate
+still cannot see a coordinate that is DRAWN rather than NAMED. That second question is asked by
+`tests/unit/test_gui_recovery.py` at RUNTIME, over the rendered panel data, and this gate is
+never cited as evidence about a panel.
 
 Unchanged by this plan and restated because 07-11 proved the gate's blind spot is wider
 than filed: it is an import/attribute gate and **cannot** see a coordinate that is *drawn*
@@ -293,7 +322,8 @@ Measured while fixing it: **no other `.py` in the repository is currently ignore
 
 **Also learned, and written into the helper's docstring:** `subprocess.run(..., text=True)` on
 Windows writes CRLF into the child's stdin, so `git check-ignore --stdin` saw every path with a
-trailing `` and reported **five false positives**. The check passes bytes with `-z`.
+trailing `
+` and reported **five false positives**. The check passes bytes with `-z`.
 
 ---
 
@@ -377,3 +407,44 @@ package re-exports, so the name form is the one 07-07 is most likely to write.
 
 `verify_log_turns` is 07-08's entry point and has no caller outside the package today; inside
 it, `write_log_artifact` calls it post-write, so it is not dead code.
+
+
+---
+
+## D7-15 · `snapshot_path_for` and `ledger_path_for` are two spellings of one sibling convention
+
+**Found by:** 07-06 Task 1 · **Owner:** whichever plan next opens `turn_commit_ledger.py`
+for a real reason
+
+`turn_commit_ledger.ledger_path_for` is `log_path.parent / f"{log_path.stem}.ledger.jsonl"`
+and `sdk/view_publish.snapshot_path_for` is the same join with `view.json`. One shared
+`sibling_path(log_path, suffix)` helper in `shared/` would own the convention outright.
+
+**Deliberately not done by 07-06**, on the D7-2 / D7-4 precedent this phase has now applied
+three times: `turn_commit_ledger.py` is the D-64 nonce path 06-05 certified, and renaming
+through it for a one-expression path join buys nothing while putting every game's ledger
+location at risk. `snapshot_path_for` names `ledger_path_for` in its own docstring as the
+convention it follows, and `test_view_publish` asserts the two agree on the parent directory
+and the stem, so they cannot drift apart silently. Fold them when that file is next opened.
+
+---
+
+## D7-16 · A view's own legal cell can collide with the leak scan's reversed-pair branch
+
+**Found by:** 07-06, on the LIVE `dev_launch` game `2db6cc8b039c82e7` · **Owner:** nobody —
+recorded so a future reader does not mistake it for a leak
+
+`local_view_scanner.coordinate_hits` reports both `[row, col]` and `[col, row]`, because a
+leak could arrive in either encoding. On that game the thief's true cell was `(2, 3)` and the
+police's OWN cell was `(3, 2)`, so scanning the police snapshot for the truth reported
+`$.own_cell: pair [3, 2]` — a **false positive** on a field rule 8 explicitly permits.
+
+This is exactly the coincidence `local_view_fixtures.py`'s docstring says its chosen
+coordinates avoid (`OPPONENT_CELL` differs from `OWN_CELL`, from every barrier and from every
+other integer in the view), and here it is on live data rather than in a fixture. Confirmed a
+false positive rather than assumed: the FORWARD pair `[2, 3]` appears nowhere in the file, and
+neither flat index (17 row-major, 23 column-major) appears either.
+
+**What to do with it:** nothing in source. When scanning a real snapshot by hand, separate the
+forward pair from the reversed one before drawing a conclusion, and prefer the geometric
+inversion — which returned `[]` on that same game — because it cannot collide this way.

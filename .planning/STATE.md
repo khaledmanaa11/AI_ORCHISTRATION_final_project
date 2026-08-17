@@ -3,89 +3,142 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-05 is fully committed and closed, tree clean. WAVE 2 CONTINUES: 07-06
-  (live GUI) is the remaining wave-2 plan, and 07-07 (end-of-game) now has EVERYTHING it needs
-  from waves 1-2 -- 07-05 was its last missing input. Running two in parallel needs WORKTREES:
-  the shared git index mixes commits and the whole-tree pre-commit hook blocks everyone. WHAT
-  07-05 LEAVES FOR THE PLANS THAT OWN IT, AND IT IS FOUR THINGS: (1) 07-07 MUST PASS THE
-  NEGOTIATED game_uid (ctx.game_uid), not the process-local one -- D7-13, found on a real thief
-  log that carries TWO game_uids because adopt_negotiated_game_id renames the log mid-stream;
-  prior_game_uids will be [] on one seat and one entry on the other, and that is correct; (2)
-  07-07 must call write_log_artifact from the GAME-END path only -- D-64 and SEC-04, and
-  tests/unit/test_log_artifact_reachability.py FAILS the moment anything under network/turn_* or
-  orchestrator.py reaches it, in EITHER import form (the module path or the package's re-exported
-  name; the name form is the one 07-07 is most likely to write); (3) 07-08 must check
-  committed > 0 before displaying any ratio -- verify_log_turns returns (0, 0) on an empty
-  artifact and 0 == 0 is True; it needs NEITHER source file, proven by deleting both; and there
-  is no belief_argmax in the artifact at all, so D7-8's constraint is satisfied by ABSENCE rather
-  than by discipline at render time; (4) log_join.py sits at 147/150 -- the next plan to open it
-  SPLITS, never compresses. Fourteen deferred items now sit in the phase's deferred-items.md:
-  D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, D7-6, D7-7, D7-8, D7-9, D7-10 RESOLVED, D7-11, D7-12,
-  plus D7-13 (RESOLVED for log_) and D7-14 from this plan. Still open and NOT fixed per the scope
-  boundary: the local-truth CI job is RED until 07-06 creates src/pursuit/gui/ (D7-6, by
-  construction -- 07-06 turns it green by writing modules that pass, and must not soften the
-  gate), check_no_llm_in_strategy.sh has been absent from quality-gate.yml since 03-10, and
-  D7-5's recoverable handshake -> handshake transition still fires once per run (it is the very
-  record carrying the pre-negotiation uid in D7-13). OQ-1/OQ-2/OQ-3 are CLOSED in code with
-  citations. OQ-4 is resolved in the outline and half-implemented; 07-07 owns the rest. OQ-5 --
-  the games-played VALUE -- remains the human's at 07-10, before any live send. NOTHING IN THIS
-  REPO TRANSMITS: both shipped reporting.json files still read mode dry_run, and no test anywhere
-  can reach the network.
-stopped_at: PHASE 7 PLAN 05 EXECUTED (2026-08-17) -- log_<game_id>_g<NN>.json IS BUILT, AND ON A
-  REAL dev_launch GAME IT RE-HASHES 5/5 COMMITTED TURNS TO 100% ON BOTH SEATS WITH THE .jsonl AND
-  THE .ledger.jsonl DELETED FROM DISK. Rule 20 makes a VERIFYING replay viewer a threshold
-  condition for approving the project, so self-containment was proven by REMOVING the sources,
-  not by asserting it. THE JOIN KEYS ON LOCAL TURN TRUTH, reusing 06-05's discipline rather than
-  re-deriving it, and the peer's envelope turn is carried into peer_claimed_turns as EVIDENCE and
-  is never a key. THE COUNTER-CONTROL IS THE POINT AND IT HAS REAL COUNTS: the adversarial fixture
-  has the peer stamp COMMIT turn 99 and REVEAL turn 7 on one local turn 3 -- keyed on local truth
-  the artifact has 5 turn entries and 4 peer COMMIT+REVEAL pairs, keyed on envelope.turn it has 7
-  entries and 3 pairs, keys [0,1,2,3,4,7,99] -- it LOSES A PAIR AND INVENTS TWO TURNS THE PEER
-  NAMED OUT OF THIN AIR, while the HONEST fixture is identical under both keys, which is exactly
-  why a happy path alone proves nothing. AND IT IS NOT ONLY AN ADVERSARY: scanning all 20 recorded
-  games in logs/, EVERY ONE carries 5-6 message_received records whose local turn differs from the
-  peer's stamp -- every incoming HINT, because a hint arrives one turn late -- so a builder keyed
-  on the peer's number would misfile every hint of every honest game. RULES 8-9: ZERO INTERNAL
-  STATE, BY ALLOW-LIST. D7-8 records that the cop's true argmax is STILL written into every
-  language_turn JSONL record, correctly, because that log is the rule-38 audit record -- but this
-  artifact is emailed off the machine, so outgoing_hint copies exactly ("intent","text") and never
-  the whole record minus a deny-list, because an allow-list stays correct when a future plan adds
-  a field. All six LANGUAGE_INTERNAL_FIELDS scanned absent from BOTH real artifacts, with a
-  counter-control proving the scan finds a planted belief_argmax. A TRUNCATED TAIL IS TOLERATED
-  AND MID-FILE CORRUPTION IS NOT, without weakening read_all or _read_log: log_read.py is a
-  SECOND reader, because an audit that cannot read its own evidence must stop while a replay
-  artifact that cannot be produced from a crashed game is useless exactly when it is needed;
-  CorruptLogError is a distinct CLASS, asserted with an exact type check, because
-  json.JSONDecodeError is itself a ValueError and a looser assertion would have passed on the
-  tail case too. TWENTY-ONE REVERT PROBES, every count real, anchor asserted present and mutation
-  asserted landed before each run: re-key on envelope.turn 3 failed; peer_claimed_turn neutered
-  3; partial tail raises 3; mid-file corruption dropped 4; _is_turn bool guard removed 1;
-  language record copied wholesale 11; verify_log_turns counts uncommitted turns 8; re-hash
-  always True 2; truncated_tail out of the seal 1; seal from a fresh build not the FILE 1;
-  game_uid check removed 2; post-write re-hash check removed 1; outgoing hint never populated 3;
-  audit verdict never carried 2; prior_game_uids dropped 1; turn-loop imports the builder by
-  module path 2, by re-exported NAME 2, from the orchestrator 2; the join reaches for
-  CommitLedger 1; a new src/ module imports security.ledger 1; the reachability scanner blinded
-  2. THREE HOLES THE SELF-AUDIT FOUND IN MY OWN WORK, and the third is the one worth remembering:
-  (i) the _is_turn bool guard had NO test and probe 5 returned 18 passed / 0 failed -- it is not
-  cosmetic, because True == 1 and hash(True) == hash(1), so a ledger line stamped "turn": true
-  lands on TURN 1's dict key and silently replaces its nonce and hash; (ii) the post-write
-  re-hash check had no test and probe 12 returned 16 passed / 0 failed, fixed by giving it a real
-  cause -- a ledger whose h_commit disagrees with its own payload; (iii) THE REACHABILITY GATE
-  WAS GREEN BECAUSE IT WAS BLIND -- it watched module PATHS only, so a probe adding an import of
-  artifact_log FROM THE PACKAGE into network/turn_actions.py, a turn-loop module importing the
-  builder, PASSED 6/6. The package re-exports, so the name form is precisely the one 07-07 will
-  write. Same class as 07-11's vacuous fixtures. Coverage then found four more untested defensive
-  branches; all four new modules now sit at 100%. D-61 FOUND ON A REAL GAME BY A CHECK WRITTEN TO
-  CATCH THE OPPOSITE MISTAKE: logs/thief/521519a78f96c255.jsonl holds 42 records and TWO game_uids
-  -- the one pre-negotiation illegal_transition carries 3c0c5fd8f6705a3b, the other 41 and the
-  filename carry the negotiated 521519a78f96c255 -- because agent_lifecycle opens the log before
-  the handshake and adopt_negotiated_game_id renames it after. A builder reading "the log's
-  game_uid" off the first record would have REFUSED THE THIEF AN ARTIFACT IN EVERY GAME. Fixed by
-  requiring the negotiated id to appear somewhere and carrying every other id in prior_game_uids
-  INSIDE THE SEAL, because dropping it would hide the very fact 05-UAT G2 exists to make visible;
-  the strict half is kept and tested. Zero numbers invented: turn indices come from the records,
-  the filename and the sub-game index from 07-02's namer.
+Resume file: None -- 07-06 is fully committed and closed, tree clean. WAVE 2 IS DONE: 07-06 was
+  the last wave-2 plan. NEXT IS 07-07 (end-of-game reporting + result_), which has had everything
+  it needs since 07-05 and owns D7-13/D7-14 and the D7-3/D7-12 wiring; then 07-08 (replay viewer),
+  07-09 (gate evidence) and 07-10 (the one autonomous:false plan -- OAuth consent, one live send,
+  screenshots, and the games-played VALUE decision, OQ-5). WHAT 07-06 LEAVES FOR THE PLANS THAT OWN
+  IT, AND IT IS FOUR THINGS: (1) 07-10 MUST STATE A --refresh-ms VALUE for the screenshot and record
+  it -- OQ-6 is resolved STRUCTURALLY, the repository holds no interval number anywhere in src/ and
+  --refresh-ms is required=True with no default, so a launcher that omits it exits 2; (2) 07-08's
+  replay viewer inherits the QUANTISATION rule as well as D7-8 -- a heat ramp whose background
+  swallows small probabilities draws a support SMALLER than display.min_support_cells guards, and a
+  five-cell drawn plus names its centre off numbers that were themselves compliant, so
+  view_render.shade reserves the background for exactly zero and the drawn support is asserted
+  EQUAL to the published one; (3) NOTHING may move from sdk/view_render.py or sdk/view_text.py into
+  gui/ -- pyproject.toml:38 omits */gui/* from coverage, the 100% figures exist because the logic is
+  outside it, and tests/unit/test_gui_structural.py FAILS the moment a gui/ module performs
+  arithmetic, builds a string, or imports outside pursuit.sdk/pursuit.gui; (4) 07-09 records the
+  scripted-launch evidence -- --once exits 0 on this machine (Tk 8.6) against a synthetic snapshot
+  AND against both seats of a real game. Sixteen deferred items now sit in the phase's
+  deferred-items.md: D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, D7-6 RESOLVED, D7-7 RESOLVED, D7-8,
+  D7-9 RESOLVED, D7-10 RESOLVED, D7-11, D7-12, D7-13 (RESOLVED for log_), D7-14, plus D7-15 and
+  D7-16 from this plan. Still open and NOT fixed per the scope boundary:
+  check_no_llm_in_strategy.sh has been absent from quality-gate.yml since 03-10, and D7-5's
+  recoverable handshake -> handshake transition still fires once per run. OQ-1/OQ-2/OQ-3 are CLOSED
+  in code with citations; OQ-4 is 07-07's remainder; OQ-6 is CLOSED structurally by this plan.
+  OQ-5 -- the games-played VALUE -- remains the human's at 07-10, before any live send. NOTHING IN
+  THIS REPO TRANSMITS: both shipped reporting.json files still read mode dry_run, no test anywhere
+  can reach the network, and the live GUI's only output is a JSON file inside the agent's own
+  gitignored logs/<role>/ directory.
+stopped_at: PHASE 7 PLAN 06 EXECUTED (2026-08-17) -- THE LIVE GUI IS A SEPARATE PROCESS (D-76) FED
+  BY A PUBLISHED LocalView SNAPSHOT, AND IT FOUND A LEAK CHANNEL 07-11 STRUCTURALLY COULD NOT:
+  QUANTISATION. display.min_support_cells = 6 keeps the geometric inversion empty by guarding the
+  PUBLISHED support; a heat ramp that rounded small probabilities down to the background would paint
+  a SMALLER support than the grid carries, and a five-cell drawn plus names its centre exactly as
+  loudly as a printed coordinate. So shade reserves BACKGROUND_COLOUR for exactly zero and the
+  load-bearing assertion is an EQUALITY between the drawn support and the published one, asserted
+  BEFORE any inversion. IT IS NOT HYPOTHETICAL: measured on the production view, scent.own spans
+  0.08-1.8 (ratio 22.50) and scent.opponent 0.058-0.154 (2.66) against the belief's 1.57 -- the
+  near-uniform belief would have HIDDEN the defect behind the very panel it endangers, so both
+  halves are asserted; probe 1 gives 4 failed. D-76 DECIDED FROM THREE MEASUREMENTS, not preference:
+  tk.mainloop() blocks its calling thread and Watchdog os._exits at the configured 60 s threshold,
+  killing the agent mid-game; Tk is not thread-safe, and a polling thread could sample the pure
+  1.0/0.0 delta window inside decide(); and a separate process CANNOT HOLD the true joint position
+  at all, turning D-74's type-level firewall into a PROCESS-level one. The agent's whole
+  contribution is one contained call at the single point a joint turn resolves -- publish_view never
+  raises, never returns a verdict and never touches ctx.state, because since 06-05 a non-zero exit
+  code MEANS an audit mismatch and a failed cosmetic write must not forge a technical loss.
+  dev_launch (2db6cc8b039c82e7) exit 0, both seats matched=true, outcome capture, ZERO
+  technical_win and ZERO watchdog_incident. THE RUNTIME RECOVERY TEST RUNS THE WHOLE CHAIN -- real
+  decide(known_cell=ctx.state.thief) -> publish -> THE FILE ON DISK -> read_snapshot -> the exact
+  view_render/view_text calls gui/ makes -- and BOTH counter-controls fire: a leaky panel inverts to
+  [(5,3)] and its scent brightest set is [(5,3)]; the peak-cell-line-deleted sidebar earns a CLEAN
+  coordinate verdict while the heatmap still inverts, which is the argmax-only trap re-run at the
+  render layer. VERIFIED ON THE LIVE GAME, not only on fixtures: thief true cell (2,3), police
+  published argmax (1,1), entropy 5.5587, drawn support 49/49 == published, inversion [], scent peak
+  (2,2), and NO forward pair [2,3] and NO flat index 17/23 anywhere in the file -- the single scan
+  hit was own_cell pair [3,2], the REVERSED encoding colliding with our own rule-8-legal cell,
+  confirmed a false positive rather than assumed and filed as D7-16. ONE OF MY OWN ASSERTIONS WAS
+  WRONG-SHAPED AND FAILED FIRST: "the brightest stop must not CONTAIN the true cell" is false on a
+  near-uniform map, where ceil(v/peak*6) puts 20-odd of 49 cells in the last bucket; what is a leak
+  is the top stop NAMING a cell, so it is now a geometric inversion over the brightest set with a
+  non-empty guard. D7-6 CLOSED BY CODE AND THE GATE HARDENED IN THE SAME COMMIT, with all three of
+  D7-9's blind spots MEASURED OPEN FIRST: a bare __init__.py printed "OK: 1 module(s) scanned" exit
+  0 -> now exit 2; a panel.pyw reading ctx.state.thief was NEVER SCANNED -> now reported; and an
+  aliased s = ctx.state then s.thief, plus getattr(ctx.state,"thief") and asdict(s)["cop"], returned
+  violations=[] exit 0 -> now 3 violations. The dynamic-key check is on the KEY rather than on what
+  it is applied to, which makes it total over indirections nobody has thought of yet. The gate hit
+  198 code lines and was SPLIT into scripts/local_truth_ast.py, loaded by file path so 07-03's
+  standalone property survives; both halves checked explicitly at 140 and 102. What is STILL open is
+  written into the gate's own docstring rather than papered over -- a parameter named state is
+  beyond a single-module AST walk, and the gate still cannot see a coordinate that is DRAWN, so it
+  is nowhere cited as evidence about these panels. gui/ IS 200 CODE LINES OF PURE CONSTRUCTION
+  across five files, 34.5% of the 579 new src/ lines, and the coverage omission is made safe rather
+  than tolerated: zero arithmetic BinOps (annotation BitOr excluded), zero f-strings/.join/.format,
+  every pursuit import under pursuit.sdk or pursuit.gui, each scan paired with a control proving it
+  can fail -- and the plan's grep is clean AS PROSE too, the four forbidden spellings absent from
+  docstrings as well. All four new sdk modules at 100%. OQ-6 RESOLVED WITH ZERO NUMBERS IN src/:
+  --refresh-ms is required=True with no default and LiveDashboard takes it keyword-only with no
+  default (the Watchdog/TokenBucket precedent); --help exits 0 showing it required, and omitting it
+  exits 2. EIGHTEEN REVERT PROBES, every count real, anchor asserted present and mutation asserted
+  landed before each run: quantisation 4; lit_cells inert 6; publisher re-raises 2; published before
+  both slots 1; view_history shared 1; strategy map republished 14; fabricated uniform panel 1; idle
+  0.00 instead of unknown 1; half-written file raises 2; package-marker guard neutered 2; .pyw
+  dropped 1; state_aliases emptied 1; accessor_key None 1; direct .state chain dropped 5; belief
+  panel blanked 1; shared scent scale 3; outgoing hint never recorded 2; raw scent republished 4.
+  FOUR HOLES THE SELF-AUDIT FOUND IN MY OWN WORK: (i) lit_cells() had TEST-ONLY reachability -- the
+  D7-3 finding in my own code, found by grepping production callers for all 33 new public names, and
+  WIRED rather than excused (view_text._support now counts what the panel actually lights, so the
+  caption and the picture are one fact); (ii) one unguarded assert-bearing loop over fx.BARRIERS,
+  rewritten as a set comparison which FAILS on an empty source instead of passing; (iii) both
+  parametrize tables were inline literals -- named and floored, because a thinned table skips
+  silently; (iv) coverage exposed the one uncovered branch, a scent-free view that
+  view_builder._scent_view genuinely produces. D7-7 also CLOSED: HintHistory.record_outgoing had no
+  caller AT ALL and is now called from turn_language_io after the hint goes out, so the sidebar
+  shows a whole conversation. Zero numbers invented: every constant is presentation (CELL_PIXELS,
+  PANEL_PAD, DECIMALS...), the bucket count is len(HEAT_RAMP) everywhere, and the one number a live
+  GUI genuinely needs is deliberately not in the repository.
+---
+
+Last session: 2026-08-17T22:40:00+03:00
+Stopped at: Completed 07-06-PLAN.md (the live GUI -- a separate process over a published
+  LocalView snapshot) in full. Three tasks, each committed atomically: Task 1 the best-effort
+  publisher plus its read half, the one call site in `maybe_resolve`, and the leak scan run over
+  the WRITTEN FILE with its five-variant counter-control (`56e4d96`); Task 2 the five thin `gui/`
+  files over `sdk/view_render.py` + `sdk/view_text.py`, and the runtime recovery test that found
+  the quantisation channel (`840636b`); Task 3 the local-truth gate turned green BY CODE with
+  D7-9's three blind spots measured open then closed, split at 198 lines into
+  `scripts/local_truth_ast.py` (`ad46940`). A fourth commit closed four findings in my own work
+  (`dea2a60`): `lit_cells`'s test-only reachability wired into `view_text._support`, one unguarded
+  assert-bearing loop rewritten as a set comparison, both inline parametrize tables named and
+  floored, and the last uncovered branch (a scent-free view) covered. Gates: `ruff check .` 0
+  violations; 2047 passed / 0 failed against the 1974 baseline; coverage 97.19% (baseline 97.12%);
+  `check_line_limit.sh` exit 0 with all twenty-one new/touched files ALSO checked explicitly by
+  path; `check_local_truth.py` -> `OK: 5 module(s) scanned`, exit 0, and the `.sh` wrapper the same;
+  `check_no_llm_in_strategy.py` OK; every new `.py` confirmed NOT ignored by git (D7-10's guard);
+  grep of `gui/` for the four forbidden spellings -> no hits, prose included;
+  `python -m pursuit.gui.live_app --help` exit 0 with `--refresh-ms` shown as required and exit 2
+  when it is omitted; `--once` scripted launch exit 0 against a synthetic snapshot AND against both
+  seats of the real game; `scripts/dev_launch.py` exit 0, game `2db6cc8b039c82e7`, both seats
+  matched=true, outcome capture, zero `technical_win`, zero `watchdog_incident`. Rule-38
+  counters, all four: the full suite moved police 1918->1918 and thief 1911->1911 (delta 0/0); one
+  real game moved 1917->1918 and 1910->1911 (delta 1/1). All four new sdk modules at 100% coverage:
+  view_publish.py, view_snapshot.py, view_render.py, view_text.py; `gui/` is coverage-omitted and
+  holds 200 of the 579 new `src/` code lines (34.5%), every one of them widget construction, which
+  `test_gui_structural.py` enforces structurally. AST parametrize/loop scan over all six of this
+  plan's test files: 2 parametrize sites, both now NAMED and floored; 4 assert-bearing loops, three
+  already guarded and one found UNGUARDED and rewritten. Graphify refreshed -- 9734 nodes / 17412
+  edges / 579 communities; `graphify explain publish_view` resolves to `view_publish.py:90`
+  (degree 17, edge in from `maybe_resolve`) and `LiveDashboard` to `live_app.py:47`.
+  `07-06-SUMMARY.md` written with every number from a run in this session, self-check PASSED (25
+  paths and 4 task commits verified, every new source/test file additionally verified TRACKED by
+  git, and the `gui/` line share recomputed independently at 200/579 = 34.5%).
+  `docs/phases/phase-7/TODO.md` gains a ticked 07-06 row and a refreshed 07-96; D7-6, D7-7 and D7-9
+  marked RESOLVED and D7-15/D7-16 filed in the phase's `deferred-items.md`.
+Resume file: None -- the tree is clean and 07-06 is closed. Wave 2 of phase 7 is COMPLETE. Next is
+  `/gsd:execute-phase 7` continuing into 07-07 (end-of-game reporting + `result_`), which owns
+  D7-13/D7-14 and the D7-3/D7-12 wiring; then 07-08, 07-09 and the human-in-the-loop 07-10.
 ---
 
 Last session: 2026-08-17T16:10:00+03:00
