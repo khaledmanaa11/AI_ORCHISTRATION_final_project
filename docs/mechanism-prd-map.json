@@ -5,19 +5,19 @@
   "_version": "1.00",
   "mechanisms": {
     "src/pursuit/gui": {
-      "prds": [],
+      "prds": ["docs/PRD_gui.md"],
       "reason": "",
-      "note": "GAP, owned by 08-08. docs/PRD_display_belief.md governs what a view may CONTAIN (rules 8-9); it does not specify how the six gui/ files render or replay. Reading it as coverage would close this row with a document that answers a different question."
+      "note": "CLOSED by 08-08. docs/PRD_display_belief.md is deliberately NOT cited: it governs what a view may CONTAIN (rules 8-9), not how the seven gui/ files render or replay, and citing it here would close this row with a document that answers a different question."
     },
     "src/pursuit/network": {
       "prds": ["docs/PRD_mcp_transport.md"],
       "reason": "",
-      "note": "The FastMCP peer layer. The tunnel is explicitly OUT of this PRD's scope and is tracked as its own row, G1-M-TUNNEL."
+      "note": "The FastMCP peer layer. The tunnel is explicitly OUT of this PRD's scope (docs/PRD_mcp_transport.md:28) and is specified by docs/PRD_tunnel.md instead; the G1-M-TUNNEL row derives that exclusion from the transport PRD's own text rather than trusting this note."
     },
     "src/pursuit/sdk": {
-      "prds": [],
+      "prds": ["docs/PRD_sdk.md"],
       "reason": "",
-      "note": "GAP, owned by 08-08. The SDK layer is Table 5's first row and Segal 4's mandated single entry point, and it has no PRD of its own."
+      "note": "CLOSED by 08-08. The SDK layer is Table 5's first row and Segal 4's mandated single entry point. Its PRD covers both halves of the package -- the game rules as callable functions, and the rules 8-9 read model -- and records the limit honestly: nothing automated stops a FUTURE rule being written into network/."
     },
     "src/pursuit/security": {
       "prds": ["docs/PRD_commit_reveal.md"],
@@ -44,7 +44,7 @@
     },
     "src/pursuit/shared": {
       "prds": [],
-      "reason": "Cross-cutting configuration loaders, frozen value objects and version.py -- not a mechanism. Every number it loads is specified in the PRD of the mechanism that consumes it (belief_config -> PRD_belief_map, scent_config -> PRD_scent_map, gatekeeper_params -> PRD_gatekeeper, tunnel_config -> the tunnel PRD that G1-M-TUNNEL tracks as missing).",
+      "reason": "Cross-cutting configuration loaders, frozen value objects and version.py -- not a mechanism. Every number it loads is specified in the PRD of the mechanism that consumes it (belief_config -> PRD_belief_map, scent_config -> PRD_scent_map, gatekeeper_params -> PRD_gatekeeper, tunnel_config -> PRD_tunnel, display_config -> PRD_display_belief).",
       "note": ""
     },
     "src/pursuit/strategy": {
