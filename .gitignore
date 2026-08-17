@@ -57,9 +57,19 @@ env/
 .python-version
 
 # Testing / coverage
+#
+# The XML pair is 08-03's §17 "automated test reports" deliverable, produced by
+# the CI job and uploaded as a run artifact. They are BUILD OUTPUT — regenerable
+# with the one command written into .github/workflows/quality-gate.yml — so they
+# are ignored here for the same reason graph.json is: a per-run file committed by
+# reflex produces diffs nobody reads and evidence nobody can date.
 .pytest_cache/
 .coverage
 .coverage.*
+# Anchored: both are written at the workspace root by the command above, and an
+# unanchored `reports/` would silently swallow a `docs/reports/` somebody adds.
+/coverage.xml
+/reports/
 htmlcov/
 .tox/
 .mypy_cache/

@@ -65,6 +65,26 @@ jobs:
         run: sh scripts/check_no_llm_in_strategy.sh
 
   # Enabled 03-20: the uv project exists, so these no longer have to stay dormant.
+  #
+  # THE TEST-REPORT ARTIFACTS ARE 08-03's (§17 "automated test reports"). Until
+  # this plan the run produced a green tick and nothing a grader could open: no
+  # coverage.xml, no JUnit XML, no stored artifact — the whole evidence of the
+  # ≥85% claim was a line in a log that expires with the run. The three
+  # directives below are what `scripts/submission_testing._report_artifact_row`
+  # looks for, and `tests/unit/test_test_report_artifacts.py` parses this file so
+  # the claim cannot rot.
+  #
+  # `--cov-report=term-missing` is kept alongside the XML because
+  # `--cov-report=xml` REPLACES the default terminal report; without it the human
+  # reading the log loses the summary that `fail_under = 85` is judged on.
+  # `if: always()` uploads the reports for a FAILING run too, which is the run
+  # whose report anybody actually wants.
+  #
+  # Reproduce locally with exactly:
+  #   uv run pytest --cov --cov-report=term-missing --cov-report=xml \
+  #                 --junitxml=reports/junit.xml
+  # Both outputs are gitignored build artifacts (.gitignore, "Testing / coverage")
+  # — regenerable, never committed.
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -72,4 +92,12 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run ruff check .
-      - run: uv run pytest --cov
+      - run: uv run pytest --cov --cov-report=term-missing --cov-report=xml --junitxml=reports/junit.xml
+      - name: Store the automated test reports (§17)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            coverage.xml
+            reports/junit.xml
