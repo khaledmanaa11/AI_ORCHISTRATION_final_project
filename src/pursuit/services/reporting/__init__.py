@@ -17,6 +17,13 @@ from pursuit.services.reporting.artifact_config import (
     build_config_artifact,
     write_config_artifact,
 )
+from pursuit.services.reporting.artifact_declaration import (
+    DeclarationArtifactField,
+    DeclarationContext,
+    build_declaration_artifact,
+    verify_embedded_declarations,
+    write_declaration_artifact,
+)
 from pursuit.services.reporting.artifacts import (
     ArtifactField,
     ArtifactPrefix,
@@ -39,6 +46,8 @@ __all__ = (
     "ArtifactField",
     "ArtifactPrefix",
     "ConfigArtifactField",
+    "DeclarationArtifactField",
+    "DeclarationContext",
     "DosDetector",
     "QuotaField",
     "QuotaManager",
@@ -49,12 +58,15 @@ __all__ = (
     "artifact_digest_matches",
     "artifact_header",
     "build_config_artifact",
+    "build_declaration_artifact",
     "config_filename",
     "declaration_filename",
     "log_filename",
     "next_sub_game_index",
     "result_filename",
     "sub_game_suffix",
+    "verify_embedded_declarations",
     "write_artifact",
     "write_config_artifact",
+    "write_declaration_artifact",
 )

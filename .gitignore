@@ -79,9 +79,27 @@ models/checkpoints/
 # generation is covered by the same glob.
 config/*/games_played*.json
 
-# Local run output. NOTE: the four required JSON artifacts
-# (declaration_/config_/log_/result_) MUST be committed per rule 50 and
-# Appendix F rule 4 — keep them out of this ignore list.
+# Local run output: per-run wire logs (<uid>.jsonl) and nonce ledgers
+# (<uid>.ledger.jsonl). Bulky, regenerable, deliberately not version-
+# controlled — same reasoning as *.qtable above.
+#
+# D7-1 (07-02), correcting this comment. It used to read "the four required
+# JSON artifacts (declaration_/config_/log_/result_) MUST be committed per
+# rule 50 and Appendix F rule 4 — keep them out of this ignore list", while
+# the very next line ignored logs/ wholesale and
+# agent_step0_wiring.write_declaration wrote declaration_<game_id>.json into
+# logs/<role>/. The comment was false and that is what let the contradiction
+# survive: a document certifying a wrong fact turns every reader away at the
+# door. The rule below is CORRECT and stays byte-unchanged.
+#
+# The four deliverable artifacts go to game_artifacts/ instead — the
+# artifact_dir config/*/reporting.json sets, verified not ignored — and
+# services/reporting/artifacts.write_artifact REFUSES any path under logs/,
+# so the spine cannot regress back into this tree. Narrowing this rule was
+# the rejected alternative: git cannot re-include a file whose parent
+# directory is excluded, so it would take a logs/** + negation restructure
+# that the next editor can silently break, and it would put the bulky
+# per-run output one careless `git add` away from the repository.
 logs/
 *.log
 runs/
