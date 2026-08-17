@@ -3,98 +3,126 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 08-01, 08-02, 08-03, 08-04 and 08-05 are all committed and closed, tree
-  clean (only untracked throwaway `game_artifacts/` from dev_launch runs, which must NEVER be
-  committed -- D7-19: a grader reads those filenames as league evidence). WAVE 1 OF PHASE 8 IS
-  COMPLETE. NEXT IS WAVE 2: 08-06 (the README rewrite -- the phase's largest document and an
-  honesty problem, not a formatting one), 08-07 (architecture docs, C4 x4, ISO 25010, extension
-  points), 08-08 (the three missing per-mechanism PRDs) and 08-09 (research and visualization).
-  All four depend only on 08-01 and share no files, so they are a genuine four-way fan-out --
-  and per the parallel-executor rule they need WORKTREES if run concurrently.
-  WHAT WAVE 2 INHERITS, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py` now exits 1
-  at 49 PASS / 24 GAP / 13 UNJUDGED (was 41/32/13). The 24 remaining GAPs belong to 08-06 (9
-  README rows), 08-07 (4), 08-08 (3), 08-09 (4), 08-11/08-12 (2: the tag G6-08 and T5-06's
-  version reconciliation) and 08-06+07-10 jointly (2 screenshot rows).
-  08-06 SHOULD KNOW: G1-05 and G1-06 are still GAP and that is DELIBERATE -- they judge the
-  README's own `contribut` / `license` HEADINGS, not the existence of the files. `CONTRIBUTING.md`
-  and `LICENSE` now both exist at the repo root, so those two rows close with two sections that
-  link to them. G1-08/G1-09 are the honesty rows: `README.md:7` still says the agent "decides
-  moves with a trained tabular Q-learning policy", which Phase 3 WITHDREW.
-  08-11 STILL OWNS T5-06: `version.py` reads `1.00` and `pyproject.toml` reads `1.00.0`, and
-  D-79 derives the tag name from the reconciled value. 08-03 had `pyproject.toml` open and did
-  NOT reconcile it, on purpose.
-  A NEW STANDING CONSTRAINT FROM 08-03: every package under `src/pursuit/` now declares `__all__`,
-  and `tests/unit/test_package_exports.py` DERIVES each inventory from `git ls-files`. A plan
-  that adds a module to any package MUST add its name to that package's `__all__` or that test
-  fails. It already caught 08-05's own new `turn_buffer_queue.py`.
-  STILL OPEN AND STILL A HUMAN'S: OQ8-1 (the D7-17 question, DRAFTED and UNSENT at
-  `docs/phases/phase-8/D7-17-QUESTION-FOR-THE-LECTURER.md`), OQ8-2 (the games-played VALUE),
-  OQ8-5 (**THE LICENCE -- now a prepared MIT file carrying a `PREPARED, NOT ADOPTED` block, with
-  `docs/SUBMISSION-CHECKLIST.md` reading `**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION`. A
-  BICONDITIONAL TEST binds the two, so the flag cannot be dropped by tidying either file. 08-12
-  MUST NOT PUBLISH until the owner confirms the licence, the copyright-holder line and the
-  year**), OQ8-6 (the two repo URLs) and OQ8-7 (the agreed token ceiling).
-  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 144 commits sit ahead of
+Resume file: None -- 08-06 is committed and closed; the tree is clean apart from untracked
+  throwaway `game_artifacts/`, which must NEVER be committed (D7-19: a grader reads those
+  filenames as league evidence). WAVE 2 CONTINUES: 08-07 (architecture docs, C4 x4, ISO 25010,
+  extension points), 08-08 (the three missing per-mechanism PRDs) and 08-09 (research and
+  visualization). All three depend only on 08-01, share no files with each other or with 08-06,
+  and need WORKTREES if run concurrently.
+  WHAT 08-07/08-08/08-09 INHERIT, WRITTEN DOWN RATHER THAN REMEMBERED: `check_submission.py`
+  now exits 1 at **58 PASS / 15 GAP / 13 UNJUDGED** (was 49/24/13). The 15 remaining belong to
+  08-07 (4: G1-13 mermaid, G6-01, G6-02, G6-05), 08-08 (3: the sdk/gui/tunnel PRDs), 08-09
+  (4: G1-14 PROMPT_LOG, G5-02, G5-03, G5-05), 08-11/08-12 (2: G6-08 the tag and T5-06's version
+  reconciliation) and **08-06+07-10 jointly (2: G1-03b and G5-04, the screenshots)**.
+  THE TWO SCREENSHOT ROWS ARE NOT 08-06's TO CLOSE and are left GAP on purpose. The README
+  carries two MARKED-ABSENT SLOTS naming `docs/assets/live-gui-heatmap.png` and
+  `docs/assets/replay-verified-ok.png` and the plan that produces them (07-10). A NEW TEST
+  ENFORCES THAT DISCIPLINE: `tests/unit/test_readme_contract.py` fails the moment ANY image
+  link in the README resolves to nothing, so the slot cannot quietly become a fake asset.
+  A NEW STANDING CONSTRAINT FROM 08-06: the README is now judged BY THE SUITE, not only by the
+  CLI. Eight derived checks in `tests/unit/readme_contract_checks.py` -- Sec2.1's seven items,
+  Sec9.4.2's six sections, every relative link resolves, every repo path quoted in a fenced
+  command block exists, the shipped mail mode is stated while it is dry_run, no phase without a
+  `NN-VERIFICATION.md` reads as verified, the README names the brain `config/*/strategy.json`
+  actually selects, and NEITHER games_played counter value appears (rule 38). A plan that edits
+  the README must keep all eight green. 08-07 in particular: adding `docs/ARCHITECTURE.md` to
+  the README's Documentation map is safe, but linking it BEFORE creating it goes red.
+  ALSO: `scripts/plot_run2_curves.py` is the ONLY curve generator that exists.
+  `training/plot_curves.py` and `training/curves.py` were DELETED in `f3d9847` with the rest of
+  the run-1 stack -- the old README documented a command nobody could run. `artifacts/curves/`
+  now holds FIVE images: three from the WITHDRAWN run 1 and two from run 2. The two run-2
+  figures are drawn from TRACKED `artifacts/run2/curve.json` and `artifacts/run2_es/curve.json`,
+  and `config/{police,thief}/weights.json` is BYTE-IDENTICAL to `artifacts/run2/weights.json`.
+  STILL OPEN AND STILL A HUMAN'S: OQ8-1 (D7-17, DRAFTED and UNSENT), OQ8-2 (the games-played
+  VALUE -- 08-06 put NO number in the README and a test enforces it), OQ8-5 (THE LICENCE --
+  still PREPARED, NOT ADOPTED; the README's new `## Licence` section says all rights reserved
+  until the owner confirms, and `**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION` plus its
+  biconditional test are UNTOUCHED), OQ8-6 (the two repo URLs) and OQ8-7 (the token ceiling).
+  **OQ8-8 IS NOW EXPLICITLY UNRESOLVED RATHER THAN QUIETLY ASSUMED.** The instruction was to
+  confirm against the book whether Sec9.4.2 mandates Hebrew. The book is in Hebrew and CLAUDE.md
+  forbids re-deriving from it; `SEGAL_GUIDELINES.md`, `RULES.md` and `PROJECT_GUIDE.md` carry NO
+  language requirement. English is recorded as an ASSUMPTION in `docs/SUBMISSION-CHECKLIST.md`.
+  NOTHING IN THIS REPO HAS BEEN PUSHED: `git tag -l` is EMPTY and 149 commits sit ahead of
   `origin/main`.
-stopped_at: PHASE 8 WAVE 1 CLOSED (2026-08-17) -- 08-03 CLOSED EIGHT Sec17 GAP ROWS AND 08-05
-  CLOSED BOTH DEFERRED ITEMS, WITH THE SHIPPED COMMIT-REVEAL PATH PROVEN BYTE-IDENTICAL. Neither
-  `08-03-PLAN.md` nor `08-05-PLAN.md` existed; both were executed from `08-PLAN-OUTLINE.md`
-  Sec9, and every finding was RE-DERIVED at HEAD. ELEVEN COMMITS, each atomic.
-  08-03 (7 commits): `6c44e5c` the root graph artifacts genuinely ignored, `589b094` Sec14
-  packaging, `fbad2a7` the four config version fields, `2fd8a2a` the CI test-report artifacts,
-  `43da1ea` CONTRIBUTING/metadata/LICENSE, `d257b8d` the RULES.md correction, `ae281de` the
-  re-measured register. THE GAP COUNT MOVED 32 -> 24, and EXACTLY the eight rows 08-03 owned:
-  G4-06/G4-07 (`git check-ignore -q graph.json` 1 -> 0, anchored `/graph.json` `/graph.html`;
-  CLAUDE.md:178 had ASSERTED they were ignored and it was FALSE), G4-21 (24/28 -> 28/28 config
-  files versioned; neither resolution.json nor role.json feeds a peer-compared digest, so rule
-  11 is untouched), G2-05 (4/11 -> 11/11 packages declare `__all__`), G2-06 (`__version__`
-  re-exported from shared/version.py, never re-typed), G3-03 (CI runs `--cov-report=xml
-  --junitxml` and uploads both; PROVEN by running the identical command locally -- coverage.xml
-  290597 B, reports/junit.xml 309353 B, neither in `git status`), G6-03 (LICENSE + pyproject
-  license/authors) and G1-15 (RULES.md rule 48 survival pair 10/5 -> 5/10). NO OTHER ROW MOVED
-  in either direction. NO FIXED VALUE WAS CHANGED by the RULES.md correction -- both numbers were
-  already on the line; only the ORDER was wrong, and the order is what says whose number it is.
-  It is recorded in a new "Corrections to this extract" section with BOTH citations and the
-  honest limit that the Hebrew book was NOT re-read.
-  08-05 (4 commits): `112e593` deferred #13, `12c3a0c` deferred #19, `89ccdf0` the records +
-  graph refresh, `120cf54` the summary. BOTH CLOSED, NEITHER ACCEPTED. #13: `send_move_only`
-  no longer reads `ctx.state.turn` after `maybe_resolve`; `take_my_turn` threads
-  `pre_turn_state.turn` through a REQUIRED KEYWORD-ONLY `played_turn`. THE SHIPPED
-  COMMIT-REVEAL-ON PATH IS BYTE-IDENTICAL, MEASURED: a nonce-pinned drive gave the same
-  fingerprint `c79f76aff77180...`, the same 3 pushes at turns [0,0,0], the same h_commit
-  `6a34ee5c...` and the same ledger record at turn 0, before and after -- so the D-59 hash input
-  and the D-64 join key were never in the change's path, and an AST guard
-  (`test_shipped_path_turn_source.py`) keeps it that way. #19: `await_move` returns ONLY a MOVE,
-  BUFFERS a FINAL_REVEAL (without that it would have become 05-17's defect on the same path) and
-  skips the rest; it has exactly ONE production caller, the toggle-off branch, so a
-  commit-reveal-ON game never reaches it. `turn_buffer.py` was SPLIT along the seam deferred #20
-  named itself (142 -> 114, new `turn_buffer_queue.py` at 93).
-  THREE SELF-INFLICTED DEFECTS FOUND AND CLOSED BEFORE COMMIT, plus one inherited:
-  (1) the CI-workflow test grepped the WHOLE file and the comment block quotes the flags, so
-  deleting them from the `run:` line left it GREEN -- now reads non-comment lines only;
-  (2) `str(Path('reports/junit.xml'))` is backslashed on Windows and reported an ignored file as
-  trackable; (3) the LICENCE biconditional first grepped the register and tripped on the
-  register's OWN PROSE -- now one anchored `**LICENCE STATUS:**` field; and (4) INHERITED --
-  05-18's #19 bookmark, written to FAIL on closure, DID NOT FIRE, because its `counts["off"] > 0`
-  counted all nine MessageType members and the nine include MOVE, whose fixture payload is
-  legitimately malformed. Nine = 1 buffered + 1 awaited + 7 FOREIGN; all seven closed, and the
-  test now derives that partition from MessageType.
-  ALSO LEARNED: the 150-line gate COUNTS DOCSTRING LINES AS CODE. #13's rationale in a docstring
-  took `turn_commit.py` 149 -> 163, a VIOLATION; the prose moved to `#` comments with no code
-  compressed. Recorded in deferred item #20.
-  GATES: 2342 passed / 0 failed (baseline 2293), coverage 97.44% (from 97.43%), ruff 0,
-  line-limit 0 tree-wide with every new file also checked BY PATH, local-truth 7 modules, no-LLM
-  OK, `uv sync` + `uv lock --check` exit 0, `check_submission.py` exit 1 at 49/24/13.
-  `git diff config/` EMPTY. RULE-38 COUNTERS, ALL FOUR, PER PLAN: 08-03 suite 1923->1923 /
-  1916->1916 (0/0) and one real game 1923->1924 / 1916->1917 (+1/+1), `game_id`
-  `117041920a949129`; 08-05 suite 1924->1924 / 1917->1917 (0/0) and one real game 1924->1925 /
-  1917->1918 (+1/+1), `game_id` `b995f351b3796e23`, BOTH seats `audit_verdict matched=true` at
-  turn 5, zero technical_win, zero watchdog_incident. Two real games were played across the two
-  plans, so the counters advanced by exactly two. NOTHING SETS THE GAMES-PLAYED VALUE.
-  Graph refreshed: 11332 nodes / 19921 edges / 638 communities; `graphify explain await_move`
-  independently resolves it to `turn_buffer_queue.py:66` with a `--> record_final_reveal()` edge.
+stopped_at: 08-06 CLOSED (2026-08-17) -- THE ROOT README REBUILT, AND ITS CENTRAL CLAIM WAS
+  FALSE. `README.md:7` said each agent decides moves "with a trained tabular Q-learning policy
+  (Bayes + BFS fallback)". Phase 3 WITHDREW that design as unsound under the book's simultaneous
+  turn order (Sec5.3.2 p.35) and shipped a matrix-game mover over a learned 15-weight
+  evaluation. UNQUALIFIED MENTIONS 3 -> 0, and phase 3 no longer reads "in progress" against a
+  `passed` verification. No `08-06-PLAN.md` existed; executed from `08-PLAN-OUTLINE.md` Sec9.
+  THIS RUN WAS TERMINATED MID-PLAN BY A SERVER-SIDE 529 and resumed. On resumption the tree was
+  RE-READ rather than trusted: 26bd9d8 was verified committed and NOT redone; README.md was
+  found uncommitted at 511 lines with all 17 sections present, verified coherent by listing
+  every heading AND by running the gate's own `_sections()` parser over it, then continued.
+  FOUR COMMITS, each atomic: `26bd9d8` the run-2 curves, `129fa7f` the README, `a5fc8c5` the
+  contract tests, `6141b61` the register + phase TODO.
+  GAP MOVEMENT: 49 PASS / 24 GAP / 13 UNJUDGED -> **58 / 15 / 13**. NINE rows, and EXACTLY the
+  nine 08-06 owned (G1-01..G1-09). NO OTHER ROW MOVED IN EITHER DIRECTION -- that symmetry is
+  the counter-control. G5-04's image count rose 3 -> 5 from this plan's two new curves and the
+  row DID NOT MOVE, which is the judge working correctly: a learning curve is not a screenshot.
+  ASSERTIONS PROVEN RED ON THE OLD FILE, not asserted to be: `git show HEAD:README.md` was
+  restored in place and the test file run against it -- **6 failed / 11 passed** -- then restored
+  and the restoration verified BYTE-IDENTICAL by SHA-256. 6 of the 8 checkers return violations
+  on the old README; the two that do not (broken links, counter leak) are reported as GUARDS,
+  not dressed up as regressions. Every checker has an anti-vacuity control that fires it.
+  SIX DEVIATIONS, AND FOUR WERE DEFECTS IN THIS PLAN'S OWN WORK, found before commit:
+  (1) `plot_run2_curves.py` crashed on an out-of-tree `--out-dir` (`relative_to` ValueError);
+  (2) THE OUTLINE'S OWN ACCEPTANCE WAS WRONG -- it said to use the existing
+  `artifacts/curves/*.png` "with the generating command recorded", but those are the WITHDRAWN
+  run's figures and the command names `training/plot_curves.py`, DELETED in `f3d9847`. The
+  outline's own trap for this plan says to show what the shipped fit produced, so
+  `scripts/plot_run2_curves.py` was written instead;
+  (3) A FRAGILE GATE PASS IN MY OWN README -- `#` comments inside a bash fence parse as H1
+  headings in the gate's `_sections()` (it does not track fences), so G1-02 was passing with a
+  body of EXACTLY 3 lines, the floor. Fixed to 42 lines, zero phantom sections. FOUND BY
+  INSPECTING THE PARSE, NOT THE VERDICT;
+  (4) my own phase-8 status row said "In progress" without saying the phase is unverified -- the
+  new contract test caught it and THE README WAS FIXED, NOT THE CHECK;
+  (5) I wrote that "the peer that comes up first retries until the other answers"; grepping found
+  only a durable DISK-WRITE retry (`_DECLARE_RETRIES = 3`), so the unsupported claim was replaced
+  with `HandshakeOutcome.UNREACHABLE`, which is real;
+  (6) I attributed the four game artifacts to rule 50; `docs/RULES.md:99` does not name them, so
+  the attribution moved to `docs/PARAMETERS.md`, which does.
+  WHAT THE README DELIBERATELY DOES NOT CLAIM: mail `dry_run` + live PENDING (no report has ever
+  been delivered), phase 4 `human_needed`, phases 7 AND 8 NOT verified, NO league game played,
+  NO games-played number anywhere, screenshots as MARKED-ABSENT SLOTS, the rule-49 cross-link as
+  a STATED ABSENCE naming 08-12, and the licence PREPARED, NOT ADOPTED. Understatement avoided
+  too, by pointing at evidence: 2366 tests, 97.44%, Sec10.4 met for phases 1/2/3/5/6, GATE-5
+  closed across two machines on two networks, commit-reveal with nonces and a mutual audit.
+  EVERY DOCUMENTED COMMAND WAS RUN BEFORE IT WAS DOCUMENTED: `uv sync`, `--check-config` for both
+  roles (output quoted verbatim), `dev_launch.py`, both GUI processes' `--help` and `--once`, the
+  `.jsonl` refusal (exit 2, as claimed), `plot_run2_curves.py`, and all seven gate commands.
+  GATES: 2366 passed / 0 failed (baseline 2342; +7 curve tests, +17 contract tests), coverage
+  97.44% (unchanged -- the new code is in `scripts/`, outside the coverage source list, and is
+  measured by tests loaded BY PATH), ruff 0, line-limit 0 tree-wide with all four new `.py` files
+  ALSO checked by path (104/77/124/65) and the by-path form PROVEN to fire, local-truth 7
+  modules, no-LLM OK, `uv lock --check` exit 0, `check_submission.py` exit 1 at 58/15/13.
+  RULE-38 COUNTERS, ALL FOUR: suite 1925->1925 / 1918->1918 (0/0); one real game 1925->1926 /
+  1918->1919 (+1/+1), `game_id` `47873d48ba712222`, BOTH seats `audit_verdict matched=true`,
+  zero technical_win, zero watchdog_incident. `git diff config/` EMPTY -- the counters are
+  gitignored at `.gitignore:90`, so no counter value can be committed.
+  SELF-CHECK PASSED: 9 paths verified present AND tracked AND not gitignored, 4 commits verified
+  reachable, and TWO code-line numbers CORRECTED rather than left as written (67->77, 87->124).
   NOTHING PUSHED, NO TAG CREATED, NO REMOTE TOUCHED.
 ---
+
+Last session: 2026-08-17T23:20:00+03:00
+Stopped at: Completed 08-06 in full -- the root README rebuilt to Sec2.1's seven items AND
+  Sec9.4.2's six sections, with the rule-42 honesty defect closed. Four atomic commits
+  (`26bd9d8`, `129fa7f`, `a5fc8c5`, `6141b61`). Interrupted mid-plan by a 529 and resumed by
+  re-reading the tree rather than trusting it. `check_submission.py` 49/24/13 -> 58/15/13,
+  exactly the nine rows this plan owns. New assertions proven RED on the pre-fix file: 6 failed
+  / 11 passed against `git show HEAD:README.md`, restored byte-identically afterwards. Six
+  deviations, four of them defects in this plan's own work found before commit -- including a
+  GATE PASS THAT WAS FRAGILE RATHER THAN WRONG (a `#` comment inside a bash fence parses as a
+  heading, leaving G1-02's body at exactly the 3-line floor). Counters: suite 0/0, one real game
+  +1/+1, `game_id` `47873d48ba712222`, both seats matched=true.
+Resume file: None -- the tree is clean and 08-06 is closed. Next is `/gsd:execute-phase 8`
+  continuing wave 2: 08-07 (architecture docs), 08-08 (the three per-mechanism PRDs) and 08-09
+  (research and visualization). None of them shares a file with 08-06, but all three must keep
+  `tests/unit/test_readme_contract.py` green if they touch README.md.
+---
+
 
 Last session: 2026-08-17T16:40:00+03:00
 Stopped at: Completed 08-03 and 08-05 in full -- WAVE 1 OF PHASE 8 IS CLOSED. Neither plan file
