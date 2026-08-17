@@ -1,0 +1,91 @@
+{
+  "call_rate_comparison": {
+    "calls_per_turn_live": 1.6428571428571428,
+    "calls_per_turn_mocked": 1.661764705882353,
+    "calls_per_turn_ratio": 0.9886219974715549,
+    "tokens_per_call_ratio": 9.834233273016947
+  },
+  "config": {
+    "move_ceiling": 35,
+    "short_prompt_threshold_tokens": 140000,
+    "source": [
+      "config/police/language.json",
+      "config/police/game_params.json"
+    ],
+    "template_only_threshold_tokens": 180000,
+    "token_budget_per_series": 200000
+  },
+  "estimator_calibration": {
+    "estimated_tokens_per_call": 706.1012658227849,
+    "measured_output_per_call": 19.08695652173913,
+    "measured_tokens_per_call": 524.8695652173913,
+    "output_ceiling_share_of_estimate": 0.4248682370657201,
+    "ratio_estimate_over_measured": 1.3452890253416214,
+    "sample": "one live game (n=1), 23 provider calls"
+  },
+  "live": {
+    "calls": 23,
+    "calls_per_turn": 1.6428571428571428,
+    "cost_usd": 0.013828,
+    "games": 1,
+    "hints_sent": 14,
+    "input_share": 0.9636348575215374,
+    "input_tokens": 11633,
+    "outcome": "capture",
+    "output_tokens": 439,
+    "served_model": "claude-haiku-4-5-20251001",
+    "source": "docs/phases/phase-4/gate4_measurement_live.json",
+    "tokens_per_call": 524.8695652173913,
+    "tokens_per_turn": 862.2857142857143,
+    "total_tokens": 12072,
+    "turns": 14,
+    "usd_per_million_tokens": 1.1454605699138503
+  },
+  "mocked": {
+    "calls": 113,
+    "calls_per_turn": 1.661764705882353,
+    "games": 3,
+    "input_tokens": 4405,
+    "output_tokens": 1626,
+    "simulated": "mocked mode uses SIMULATED per-call token counts, never real API usage",
+    "source": "docs/phases/phase-4/gate4_measurement_mocked.json",
+    "tokens_per_call": 53.3716814159292,
+    "total_tokens": 6031,
+    "turns": 68
+  },
+  "projection": {
+    "games_before_short_prompt": 4.638833664678595,
+    "games_before_template_only": 5.964214711729622,
+    "games_within_budget": 6.626905235255136,
+    "max_games_fits_budget": false,
+    "max_games_per_team": 10,
+    "series_opponents": 6,
+    "tokens_for_max_games": 301800.0,
+    "tokens_for_one_per_opponent": 181080.0,
+    "tokens_per_full_game": 30180.0,
+    "usd_per_full_game": 0.03457
+  },
+  "prompt_sizes": {
+    "bluff": {
+      "estimated_tokens_mean": 685.0,
+      "system_chars": 1474,
+      "system_share_of_input_chars": 0.9571428571428572,
+      "system_words": 258,
+      "user_chars_mean": 66.0
+    },
+    "decode": {
+      "estimated_tokens_mean": 727.2025316455696,
+      "system_chars": 1560,
+      "system_share_of_input_chars": 0.9124157844080847,
+      "system_words": 270,
+      "user_chars_mean": 149.74683544303798
+    },
+    "hint_sample": {
+      "max_chars": 69,
+      "mean_chars": 48.74683544303797,
+      "n": 79,
+      "source": "docs/phases/phase-5"
+    },
+    "max_tokens_reserved_per_call": 300
+  }
+}
