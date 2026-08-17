@@ -34,6 +34,11 @@ TAMPER_INDEX = 1
 TAMPER_TURN = 1
 LIVE_LOG_NAME = "521519a78f96c255.jsonl"
 LIVE_LEDGER_NAME = "521519a78f96c255.ledger.jsonl"
+#: Named and floored rather than left inline in the loops below: a thinned
+#: table makes an assert-bearing loop skip its body and pass silently, which
+#: this phase has now found in four separate plans.
+REFUSED_NAMES = (LIVE_LOG_NAME, LIVE_LEDGER_NAME, "result_x.json", "declaration_x.json")
+BAD_DIGESTS = ("00" * 32, None, 17)
 
 REPORTING = pathlib.Path(__file__).parents[2] / "src" / "pursuit" / "services" / "reporting"
 REPLAY_MODULES = ("replay_verdict", "replay_session", "replay_source", "replay_verify")
@@ -118,7 +123,8 @@ def test_the_seal_check_is_not_a_no_op():
     """The counter-control: it says True for the clean artifact, and False
     for a digest of the wrong length, an absent digest and a non-str one."""
     assert seal_matches(fx.artifact()) is True
-    for digest in ("00" * 32, None, 17):
+    assert len(BAD_DIGESTS) == 3
+    for digest in BAD_DIGESTS:
         body = fx.artifact()
         body[fx.LogArtifactField.LOG_DIGEST] = digest
         assert seal_matches(body) is False, digest
@@ -129,7 +135,8 @@ def test_the_seal_check_is_not_a_no_op():
 def test_a_live_wire_log_and_its_nonce_ledger_are_both_refused_by_name(tmp_path):
     """Rule 18 keeps nonces secret while a game is live, so the replay viewer
     is not permitted to open the two files a live game writes."""
-    for name in (LIVE_LOG_NAME, LIVE_LEDGER_NAME, "result_x.json", "declaration_x.json"):
+    assert len(REFUSED_NAMES) == 4
+    for name in REFUSED_NAMES:
         path = tmp_path / name
         path.write_text("{}\n", encoding="utf-8")
         with pytest.raises(ValueError, match="replay viewer"):

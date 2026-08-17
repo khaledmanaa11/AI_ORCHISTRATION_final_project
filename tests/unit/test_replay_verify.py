@@ -19,6 +19,7 @@ from pursuit.services.reporting.replay_verify import (
     NOTHING_TO_VERIFY,
     VERIFIED_OK,
     VerdictState,
+    banner_colour,
     check_turns,
 )
 from tests.unit import replay_fixtures as fx
@@ -106,6 +107,19 @@ def test_the_three_banners_are_three_distinct_strings():
     }
     assert len(banners) == 3
     assert all(banner for banner in banners), "an empty banner is not a verdict"
+
+
+def test_every_state_has_its_own_colour_and_ok_is_not_the_failure_one():
+    """`banner_colour`'s ONLY caller is `gui/replay_panels.py`, which
+    `pyproject.toml:38` omits from coverage -- 07-06 found the same shape in
+    `lit_cells` and wired it rather than excusing it. The colour is not
+    decoration either: a `FAILED` banner painted the OK green would be a lie
+    on the one screen a grader screenshots, and a state with no entry would
+    raise `KeyError` at render time rather than at import."""
+    colours = [banner_colour(state) for state in VerdictState]
+    assert len(colours) == len(set(colours)) == 3
+    assert banner_colour(VerdictState.OK) != banner_colour(VerdictState.FAILED)
+    assert banner_colour(VerdictState.NOTHING_TO_VERIFY) != banner_colour(VerdictState.OK)
 
 
 def test_the_trailing_game_over_turn_is_not_counted_as_committed():
