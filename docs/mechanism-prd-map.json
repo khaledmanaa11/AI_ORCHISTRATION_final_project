@@ -1,0 +1,66 @@
+{
+  "_what": "Segal 2.3 coverage register: for every package the tree contains, either the per-mechanism PRD that specifies it, or the recorded reason it needs none.",
+  "_read_by": "scripts/submission_mechanisms.py -- the inventory is walked from git ls-files, NOT from this file. An entry here answers for a package; it can never invent one.",
+  "_rules": "An entry passes when `prds` is non-empty and every path in it is tracked and NOT superseded, or when `reason` is non-empty. A package the walk finds and this file does not answer for is a GAP. An entry naming a package the walk does not find is a GAP too.",
+  "_version": "1.00",
+  "mechanisms": {
+    "src/pursuit/gui": {
+      "prds": [],
+      "reason": "",
+      "note": "GAP, owned by 08-08. docs/PRD_display_belief.md governs what a view may CONTAIN (rules 8-9); it does not specify how the six gui/ files render or replay. Reading it as coverage would close this row with a document that answers a different question."
+    },
+    "src/pursuit/network": {
+      "prds": ["docs/PRD_mcp_transport.md"],
+      "reason": "",
+      "note": "The FastMCP peer layer. The tunnel is explicitly OUT of this PRD's scope and is tracked as its own row, G1-M-TUNNEL."
+    },
+    "src/pursuit/sdk": {
+      "prds": [],
+      "reason": "",
+      "note": "GAP, owned by 08-08. The SDK layer is Table 5's first row and Segal 4's mandated single entry point, and it has no PRD of its own."
+    },
+    "src/pursuit/security": {
+      "prds": ["docs/PRD_commit_reveal.md"],
+      "reason": ""
+    },
+    "src/pursuit/services": {
+      "prds": [],
+      "reason": "Umbrella package. Every mechanism under it lives in a child package that carries its own entry in this register (services/llm, services/reporting); nothing at this level is a mechanism in its own right.",
+      "note": ""
+    },
+    "src/pursuit/services/llm": {
+      "prds": ["docs/PRD_deception.md", "docs/PRD_gatekeeper.md"],
+      "reason": "",
+      "note": "gatekeeper.py and gatekeeper_types.py live here, so both PRDs are cited."
+    },
+    "src/pursuit/services/reporting": {
+      "prds": [
+        "docs/PRD_log_artifact.md",
+        "docs/PRD_result_artifact.md",
+        "docs/PRD_end_of_game.md"
+      ],
+      "reason": "",
+      "note": "The declaration_ artifact's wrapper is specified inside PRD_end_of_game.md's artifact set but has no production caller yet -- registered separately in docs/SUBMISSION-CHECKLIST.md and owned by 08-04."
+    },
+    "src/pursuit/shared": {
+      "prds": [],
+      "reason": "Cross-cutting configuration loaders, frozen value objects and version.py -- not a mechanism. Every number it loads is specified in the PRD of the mechanism that consumes it (belief_config -> PRD_belief_map, scent_config -> PRD_scent_map, gatekeeper_params -> PRD_gatekeeper, tunnel_config -> the tunnel PRD that G1-M-TUNNEL tracks as missing).",
+      "note": ""
+    },
+    "src/pursuit/strategy": {
+      "prds": [
+        "docs/PRD_matrix_mover.md",
+        "docs/PRD_belief_map.md",
+        "docs/PRD_scent_map.md",
+        "docs/PRD_display_belief.md"
+      ],
+      "reason": "",
+      "note": "docs/PRD_rl_strategy.md is deliberately NOT cited: it is superseded, and the resolver refuses a superseded PRD as coverage."
+    },
+    "src/pursuit/strategy/graph": {
+      "prds": [],
+      "reason": "Graph primitives (connected components, cycle rank, territory) consumed by the matrix mover's evaluation weights; their contract is specified inside docs/PRD_matrix_mover.md rather than in a PRD of their own.",
+      "note": ""
+    }
+  }
+}
