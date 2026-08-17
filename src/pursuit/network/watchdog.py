@@ -93,6 +93,21 @@ class Watchdog:
         """Record activity now. 02-09 calls this every turn."""
         self._last_activity = self._clock()
 
+    @property
+    def idle_seconds(self) -> float:
+        """Seconds since the last `touch()` -- READ-ONLY, and the exact
+        quantity `check_once` compares against the threshold.
+
+        Added by 07-06 for the live view's freeze timer. 07-03 recorded that
+        `LocalView.idle_seconds` had to be supplied by the caller "because
+        `Watchdog` exposes no public idle reading and this plan does not edit
+        `network/`"; this is that reading. It takes no lock and mutates
+        nothing, so it cannot perturb the poll loop -- a float read against a
+        float write is atomic under the GIL, and a value one poll stale is
+        exactly what a display wants anyway.
+        """
+        return self._clock() - self._last_activity
+
     def start(self) -> None:
         """Start the background poll loop."""
         self._thread.start()

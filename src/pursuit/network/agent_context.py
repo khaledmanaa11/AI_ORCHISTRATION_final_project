@@ -32,6 +32,7 @@ from pursuit.network.state_machine import TransitionReporter, TurnStateMachine
 from pursuit.network.watchdog import Watchdog
 from pursuit.sdk import engine
 from pursuit.sdk.actions import CopAction
+from pursuit.sdk.view_builder import HintHistory
 from pursuit.shared.config import GameParams
 from pursuit.shared.network_config import NetworkParams
 from pursuit.shared.resolution import BOOK_ONLY, ResolutionRules
@@ -118,6 +119,13 @@ class AgentContext:
     identity: GameIdentity | None = None
     negotiated_game_id: str | None = None
     candidate_game_ids: set[str] | None = None
+    # 07-06 (D-76): the live view's hint log. `ctx.incoming_hints` holds only
+    # the LAST hint per sender and is never cleared, so the turn-by-turn log
+    # has to be accumulated somewhere that survives a turn -- and per NET-02 /
+    # rule 2 that somewhere is THE CONTEXT, never a module-level global and
+    # never a class attribute. `default_factory` gives each context its own
+    # instance, so two contexts in one interpreter still share no field.
+    view_history: HintHistory = field(default_factory=HintHistory)
 
 
 def build_context(

@@ -23,6 +23,7 @@ from pursuit.network import move_payload
 from pursuit.network.orchestrator import AgentContext, Coord
 from pursuit.sdk import engine
 from pursuit.sdk.actions import CopAction
+from pursuit.sdk.view_publish import publish_view
 from pursuit.shared.config import GameParams
 from pursuit.shared.state import GameState
 
@@ -94,4 +95,18 @@ def maybe_resolve(ctx: AgentContext) -> Outcome | None:
     ctx.pending_cop_action = None
     ctx.pending_thief_move = None
     ctx.pending_hints = {}
+    # 07-06 (D-76), THE ONE PUBLICATION SITE. Here because this is the single
+    # point at which a joint turn has actually resolved -- the same reason
+    # `ScentField.advance` is called here rather than duplicated into
+    # take_my_turn and await_opponent_turn. It runs on the agent's own event
+    # loop (no thread, no coroutine): `decide()` is synchronous, so nothing
+    # can interleave and sample the pure 1.0/0.0 delta window inside it.
+    #
+    # CONTAINED, not merely tidy: `publish_view` never raises, never returns
+    # a verdict and never touches `ctx.state`, on
+    # `capture_declaration.send_capture_declaration`'s model. Since 06-05 a
+    # non-zero process exit code MEANS an audit mismatch (`main.py:25-29`),
+    # so an exception escaping a cosmetic write would forge a technical-loss
+    # signal. `outcome` below is returned unchanged whatever happens above.
+    publish_view(ctx, ctx.view_history)
     return outcome

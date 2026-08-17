@@ -104,6 +104,11 @@ async def compose_and_send_hint(
     )
     text = await compose_outgoing(plan, bluff_context, timeout=remaining)
     await turn_buffer.send_hint(ctx, turn, text=text, intent=plan.intent)
+    # 07-06 (D-76, closing D7-7's zero-caller finding): the live sidebar's
+    # hint log is one peer's WHOLE conversation, so our own outgoing hint is
+    # recorded here -- after it actually went out, never before. Its intent
+    # flag is the one entry in that log that is a fact rather than a claim.
+    ctx.view_history.record_outgoing(turn=turn, text=text, intent=plan.intent.value)
 
     entropy, argmax, reliability = belief_snapshot(ctx)
     append_event(
