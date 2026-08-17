@@ -22,14 +22,13 @@ Three subjects, all about what must NOT be somewhere:
 import ast
 import json
 import re
-import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from pursuit.services.reporting.gmail_sink import GMAIL_SEND_SCOPE
 from pursuit.shared.reporting_config import ReportingMode, load_reporting_config
+from tests.unit.gitignore_probe import git_available, git_ignored
 from tests.unit.gmail_fixtures import CONFIG_ROOT, TOO_MANY_REQUESTS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -149,26 +148,11 @@ def test_the_send_scope_is_googles_own_send_only_identifier():
     assert GMAIL_SEND_SCOPE == "https://www.googleapis.com/auth/gmail.send"
 
 
-def _git_ignored(paths: list[Path]) -> list[str]:
-    """The subset of `paths` git would refuse to track.
-
-    NUL-separated and in BYTES both ways: `text=True` on Windows writes CRLF
-    into the child's stdin, and git then sees every path with a trailing `\\r`.
-    Measured -- that alone reported five false positives.
-    """
-    result = subprocess.run(
-        ["git", "check-ignore", "--stdin", "-z"],
-        input=b"\0".join(str(path).encode("utf-8") for path in paths),
-        capture_output=True, cwd=REPO_ROOT, check=False,
-    )
-    return [chunk.decode("utf-8") for chunk in result.stdout.split(b"\0") if chunk.strip()]
-
-
 def test_no_source_or_test_file_is_swallowed_by_gitignore():
     """A `.gitignore` secret pattern silently ate this very file once. It fails
     rather than skips without git: a gate that reports OK for having looked at
     nothing is worse than no gate (the D7-6 standard)."""
-    assert shutil.which("git"), "git is unavailable, so this gate cannot vouch for anything"
+    assert git_available(), "git is unavailable, so this gate cannot vouch for anything"
     sources = [
         path
         for root in ("src", "tests", "training", "scripts")
@@ -176,10 +160,10 @@ def test_no_source_or_test_file_is_swallowed_by_gitignore():
         if "__pycache__" not in path.parts
     ]
     assert len(sources) > 100, "the scan found almost nothing, so it proves nothing"
-    assert _git_ignored(sources) == []
+    assert git_ignored(sources) == []
 
 
 def test_control_the_gitignore_scan_finds_a_file_that_is_ignored():
     """Without this, the scan above would pass against a broken subprocess
     call. `.env` is ignored on purpose and always has been."""
-    assert _git_ignored([REPO_ROOT / ".env"]) != []
+    assert git_ignored([REPO_ROOT / ".env"]) != []

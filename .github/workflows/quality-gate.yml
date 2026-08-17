@@ -33,6 +33,37 @@ jobs:
       - name: Local-truth firewall (no objective board state reachable from gui/)
         run: sh scripts/check_local_truth.sh
 
+  # Rule 25 / STRAT-07: a language model reachable from the move-decision path.
+  #
+  # STATED PRECISELY, because the two governing documents differ and the weaker
+  # reading is the honest one to record. docs/RULES.md:61 marks rule 25
+  # **RECOMMENDED** with "No mandated sanction" — the book warns that blind
+  # reliance invites hallucinations, illegal moves and technical loss, but names
+  # no penalty. CLAUDE.md's own binding list is stricter: "Never let the language
+  # model choose a move" sits among the project's disqualifiers. This job enforces
+  # the stricter of the two, which is the same posture SEGAL_GUIDELINES.md:182
+  # asks for wherever the documents disagree.
+  #
+  # WIRED IN BY 07-09, AND IT SHOULD HAVE BEEN HERE SINCE 03-10. The script was
+  # written to be CI-runnable in that plan and then never referenced from this
+  # file; 07-03 measured its absence and recorded it rather than silently fixing
+  # it (deferred-items.md). Phase 7 adds LLM-adjacent surface area — a mail
+  # gatekeeper sharing a class with the LLM one, and two GUI processes — so the
+  # guard is wired in here.
+  #
+  # The script is a plain `ast` walk that never imports `pursuit`, so this job
+  # would pass on a bare checkout; `uv sync` runs anyway because the wrapper
+  # invokes `uv run`, and keeping the three jobs identically shaped is worth more
+  # than the seconds saved.
+  no-llm-in-strategy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - name: Rule 25 firewall (no language model reachable from strategy/)
+        run: sh scripts/check_no_llm_in_strategy.sh
+
   # Enabled 03-20: the uv project exists, so these no longer have to stay dormant.
   lint-and-test:
     runs-on: ubuntu-latest

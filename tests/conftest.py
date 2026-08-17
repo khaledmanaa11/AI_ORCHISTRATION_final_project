@@ -29,17 +29,21 @@ def _shipped_config_is_off_limits():
     rather than shipped. See `tests/_shipped_config_guard.py` for why the
     guard raises instead of redirecting.
 
+    WIDENED BY 07-09 (D7-18). Until then the patch covered ONE writer --
+    `step0_collect`'s -- so it guarded `games_played.json` rather than the
+    rule, which is about the TREE. `guard.install` now wraps every module
+    that binds `durable_write_json`, and the count is asserted here so a
+    silently-emptied list cannot make this fixture a no-op.
+
     Imported inside the body, matching `network_params` below: a
     module-level import of a sibling would couple collection of the entire
     suite to it."""
-    from pursuit.security import step0_collect
     from tests import _shipped_config_guard as guard
 
     before = guard.read_counters()
     with pytest.MonkeyPatch.context() as patched:
-        patched.setattr(
-            step0_collect, "durable_write_json", guard.guarded(step0_collect.durable_write_json),
-        )
+        installed = guard.install(patched)
+        assert len(installed) == len(guard.DURABLE_WRITE_BINDERS) > 1
         yield
     after = guard.read_counters()
     assert after == before, (

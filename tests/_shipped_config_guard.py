@@ -33,6 +33,7 @@ not cover -- late, but caught, and never silently.
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -40,6 +41,28 @@ SHIPPED_CONFIG_ROOT = REPO_ROOT / "config"
 SHIPPED_COUNTERS = (
     SHIPPED_CONFIG_ROOT / "police" / "games_played.json",
     SHIPPED_CONFIG_ROOT / "thief" / "games_played.json",
+)
+
+WRITER_ATTR = "durable_write_json"
+
+#: EVERY module that binds `durable_write_json` into its own namespace, plus
+#: the module that defines it. D7-18 (07-09): until this list existed the guard
+#: covered `step0_collect` ALONE, so it caught `games_played.json`'s writer and
+#: not the RULE, which is "no test writes the shipped config tree". 07-07's
+#: revert probe 17 pointed `QuotaManager` at `config/police/` and the suite
+#: happily wrote `config/police/reporting_quota.json` -- no test failed for the
+#: WRITE. A binding is patched per module because `from ... import
+#: durable_write_json` copies the function object: patching only the defining
+#: module would leave all five copies live.
+#: `tests/unit/test_shipped_config_guard.py` re-derives this list by AST over
+#: `src/`, so a SIXTH writer fails there rather than escaping the guard.
+DURABLE_WRITE_BINDERS = (
+    "pursuit.network.agent_step0_wiring",
+    "pursuit.sdk.view_publish",
+    "pursuit.security.step0_collect",
+    "pursuit.services.reporting.artifacts",
+    "pursuit.services.reporting.quota",
+    "pursuit.shared.durable_write",
 )
 
 
@@ -84,6 +107,19 @@ def guarded(write_json):
         return write_json(path, payload, **kwargs)
 
     return _write
+
+
+def install(patched) -> tuple[str, ...]:
+    """Wrap EVERY binding in `DURABLE_WRITE_BINDERS`, returning the names
+    patched so a caller can assert the count rather than trust it.
+
+    `patched` is a `pytest.MonkeyPatch`, so every wrap is undone when its
+    context exits -- the guard never outlives the session it guards.
+    """
+    for name in DURABLE_WRITE_BINDERS:
+        module = importlib.import_module(name)
+        patched.setattr(module, WRITER_ATTR, guarded(getattr(module, WRITER_ATTR)))
+    return DURABLE_WRITE_BINDERS
 
 
 def read_counters() -> dict[str, str | None]:

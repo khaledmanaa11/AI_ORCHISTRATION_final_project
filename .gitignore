@@ -105,6 +105,25 @@ logs/
 runs/
 tmp/
 
+# D7-19 (07-09). `game_artifacts/` is deliberately NOT ignored -- that is D7-1's
+# whole resolution, because rule 50 and Appendix F rule 4 require the four JSON
+# artifacts to be COMMITTABLE. The cost is that every scripts/dev_launch.py run
+# leaves untracked files there, and one `git add -A` would publish a throwaway
+# local game under filenames a grader reads as league evidence.
+#
+# Only the two patterns that can NEVER be one of those four artifacts are
+# ignored here, and nothing else:
+#   *.eml        the rendered RFC 5322 message a DRY RUN writes beside the
+#                report. Not JSON, not one of the four names, never required.
+#   *.prev.json  durable_write_json's rotation generation. `.prev` is not a
+#                name docs/PARAMETERS.md:165-168 gives.
+# The four required names (declaration_/config_/log_/result_) stay tracked and
+# tracked-able, and tests/unit/test_artifact_dir_hygiene.py asserts BOTH halves
+# -- that these two are ignored and that the four are not -- so narrowing this
+# further would fail there rather than quietly hide league evidence.
+game_artifacts/**/*.eml
+game_artifacts/**/*.prev.json
+
 # Tunnel config may embed auth tokens
 ngrok.yml
 ngrok.yaml

@@ -28,3 +28,27 @@ git cannot re-include a file whose parent directory is excluded, so narrowing it
 require a `logs/**`-plus-negations restructure that the next editor can silently break,
 and it would put the bulky per-run wire logs and nonce ledgers one careless `git add`
 away from the repository.
+
+## Staging rule — never `git add -A` here (D7-19)
+
+Every `scripts/dev_launch.py` run leaves untracked files in this directory, from a
+throwaway local game. **Stage league evidence by explicit path.** A blanket sweep would
+commit a development game under filenames a grader reads as league evidence, and rule 38
+territory is one directory away.
+
+Two patterns that can never be one of the four required artifacts are ignored as of plan
+07-09, so a careless sweep is that much less harmful:
+
+| Pattern | What it is | Why it is safe to ignore |
+|---|---|---|
+| `game_artifacts/**/*.eml` | the rendered RFC 5322 message a **dry run** writes beside the report | not JSON, and not one of the four names |
+| `game_artifacts/**/*.prev.json` | `durable_write_json`'s rotation generation | `.prev` is not a name `docs/PARAMETERS.md:165-168` gives |
+
+**The four required names are NOT ignored and must never be.**
+`tests/unit/test_artifact_dir_hygiene.py` asserts both halves — that those two patterns are
+ignored *and* that all four required names are not — so narrowing this further fails a test
+rather than quietly hiding evidence.
+
+Which of the remaining files are real league evidence and which are debris is a judgement
+only the operator running the game can make; plan 07-10 owns it
+(`docs/phases/phase-7/OAUTH-RUNBOOK.md` §6).
