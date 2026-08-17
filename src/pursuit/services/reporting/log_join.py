@@ -5,14 +5,11 @@ THE JOIN KEY IS THE RECORD'S OWN TOP-LEVEL `turn`, NEVER `envelope["turn"]`.
 That is not a style preference; it is the exact bug 06-05 closed, and
 `network/agent_audit_observed.observed` already writes it down: the top-level
 turn is "a number THIS side stamped ... never on the nested `envelope`'s turn,
-which on the received side is whatever the peer chose to claim". Keying on the
-peer's number let an adversary stamp its COMMIT and REVEAL with disjoint turns,
-which emptied `audit.audit_peer_records`'s coverage intersection (re-opening
-the `{"records": []}` rule-36 evasion) and sent every entry down the
-trailing-commit exemption, so the D-67 revealed-vs-played check never fired.
-This builder reuses that discipline rather than re-deriving it. The peer's
-claimed turn is carried verbatim into `peer_claimed_turns` as EVIDENCE and is
-never a key.
+which on the received side is whatever the peer chose to claim". This builder
+reuses that discipline rather than re-deriving it, and the peer's claimed turn
+is carried verbatim into `peer_claimed_turns` as EVIDENCE, never as a key.
+What keying on the peer's number cost, and what it still costs against an
+HONEST peer, is measured in `docs/PRD_log_artifact.md` Sec2.
 
 A TRUNCATED TAIL IS TOLERATED; MID-FILE CORRUPTION IS NOT -- see
 `log_read.py`, which owns that reader and the reasoning. A dropped partial
