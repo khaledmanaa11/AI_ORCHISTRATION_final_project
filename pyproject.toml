@@ -1,6 +1,13 @@
 [project]
 name = "pursuit"
-version = "1.00.0"
+# T5-06, closed by 08-11. This string is a COPY of `src/pursuit/shared/version.py`
+# `VERSION`, which is the single source of truth for the project version -- the one
+# Table 5's `Version control` row reads and the one D-79 derives the submission tag
+# name from. TOML cannot import, so the copy is unavoidable; it is pinned instead by
+# `tests/unit/test_version_single_source.py`, which fails on any disagreement.
+# It read "1.00.0" until 2026-08-17 while VERSION read "1.00" -- two literals, one
+# of which nobody read until they disagreed.
+version = "1.00"
 requires-python = ">=3.10"
 description = "Cops-and-robbers pursuit engine"
 # §17 packaging metadata, added by 08-03.
