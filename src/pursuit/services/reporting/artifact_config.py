@@ -49,6 +49,7 @@ from pathlib import Path
 from pursuit.network.config_hash import config_digest
 from pursuit.services.reporting.artifacts import (
     artifact_digest,
+    artifact_digest_matches,
     artifact_header,
     config_filename,
     write_artifact,
@@ -61,6 +62,7 @@ __all__ = (
     "SCENT_STEM",
     "ConfigArtifactField",
     "build_config_artifact",
+    "verify_config_artifact",
     "write_config_artifact",
 )
 
@@ -118,6 +120,21 @@ def build_config_artifact(
     return artifact
 
 
+def verify_config_artifact(path: Path | str) -> bool:
+    """Read a written config artifact back and check its own seal.
+
+    Not a tautology on a freshly built object: this reads the FILE, so it is
+    the round trip through `durable_write_json` and back through `json.loads`
+    that is being checked -- an encoding fault, a truncated write or a
+    `.prev` rotation that landed the wrong generation all show up here as a
+    broken seal rather than as a graded artifact nobody re-read.
+    """
+    artifact = json.loads(Path(path).read_text(encoding="utf-8"))
+    return artifact_digest_matches(
+        artifact[ConfigArtifactField.CONFIG], artifact[ConfigArtifactField.CONFIG_DIGEST]
+    )
+
+
 def write_config_artifact(
     artifact_dir: Path | str,
     config_dir: Path | str,
@@ -126,10 +143,18 @@ def write_config_artifact(
     game_id: str,
     sub_game_index: int,
 ) -> Path:
-    """Build and durably write the config artifact, through the one
-    `write_artifact` gate -- so this writer inherits D7-1's refusal of any
-    path under `logs/` rather than restating it."""
+    """Build, durably write, then re-read and re-check the seal.
+
+    Writing goes through the one `write_artifact` gate, so this writer
+    inherits D7-1's refusal of any path under `logs/` rather than restating
+    it, and the post-write verification is the config half of the same
+    promise `write_declaration_artifact` makes for signatures: an artifact
+    that does not verify must fail here rather than ship.
+    """
     artifact = build_config_artifact(
         config_dir, game_uid=game_uid, game_id=game_id, sub_game_index=sub_game_index
     )
-    return write_artifact(artifact_dir, config_filename(game_id, sub_game_index), artifact)
+    path = write_artifact(artifact_dir, config_filename(game_id, sub_game_index), artifact)
+    if not verify_config_artifact(path):
+        raise ValueError(f"config artifact failed seal re-verification after write: {path}")
+    return path
