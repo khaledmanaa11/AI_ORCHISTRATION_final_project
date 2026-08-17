@@ -51,6 +51,7 @@ __all__ = (
     "GmailScopeError",
     "GmailSink",
     "build_gmail_transport",
+    "load_send_only_credentials",
     "require_send_only_scope",
 )
 

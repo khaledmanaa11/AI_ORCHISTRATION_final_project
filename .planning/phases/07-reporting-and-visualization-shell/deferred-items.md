@@ -266,3 +266,67 @@ against a synthetic panel that markered `belief.argmax` and labelled the `scent.
 peak. Do not cite it as evidence about these panels. The attribute-chain indirection
 (alias/`getattr`/`asdict`), the `rglob('*.py')` `.pyw` blind spot and the empty-`__init__.py`
 anti-vacuity hole all remain 07-06's to close.
+
+---
+
+## D7-10 · A `.gitignore` secret pattern can swallow a source or test file silently
+
+**Found by:** 07-04 self-audit (in its own work) · **Owner:** resolved here; the GATE is now
+permanent
+
+This plan's third test file shipped first as `tests/unit/test_gmail_secrets.py`. `.gitignore:26`
+carries `*_secret*` — a correct rules-39-40 guard that must NOT be weakened — and it matched the
+filename. `git status` simply never listed the file: 18 passing tests that git would have refused
+to track, that CI would never have run, and that the grader would never have seen. **That is the
+most complete form of the vacuity this phase keeps finding**, because the tests pass locally right
+up until the moment they stop existing.
+
+**Resolved, and not by loosening the pattern:** the file is renamed
+`tests/unit/test_gmail_credentials.py`, and `test_no_source_or_test_file_is_swallowed_by_gitignore`
+now runs `git check-ignore -z --stdin` over every `.py` under `src/`, `tests/`, `training/` and
+`scripts/`. It fails (rather than skips) when git is unavailable, on the D7-6 standard that a gate
+reporting OK for having looked at nothing is worse than no gate, and it carries an anti-vacuity
+floor (`> 100` files scanned) plus a control that asserts the scan DOES find `.env`. Probe: a file
+named `test_probe_secret_name.py` → **1 failed**.
+
+Measured while fixing it: **no other `.py` in the repository is currently ignored.**
+
+**Also learned, and written into the helper's docstring:** `subprocess.run(..., text=True)` on
+Windows writes CRLF into the child's stdin, so `git check-ignore --stdin` saw every path with a
+trailing `` and reported **five false positives**. The check passes bytes with `-z`.
+
+---
+
+## D7-11 · `durable_write_json`'s two older copies of the retry/backoff pair are still un-folded
+
+**Found by:** 07-01 (as D7-2) · **Restated by 07-04** · **Owner:** unchanged
+
+07-04 opened `shared/durable_write.py` to extract `durable_write_bytes` (the `.eml` needed the same
+crash-safe write, and a second write-and-rotate sequence would have been a second crash-safety
+scheme). It deliberately did **not** fold `security/step0_collect.py`'s and `QTable.save()`'s local
+copies onto the shared names while it was there: `step0_collect.py` is the rule-38 write path 07-00
+certified, and D7-2's reasoning is unchanged by this plan touching a different function in the same
+file. The extraction was proven byte-neutral rather than assumed — the JSON bytes are identical
+either way (98 bytes for a payload carrying a newline, a tab and Hebrew), because `json.dumps`
+escapes newlines and defaults to ASCII.
+
+---
+
+## D7-12 · Nothing in `src/` sends a report yet — D7-3, fourth occurrence
+
+**Found by:** 07-04 self-audit · **Owner:** 07-07 (end-of-game)
+
+Grepped, not assumed: every importer of `message.py`, `sink.py` and `gmail_sink.py` outside the
+package is a test. Structural, exactly like D7-3: this plan's `<non_goals>` exclude "deciding WHEN a
+report is sent", which is 07-07's `end_of_game.py`, and 07-07 declares `depends_on: 07-01`.
+
+Everything that COULD be wired now is wired now, and that half was checked rather than waved past:
+`report_filename` ← `build_report_message` and `DryRunSink.send` · `build_report_message` /
+`render_message` ← both sinks · `write_artifact_bytes` ← `DryRunSink.send` · `durable_write_bytes` ←
+`durable_write_json` and `write_artifact_bytes` · `require_send_only_scope` ←
+`build_gmail_transport` **and** `load_send_only_credentials` · `load_send_only_credentials` ←
+`build_gmail_transport`'s default · `_require_env_value` ← `build_gmail_transport`.
+
+`build_gmail_transport` itself is the one public name whose only caller is 07-10's runbook, which is
+what it exists for.
+

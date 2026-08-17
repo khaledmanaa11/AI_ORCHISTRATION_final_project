@@ -3,102 +3,130 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-03 is fully committed and closed, tree clean. **WAVE 1 IS COMPLETE**
-  (07-01, 07-02, 07-03 all executed and summarised). Next is WAVE 2: 07-04 (mail transport,
-  depends_on 07-01 + 07-02), 07-05 (log_ builder) and 07-06 (live GUI, the consumer side of
-  D-74). Running any two in parallel needs WORKTREES -- the shared git index mixes commits and
-  the whole-tree pre-commit hook blocks everyone. WHAT 07-03 LEAVES FOR 07-06, AND IT IS TWO
-  THINGS NOT ONE: (1) the whole 07-03 surface -- build_local_view, HintHistory, LocalView -- has
-  no PRODUCTION caller yet and HintHistory.record_outgoing has none at all, structurally rather
-  than by omission since this plan's non-goals exclude every line of Tkinter (D7-7, the third
-  occurrence of D7-3); and (2) THE local-truth CI JOB IS RED UNTIL 07-06 CREATES
-  src/pursuit/gui/, by construction -- 07-06 turns it green by writing modules that pass the
-  check, and must not be tempted to soften the gate instead (D7-6). Seven deferred items now sit
-  in the phase's deferred-items.md: D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, and the two new ones.
-  Also recorded in D7-6 and NOT fixed per the scope boundary: check_no_llm_in_strategy.sh has
-  been absent from quality-gate.yml since 03-10 and still is -- pre-existing and unrelated,
-  so not slipped into a commit about a different gate. OQ-1/OQ-2/OQ-3 are CLOSED in code with
-  citations; OQ-4 is resolved in the outline but not implemented; OQ-5 -- the games-played
-  VALUE -- remains the human's at 07-10, before any live send. Nothing in this repo transmits:
-  every shipped config carries reporting.mode dry_run.
-stopped_at: PHASE 7 PLAN 11 EXECUTED (2026-08-17) -- THE COP WAS PUBLISHING THE THIEF'S EXACT
-  CELL, AND 07-03'S FIREWALL WAS GREEN BECAUSE ITS FIXTURES WERE VACUOUS. Rules 8-9 are an
-  ABSOLUTE DISQUALIFICATION (docs/RULES.md:30). TWO INDEPENDENT FIXTURE DEFECTS made every
-  assertion in that area worthless: local_view_fixtures.scent_field never called emit_opponent,
-  so view.scent.opponent was an ALL-ZERO grid in all thirty of 07-03's revert probes -- the one
-  field carrying the true cell at full strength was empty in every test written to protect it --
-  and honest_context seeded belief with observe_exact((6,6)), a cell production never supplies.
-  Corrected to run ONE real decide(known_cell=ctx.state.thief), 07-03's own load-bearing absence
-  test FAILED at '$.belief.argmax: pair [5, 3]'. THE MEASURED LEAK, through the shipped path with
-  the real config/police/*.json: belief argmax (5,3) == ctx.state.thief; entropy 1.8799649487271113;
-  support [(4,3),(5,2),(5,3),(5,4),(6,3)], 5 of 49, P(true) 0.5556; scent.opponent argmax (5,3) at
-  0.9, which is EXACTLY scent.json's "source" -- the unmixed kernel centre, not a decayed trace.
-  THE OBVIOUS FIX IS A TRAP AND IT WAS RUN: publishing the strategy maps again and deleting
-  BeliefView.argmax makes 07-03's coordinate scanner PASS 2/2 -- a clean verdict -- while the
-  geometric, scent and floor tests all FAIL, because observe_exact gives a delta, spread disperses
-  it only over that cell's legal destinations and update multiplies pointwise so a zeroed cell
-  never reopens: the published support IS the legal-move plus centred on the true pre-move cell,
-  and the centre of a plus inverts uniquely. A fix validated by a coordinate-absence test would
-  have looked successful and shipped the disqualification. THE SEALED-THIEF ENDGAME IS WORSE AND
-  IS THE COP'S WIN CONDITION, not a corner case: thief walled at (0,0) behind 2 barriers against a
-  quota of 14 published argmax (0,0), entropy -0.0, lit cells [(0,0,1.0)] -- a one-pixel heatmap on
-  the truth. IT WAS REAL IN A REAL GAME, not only in a fixture: logs/police/29dec44e0ab71785.jsonl
-  records cop belief_entropy 5.6108 at turn 0 then 1.8800/1.8800/1.8800/1.7159, while the thief's
-  stayed 5.6131/5.6100/5.5183/5.4697. OPTION (a) CHOSEN AND WRITTEN DOWN (source + the new
-  docs/PRD_display_belief.md, which CLAUDE.md Sec2.3 requires anyway): a display-only BeliefMap
-  never fed ctx.state.thief, driven by the legal-motion model and the opponent's own broadcast
-  hints, published in place of the strategy map. Option (b) -- publish only when observe_exact did
-  not fire -- is for the COP a PERMANENTLY BLANK PANEL, since turn_language.py:57 returns the true
-  cell on every turn but turn 0; it hides the leak by deleting the feature. NOBODY OWNED RULE 9
-  BEFORE THIS: beliefadapter.py:120-123 said in its own docstring that local truth was "a
-  display-layer concern, not this one's" and view_builder published the value unredacted -- both
-  delegated, neither owned. strategy/display_belief.py owns it now. THE STRATEGY BELIEF IS
-  UNCHANGED and still receives known_cell (argmax still (5,3), entropy still 1.88): provenance is
-  the opponent's own honest Reveal and rule 9 governs the DISPLAY, not play. scent.opponent IS
-  FIXED TOO because it leaks independently -- uniform scalar decay lets two published snapshots
-  subtract to recover the fresh deposit, so even an animate-only GUI leaked every turn; scent.own
-  is passed through untouched at 1.8, local truth by definition. AFTER: published argmax (1,3),
-  entropy 5.5469, support 47/49, P(truth) 0.0223, inversion [], scent peak (4,4) at 0.154; sealed
-  case argmax (1,2), entropy 5.5472, support 47. COP SEAT ONLY BY PROVENANCE, NEVER BY ROLE NAME:
-  the substitution fires on a contamination flag, so the thief's published belief is BYTE-IDENTICAL
-  before and after -- sha256 0b046a9430b79af3d1b7f3a58a4bf91ffdce383d739d3d5267f3e03e1ba0e3b0,
-  2565 bytes, argmax (4,5), entropy 5.5328, support 47 -- and a future path that contaminated a
-  different seat is covered without an edit. FLOORS ARE DERIVED, NEVER INVENTED (CLAUDE.md rule 1,
-  D-18): belief.json gains display.min_support_cells 6 (one cell's legal destination set is STAY
-  plus four orthogonal moves = len(DIRECTION_WORDS) = 5, so a support of 6+ cannot fit inside any
-  cell's neighbourhood and the inversion is structurally empty) and display.min_entropy_bits 1.0
-  (a fair coin between two cells); validate_display_floors REFUSES a floor at or below
-  MAX_STEP_NEIGHBOURHOOD, because a floor that admits the measured leak is not a floor. TWELVE
-  REVERT PROBES, every count real: strategy belief republished 9; raw scent republished 3; the
-  argmax-only fix 3 failed / 2 PASSED (the scanner); publishable() hard-wired True 2; contamination
-  never recorded 14; display map fed the truth 9; the SYMMETRIC fix (thief redacted too) 3; advance
-  made inert 3; geometric_inversion always [] 2; grid_argmax always (0,0) 2; min_support_cells
-  lowered to 5 22 failed + 12 errors; published_scent leaking the raw grid 3. Probe 3's first
-  attempt reported "anchor not found" (a trailing \n against a CRLF tree) and was NOT counted as a
-  pass -- it was rewritten to report per-test outcomes. Probes 8/9/10 exist because this
-  mechanism's likeliest failure is an inert display map or an attack that never fires, either of
-  which would make every assertion pass vacuously. AST scan of all eight touched test files: one
-  parametrize site and one module-level literal looped in an assert, BOTH already length-guarded,
-  zero unguarded. Production callers grepped for all 13 new names: ten external; publishable,
-  contaminated and MAX_STEP_NEIGHBOURHOOD are reached only from inside their own module, by
-  published_belief/published_scent and validate_display_floors, all of which are on the production
-  path -- proven live by probes 4 and 11. THREE FALSE DOCSTRINGS IN local_view.py CORRECTED, each
-  now saying what it used to claim: "cannot express an opponent's true cell" (a dense grid
-  expresses one without any coordinate in it), "argmax ... is routinely wrong; that is exactly why
-  it is legal to draw" (observe_exact made it RIGHT every turn by construction) and "our own
-  RECONSTRUCTION ... not a live reading of where it is now" (the kernel was stamped on the true
-  CURRENT cell at source strength). FOUR FILES SPLIT AT THE 150-LINE GATE, never compressed:
-  BeliefKey to shared/belief_keys.py (which also removed a real cycle -- every group module is
-  imported BY belief_config.py, so the newest group could not name its fields canonically),
-  scent_likelihood checks to shared/scent_likelihood_config.py, 07-03's scanner to
-  tests/unit/local_view_scanner.py, and the display rationale to docs/PRD_display_belief.md.
-  D7-8 FILED AND DELIBERATELY NOT FIXED: turn_language.belief_snapshot still writes the true argmax
-  to the JSONL, which is CORRECT -- the log is the audit record (rule 38) and rules 8-9 govern the
-  LIVE interface -- but 07-08's replay viewer may not render it live. D7-9 restates that
-  check_local_truth.py CANNOT see a coordinate that is drawn rather than named and was not cited as
-  evidence anywhere in this plan. 07-06 AND 07-08 WERE BLOCKED ON THIS AND ARE NOW UNBLOCKED;
-  07-06 must also render belief=None gracefully, which is now a LIVE case (the floor guard), not
-  only the belief-disabled one.
+Resume file: None -- 07-04 is fully committed and closed, tree clean. WAVE 2 CONTINUES: 07-05
+  (log_ builder) and 07-06 (live GUI) are next, and 07-07 (end-of-game) now has everything it
+  needs from waves 1-2 except 07-05's log_ artifact. Running any two in parallel needs
+  WORKTREES -- the shared git index mixes commits and the whole-tree pre-commit hook blocks
+  everyone. WHAT 07-04 LEAVES FOR THE PLANS THAT OWN IT, AND IT IS THREE THINGS: (1) D7-12,
+  the fourth occurrence of D7-3 -- nothing in src/ SENDS a report yet, because this plan's
+  non-goals exclude deciding WHEN, which is 07-07's end_of_game.py; every importer of
+  message.py / sink.py / gmail_sink.py outside the package is a test, grepped, and every name
+  that COULD be wired inside the package IS; (2) build_gmail_transport's only caller is
+  07-10's OAUTH-RUNBOOK, which is what it exists for, and 07-09 must write that runbook
+  against the real signature (params, scopes=SEND_ONLY_SCOPES, credentials_loader=...); (3)
+  gmail_sink.py sits at 149/150 code lines -- the next plan to open it SPLITS, never
+  compresses. Twelve deferred items now sit in the phase's deferred-items.md: D7-1 RESOLVED,
+  D7-2, D7-3, D7-4, D7-5, D7-6, D7-7, D7-8, D7-9, plus D7-10 RESOLVED, D7-11 and D7-12 from
+  this plan. Still open and NOT fixed per the scope boundary: the local-truth CI job is RED
+  until 07-06 creates src/pursuit/gui/ (D7-6, by construction -- 07-06 turns it green by
+  writing modules that pass, and must not soften the gate), and check_no_llm_in_strategy.sh
+  has been absent from quality-gate.yml since 03-10. OQ-1/OQ-2/OQ-3 are CLOSED in code with
+  citations and OQ-3 is now enforced at the point of use -- one test pins the mail instance at
+  30 s and the LLM instance at 5 s in the same assertion block, so neither can be harmonised
+  into the other. OQ-4 is resolved in the outline and half-implemented: message.py names the
+  attachment result_<game_id>.json via 07-02's namer, and DryRunSink's .prev rotation is what
+  makes the per-sub-game rewrite non-destructive; 07-07 owns the rest. OQ-5 -- the games-played
+  VALUE -- remains the human's at 07-10, before any live send. NOTHING IN THIS REPO TRANSMITS:
+  both shipped reporting.json files still read mode dry_run, asserted per role by a test that
+  reads the raw JSON rather than the loader's enum, and no test anywhere can reach the network
+  -- test_gmail_sink.py fails any non-loopback connect or DNS lookup, with two control tests
+  proving the guard is armed.
+stopped_at: PHASE 7 PLAN 04 EXECUTED (2026-08-17) -- THE MANDATORY REPORT NOW LEAVES AS AN
+  ATTACHED application/json FILE, AND THE 429 WAIT STAYS IN THE ONE GATEKEEPER. Rule 34
+  (docs/RULES.md:75) makes a free-text report a ZERO SCORE and rule 30 (:66) makes a broad
+  OAuth scope a DISQUALIFICATION; both are pinned before a credential exists. THE CENTRAL
+  VACUITY RISK WAS NAMED IN THE PLAN AND ENFORCED IN THE TREE: DryRunSink writes a file and
+  returns success, so it would make every send assertion green whether or not GmailSink works
+  -- so test_mail_sink_dry_run.py asserts only what a disk write can honestly assert, and
+  test_gmail_credentials.py CHECKS that absence with an AST IDENTIFIER scan rather than a text
+  search, because the dry-run file's docstring legitimately NAMES 429 and scope while
+  explaining that it asserts neither; paired with a control that runs the same scan over
+  test_gmail_sink.py and requires it to find something. Every REPORT-04/05 assertion runs
+  against GmailSink through the real 07-01 ReportingChain with a fake transport raising real
+  googleapiclient HttpErrors. MEASURED: statuses [429,429,200] -> sent=True, attempts=3,
+  sleeps=[30,30]; statuses [429] always -> sent=False, attempts=4 (= retries_before_failure+1
+  from the shipped reporting.json), sleeps=[30,30,30], refusal=SEND_FAILED, queued=True,
+  pending=1, and after statuses=[200] + drain() the SAME report comes back off the queue and
+  is compared after a round trip through base64, MIME and json.loads -- recoverability, not
+  "nothing raised". GmailSink RAISES GmailRetryableError on 429 and never sleeps: a second
+  backoff would be a second gatekeeper (SEGAL Sec4) and would make the test pass for the wrong
+  reason. THE BACKOFF ASSERTION TRANSCRIBES THE LITERAL 30 rather than reading
+  params.wait_after_error_seconds back -- written the obvious way it would have stayed GREEN
+  with the config lowered to Table 19's bare 5 s (probe ii: 3 failed). RULE 30 IS ENFORCED
+  TWICE, and the second one is the one that matters: a token.json left over from a broader
+  consent is what actually AUTHORISES the call and never appears in the list of scopes we
+  asked for. Six forbidden scope sets refused (send+readonly, send+mail.google.com, modify,
+  compose, mail.google.com alone, and the EMPTY set) by SET EQUALITY, so "contains gmail.send"
+  cannot pass. D-70 HOLDS, GREPPED NOT ASSERTED: google.auth / google.oauth2 /
+  google_auth_oauthlib / googleapiclient all resolve to exactly one file in src/,
+  services/reporting/gmail_sink.py -- and GmailSink is DELIBERATELY NOT re-exported from the
+  package __init__, the one departure from services/llm's convention, because that package
+  must import anthropic_provider for its register_provider side effect and this one has no
+  such requirement; re-exporting would load google-* (measured 0.265 s) for every dry_run
+  importer. TWELVE REVERT PROBES, every count real and every mutation confirmed WIRED before
+  the run: report interpolated into the body 2 failed; JSON sent inline instead of attached 4
+  failed; attachment renamed off 07-02's namer 2 failed; dry run writes no .eml 3 failed;
+  durable bytes write reverted to text mode 2 failed (CRCRLF observed on disk); GmailSink
+  swallows 429 3 failed; backoff lowered to 5 s 3 failed; scope gate weakened to membership 4
+  failed; granted-token check removed 1 failed; scope gate moved BELOW the credential read 7
+  failed; asyncio.to_thread removed 1 failed; a test file named *_secret* 1 failed. THE HOLE
+  THE SELF-AUDIT FOUND IN MY OWN WORK IS THE MOST COMPLETE FORM OF VACUITY THIS PHASE HAS SEEN:
+  tests/unit/test_gmail_credentials.py shipped first as test_gmail_secrets.py, and
+  .gitignore:26's *_secret* SWALLOWED IT SILENTLY -- eighteen passing tests, including every
+  rules 39-40 assertion in the plan, that git would have refused to track, CI would never have
+  run and the grader would never have seen. Caught only because git status --short before the
+  commit did not list a file I had just written. Fixed by RENAMING, not by weakening the
+  pattern, and the class of mistake is now a permanent gate: git check-ignore -z --stdin over
+  every .py under src/ tests/ training/ scripts/, which FAILS rather than skips without git
+  (D7-6's standard), carries an anti-vacuity floor of >100 files scanned and is paired with a
+  control asserting the scan does find .env. Measured while fixing it: no other .py in the
+  repository is ignored. That check also taught that subprocess.run(text=True) on Windows
+  writes CRLF into the child's stdin, so git saw every path with a trailing carriage return
+  and reported FIVE FALSE POSITIVES -- the helper passes bytes with -z and says why. TWO MORE
+  MEASURED CORRECTIONS: iter_attachments() is NOT a disposition filter (probe B failed only 1
+  test instead of 4 until the helper filtered on get_content_disposition()), and
+  socket.connect cannot be blanket-refused on Windows (8 fixture ERRORs in asyncio's proactor
+  self-pipe, so the guard is narrowed to non-loopback plus a DNS guard, both controlled).
+  durable_write_bytes was EXTRACTED rather than a second write-and-rotate sequence written,
+  and proven byte-neutral -- 98 IDENTICAL bytes both ways for a payload carrying a newline, a
+  tab and Hebrew, because json.dumps escapes newlines and defaults to ASCII. The .eml goes
+  through artifacts.write_artifact_bytes so it inherits D7-1's logs/ refusal instead of a
+  hand-rolled Path.write_bytes no rule governs. THE PHASE-4 CONTROL STILL HOLDS: 07-01's
+  26-test test_gatekeeper_llm_unchanged.py passes UNMODIFIED and git diff config/ is EMPTY.
+  Zero numbers invented -- 429 is RFC 6585 and is what rule 28 names, v1 is Google's, and
+  every limit comes from the shipped reporting.json whose _sources object cites each leaf.
+---
+
+Last session: 2026-08-17T11:40:00+03:00
+Stopped at: Completed 07-04-PLAN.md (the mail transport -- attached JSON, send-only scope, 429
+  handled by the ONE gatekeeper) in full. Three tasks, each committed atomically: Task 1 the
+  MIME shape asserted by re-parsing the rendered bytes (`86d9547` -- 17 tests, with the body
+  and header leak checks each paired with a control that plants the distinctive value and
+  requires the check to FAIL), Task 2 the MailSink protocol and DryRunSink plus the
+  durable_write_bytes / write_artifact_bytes extractions (`c196535` -- 9 tests that claim only
+  what a disk write can claim), Task 3 GmailSink against an injected fake transport
+  (`6b686cd` -- 47 tests across three files, none satisfiable by DryRunSink). Gates:
+  `ruff check .` 0 violations; 1919 passed / 0 failed against the 1846 baseline; coverage
+  97.02% (baseline 96.95%); `check_line_limit.sh` exit 0 with all twelve new/touched files
+  ALSO checked explicitly by path; `check_no_llm_in_strategy.py` OK; `uv lock --check` current
+  and no requirements.txt exists; `git diff config/` EMPTY; `scripts/dev_launch.py` exit 0
+  with outcome capture and 11 `"matched":true` audit verdicts per side, zero STEP0_MISMATCH,
+  zero technical_win. Rule-38 counters, all four: the full suite moved police 1915->1915 and
+  thief 1908->1908 (delta 0/0); one real game moved 1915->1916 and 1908->1909 (delta 1/1).
+  Every new or touched module at 100% coverage: message.py, sink.py, gmail_sink.py,
+  artifacts.py, durable_write.py. Collected test counts re-read from pytest rather than
+  counted by hand -- 17 / 9 / 12 / 15 / 20 = 73, exactly the suite delta. Every parametrize
+  site in this plan's five test files is length-guarded (4 sites, 4 guards), because an
+  emptied table SKIPS silently. Graphify refreshed -- 9250 nodes / 16532 edges,
+  `graphify explain GmailSink` resolves to `gmail_sink.py:153`. `07-04-SUMMARY.md` written
+  with every number from a run in this session, self-check PASSED (18 paths and 3 commits
+  verified, and the nine new source/test files additionally verified TRACKED by git -- the
+  check that would have caught D7-10 on its own). `docs/phases/phase-7/TODO.md` gains a ticked
+  07-04 row and moves 07-96 to in-progress; D7-10 (RESOLVED), D7-11 and D7-12 filed in the
+  phase's `deferred-items.md`.
+Resume file: None -- the tree is clean and 07-04 is closed. Wave 2 of phase 7 continues
+  (`/gsd:execute-phase 7`): 07-05 (log_ builder) and 07-06 (live GUI). 07-07 consumes this
+  plan's ReportingChain + sink wiring and owns D7-12.
 ---
 
 Last session: 2026-08-17T09:20:00+03:00
