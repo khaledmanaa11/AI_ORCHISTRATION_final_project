@@ -220,7 +220,9 @@ Two separate reports, **one sub-game each**, `games_measured: 1` each, both logs
 driving both seats into the **same** root in run order — a test that gave each seat
 its own root would pass against the bug — and probe 15 (the fix reverted) fails 2.
 
-## 6. Revert probes — eighteen, every count real
+## 6. Revert probes — eighteen numbered, twenty-two runs, every count real
+
+Four of the eighteen carry a variant (1b/1c/1d and 2-single), so the table has 22 rows.
 
 Anchor asserted present, mutation asserted landed, source restored and re-compared
 afterwards (07-04's discipline).
