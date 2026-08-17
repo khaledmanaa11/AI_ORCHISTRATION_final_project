@@ -12,15 +12,41 @@ NOTHING IN THIS PACKAGE TRANSMITS. The sink is injected and has no default;
 import `google-*`). Every shipped config carries `reporting.mode = dry_run`.
 """
 
+from pursuit.services.reporting.artifacts import (
+    ArtifactField,
+    ArtifactPrefix,
+    artifact_digest,
+    artifact_digest_matches,
+    artifact_header,
+    config_filename,
+    declaration_filename,
+    log_filename,
+    next_sub_game_index,
+    result_filename,
+    sub_game_suffix,
+    write_artifact,
+)
 from pursuit.services.reporting.chain import Refusal, ReportingChain, SendOutcome
 from pursuit.services.reporting.dos import DosDetector
 from pursuit.services.reporting.quota import QuotaField, QuotaManager
 
 __all__ = (
+    "ArtifactField",
+    "ArtifactPrefix",
     "DosDetector",
     "QuotaField",
     "QuotaManager",
     "Refusal",
     "ReportingChain",
     "SendOutcome",
+    "artifact_digest",
+    "artifact_digest_matches",
+    "artifact_header",
+    "config_filename",
+    "declaration_filename",
+    "log_filename",
+    "next_sub_game_index",
+    "result_filename",
+    "sub_game_suffix",
+    "write_artifact",
 )
