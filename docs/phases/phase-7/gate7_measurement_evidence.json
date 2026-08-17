@@ -1,0 +1,251 @@
+{
+  "criterion_1_game_summary_sent_by_mail": {
+    "backoff_ladder": {
+      "attempts": 3,
+      "backoffs_match_config": true,
+      "scripted_statuses": [
+        429,
+        429,
+        200
+      ],
+      "sent": true,
+      "sink_slept_itself": false,
+      "sleeps_seconds": [
+        30,
+        30
+      ],
+      "user_id": "me",
+      "wait_after_error_seconds_from_config": 30
+    },
+    "dry_run_end_to_end": {
+      "attachment": {
+        "attachment_count": 1,
+        "content_type": "application/json",
+        "filename": "result_gate7mail.json",
+        "is_attachment": true,
+        "reparses_to_the_report": true
+      },
+      "body": {
+        "carries_no_report_content": true,
+        "is_the_fixed_boilerplate": true,
+        "line_ending_is_crlf": true
+      },
+      "files_written": [
+        "reporting_quota.json",
+        "result_gate7mail.eml",
+        "result_gate7mail.json"
+      ],
+      "from_header_absent": true,
+      "mode": "dry_run",
+      "pending_after_send": 0,
+      "quota_counter_written_beside_the_run": true,
+      "refusal": null,
+      "sent": true,
+      "subject_header": "UOH26 pursuit game report: result_gate7mail.json",
+      "to_header": "rmisegal+uoh26finalgame@gmail.com",
+      "watchdog_touches": 2
+    },
+    "dry_run_verdict": "PASS",
+    "live_send": {
+      "evidence_07_10_must_attach": [
+        "the Gmail message id returned by the API for the one supervised send",
+        "a screenshot of the delivered message at the mandatory recipient showing the result_<game_id>.json ATTACHMENT (rules 33-34)",
+        "the config diff proving reporting.mode was flipped to live and flipped BACK",
+        "the games-played value decision (OQ-5) recorded in writing BEFORE the send"
+      ],
+      "verdict": "PENDING",
+      "why": "no message has been delivered. The one live send needs a human at Google's OAuth consent screen and one config flipped to live; that is 07-10's work (docs/phases/phase-7/OAUTH-RUNBOOK.md). This script clears both credential environment variables at import, so it CANNOT have sent anything."
+    },
+    "live_send_verdict": "PENDING",
+    "queue_and_drain": {
+      "attempts_before_recovery": 4,
+      "attempts_equal_one_full_ladder": true,
+      "drained_outcomes_sent": [
+        true
+      ],
+      "pending_after_drain": 0,
+      "pending_after_send": 1,
+      "queued": true,
+      "raised_into_the_turn_loop": false,
+      "refusal": "send_failed",
+      "retries_before_failure_from_config": 3
+    },
+    "recipient": "rmisegal+uoh26finalgame@gmail.com",
+    "recipient_is_the_mandatory_address": true,
+    "scope_gate": {
+      "empty_scope_rejected": true,
+      "exact_send_scope_accepted": true,
+      "extra_scope_rejected": true,
+      "guard_call_sites": [
+        "the granted OAuth token",
+        "the requested OAuth scopes"
+      ],
+      "scope_checked_before_any_credential_is_read": true,
+      "unset_credential_env_var_refuses_loudly": true
+    },
+    "shipped_modes": {
+      "police": "dry_run",
+      "thief": "dry_run"
+    },
+    "verdict": "DRY_RUN PASS; LIVE PENDING (07-10)"
+  },
+  "criterion_2_live_gui_local_truth_only": {
+    "empty_scan_control": {
+      "expected_exit_code": 2,
+      "missing_root_exit_code": 2,
+      "package_marker_only_exit_code": 2
+    },
+    "game_uid": "gate7measure",
+    "live_app_launch": {
+      "police": {
+        "refresh_ms": 500,
+        "returncode": 0,
+        "stderr_tail": []
+      },
+      "thief": {
+        "refresh_ms": 500,
+        "returncode": 0,
+        "stderr_tail": []
+      }
+    },
+    "not_measured_here": "whether a human could INVERT the true cell out of what a panel paints (tests/unit/test_gui_recovery.py, tests/unit/test_local_truth_recovery.py), and whether the README screenshot is presentation-grade (07-10)",
+    "published_snapshot": {
+      "police": {
+        "own_cell": [
+          2,
+          2
+        ],
+        "published": true,
+        "top_level_keys": [
+          "barriers_placed",
+          "belief",
+          "board_size",
+          "declared_barriers",
+          "hints",
+          "idle_seconds",
+          "machine_state",
+          "own_cell",
+          "role",
+          "scent",
+          "turn",
+          "watchdog_threshold_seconds"
+        ],
+        "true_position_fields_present": []
+      },
+      "thief": {
+        "own_cell": [
+          2,
+          4
+        ],
+        "published": true,
+        "top_level_keys": [
+          "barriers_placed",
+          "belief",
+          "board_size",
+          "declared_barriers",
+          "hints",
+          "idle_seconds",
+          "machine_state",
+          "own_cell",
+          "role",
+          "scent",
+          "turn",
+          "watchdog_threshold_seconds"
+        ],
+        "true_position_fields_present": []
+      },
+      "true_position_fields": [
+        "cop",
+        "thief",
+        "barriers"
+      ]
+    },
+    "structural_gate": {
+      "allowed_service_modules": [
+        "pursuit.services.reporting.replay_verify"
+      ],
+      "exit_code": 0,
+      "module_names": [
+        "__init__.py",
+        "live_app.py",
+        "live_panels.py",
+        "live_sidebar.py",
+        "replay_app.py",
+        "replay_panels.py",
+        "widgets.py"
+      ],
+      "modules_scanned": 7,
+      "violation_count": 0,
+      "violations": []
+    },
+    "verdict": "PASS"
+  },
+  "criterion_3_replay_shows_verified_ok": {
+    "app_launch": {
+      "expected_returncode": 0,
+      "returncode": 0,
+      "stdout_tail": [],
+      "step_ms": 400
+    },
+    "artifact": "log_gate7measure_g01.json",
+    "failed": {
+      "banner": "FAILED -- turn 4: re-hash does not match h_commit",
+      "banner_does_not_name_turn_zero": true,
+      "banner_names_the_tampered_turn": true,
+      "committed": 5,
+      "detail": "4/5 committed turns re-hash",
+      "first_committed_turn": 0,
+      "state": "failed",
+      "tampered_field": "move",
+      "tampered_turn": 4,
+      "turn_count": 6,
+      "verified": 4
+    },
+    "game_uid": "gate7measure",
+    "live_log_refused_by_name": {
+      "expected_returncode": 2,
+      "message_names_rule_18": true,
+      "returncode": 2,
+      "stdout_tail_tmp_dir_redacted": [
+        "replay_app: cannot open that file -- <tmp>\\gate7-live.jsonl is not a log_ artifact. The replay viewer reads the sealed end-of-game artifact only -- never a live wire log or nonce ledger (rule 18)."
+      ]
+    },
+    "nothing_to_verify": {
+      "banner": "Nothing to verify",
+      "committed": 0,
+      "detail": "0/0 committed turns re-hash",
+      "state": "nothing_to_verify",
+      "turn_count": 0,
+      "verified": 0
+    },
+    "outcome_police": "capture",
+    "outcome_thief": "capture",
+    "outcomes_agree": true,
+    "sources_deleted_before_verifying": {
+      "ledger": true,
+      "wire_log": true
+    },
+    "sources_existed_before_deletion": true,
+    "verdict": "PASS",
+    "verified_ok": {
+      "banner": "Verified OK",
+      "committed": 5,
+      "detail": "5/5 committed turns re-hash",
+      "state": "ok",
+      "turn_count": 6,
+      "verified": 5
+    }
+  },
+  "env_vars_required": [],
+  "games_played_counter": {
+    "after": {
+      "games_played.json": "{\"games_played\": 1914}"
+    },
+    "before": {
+      "games_played.json": "{\"games_played\": 1914}"
+    },
+    "unchanged_by_this_measurement": true
+  },
+  "gate": "GATE-7 (book Sec10.4 milestone 7)",
+  "generated_at": "2026-08-17T09:41:42.775369+00:00"
+}
