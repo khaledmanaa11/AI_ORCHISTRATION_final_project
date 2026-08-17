@@ -58,6 +58,18 @@ def _llm_gatekeeper(role: str) -> Gatekeeper:
     return Gatekeeper(params=load_language_config(_SHIPPED_CONFIG / role / "language.json"))
 
 
+def test_the_expectation_tables_cover_every_row_they_claim_to() -> None:
+    """The vacuity guard for the two parametrized tests below. An emptied or
+    thinned table would SKIP silently and the whole Phase-4 regression guard
+    would read as green. Seven Table-19 rows, three budget rows, two roles."""
+    assert len(_EXPECTED_GATEKEEPER) == 7
+    assert len(_EXPECTED_BUDGET) == 3
+    assert len(_ROLES) == 2
+    assert set(_EXPECTED_GATEKEEPER) | set(_EXPECTED_BUDGET) <= set(
+        load_language_config(_SHIPPED_CONFIG / "police" / "language.json").__dict__
+    )
+
+
 @pytest.mark.parametrize("role", _ROLES)
 @pytest.mark.parametrize(("field", "expected"), sorted(_EXPECTED_GATEKEEPER.items()))
 def test_shipped_llm_gatekeeper_row_is_unchanged(role: str, field: str, expected: int) -> None:

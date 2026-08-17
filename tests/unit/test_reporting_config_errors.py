@@ -55,6 +55,15 @@ def test_a_missing_group_raises_keyerror_naming_it(tmp_path: Path, group: Report
         load_reporting_config(write_config(tmp_path, data))
 
 
+def test_a_non_object_file_raises_typeerror(tmp_path: Path) -> None:
+    """A JSON array or scalar where the config should be -- caught before any
+    key lookup, so the message names the file rather than a missing key."""
+    path = tmp_path / "reporting.json"
+    path.write_text("[]", encoding="utf-8")
+    with pytest.raises(TypeError, match="reporting.json"):
+        load_reporting_config(path)
+
+
 def test_a_missing_version_raises_keyerror_naming_it(tmp_path: Path) -> None:
     data = _police()
     del data[ReportingKey.VERSION.value]
