@@ -3,98 +3,123 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-04 is fully committed and closed, tree clean. WAVE 2 CONTINUES: 07-05
-  (log_ builder) and 07-06 (live GUI) are next, and 07-07 (end-of-game) now has everything it
-  needs from waves 1-2 except 07-05's log_ artifact. Running any two in parallel needs
-  WORKTREES -- the shared git index mixes commits and the whole-tree pre-commit hook blocks
-  everyone. WHAT 07-04 LEAVES FOR THE PLANS THAT OWN IT, AND IT IS THREE THINGS: (1) D7-12,
-  the fourth occurrence of D7-3 -- nothing in src/ SENDS a report yet, because this plan's
-  non-goals exclude deciding WHEN, which is 07-07's end_of_game.py; every importer of
-  message.py / sink.py / gmail_sink.py outside the package is a test, grepped, and every name
-  that COULD be wired inside the package IS; (2) build_gmail_transport's only caller is
-  07-10's OAUTH-RUNBOOK, which is what it exists for, and 07-09 must write that runbook
-  against the real signature (params, scopes=SEND_ONLY_SCOPES, credentials_loader=...); (3)
-  gmail_sink.py sits at 149/150 code lines -- the next plan to open it SPLITS, never
-  compresses. Twelve deferred items now sit in the phase's deferred-items.md: D7-1 RESOLVED,
-  D7-2, D7-3, D7-4, D7-5, D7-6, D7-7, D7-8, D7-9, plus D7-10 RESOLVED, D7-11 and D7-12 from
-  this plan. Still open and NOT fixed per the scope boundary: the local-truth CI job is RED
-  until 07-06 creates src/pursuit/gui/ (D7-6, by construction -- 07-06 turns it green by
-  writing modules that pass, and must not soften the gate), and check_no_llm_in_strategy.sh
-  has been absent from quality-gate.yml since 03-10. OQ-1/OQ-2/OQ-3 are CLOSED in code with
-  citations and OQ-3 is now enforced at the point of use -- one test pins the mail instance at
-  30 s and the LLM instance at 5 s in the same assertion block, so neither can be harmonised
-  into the other. OQ-4 is resolved in the outline and half-implemented: message.py names the
-  attachment result_<game_id>.json via 07-02's namer, and DryRunSink's .prev rotation is what
-  makes the per-sub-game rewrite non-destructive; 07-07 owns the rest. OQ-5 -- the games-played
-  VALUE -- remains the human's at 07-10, before any live send. NOTHING IN THIS REPO TRANSMITS:
-  both shipped reporting.json files still read mode dry_run, asserted per role by a test that
-  reads the raw JSON rather than the loader's enum, and no test anywhere can reach the network
-  -- test_gmail_sink.py fails any non-loopback connect or DNS lookup, with two control tests
-  proving the guard is armed.
-stopped_at: PHASE 7 PLAN 04 EXECUTED (2026-08-17) -- THE MANDATORY REPORT NOW LEAVES AS AN
-  ATTACHED application/json FILE, AND THE 429 WAIT STAYS IN THE ONE GATEKEEPER. Rule 34
-  (docs/RULES.md:75) makes a free-text report a ZERO SCORE and rule 30 (:66) makes a broad
-  OAuth scope a DISQUALIFICATION; both are pinned before a credential exists. THE CENTRAL
-  VACUITY RISK WAS NAMED IN THE PLAN AND ENFORCED IN THE TREE: DryRunSink writes a file and
-  returns success, so it would make every send assertion green whether or not GmailSink works
-  -- so test_mail_sink_dry_run.py asserts only what a disk write can honestly assert, and
-  test_gmail_credentials.py CHECKS that absence with an AST IDENTIFIER scan rather than a text
-  search, because the dry-run file's docstring legitimately NAMES 429 and scope while
-  explaining that it asserts neither; paired with a control that runs the same scan over
-  test_gmail_sink.py and requires it to find something. Every REPORT-04/05 assertion runs
-  against GmailSink through the real 07-01 ReportingChain with a fake transport raising real
-  googleapiclient HttpErrors. MEASURED: statuses [429,429,200] -> sent=True, attempts=3,
-  sleeps=[30,30]; statuses [429] always -> sent=False, attempts=4 (= retries_before_failure+1
-  from the shipped reporting.json), sleeps=[30,30,30], refusal=SEND_FAILED, queued=True,
-  pending=1, and after statuses=[200] + drain() the SAME report comes back off the queue and
-  is compared after a round trip through base64, MIME and json.loads -- recoverability, not
-  "nothing raised". GmailSink RAISES GmailRetryableError on 429 and never sleeps: a second
-  backoff would be a second gatekeeper (SEGAL Sec4) and would make the test pass for the wrong
-  reason. THE BACKOFF ASSERTION TRANSCRIBES THE LITERAL 30 rather than reading
-  params.wait_after_error_seconds back -- written the obvious way it would have stayed GREEN
-  with the config lowered to Table 19's bare 5 s (probe ii: 3 failed). RULE 30 IS ENFORCED
-  TWICE, and the second one is the one that matters: a token.json left over from a broader
-  consent is what actually AUTHORISES the call and never appears in the list of scopes we
-  asked for. Six forbidden scope sets refused (send+readonly, send+mail.google.com, modify,
-  compose, mail.google.com alone, and the EMPTY set) by SET EQUALITY, so "contains gmail.send"
-  cannot pass. D-70 HOLDS, GREPPED NOT ASSERTED: google.auth / google.oauth2 /
-  google_auth_oauthlib / googleapiclient all resolve to exactly one file in src/,
-  services/reporting/gmail_sink.py -- and GmailSink is DELIBERATELY NOT re-exported from the
-  package __init__, the one departure from services/llm's convention, because that package
-  must import anthropic_provider for its register_provider side effect and this one has no
-  such requirement; re-exporting would load google-* (measured 0.265 s) for every dry_run
-  importer. TWELVE REVERT PROBES, every count real and every mutation confirmed WIRED before
-  the run: report interpolated into the body 2 failed; JSON sent inline instead of attached 4
-  failed; attachment renamed off 07-02's namer 2 failed; dry run writes no .eml 3 failed;
-  durable bytes write reverted to text mode 2 failed (CRCRLF observed on disk); GmailSink
-  swallows 429 3 failed; backoff lowered to 5 s 3 failed; scope gate weakened to membership 4
-  failed; granted-token check removed 1 failed; scope gate moved BELOW the credential read 7
-  failed; asyncio.to_thread removed 1 failed; a test file named *_secret* 1 failed. THE HOLE
-  THE SELF-AUDIT FOUND IN MY OWN WORK IS THE MOST COMPLETE FORM OF VACUITY THIS PHASE HAS SEEN:
-  tests/unit/test_gmail_credentials.py shipped first as test_gmail_secrets.py, and
-  .gitignore:26's *_secret* SWALLOWED IT SILENTLY -- eighteen passing tests, including every
-  rules 39-40 assertion in the plan, that git would have refused to track, CI would never have
-  run and the grader would never have seen. Caught only because git status --short before the
-  commit did not list a file I had just written. Fixed by RENAMING, not by weakening the
-  pattern, and the class of mistake is now a permanent gate: git check-ignore -z --stdin over
-  every .py under src/ tests/ training/ scripts/, which FAILS rather than skips without git
-  (D7-6's standard), carries an anti-vacuity floor of >100 files scanned and is paired with a
-  control asserting the scan does find .env. Measured while fixing it: no other .py in the
-  repository is ignored. That check also taught that subprocess.run(text=True) on Windows
-  writes CRLF into the child's stdin, so git saw every path with a trailing carriage return
-  and reported FIVE FALSE POSITIVES -- the helper passes bytes with -z and says why. TWO MORE
-  MEASURED CORRECTIONS: iter_attachments() is NOT a disposition filter (probe B failed only 1
-  test instead of 4 until the helper filtered on get_content_disposition()), and
-  socket.connect cannot be blanket-refused on Windows (8 fixture ERRORs in asyncio's proactor
-  self-pipe, so the guard is narrowed to non-loopback plus a DNS guard, both controlled).
-  durable_write_bytes was EXTRACTED rather than a second write-and-rotate sequence written,
-  and proven byte-neutral -- 98 IDENTICAL bytes both ways for a payload carrying a newline, a
-  tab and Hebrew, because json.dumps escapes newlines and defaults to ASCII. The .eml goes
-  through artifacts.write_artifact_bytes so it inherits D7-1's logs/ refusal instead of a
-  hand-rolled Path.write_bytes no rule governs. THE PHASE-4 CONTROL STILL HOLDS: 07-01's
-  26-test test_gatekeeper_llm_unchanged.py passes UNMODIFIED and git diff config/ is EMPTY.
-  Zero numbers invented -- 429 is RFC 6585 and is what rule 28 names, v1 is Google's, and
-  every limit comes from the shipped reporting.json whose _sources object cites each leaf.
+Resume file: None -- 07-05 is fully committed and closed, tree clean. WAVE 2 CONTINUES: 07-06
+  (live GUI) is the remaining wave-2 plan, and 07-07 (end-of-game) now has EVERYTHING it needs
+  from waves 1-2 -- 07-05 was its last missing input. Running two in parallel needs WORKTREES:
+  the shared git index mixes commits and the whole-tree pre-commit hook blocks everyone. WHAT
+  07-05 LEAVES FOR THE PLANS THAT OWN IT, AND IT IS FOUR THINGS: (1) 07-07 MUST PASS THE
+  NEGOTIATED game_uid (ctx.game_uid), not the process-local one -- D7-13, found on a real thief
+  log that carries TWO game_uids because adopt_negotiated_game_id renames the log mid-stream;
+  prior_game_uids will be [] on one seat and one entry on the other, and that is correct; (2)
+  07-07 must call write_log_artifact from the GAME-END path only -- D-64 and SEC-04, and
+  tests/unit/test_log_artifact_reachability.py FAILS the moment anything under network/turn_* or
+  orchestrator.py reaches it, in EITHER import form (the module path or the package's re-exported
+  name; the name form is the one 07-07 is most likely to write); (3) 07-08 must check
+  committed > 0 before displaying any ratio -- verify_log_turns returns (0, 0) on an empty
+  artifact and 0 == 0 is True; it needs NEITHER source file, proven by deleting both; and there
+  is no belief_argmax in the artifact at all, so D7-8's constraint is satisfied by ABSENCE rather
+  than by discipline at render time; (4) log_join.py sits at 147/150 -- the next plan to open it
+  SPLITS, never compresses. Fourteen deferred items now sit in the phase's deferred-items.md:
+  D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, D7-6, D7-7, D7-8, D7-9, D7-10 RESOLVED, D7-11, D7-12,
+  plus D7-13 (RESOLVED for log_) and D7-14 from this plan. Still open and NOT fixed per the scope
+  boundary: the local-truth CI job is RED until 07-06 creates src/pursuit/gui/ (D7-6, by
+  construction -- 07-06 turns it green by writing modules that pass, and must not soften the
+  gate), check_no_llm_in_strategy.sh has been absent from quality-gate.yml since 03-10, and
+  D7-5's recoverable handshake -> handshake transition still fires once per run (it is the very
+  record carrying the pre-negotiation uid in D7-13). OQ-1/OQ-2/OQ-3 are CLOSED in code with
+  citations. OQ-4 is resolved in the outline and half-implemented; 07-07 owns the rest. OQ-5 --
+  the games-played VALUE -- remains the human's at 07-10, before any live send. NOTHING IN THIS
+  REPO TRANSMITS: both shipped reporting.json files still read mode dry_run, and no test anywhere
+  can reach the network.
+stopped_at: PHASE 7 PLAN 05 EXECUTED (2026-08-17) -- log_<game_id>_g<NN>.json IS BUILT, AND ON A
+  REAL dev_launch GAME IT RE-HASHES 5/5 COMMITTED TURNS TO 100% ON BOTH SEATS WITH THE .jsonl AND
+  THE .ledger.jsonl DELETED FROM DISK. Rule 20 makes a VERIFYING replay viewer a threshold
+  condition for approving the project, so self-containment was proven by REMOVING the sources,
+  not by asserting it. THE JOIN KEYS ON LOCAL TURN TRUTH, reusing 06-05's discipline rather than
+  re-deriving it, and the peer's envelope turn is carried into peer_claimed_turns as EVIDENCE and
+  is never a key. THE COUNTER-CONTROL IS THE POINT AND IT HAS REAL COUNTS: the adversarial fixture
+  has the peer stamp COMMIT turn 99 and REVEAL turn 7 on one local turn 3 -- keyed on local truth
+  the artifact has 5 turn entries and 4 peer COMMIT+REVEAL pairs, keyed on envelope.turn it has 7
+  entries and 3 pairs, keys [0,1,2,3,4,7,99] -- it LOSES A PAIR AND INVENTS TWO TURNS THE PEER
+  NAMED OUT OF THIN AIR, while the HONEST fixture is identical under both keys, which is exactly
+  why a happy path alone proves nothing. AND IT IS NOT ONLY AN ADVERSARY: scanning all 20 recorded
+  games in logs/, EVERY ONE carries 5-6 message_received records whose local turn differs from the
+  peer's stamp -- every incoming HINT, because a hint arrives one turn late -- so a builder keyed
+  on the peer's number would misfile every hint of every honest game. RULES 8-9: ZERO INTERNAL
+  STATE, BY ALLOW-LIST. D7-8 records that the cop's true argmax is STILL written into every
+  language_turn JSONL record, correctly, because that log is the rule-38 audit record -- but this
+  artifact is emailed off the machine, so outgoing_hint copies exactly ("intent","text") and never
+  the whole record minus a deny-list, because an allow-list stays correct when a future plan adds
+  a field. All six LANGUAGE_INTERNAL_FIELDS scanned absent from BOTH real artifacts, with a
+  counter-control proving the scan finds a planted belief_argmax. A TRUNCATED TAIL IS TOLERATED
+  AND MID-FILE CORRUPTION IS NOT, without weakening read_all or _read_log: log_read.py is a
+  SECOND reader, because an audit that cannot read its own evidence must stop while a replay
+  artifact that cannot be produced from a crashed game is useless exactly when it is needed;
+  CorruptLogError is a distinct CLASS, asserted with an exact type check, because
+  json.JSONDecodeError is itself a ValueError and a looser assertion would have passed on the
+  tail case too. TWENTY-ONE REVERT PROBES, every count real, anchor asserted present and mutation
+  asserted landed before each run: re-key on envelope.turn 3 failed; peer_claimed_turn neutered
+  3; partial tail raises 3; mid-file corruption dropped 4; _is_turn bool guard removed 1;
+  language record copied wholesale 11; verify_log_turns counts uncommitted turns 8; re-hash
+  always True 2; truncated_tail out of the seal 1; seal from a fresh build not the FILE 1;
+  game_uid check removed 2; post-write re-hash check removed 1; outgoing hint never populated 3;
+  audit verdict never carried 2; prior_game_uids dropped 1; turn-loop imports the builder by
+  module path 2, by re-exported NAME 2, from the orchestrator 2; the join reaches for
+  CommitLedger 1; a new src/ module imports security.ledger 1; the reachability scanner blinded
+  2. THREE HOLES THE SELF-AUDIT FOUND IN MY OWN WORK, and the third is the one worth remembering:
+  (i) the _is_turn bool guard had NO test and probe 5 returned 18 passed / 0 failed -- it is not
+  cosmetic, because True == 1 and hash(True) == hash(1), so a ledger line stamped "turn": true
+  lands on TURN 1's dict key and silently replaces its nonce and hash; (ii) the post-write
+  re-hash check had no test and probe 12 returned 16 passed / 0 failed, fixed by giving it a real
+  cause -- a ledger whose h_commit disagrees with its own payload; (iii) THE REACHABILITY GATE
+  WAS GREEN BECAUSE IT WAS BLIND -- it watched module PATHS only, so a probe adding an import of
+  artifact_log FROM THE PACKAGE into network/turn_actions.py, a turn-loop module importing the
+  builder, PASSED 6/6. The package re-exports, so the name form is precisely the one 07-07 will
+  write. Same class as 07-11's vacuous fixtures. Coverage then found four more untested defensive
+  branches; all four new modules now sit at 100%. D-61 FOUND ON A REAL GAME BY A CHECK WRITTEN TO
+  CATCH THE OPPOSITE MISTAKE: logs/thief/521519a78f96c255.jsonl holds 42 records and TWO game_uids
+  -- the one pre-negotiation illegal_transition carries 3c0c5fd8f6705a3b, the other 41 and the
+  filename carry the negotiated 521519a78f96c255 -- because agent_lifecycle opens the log before
+  the handshake and adopt_negotiated_game_id renames it after. A builder reading "the log's
+  game_uid" off the first record would have REFUSED THE THIEF AN ARTIFACT IN EVERY GAME. Fixed by
+  requiring the negotiated id to appear somewhere and carrying every other id in prior_game_uids
+  INSIDE THE SEAL, because dropping it would hide the very fact 05-UAT G2 exists to make visible;
+  the strict half is kept and tested. Zero numbers invented: turn indices come from the records,
+  the filename and the sub-game index from 07-02's namer.
+---
+
+Last session: 2026-08-17T16:10:00+03:00
+Stopped at: Completed 07-05-PLAN.md (the log_ artifact -- wire JSONL x nonce ledger, joined on
+  local turn truth) in full. Three tasks, each committed atomically: Task 1 the join, the
+  crash-tolerant reader and the adversarial disjoint-turn fixture (`3f503b2`), Task 2 the
+  artifact, its seal and the deleted-sources integration proof (`e6ea7f0`), Task 3 the nonce
+  boundary pinned as a SCAN rather than recorded as a grep, plus `docs/PRD_log_artifact.md`
+  (`1d0a47d`). Three further commits closed findings in my own work: the four defensive branches
+  coverage exposed and the last unguarded assert-bearing loop (`fdb95eb`), the D-61 two-game_uid
+  fix (`4787e11`), and trimming log_join.py off the exact 150/150 limit (`34169fd`). Gates:
+  `ruff check .` 0 violations; 1974 passed / 0 failed against the 1919 baseline; coverage 97.12%
+  (baseline 97.02%); `check_line_limit.sh` exit 0 with all twelve new files ALSO checked
+  explicitly by path (the no-arg form enumerates via git ls-files and passes VACUOUSLY on an
+  untracked file); `check_no_llm_in_strategy.py` OK; every new `.py` confirmed NOT ignored by git
+  (D7-10's guard); `scripts/dev_launch.py` exit 0, game `521519a78f96c255`, both seats
+  `"matched":true`, outcome capture at turn 5. Rule-38 counters, all four: the full suite moved
+  police 1916->1916 and thief 1909->1909 (delta 0/0); one real game moved 1916->1917 and
+  1909->1910 (delta 1/1). All five new modules at 100% coverage: log_join.py, log_read.py,
+  log_turn_fields.py, log_artifact_fields.py, artifact_log.py. AST parametrize scan over all
+  seven of this plan's test/fixture files: 3 sites, two named sources both length-guarded and one
+  inline 5-element literal with a positive control; 2 assert-bearing loops, one already guarded
+  and one -- over LOG_ARTIFACT_MODULES -- found UNGUARDED and now floored at 4. Graphify refreshed
+  -- 9449 nodes / 16882 edges; `graphify explain write_log_artifact` resolves to
+  `artifact_log.py:129` (degree 14) and `join_game` to `log_join.py:119` (degree 25); graph.html
+  skipped by the tool at 9449 nodes against its 5000 viz limit, and it is a gitignored local-only
+  artifact anyway. `07-05-SUMMARY.md` written with every number from a run in this session,
+  self-check PASSED (19 paths and 5 task commits verified, and every new source/test file
+  additionally verified TRACKED by git). `docs/phases/phase-7/TODO.md` gains a ticked 07-05 row
+  with its measured evidence; D7-13 and D7-14 filed in the phase's `deferred-items.md`.
+Resume file: None -- the tree is clean and 07-05 is closed. Wave 2 of phase 7 continues
+  (`/gsd:execute-phase 7`): 07-06 (live GUI) is the last wave-2 plan. 07-07 is now fully
+  unblocked and owns D7-13/D7-14; 07-08 consumes `verify_log_turns` and must floor it on
+  `committed > 0`.
 ---
 
 Last session: 2026-08-17T11:40:00+03:00

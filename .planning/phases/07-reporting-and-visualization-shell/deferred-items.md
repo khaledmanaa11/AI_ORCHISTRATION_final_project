@@ -330,3 +330,50 @@ Everything that COULD be wired now is wired now, and that half was checked rathe
 `build_gmail_transport` itself is the one public name whose only caller is 07-10's runbook, which is
 what it exists for.
 
+
+---
+
+## D7-13 · One wire log can legitimately carry TWO `game_uid`s (D-61)
+
+**Found by:** 07-05, building the artifact from a real `dev_launch` game · **Owner:**
+resolved here for the `log_` artifact; **07-07 and 07-08 must inherit the fact**
+
+`agent_lifecycle` mints a process-local `secrets.token_hex(8)` and opens the log **before**
+the handshake; `game_identity.adopt_negotiated_game_id` then renames the log to the
+negotiated id (D-61, closing 05-UAT G2). Every record written before that rename keeps its
+pre-negotiation stamp.
+
+Measured on `logs/thief/521519a78f96c255.jsonl`: **42 records, two `game_uid`s.** The single
+pre-negotiation `illegal_transition` (D7-5's known recoverable one) carries
+`3c0c5fd8f6705a3b`; the other 41 carry the negotiated `521519a78f96c255`, which is also the
+filename. The police-side log of the same game carries one, because the negotiated id is the
+police's own.
+
+**Why it matters beyond 07-05:** a builder that reads "the log's `game_uid`" off the first
+record would have **refused the thief an artifact in every game**. 07-05's own check caught
+it only because it was written to fail loudly rather than to pick a value.
+
+**Resolved here as:** the caller supplies the negotiated id, which must appear *somewhere* in
+the log; every other id found is carried in `prior_game_uids`, **inside the artifact's seal**.
+Dropping the older id would hide exactly the fact 05-UAT G2 exists to make visible.
+
+## D7-14 · The `log_` builder has no production caller yet — D7-3, fifth occurrence
+
+**Found by:** 07-05 self-audit · **Owner:** 07-07 (game-end hook), 07-08 (replay viewer)
+
+Structural, exactly like D7-3/D7-7/D7-12, and this time it is also a **rule**: D-64 keeps the
+nonce ledger off the wire path and only SEC-04's end-of-game publication makes it readable, so
+the builder *must not* be reachable during play. 07-07 owns the game-end call site.
+
+Unlike the earlier four, this one is **enforced rather than recorded**:
+`tests/unit/test_log_artifact_reachability.py` re-runs the scan on every suite run over 173
+`src/` files, watching both the module-path and the re-exported-name import forms, floored at
+100 files with a control that finds a real import.
+
+**That second form is not decoration.** The first version of the gate watched module paths
+only, and a probe that added `from pursuit.services.reporting import artifact_log` to
+`network/turn_actions.py` — a turn-loop module importing the builder — **passed 6/6**. The
+package re-exports, so the name form is the one 07-07 is most likely to write.
+
+`verify_log_turns` is 07-08's entry point and has no caller outside the package today; inside
+it, `write_log_artifact` calls it post-write, so it is not dead code.
