@@ -1,7 +1,7 @@
 # Submission Checklist — the §17 + Table-5 gap register
 
-**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-08) ·
-**Status:** 8 GAP / 65 PASS / 13 UNJUDGED
+**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-09) ·
+**Status:** 4 GAP / 69 PASS / 13 UNJUDGED
 
 > **This file is a report, not a source.** Every number in it comes from
 > `uv run python scripts/check_submission.py`, which re-derives all 86 rows from the tree on
@@ -30,16 +30,16 @@ in their own column and never folded into the pass count.
 
 ## Measured state at HEAD
 
-| Group | PASS | GAP | UNJUDGED | GAP was (08-06) | GAP was (08-03) | GAP was (08-01) |
-|---|---:|---:|---:|---:|---:|---:|
-| 1. Structure & documentation | 26 | 2 | 0 | 6 | 15 | 16 |
-| 2. Architecture & code | 7 | 0 | 3 | 0 | 0 | 2 |
-| 3. Testing & quality | 4 | 0 | 3 | 0 | 0 | 1 |
-| 4. Configuration & security | 15 | 0 | 0 | 0 | 0 | 3 |
-| 5. Research & visualization | 1 | 4 | 0 | 4 | 4 | 4 |
-| 6. Extensibility & standards | 5 | 1 | 2 | 4 | 4 | 5 |
-| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 | 1 |
-| **Total (86 rows, 73 judged)** | **65** | **8** | **13** | **15** | **24** | **32** |
+| Group | PASS | GAP | UNJUDGED | GAP was (08-08) | GAP was (08-06) | GAP was (08-03) | GAP was (08-01) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1. Structure & documentation | 27 | 1 | 0 | 2 | 6 | 15 | 16 |
+| 2. Architecture & code | 7 | 0 | 3 | 0 | 0 | 0 | 2 |
+| 3. Testing & quality | 4 | 0 | 3 | 0 | 0 | 0 | 1 |
+| 4. Configuration & security | 15 | 0 | 0 | 0 | 0 | 0 | 3 |
+| 5. Research & visualization | 4 | 1 | 0 | 4 | 4 | 4 | 4 |
+| 6. Extensibility & standards | 5 | 1 | 2 | 1 | 4 | 4 | 5 |
+| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 | 1 | 1 |
+| **Total (86 rows, 73 judged)** | **69** | **4** | **13** | **8** | **15** | **24** | **32** |
 
 Evidence JSON: [`docs/phases/phase-8/submission_audit_evidence.json`](phases/phase-8/submission_audit_evidence.json).
 
@@ -154,9 +154,46 @@ derivation `PRD_tunnel.md` rests on), and every backticked path in all three PRD
 `git ls-files`. That last rule caught a second fabricated script name
 (`scripts/check_publication_safety.py` never existed; the scan is `scripts/submission_scan.py`).
 
+### What moved, row by row — 08-09, 2026-08-17
+
+**8 GAP → 4 GAP. Four rows, and exactly the four 08-09 owned.** No other row changed verdict
+in either direction.
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **G1-14** | GAP | PASS | `docs/PROMPT_LOG.md`, **199** non-blank lines. Both halves of §8.3: the two prompts the agent sends, with revisions and real sample outputs, and how the codebase itself was prompted |
+| **G5-02** | GAP | PASS | `docs/SENSITIVITY.md`, **212** non-blank lines, rendered from `artifacts/sensitivity/sweep.json` — a 13-configuration OFAT sweep at 200 games per matchup |
+| **G5-03** | GAP | PASS | `notebooks/analysis.ipynb` — **1** tracked `*.ipynb` (was 0). It executes offline (`nbconvert --execute` exit 0, 4.6s, three figures) and its committed outputs carry the graphs |
+| **G5-05** | GAP | PASS | `docs/TOKEN-COST.md`, **160** non-blank lines, rendered from `artifacts/token_cost/token_cost.json`, with a ranked optimization strategy |
+
+**Every published number is regenerated and compared.** `tests/unit/test_research_docs.py`
+re-renders all four generated blocks from the committed artifacts and asserts each appears in
+its document verbatim, so a hand-edited figure fails the suite. It also resolves every
+backticked repository path and every cited commit hash in the three documents — the check
+08-07 introduced after three fabricated citations — and it immediately caught one of its own
+(`scripts/sensitivity_status.refuse_fixed` is a function, not a file).
+
+**Two things 08-09 found and did NOT paper over.**
+
+1. **A contradiction it could not resolve.** `docs/phases/phase-3/ENGINEERING-LOG.md` Act 4.3
+   records thief survival against a barrier-blind chaser as **89% → 1%** across the swap
+   decision, and `PRD.md`, `PLAN.md` and `shared/resolution.py`'s `PREFERRED` docstring all
+   quote it. The sweep measures **32.0% → 7.5%**. `scripts/sensitivity_reconcile.py` parses
+   the old pair out of the log and re-measures all eight weights × rules × opening
+   combinations; none reproduces it. The *direction* of the shipped decision is confirmed and
+   unchanged, the *magnitude* is not, and the cause was not established. **Correcting the
+   three documents that quote the pair is a follow-up 08-09 did not own** — it belongs with
+   whoever next touches the Phase-3 documents, and it is recorded here so it is not lost.
+2. **A vacuous test in its own work.** The first draft of the token-cost empty-evidence probe
+   used a fixture with both token totals at zero, so deleting the guard it tested made it
+   fail with `ZeroDivisionError` rather than the assertion — it would have kept passing if
+   anyone had "fixed" the crash by guarding the division instead of the evidence. The fixture
+   now carries a non-zero output total; the test fails with `DID NOT RAISE`. Written up in
+   `docs/PROMPT_LOG.md` B2 rather than tidied away.
+
 ---
 
-## Group 1 — Structure & documentation · 2 GAP  *(was 6; G1-13 closed by 08-07, the three mechanism rows by 08-08)*
+## Group 1 — Structure & documentation · 1 GAP  *(was 6; G1-13 closed by 08-07, the three mechanism rows by 08-08, G1-14 by 08-09)*
 
 ### The root README describes a system this repository does not ship
 
@@ -257,8 +294,29 @@ gate now reports **6 blocks in 1 file**. They are held to the tree by
 
 ### No prompt-engineering log
 
-**Row G1-14.** `docs/PROMPT_LOG.md` does not exist. §8.3 requires it and §17 names it.
-**Owner: 08-09.**
+**Row G1-14.** `docs/PROMPT_LOG.md` did not exist. §8.3 requires it and §17 names it.
+
+**CLOSED by 08-09, 2026-08-17.** `docs/PROMPT_LOG.md` carries **199** non-blank lines in two
+parts, because this project has two kinds of prompt.
+
+**Part A — the prompts the agent sends.** There are exactly two (`decode_prompt.py`,
+`bluff_prompt.py`), and rule 25 means neither can choose a move. Entry **R1** is the one
+prompt revision this project can measure end to end: the composer originally said *"phrasing a
+claim **for** a player"*, and on 2026-08-13 it produced *"The player is currently positioned
+near the eastern edge of the grid."* — asked to write **for** someone, the model wrote
+**about** them. `50ac2fe` put the model in the seat. The tracked wire logs show **1**
+third-person sentence in the 10 hints before the change and **0** in the 69 after.
+`scripts/prompt_log_evidence.py` measures that table and refuses an empty sample; the entry
+states its own limit (a 10-hint before-sample, rounds not otherwise controlled) and the
+third-person test is labelled a narrow mechanical proxy where it is printed.
+
+**Part B — how the codebase was prompted**, which is what §8.3 literally asks for. Each
+practice cites reproducible evidence: **31 of the 87** plan summaries in `.planning/` contain
+the word *vacuous* or *vacuity*, which is why "prove your own tests can fail" is in every
+execution prompt from phase 5 on. B6 records what did **not** work, including that a prompt
+asking for a summary of work done produces a flattering one.
+
+**Owner: 08-09 — CLOSED.**
 
 ### A defect in a grader-facing extract — rule 48's survival pair
 
@@ -395,20 +453,44 @@ a secret placed in a real file. It only classifies what the scan already found.
 
 ---
 
-## Group 5 — Research & visualization · 4 GAP
+## Group 5 — Research & visualization · 1 GAP  *(was 4; G5-02, G5-03 and G5-05 closed by 08-09)*
 
 **PASS:** `artifacts/curves/{winrate_cop,winrate_thief,mean_reward}.png` + `curves.csv`, with a
 McNemar correction discussed in the README — real statistical work, instrumented from
 episode 1.
 
-| Row | Gap | Evidence | Fix lands in |
+| Row | Was | Now | Evidence at HEAD |
 |---|---|---|---|
-| G5-02 | no sensitivity analysis | `docs/SENSITIVITY.md` absent | `docs/SENSITIVITY.md` |
-| G5-03 | no analysis notebook | **0** tracked `*.ipynb`; no `notebooks/` despite §2.4 | `notebooks/analysis.ipynb` |
-| G5-04 | no screenshots of the running system | **5** tracked images (08-06 added the two run-2 curves), **0** of them not a training curve. A learning curve satisfies rule 42 and §9.4.2 item 4; it is not a screenshot, and counting it as one would answer a different question — which is why adding two curves moved the image count and left this row exactly where it was | `docs/assets/` |
-| G5-05 | no token-cost analysis or optimization strategy | `docs/TOKEN-COST.md` absent, though `TokenBudget.report()` already produces the data | `docs/TOKEN-COST.md` |
+| G5-02 | no sensitivity analysis | **PASS** | `docs/SENSITIVITY.md`, **212** non-blank lines, every table rendered from `artifacts/sensitivity/sweep.json` |
+| G5-03 | **0** tracked `*.ipynb` despite §2.4 | **PASS** | `notebooks/analysis.ipynb` — 1 tracked notebook, executes offline in 4.6s and ships three embedded figures |
+| G5-05 | no token-cost analysis or optimization strategy | **PASS** | `docs/TOKEN-COST.md`, **160** non-blank lines, rendered from `artifacts/token_cost/token_cost.json` |
+| G5-04 | no screenshots of the running system | **still GAP** | **5** tracked images, **0** of them not a training curve. A learning curve satisfies rule 42 and §9.4.2 item 4; it is not a screenshot, and counting it as one would answer a different question. 08-09 added no image, so this row is exactly where it was | `docs/assets/` |
 
-**Owner: 08-09** (G5-02, G5-03, G5-05) · **08-06 with 07-10's screenshots** (G5-04).
+**Owner: 08-09 (G5-02, G5-03, G5-05) — all three CLOSED 2026-08-17** · **08-06 with 07-10's
+screenshots** (G5-04).
+
+**None of the three is a document that merely exists.** Each is generated from a committed
+artifact by a committed script, and `tests/unit/test_research_docs.py` re-renders and compares:
+
+* **G5-02.** `scripts/sensitivity_sweep.py` plays 13 configurations × 3 fixed matchups × 200
+  games through `training/arena.run_match` — offline, no key, no counter touched. It varies
+  **only** parameters `docs/PARAMETERS.md` marks `minimum` (upward only) or `negotiable`, plus
+  three labelled engineering defaults; `scripts/sensitivity_status.py` parses the Status column
+  out of the extract and refuses the grid otherwise. The fixed list the document prints is
+  derived from that same parse, not typed. Separable findings at 95% Wilson: board 11 is worth
+  **+35.0pp** of thief survival, a 70-turn horizon **−29.0pp**, swap-as-capture **−25.0pp**,
+  the fitted vector over the prior **+18.0pp**. Search depth and extra barriers move nothing
+  separably, and the cop matchup is flagged SATURATED rather than read as evidence.
+* **G5-03.** The notebook's offline property is *parsed*, not grepped: its input manifest is
+  `ast.literal_eval`ed out of the code and each path put to `git ls-files`, and its import set
+  is held to `{json, pathlib, matplotlib}`. Probed by repointing one input at `logs/` — both
+  the manifest test and the execution test go red.
+* **G5-05.** Fed by the one real Haiku 4.5 game and the three mocked ones, both already
+  tracked; nothing is read from the untracked `game_artifacts/`. Findings: input is **96.4%**
+  of spend, the system prompts are **91–96%** of each call's input characters, the shipped
+  estimator over-reserves **1.35×** (the `max_tokens=300` ceiling is 42.5% of it while real
+  output averaged 19.1), and a 10-game series — the **fixed** maximum — projects to 301,800
+  tokens against a 200,000 budget and **does not fit**. Every figure is flagged n=1.
 
 ---
 

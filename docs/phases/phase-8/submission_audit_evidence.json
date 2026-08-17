@@ -1,76 +1,76 @@
 {
   "counts": {
-    "gap": 24,
+    "gap": 4,
     "judged": 73,
-    "pass": 49,
+    "pass": 69,
     "total": 86,
     "unjudged": 13
   },
   "empty_evidence_reasons": [],
   "exit_code": 1,
   "gate": "Segal Sec17 final checklist + Sec19.1 Table 5",
-  "generated_at": "2026-08-17T13:23:15.940203+00:00",
+  "generated_at": "2026-08-17T17:31:03.293596+00:00",
   "mechanisms_discovered": 10,
   "readme_rows": 10,
   "rows": [
     {
-      "evidence": "no README heading matches any of ['install', 'prerequisit', 'getting started', 'setup']",
+      "evidence": "heading 'installation' has 40 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-01",
       "requirement": "Sec2.1 installation: prerequisites, step-by-step, env setup, troubleshooting",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['usage', 'running', 'how to run', 'quick start']",
+      "evidence": "heading 'usage \u2014 running a game' has 42 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-02",
       "requirement": "Sec2.1 usage: running in different modes, flags, CLI/GUI, typical workflow",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['example', 'screenshot', 'demo', 'use case']",
+      "evidence": "heading 'examples and screenshots' has 28 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-03",
       "requirement": "Sec2.1 examples and code samples, screenshots, common use-cases",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['configuration']",
+      "evidence": "heading 'configuration guide' has 21 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-04",
       "requirement": "Sec2.1 configuration guide",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['contribut']",
+      "evidence": "heading 'contributing' has 8 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-05",
       "requirement": "Sec2.1 contribution guidelines",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['license', 'licence']",
+      "evidence": "heading 'licence' has 10 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-06",
       "requirement": "Sec2.1 license",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "no README heading matches any of ['credit', 'acknowledg', 'authors']",
+      "evidence": "heading 'credits and acknowledgements' has 17 body lines",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-07",
       "requirement": "Sec2.1 credits",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "fenced code blocks present: True; images: 3, of which non-curve: 0",
+      "evidence": "fenced code blocks present: True; images: 2, of which non-curve: 0",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-03b",
@@ -78,28 +78,28 @@
       "verdict": "GAP"
     },
     {
-      "evidence": "3 unqualified mention(s) of a superseded mechanism: ['Q-Learning (docs/PRD_rl_strategy.md)']",
+      "evidence": "0 unqualified mention(s) of a superseded mechanism: []",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-08",
       "requirement": "README must not advertise a superseded mechanism (rule 42)",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "phases verified `passed`: ['01', '02', '03', '06']; still shown 'in progress' in README: ['03']",
+      "evidence": "phases verified `passed`: ['01', '02', '03', '06']; still shown 'in progress' in README: []",
       "fix_path": "README.md",
       "group": "1. Structure & documentation",
       "id": "G1-09",
       "requirement": "README phase status matches the verification files (rule 42)",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "docs/mechanism-prd-map.json entry names neither a PRD nor a reason",
-      "fix_path": "docs/mechanism-prd-map.json",
+      "evidence": "cites ['docs/PRD_gui.md']",
+      "fix_path": "docs/",
       "group": "1. Structure & documentation",
       "id": "G1-M[src/pursuit/gui]",
       "requirement": "Sec2.3 per-mechanism PRD for `src/pursuit/gui/`",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "cites ['docs/PRD_mcp_transport.md']",
@@ -110,12 +110,12 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "docs/mechanism-prd-map.json entry names neither a PRD nor a reason",
-      "fix_path": "docs/mechanism-prd-map.json",
+      "evidence": "cites ['docs/PRD_sdk.md']",
+      "fix_path": "docs/",
       "group": "1. Structure & documentation",
       "id": "G1-M[src/pursuit/sdk]",
       "requirement": "Sec2.3 per-mechanism PRD for `src/pursuit/sdk/`",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "cites ['docs/PRD_commit_reveal.md']",
@@ -150,7 +150,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "no PRD needed, recorded reason: Cross-cutting configuration loaders, frozen value objects and version.py -- not a mechanism. Every number it loads is specified in the PRD of the mechanism that consumes it (belief_config -> PRD_belief_map, scent_config -> PRD_scent_map, gatekeeper_params -> PRD_gatekeeper, tunnel_config -> the tunnel PRD that G1-M-TUNNEL tracks as missing).",
+      "evidence": "no PRD needed, recorded reason: Cross-cutting configuration loaders, frozen value objects and version.py -- not a mechanism. Every number it loads is specified in the PRD of the mechanism that consumes it (belief_config -> PRD_belief_map, scent_config -> PRD_scent_map, gatekeeper_params -> PRD_gatekeeper, tunnel_config -> PRD_tunnel, display_config -> PRD_display_belief).",
       "fix_path": "",
       "group": "1. Structure & documentation",
       "id": "G1-M[src/pursuit/shared]",
@@ -182,12 +182,12 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "module tracked: True; PRD_mcp_transport declares tunneling out of scope: True; tunnel-named PRDs: none",
+      "evidence": "module tracked: True; PRD_mcp_transport declares tunneling out of scope: True; tunnel-named PRDs: ['docs/PRD_tunnel.md']",
       "fix_path": "docs/PRD_tunnel.md",
       "group": "1. Structure & documentation",
       "id": "G1-M-TUNNEL",
       "requirement": "Sec2.3 per-mechanism PRD for the tunnel (`network/tunnel_manager.py`)",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "tracked: True; non-blank lines: 115 (stub floor 20)",
@@ -214,20 +214,20 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "rendered mermaid blocks across tracked docs/: 0 in 0 file(s) []",
+      "evidence": "rendered mermaid blocks across tracked docs/: 6 in 1 file(s) ['docs/ARCHITECTURE.md']",
       "fix_path": "docs/ARCHITECTURE.md",
       "group": "1. Structure & documentation",
       "id": "G1-13",
       "requirement": "Sec17 architecture documentation with clear (rendered) diagrams",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "tracked: False; non-blank lines: 0",
+      "evidence": "tracked: True; non-blank lines: 199",
       "fix_path": "docs/PROMPT_LOG.md",
       "group": "1. Structure & documentation",
       "id": "G1-14",
       "requirement": "Sec8.3 / Sec17 documented prompt-engineering log",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "PARAMETERS Table 17 rows 3-4 (cop, thief) = (5, 10); RULES.md rule 48 writes survival 5/10",
@@ -254,7 +254,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 520 (a zero count is a vacuous pass and fails this row)",
+      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 532 (a zero count is a vacuous pass and fails this row)",
       "fix_path": "scripts/check_line_limit.sh",
       "group": "2. Architecture & code",
       "id": "G2-03",
@@ -342,7 +342,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked files under tests/: 306",
+      "evidence": "tracked files under tests/: 318",
       "fix_path": "tests/",
       "group": "3. Testing & quality",
       "id": "G3-04",
@@ -382,7 +382,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 935; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
+      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 976; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-02",
@@ -494,7 +494,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked artifacts under artifacts/curves/: 4 ['artifacts/curves/curves.csv', 'artifacts/curves/mean_reward.png', 'artifacts/curves/winrate_cop.png', 'artifacts/curves/winrate_thief.png']",
+      "evidence": "tracked artifacts under artifacts/curves/: 6 ['artifacts/curves/curves.csv', 'artifacts/curves/mean_reward.png', 'artifacts/curves/run2_evolution.png', 'artifacts/curves/run2_selfplay.png', 'artifacts/curves/winrate_cop.png', 'artifacts/curves/winrate_thief.png']",
       "fix_path": "artifacts/curves/",
       "group": "5. Research & visualization",
       "id": "G5-01",
@@ -502,23 +502,23 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "docs/SENSITIVITY.md tracked with 0 non-blank lines (floor 20)",
+      "evidence": "docs/SENSITIVITY.md tracked with 212 non-blank lines (floor 20)",
       "fix_path": "docs/SENSITIVITY.md",
       "group": "5. Research & visualization",
       "id": "G5-02",
       "requirement": "Sec17 documented sensitivity analysis",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "tracked *.ipynb files: 0 []",
+      "evidence": "tracked *.ipynb files: 1 ['notebooks/analysis.ipynb']",
       "fix_path": "notebooks/analysis.ipynb",
       "group": "5. Research & visualization",
       "id": "G5-03",
       "requirement": "Sec17 / Sec2.4 analysis notebook with graphs",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "tracked images: 3; of which not a training curve: 0 []",
+      "evidence": "tracked images: 5; of which not a training curve: 0 []",
       "fix_path": "docs/assets/",
       "group": "5. Research & visualization",
       "id": "G5-04",
@@ -526,28 +526,28 @@
       "verdict": "GAP"
     },
     {
-      "evidence": "docs/TOKEN-COST.md tracked with 0 non-blank lines (floor 20)",
+      "evidence": "docs/TOKEN-COST.md tracked with 160 non-blank lines (floor 20)",
       "fix_path": "docs/TOKEN-COST.md",
       "group": "5. Research & visualization",
       "id": "G5-05",
       "requirement": "Sec17 token-cost analysis and optimization strategy",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "docs/EXTENSION-POINTS.md tracked with 0 non-blank lines (floor 20)",
+      "evidence": "docs/EXTENSION-POINTS.md tracked with 107 non-blank lines (floor 20)",
       "fix_path": "docs/EXTENSION-POINTS.md",
       "group": "6. Extensibility & standards",
       "id": "G6-01",
       "requirement": "Sec17 documented extension points",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "docs/ARCHITECTURE.md tracked with 0 non-blank lines (floor 20)",
+      "evidence": "docs/ARCHITECTURE.md tracked with 363 non-blank lines (floor 20)",
       "fix_path": "docs/ARCHITECTURE.md",
       "group": "6. Extensibility & standards",
       "id": "G6-02",
       "requirement": "Sec17 deployment instructions and architecture documentation",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "LICENSE tracked with 34 non-blank lines (floor 1)",
@@ -558,12 +558,12 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "characteristics parsed from Sec13: ['functional suitability', 'performance efficiency', 'compatibility', 'usability', 'reliability', 'security', 'maintainability', 'portability']; tracked docs naming all eight AND citing at least eight repo paths: none",
+      "evidence": "characteristics parsed from Sec13: ['functional suitability', 'performance efficiency', 'compatibility', 'usability', 'reliability', 'security', 'maintainability', 'portability']; tracked docs naming all eight AND citing at least eight repo paths: ['docs/QUALITY-25010.md']",
       "fix_path": "docs/QUALITY-25010.md",
       "group": "6. Extensibility & standards",
       "id": "G6-05",
       "requirement": "Sec13 / Sec17 ISO/IEC 25010 -- all eight characteristics mapped to repo evidence",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "last 200 commits read; conventional-prefix share 100.00% (floor 90%)",
@@ -703,6 +703,6 @@
     }
   ],
   "suite_was_run": false,
-  "tracked_files": 964,
+  "tracked_files": 1008,
   "verdict": "GAPS_FOUND"
 }

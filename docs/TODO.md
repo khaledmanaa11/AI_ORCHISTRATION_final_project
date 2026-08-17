@@ -223,7 +223,7 @@ Verified on every commit; blocks merge if failing (Table 5 / QUAL-01…13).
 | 0 hardcoded values / 0 secrets | P0 | ◐ | Khaled | Secrets: **886 tracked text files scanned, 0 provider-shape hits**, both scanner controls firing (audit row G4-02). Hardcoded values: Table 5 marks that row `Code review` and the audit prints it **UNJUDGED** rather than claiming a pass no script earned (QUAL-11/12) |
 | SDK layer + single gatekeeper + no duplication | P1 | ◐ | Khaled | SDK layer (11 modules) and the one gatekeeper reused as two instances are both audit-PASS; "no duplication" is a Table-5 `Code review` row and stays **UNJUDGED** (QUAL-01/02/03) |
 | TDD + versioning 1.00 | P1 | ◐ | Khaled | `version.py` reads `1.00`, but `pyproject.toml` reads `1.00.0` — audit row **T5-06 GAP**, and D-79 derives the tag name from the reconciled value (08-11). TDD is a Table-5 `Work process` row: **UNJUDGED** (QUAL-06/07) |
-| Prompt-engineering log maintained (§8.3) | P2 | ☐ | Khaled | `docs/PROMPT_LOG.md` **does not exist** — audit row G1-14 GAP; owned by plan 08-09 |
+| Prompt-engineering log maintained (§8.3) | P2 | ☑ | Khaled | `docs/PROMPT_LOG.md` — **199 non-blank lines**, audit row **G1-14 PASS** (08-09). Part A covers the two prompts the agent sends, with R1 a MEASURED revision (1 third-person hint in the 10 before `50ac2fe`, 0 in the 69 after, from the tracked phase-5 wire logs); Part B covers how the codebase was prompted, including what did not work |
 
 ---
 
