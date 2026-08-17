@@ -1,9 +1,9 @@
 [
   {
-    "commit": "99d6d5fd5104b1a890b29f869d5487a00dbf8525",
-    "copied": 1024,
+    "commit": "4897b48205caf16fb4e223e29dbfc0b102706f85",
+    "copied": 1042,
     "excluded": [],
-    "generated": "2026-08-17T18:50:29Z",
+    "generated": "2026-08-17T19:51:15Z",
     "path": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-police",
     "role": "police",
     "rows": [
@@ -18,7 +18,7 @@
         "ok": true
       },
       {
-        "detail": "commit 99d6d5f is not an object in the source repository; a shared commit would mean an inherited history",
+        "detail": "commit 4897b48 is not an object in the source repository; a shared commit would mean an inherited history",
         "name": "history disjoint from the source repository",
         "ok": true
       },
@@ -28,7 +28,7 @@
         "ok": true
       },
       {
-        "detail": "exit 0; scanned 539 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
+        "detail": "exit 0; scanned 544 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
         "name": "line-limit (<=150 code lines)",
         "ok": true
       },
@@ -63,20 +63,20 @@
         "ok": true
       },
       {
-        "detail": "exit 0; 2533 passed, 0 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
+        "detail": "exit 1; 2574 passed, 1 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
         "name": "pytest --cov",
-        "ok": true
+        "ok": false
       }
     ],
-    "source_commit": "8aa02ea",
-    "staged": 1025,
-    "verdict": "pass"
+    "source_commit": "123dff5",
+    "staged": 1043,
+    "verdict": "FAIL"
   },
   {
-    "commit": "580acae420b8458c94065676bcee49b8f1f4fa9f",
-    "copied": 1024,
+    "commit": "18d904cf4978b6ba43071cca837cfc859c2ea5f6",
+    "copied": 1042,
     "excluded": [],
-    "generated": "2026-08-17T18:50:29Z",
+    "generated": "2026-08-17T19:51:15Z",
     "path": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-thief",
     "role": "thief",
     "rows": [
@@ -91,7 +91,7 @@
         "ok": true
       },
       {
-        "detail": "commit 580acae is not an object in the source repository; a shared commit would mean an inherited history",
+        "detail": "commit 18d904c is not an object in the source repository; a shared commit would mean an inherited history",
         "name": "history disjoint from the source repository",
         "ok": true
       },
@@ -101,7 +101,7 @@
         "ok": true
       },
       {
-        "detail": "exit 0; scanned 539 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
+        "detail": "exit 0; scanned 544 tracked .py files under ['src/', 'tests/', 'training/']; violations 0 (a scan of 0 files is a vacuous pass and fails this row)",
         "name": "line-limit (<=150 code lines)",
         "ok": true
       },
@@ -136,13 +136,13 @@
         "ok": true
       },
       {
-        "detail": "exit 0; 2533 passed, 0 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
+        "detail": "exit 1; 2574 passed, 1 failed; coverage 97.44% against fail_under 85.0% (a run of 0 tests fails this row)",
         "name": "pytest --cov",
-        "ok": true
+        "ok": false
       }
     ],
-    "source_commit": "8aa02ea",
-    "staged": 1025,
-    "verdict": "pass"
+    "source_commit": "123dff5",
+    "staged": 1043,
+    "verdict": "FAIL"
   }
 ]

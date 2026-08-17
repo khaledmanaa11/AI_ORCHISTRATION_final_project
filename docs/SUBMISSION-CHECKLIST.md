@@ -38,10 +38,26 @@ in their own column and never folded into the pass count.
 | 4. Configuration & security | 15 | 0 | 0 | 0 | 0 | 0 | 3 |
 | 5. Research & visualization | 4 | 1 | 0 | 4 | 4 | 4 | 4 |
 | 6. Extensibility & standards | 5 | 1 | 2 | 1 | 4 | 4 | 5 |
-| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 | 1 | 1 | 1 |
-| **Total (86 rows, 73 judged)** | **69** | **4** | **13** | **8** | **15** | **24** | **32** |
+| T5. Table 5 (§19.1) | **8** | **0** | 5 | 1 | 1 | 1 | 1 |
+| **Total (86 rows, 73 judged)** | **70** | **3** | **13** | **8** | **15** | **24** | **32** |
 
 Evidence JSON: [`docs/phases/phase-8/submission_audit_evidence.json`](phases/phase-8/submission_audit_evidence.json).
+
+### What moved, row by row — 08-11, 2026-08-17
+
+**4 GAP → 3 GAP. One row, and exactly the one 08-11 could close.** No other row changed
+verdict in either direction — the same counter-control every pass in this phase has used.
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **T5-06** | GAP | **PASS** | `pyproject.toml` `[project] version` moved `1.00.0` → **`1.00`**, the string `src/pursuit/shared/version.py` already carried and all 28 tracked config JSONs already agreed with (bar the two deliberate `weights.json` `2.00` bumps). `version.py` is now named **in** `pyproject.toml` as the single source; the copy is unavoidable in TOML and is pinned instead by `tests/unit/test_version_single_source.py`, which parses the Table-5 baseline out of `docs/SEGAL_GUIDELINES.md` §19.1 rather than typing it and compares **raw strings, never PEP-440 versions** — `1.00` and `1.0` normalise to the same version and are different tag names |
+
+**The three that did not move, each with the reason, dated 2026-08-17:**
+
+| Row | Why it is still a GAP | Whose |
+|---|---|---|
+| **G1-03b** · **G5-04** | Screenshots of the running system. Both are **marked-absent slots**, written that way by 08-06 rather than filled with a training curve relabelled as a screenshot. They need one live run and a human at the keyboard. | **07-10** |
+| **G6-08** | `git tag -l` in **this** repository is empty, and that is the intended state, not an omission. **D-79 cuts the tag on the split outputs, never on the mono-repo**, whose `main` is well over a hundred commits ahead of a remote that is not the submission target. The annotated tag **`v1.00`** exists in `C:\Users\Hp\pursuit-split-repos\pursuit-police` and `...\pursuit-thief` — where the same audit gate reports this row **PASS** — and it is **not pushed**. A second reason not to cut one here, recorded because it is measured rather than assumed: an external process pushes this repository's `origin/main` on a delay (observed 2026-08-14 and 2026-08-16, no git hook responsible), so a local tag in this tree could be swept outward without anyone typing `push`. | **08-11** (cut) · **08-12** (pushed, by a human) |
 
 ### What moved, row by row — 08-03, 2026-08-17
 
@@ -513,7 +529,7 @@ artifact by a committed script, and `tests/unit/test_research_docs.py` re-render
 | G6-02 | ~~no deployment instructions / architecture document~~ **CLOSED by 08-07** | `docs/ARCHITECTURE.md` §5 is a deployment diagram plus §5.1's three real command paths — local two-process, league-day two-machine, and both GUI processes | `docs/ARCHITECTURE.md` |
 | G6-03 | ~~no licence file~~ **CLOSED by 08-03 — PREPARED, `AWAITING OWNER CONFIRMATION`** | `LICENSE` now exists (MIT, the conventional academic default) and `pyproject.toml` declares `license = { file = "LICENSE" }` and `authors`. See the block below — this row is structurally closed and **legally open** | `LICENSE` |
 | G6-05 | ~~ISO/IEC 25010 is not mapped~~ **CLOSED by 08-07** | the eight characteristic names are parsed out of `docs/SEGAL_GUIDELINES.md` §13 by the gate; **now** `docs/QUALITY-25010.md` does, giving each characteristic its **own section with its own repo evidence**; `tests/unit/test_quality_docs_contract.py` parses the eight names out of §13 rather than typing them, and fails on any cited path missing from `git ls-files`. Before 08-07 the whole repo had one line of content, `docs/PRD.md:94` | `docs/QUALITY-25010.md` |
-| G6-08 | no Git tag | `git tag -l` → empty. Rule 41. **The tag is cut in 08-11 and pushed by a HUMAN in 08-12 — this gate never creates or pushes one** | `docs/phases/phase-8/SUBMISSION-RUNBOOK.md` |
+| G6-08 | no Git tag **in this repository — deliberately, and dated 2026-08-17** | `git tag -l` → empty **here**. Rule 41. **D-79 cuts the tag on the split OUTPUTS, never on the mono-repo**: annotated **`v1.00`** exists in both `C:\Users\Hp\pursuit-split-repos\pursuit-{police,thief}`, where this same gate reports the row **PASS**, and it is **not pushed** — both outputs have zero remotes. A second, measured reason not to cut one here: an external process pushes this repository's `origin/main` on a delay, so a local tag in this tree could go outward without anyone typing `push`. **This gate never creates or pushes a tag** | `docs/phases/phase-8/PUBLISH-RUNBOOK.md` |
 
 **Owner: 08-07 (G6-01, G6-02, G6-05) — all three CLOSED 2026-08-17** · **08-03** (G6-03) ·
 **08-11/08-12** (G6-08).
@@ -555,17 +571,17 @@ because its first draft failed against its own explanatory prose.
 
 ---
 
-## Table 5 (§19.1) · 1 GAP
+## Table 5 (§19.1) · 0 GAP  *(was 1; T5-06 closed by 08-11)*
 
 Twelve of the thirteen rows **cite** the §17 rows that measure them and take the worst verdict
 among them; nothing is measured twice. A cited row that a run does not produce is a **GAP**,
 not a shrug — `submission_table5._worst` refuses an empty backing set by name.
 
-| Row | Gap | Evidence | Fix lands in |
+| Row | Gap | Evidence | Fix landed in |
 |---|---|---|---|
-| T5-06 | the two version sources disagree | `src/pursuit/shared/version.py` `VERSION = "1.00"`; `pyproject.toml` `version = "1.00.0"`. D-79 derives the tag name from the reconciled value, so these must agree **before** a tag exists | `pyproject.toml` |
+| T5-06 | ~~the two version sources disagree~~ **CLOSED by 08-11, 2026-08-17** | `src/pursuit/shared/version.py` `VERSION = "1.00"` and `pyproject.toml` `version = "1.00"` — one string, and `version.py` is named in `pyproject.toml` as the source it copies. `tests/unit/test_version_single_source.py` pins them, parses the Table-5 baseline out of `docs/SEGAL_GUIDELINES.md` §19.1 instead of typing it, and sweeps all 28 tracked config JSONs with the two `weights.json` `2.00` bumps exempted **by name**. Proven to fail on disagreement three ways: `1.0` (PEP-440 **equal** to `1.00`, different string) → 1 failed; `VERSION = "1.10"` → 3 failed; one config JSON at `9.99` → 1 failed. D-79's tag name is now derived from a value both files agree on | `pyproject.toml` |
 
-**Owner: 08-11.**
+**Owner: 08-11 — CLOSED.**
 
 **UNJUDGED (5):** T5-02 OOP · T5-05 overflow handling (judged by the suite, so `--run-suite`)
 · T5-07 TDD · T5-10 coverage (`--run-suite`) · T5-11 hardcoded values.

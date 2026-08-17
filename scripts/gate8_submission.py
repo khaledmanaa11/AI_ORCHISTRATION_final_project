@@ -23,6 +23,7 @@ contract failed.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -58,16 +59,22 @@ def _readme_of(dest: Path, role: str) -> str:
 
 
 def _screenshot_slots() -> dict:
-    """Tracked images that are NOT a training curve. Zero today, and stated so."""
-    tracked = [
-        str(path.relative_to(REPO_ROOT)).replace("\\", "/")
-        for path in (REPO_ROOT / "docs" / "assets").rglob("*")
-        if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif"}
-    ]
-    curves = [path for path in tracked if _CURVE_DIR in path]
+    """Tracked images that are NOT a training curve. Zero today, and stated so.
+
+    Asked of `git ls-files` across the whole tree, not of one directory. The
+    first draft globbed `docs/assets/` only -- a directory that does not exist
+    -- and reported `tracked_images: 0` while the audit gate, asking the same
+    question properly, was reporting five. A count taken over the wrong set is
+    not a smaller count; it is a different question.
+    """
+    listed = subprocess.run(
+        ["git", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    ).stdout.split()
+    tracked = [path for path in listed
+               if path.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
     return {
         "tracked_images": len(tracked),
-        "non_curve_images": len([p for p in tracked if p not in curves]),
+        "non_curve_images": len([p for p in tracked if _CURVE_DIR not in p]),
         "verdict": "PENDING",
         "owner": "07-10 (human -- one live run, then two screenshots)",
         "audit_rows": ["G1-03b", "G5-04"],

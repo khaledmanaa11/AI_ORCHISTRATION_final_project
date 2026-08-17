@@ -1,0 +1,222 @@
+{
+  "criterion_1_two_cross_linked_repos_and_a_tag": {
+    "built_and_tagged_verdict": "PASS",
+    "criterion": "1 -- two cross-linked public repos, each with rule-50 content and a tag",
+    "development_repo_is_deliberately_untagged": true,
+    "development_repo_tag_list": [],
+    "outputs": {
+      "police": {
+        "clean_worktree": true,
+        "commit_count": 1,
+        "cross_link": {
+          "banner_lines": 25,
+          "banner_present": true,
+          "names_the_other_repository": true,
+          "repo_split_doc_tracked": true,
+          "urls_in_banner": []
+        },
+        "exists": true,
+        "head": "4897b48",
+        "remote_count": 0,
+        "role": "police",
+        "root": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-police",
+        "rule50": {
+          "PLAN": 103,
+          "PRD": 16,
+          "README": 1,
+          "TODO": 10,
+          "config": 28
+        },
+        "tag": {
+          "annotated": true,
+          "exists": true,
+          "message_lines": [
+            "v1.00           Submission version 1.00 -- police (cop) repository, team khm-mn17",
+            "    Tag name derived from src/pursuit/shared/version.py VERSION = 1.00 (D-79),",
+            "    which pyproject.toml now copies and tests/unit/test_version_single_source.py",
+            "    pins. NOT PUSHED by the agent that cut it: this repository has zero remotes",
+            "    and a human pushes it at 08-12 (docs/phases/phase-8/PUBLISH-RUNBOOK.md)."
+          ],
+          "name": "v1.00",
+          "points_at_head": true,
+          "pushed": false,
+          "target_commit": "4897b48205caf16fb4e223e29dbfc0b102706f85",
+          "tree_file_count": 1043
+        },
+        "tracked_file_count": 1043
+      },
+      "thief": {
+        "clean_worktree": true,
+        "commit_count": 1,
+        "cross_link": {
+          "banner_lines": 25,
+          "banner_present": true,
+          "names_the_other_repository": true,
+          "repo_split_doc_tracked": true,
+          "urls_in_banner": []
+        },
+        "exists": true,
+        "head": "18d904c",
+        "remote_count": 0,
+        "role": "thief",
+        "root": "C:\\Users\\Hp\\pursuit-split-repos\\pursuit-thief",
+        "rule50": {
+          "PLAN": 103,
+          "PRD": 16,
+          "README": 1,
+          "TODO": 10,
+          "config": 28
+        },
+        "tag": {
+          "annotated": true,
+          "exists": true,
+          "message_lines": [
+            "v1.00           Submission version 1.00 -- thief repository, team khm-mn17",
+            "    Tag name derived from src/pursuit/shared/version.py VERSION = 1.00 (D-79),",
+            "    which pyproject.toml now copies and tests/unit/test_version_single_source.py",
+            "    pins. NOT PUSHED by the agent that cut it: this repository has zero remotes",
+            "    and a human pushes it at 08-12 (docs/phases/phase-8/PUBLISH-RUNBOOK.md)."
+          ],
+          "name": "v1.00",
+          "points_at_head": true,
+          "pushed": false,
+          "target_commit": "18d904cf4978b6ba43071cca837cfc859c2ea5f6",
+          "tree_file_count": 1043
+        },
+        "tracked_file_count": 1043
+      }
+    },
+    "published": {
+      "evidence_that_nothing_was_published": {
+        "police": 0,
+        "thief": 0
+      },
+      "owner": "08-12 (human)",
+      "verdict": "PENDING",
+      "why": "creating a GitHub repository and pushing to it needs an account, a consent screen and an irreversible outward call; no agent may do it"
+    },
+    "published_verdict": "PENDING",
+    "tag_name": "v1.00",
+    "tag_name_is_derived_from": "src/pursuit/shared/version.py VERSION",
+    "verdict": "BUILT+TAGGED PASS; PUBLISHED PENDING (08-12)"
+  },
+  "criterion_2_academic_readme_and_submission_form": {
+    "criterion": "2 -- academic README, screenshots, submission form PDF, per member",
+    "form_and_per_member_verdict": "PENDING",
+    "published_readmes": {
+      "police": {
+        "academic_sections_expected": 6,
+        "missing_academic_942_headings": [],
+        "missing_segal_21_headings": [],
+        "readme_bytes": 31347
+      },
+      "thief": {
+        "academic_sections_expected": 6,
+        "missing_academic_942_headings": [],
+        "missing_segal_21_headings": [],
+        "readme_bytes": 31346
+      }
+    },
+    "readme_sections_verdict": "PASS",
+    "screenshots": {
+      "audit_rows": [
+        "G1-03b",
+        "G5-04"
+      ],
+      "non_curve_images": 0,
+      "note": "MARKED-ABSENT SLOTS. 08-06 wrote the slots and refused to fake them.",
+      "owner": "07-10 (human -- one live run, then two screenshots)",
+      "tracked_images": 5,
+      "verdict": "PENDING"
+    },
+    "screenshots_verdict": "PENDING",
+    "self_assessment_score": {
+      "evidence_table": "docs/SELF-ASSESSMENT.md (drafted by 08-11, score field BLANK)",
+      "open_question": "OQ8-4 -- a numeric claim about our own work (rule 55)",
+      "owner": "08-14 (human)",
+      "verdict": "PENDING"
+    },
+    "submission_form_pdf": {
+      "open_question": "OQ8-3 -- neither docs/RULES.md nor docs/PARAMETERS.md records where the form lives; no location is guessed",
+      "owner": "08-14 (human)",
+      "runbook": "docs/phases/phase-8/SUBMISSION-RUNBOOK.md",
+      "verdict": "PENDING"
+    },
+    "submitted_per_member": {
+      "owner": "08-14 (human)",
+      "team_code": "khm-mn17",
+      "team_size": 1,
+      "verdict": "PENDING"
+    },
+    "verdict": "README PASS; SCREENSHOTS PENDING (07-10); FORM+SUBMISSION PENDING (08-14)"
+  },
+  "criterion_3_two_scored_league_games": {
+    "bounds": {
+      "max_games_per_team": 10,
+      "minimum_games": 2
+    },
+    "criterion": "3 -- >=2 scored games vs different teams, reported with the commit hash",
+    "declaration_wiring": {
+      "call_site_present": true,
+      "commit_hash_field": "declarations.own.declaration.commit_hash",
+      "commit_hashes_found": [
+        "e67283841ac23e0f32bad7b7d63f99c56dc7a3f1"
+      ],
+      "declaration_writer": "write_declaration_artifact",
+      "production_call_sites": [
+        "src/pursuit/services/reporting/end_of_game_declaration.py"
+      ],
+      "retained_artifacts_carrying_a_commit_hash": [
+        "police_declaration_397b3503b1bfa996.json",
+        "thief_declaration_397b3503b1bfa996.json"
+      ],
+      "retained_declaration_artifacts": [
+        "police_declaration_397b3503b1bfa996.json",
+        "thief_declaration_397b3503b1bfa996.json"
+      ]
+    },
+    "games_played_declaration": {
+      "open_question": "OQ8-2 -- the rule-38 value is not an agent's to pick",
+      "owner": "08-14 (human)",
+      "verdict": "PENDING"
+    },
+    "games_played_verdict": "PENDING",
+    "ledger": {
+      "police": {
+        "all_games": 0,
+        "distinct_scored_opponents": [],
+        "scored_games": 0
+      },
+      "thief": {
+        "all_games": 0,
+        "distinct_scored_opponents": [],
+        "scored_games": 0
+      }
+    },
+    "machinery_verdict": "PASS",
+    "scored_games_played": {
+      "owner": "08-13 (human, and blocked on 07-10)",
+      "runbook": "docs/phases/phase-8/LEAGUE-RUNBOOK.md",
+      "verdict": "PENDING",
+      "why": "real opponent teams cannot be arranged by an agent, and rule 35 zeroes BOTH teams when either fails to report -- so no game is played to demonstrate a delta"
+    },
+    "verdict": "MACHINERY PASS; GAMES PENDING (08-13, needs 07-10)"
+  },
+  "games_played_counter": {
+    "after": {
+      "police/games_played.json": "{\"games_played\": 1927}",
+      "thief/games_played.json": "{\"games_played\": 1920}"
+    },
+    "before": {
+      "police/games_played.json": "{\"games_played\": 1927}",
+      "thief/games_played.json": "{\"games_played\": 1920}"
+    },
+    "unchanged_by_this_measurement": true
+  },
+  "gate": "GATE-8 (submission gate, .planning/ROADMAP.md Phase 8)",
+  "generated_at": "2026-08-17T20:02:13.089885+00:00",
+  "no_remote_command_was_issued": {
+    "clean": true,
+    "network_verb_hits_in_this_package": {}
+  }
+}
