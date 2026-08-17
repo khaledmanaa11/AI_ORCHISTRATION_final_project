@@ -147,3 +147,28 @@ but not `declaration`. `artifact_declaration.py` therefore had to name it locall
 because one field moving inside that signed payload aborts every game at the handshake. A
 pure-rename drive-by there would have destroyed the evidence for the control while buying
 nothing. Fold it in when that file is opened for a real reason — the D7-2 precedent.
+
+---
+
+## D7-5 · A recoverable `illegal transition handshake -> handshake` on every dev_launch run
+
+**Found by:** 07-02 verification (`dev_launch.py`) · **Owner:** unclaimed — a Phase-2/6
+state-machine question, not a Phase-7 one
+
+Every `dev_launch.py` run logs exactly one, on the police side, before `game_over`:
+
+```json
+{"event": "illegal_transition", "state_from": "handshake", "sender": "police",
+ "details": {"reason": "illegal transition handshake -> handshake",
+             "severity": "recoverable"}}
+```
+
+**Pre-existing and unrelated to 07-02**, verified by reading the four most recent runs'
+logs: all four carry exactly one, including runs recorded before this plan's first commit.
+Each of those games still reached `outcome: capture` at turn 5 with `audit_verdict
+matched: true` on both sides, so nothing is currently broken by it — the machine itself
+marks it `recoverable`.
+
+Logged rather than fixed, per the executor scope boundary: it is in the handshake path
+07-02's D-71 control requires to stay byte-unchanged, and chasing it here would have traded
+the control for a benign log line.

@@ -49,15 +49,27 @@ def test_the_header_rejects_an_index_its_filename_would_reject():
         artifacts.artifact_header(game_uid=_GAME_UID, game_id=_GAME_UID, sub_game_index=True)
 
 
-def test_all_four_artifacts_join_on_one_game_uid():
+def test_the_index_in_the_name_and_the_index_in_the_header_agree():
     """The join docs/PARAMETERS.md:159 requires: one `game_uid` across all
-    four, whatever their filenames do with `<NN>`."""
-    headers = (
-        artifacts.artifact_header(game_uid=_GAME_UID, game_id=_GAME_UID),
-        artifacts.artifact_header(game_uid=_GAME_UID, game_id=_GAME_UID, sub_game_index=1),
-        artifacts.artifact_header(game_uid=_GAME_UID, game_id=_GAME_UID, sub_game_index=2),
+    four, and `<NN>` on exactly the two that carry it in their FILENAME.
+    Cross-checked here name-against-header, so a builder that put the field on
+    `result_` -- or dropped it from `config_` -- fails on the disagreement."""
+    cases = (
+        (artifacts.declaration_filename(_GAME_UID), None),
+        (artifacts.result_filename(_GAME_UID), None),
+        (artifacts.config_filename(_GAME_UID, 1), 1),
+        (artifacts.log_filename(_GAME_UID, 1), 1),
     )
-    assert {h[artifacts.ArtifactField.GAME_UID] for h in headers} == {_GAME_UID}
+    assert len(cases) == 4
+    for filename, index in cases:
+        header = artifacts.artifact_header(
+            game_uid=_GAME_UID, game_id=_GAME_UID, sub_game_index=index
+        )
+        name_has_index = "_g01" in filename
+        header_has_index = artifacts.ArtifactField.SUB_GAME_INDEX in header
+        assert name_has_index == header_has_index, filename
+        assert name_has_index is (index is not None), filename
+        assert header[artifacts.ArtifactField.GAME_UID] == _GAME_UID
 
 
 def test_the_seal_is_sha256_over_canonical_json_and_nothing_else():
