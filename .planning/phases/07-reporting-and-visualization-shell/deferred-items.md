@@ -448,3 +448,49 @@ neither flat index (17 row-major, 23 column-major) appears either.
 **What to do with it:** nothing in source. When scanning a real snapshot by hand, separate the
 forward pair from the reversed one before drawing a conclusion, and prefer the geometric
 inversion — which returned `[]` on that same game — because it cannot collide this way.
+
+---
+
+## D7-17 · `game_id` is minted per GAME, while PARAMETERS reads it as the SERIES id
+
+**Found by:** 07-07 Task 2 · **Owner:** 07-10 / Phase 8 (the league runner)
+
+`docs/PARAMETERS.md`'s artifact table reads the two name parts as *series* and *match within
+it*: "each filename embeds the game identifier `game_id` plus the match number `<NN>`, so
+files from different matches can never be confused", and `result_<game_id>.json` is defined
+as the "final results summary **across all sub-games**".
+
+But `agent_entrypoint.run_agent` mints `secrets.token_hex(8)` and then adopts the negotiated
+id (D-61), so today's `game_id` identifies **one game**. Measured on a real `dev_launch` run:
+each game produced its own `result_<uid>.json` with exactly one sub-game and
+`games_measured: 1`, and `<NN>` was `01` on both seats.
+
+**The accumulator is not the problem and is not affected.** `record_sub_game` reads the
+previous generation and adds to it, proven over two sub-games sharing a `game_id`
+(`test_the_series_total_is_the_sum_of_two_sub_games`) and proven WRONG when the accumulation
+is removed. What is missing is a series-scoped identifier for the accumulator to key on.
+
+**Not fixed here, deliberately:** inventing an id scheme would be a protocol decision taken
+in an artifact writer, and `game_id` is negotiated with the peer at handshake (D-61) — it is
+not ours alone to redefine. Until a series id exists, a production series contains one
+sub-game, which is *correct for a one-game series* and understates nothing.
+
+---
+
+## D7-18 · A `QuotaManager` path is unguarded against the shipped `config/` tree
+
+**Found by:** 07-07's revert probe 17 · **Owner:** whichever plan next opens
+`tests/_shipped_config_guard.py`
+
+`tests/conftest.py`'s session-autouse guard patches `step0_collect.durable_write_json`, so it
+catches writes to `games_played.json` by any route. It does **not** cover
+`QuotaManager`, which reaches `durable_write_json` through its own module binding. Probe 17
+pointed the quota path at `config/police/` and the suite happily wrote
+`config/police/reporting_quota.json` — no test failed for the *write*; the probe failed only
+because 07-07's own test asserts the file lands beside the run output.
+
+Production is not affected: `end_of_game` passes `ctx.log_path.parent`, and
+`test_the_quota_counter_lands_beside_the_run_output_not_in_config` pins it. The gap is that
+the STRUCTURAL guard covers one writer while the rule ("no test writes the shipped config
+tree") is about the tree. Widening it means guarding `durable_write_json` at its own module,
+which is a change to a shared primitive and out of 07-07's scope.

@@ -3,102 +3,121 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-Resume file: None -- 07-06 is fully committed and closed, tree clean. WAVE 2 IS DONE: 07-06 was
-  the last wave-2 plan. NEXT IS 07-07 (end-of-game reporting + result_), which has had everything
-  it needs since 07-05 and owns D7-13/D7-14 and the D7-3/D7-12 wiring; then 07-08 (replay viewer),
-  07-09 (gate evidence) and 07-10 (the one autonomous:false plan -- OAuth consent, one live send,
-  screenshots, and the games-played VALUE decision, OQ-5). WHAT 07-06 LEAVES FOR THE PLANS THAT OWN
-  IT, AND IT IS FOUR THINGS: (1) 07-10 MUST STATE A --refresh-ms VALUE for the screenshot and record
-  it -- OQ-6 is resolved STRUCTURALLY, the repository holds no interval number anywhere in src/ and
-  --refresh-ms is required=True with no default, so a launcher that omits it exits 2; (2) 07-08's
-  replay viewer inherits the QUANTISATION rule as well as D7-8 -- a heat ramp whose background
-  swallows small probabilities draws a support SMALLER than display.min_support_cells guards, and a
-  five-cell drawn plus names its centre off numbers that were themselves compliant, so
-  view_render.shade reserves the background for exactly zero and the drawn support is asserted
-  EQUAL to the published one; (3) NOTHING may move from sdk/view_render.py or sdk/view_text.py into
-  gui/ -- pyproject.toml:38 omits */gui/* from coverage, the 100% figures exist because the logic is
-  outside it, and tests/unit/test_gui_structural.py FAILS the moment a gui/ module performs
-  arithmetic, builds a string, or imports outside pursuit.sdk/pursuit.gui; (4) 07-09 records the
-  scripted-launch evidence -- --once exits 0 on this machine (Tk 8.6) against a synthetic snapshot
-  AND against both seats of a real game. Sixteen deferred items now sit in the phase's
-  deferred-items.md: D7-1 RESOLVED, D7-2, D7-3, D7-4, D7-5, D7-6 RESOLVED, D7-7 RESOLVED, D7-8,
-  D7-9 RESOLVED, D7-10 RESOLVED, D7-11, D7-12, D7-13 (RESOLVED for log_), D7-14, plus D7-15 and
-  D7-16 from this plan. Still open and NOT fixed per the scope boundary:
+Resume file: None -- 07-07 is fully committed and closed, tree clean. NEXT IS 07-08 (the replay
+  viewer), then 07-09 (GATE-7 evidence) and 07-10 (the one autonomous:false plan -- OAuth consent,
+  one live send, screenshots, and the games-played VALUE decision, OQ-5). WHAT 07-07 LEAVES FOR THE
+  PLANS THAT OWN IT, AND IT IS SIX THINGS: (1) THE FOUR ARTIFACTS ARE AT `<artifact_dir>/<role>/`,
+  not at `<artifact_dir>/` -- a real dev_launch game proved that two seats sharing one repository
+  share one configured directory, and the second seat's rewrite ATE the first seat's report, which
+  is rule 35's zero-for-both-teams shape exactly; (2) `agreement.audit_verdict` in `result_` is
+  BYTE-IDENTICAL to the `log_` artifact's, by construction, so 07-08's verdict screen may quote
+  either without a second extraction; (3) THE COP'S `agreed` IS LEGITIMATELY `null` ON A CAPTURE IT
+  WON -- rule 21 gives the Capture Claim to the cop, so only the THIEF ever receives one, and the
+  artifact carries a stated reason; a viewer must not render that as a failure; (4)
+  `games_played_declared` is an absent MARKER carrying its own reason, never a number -- 07-10 sets
+  the VALUE from docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md before any live send; (5)
+  `build_reporting_chain` REFUSES to build a live transport, so 07-10 constructs GmailSink itself
+  and injects it; (6) a production series contains ONE sub-game today (D7-17) -- the two-sub-game
+  arithmetic is proven, but `game_id` is minted per game while PARAMETERS reads it as the series id.
+  Eighteen deferred items now sit in the phase's deferred-items.md: D7-1 RESOLVED, D7-2, D7-3,
+  D7-4, D7-5, D7-6 RESOLVED, D7-7 RESOLVED, D7-8, D7-9 RESOLVED, D7-10 RESOLVED, D7-11, D7-12,
+  D7-13 (RESOLVED for log_), D7-14 RESOLVED by this plan's production call site, D7-15, D7-16, plus
+  D7-17 and D7-18 from this plan. Still open and NOT fixed per the scope boundary:
   check_no_llm_in_strategy.sh has been absent from quality-gate.yml since 03-10, and D7-5's
   recoverable handshake -> handshake transition still fires once per run. OQ-1/OQ-2/OQ-3 are CLOSED
-  in code with citations; OQ-4 is 07-07's remainder; OQ-6 is CLOSED structurally by this plan.
-  OQ-5 -- the games-played VALUE -- remains the human's at 07-10, before any live send. NOTHING IN
-  THIS REPO TRANSMITS: both shipped reporting.json files still read mode dry_run, no test anywhere
-  can reach the network, and the live GUI's only output is a JSON file inside the agent's own
-  gitignored logs/<role>/ directory.
-stopped_at: PHASE 7 PLAN 06 EXECUTED (2026-08-17) -- THE LIVE GUI IS A SEPARATE PROCESS (D-76) FED
-  BY A PUBLISHED LocalView SNAPSHOT, AND IT FOUND A LEAK CHANNEL 07-11 STRUCTURALLY COULD NOT:
-  QUANTISATION. display.min_support_cells = 6 keeps the geometric inversion empty by guarding the
-  PUBLISHED support; a heat ramp that rounded small probabilities down to the background would paint
-  a SMALLER support than the grid carries, and a five-cell drawn plus names its centre exactly as
-  loudly as a printed coordinate. So shade reserves BACKGROUND_COLOUR for exactly zero and the
-  load-bearing assertion is an EQUALITY between the drawn support and the published one, asserted
-  BEFORE any inversion. IT IS NOT HYPOTHETICAL: measured on the production view, scent.own spans
-  0.08-1.8 (ratio 22.50) and scent.opponent 0.058-0.154 (2.66) against the belief's 1.57 -- the
-  near-uniform belief would have HIDDEN the defect behind the very panel it endangers, so both
-  halves are asserted; probe 1 gives 4 failed. D-76 DECIDED FROM THREE MEASUREMENTS, not preference:
-  tk.mainloop() blocks its calling thread and Watchdog os._exits at the configured 60 s threshold,
-  killing the agent mid-game; Tk is not thread-safe, and a polling thread could sample the pure
-  1.0/0.0 delta window inside decide(); and a separate process CANNOT HOLD the true joint position
-  at all, turning D-74's type-level firewall into a PROCESS-level one. The agent's whole
-  contribution is one contained call at the single point a joint turn resolves -- publish_view never
-  raises, never returns a verdict and never touches ctx.state, because since 06-05 a non-zero exit
-  code MEANS an audit mismatch and a failed cosmetic write must not forge a technical loss.
-  dev_launch (2db6cc8b039c82e7) exit 0, both seats matched=true, outcome capture, ZERO
-  technical_win and ZERO watchdog_incident. THE RUNTIME RECOVERY TEST RUNS THE WHOLE CHAIN -- real
-  decide(known_cell=ctx.state.thief) -> publish -> THE FILE ON DISK -> read_snapshot -> the exact
-  view_render/view_text calls gui/ makes -- and BOTH counter-controls fire: a leaky panel inverts to
-  [(5,3)] and its scent brightest set is [(5,3)]; the peak-cell-line-deleted sidebar earns a CLEAN
-  coordinate verdict while the heatmap still inverts, which is the argmax-only trap re-run at the
-  render layer. VERIFIED ON THE LIVE GAME, not only on fixtures: thief true cell (2,3), police
-  published argmax (1,1), entropy 5.5587, drawn support 49/49 == published, inversion [], scent peak
-  (2,2), and NO forward pair [2,3] and NO flat index 17/23 anywhere in the file -- the single scan
-  hit was own_cell pair [3,2], the REVERSED encoding colliding with our own rule-8-legal cell,
-  confirmed a false positive rather than assumed and filed as D7-16. ONE OF MY OWN ASSERTIONS WAS
-  WRONG-SHAPED AND FAILED FIRST: "the brightest stop must not CONTAIN the true cell" is false on a
-  near-uniform map, where ceil(v/peak*6) puts 20-odd of 49 cells in the last bucket; what is a leak
-  is the top stop NAMING a cell, so it is now a geometric inversion over the brightest set with a
-  non-empty guard. D7-6 CLOSED BY CODE AND THE GATE HARDENED IN THE SAME COMMIT, with all three of
-  D7-9's blind spots MEASURED OPEN FIRST: a bare __init__.py printed "OK: 1 module(s) scanned" exit
-  0 -> now exit 2; a panel.pyw reading ctx.state.thief was NEVER SCANNED -> now reported; and an
-  aliased s = ctx.state then s.thief, plus getattr(ctx.state,"thief") and asdict(s)["cop"], returned
-  violations=[] exit 0 -> now 3 violations. The dynamic-key check is on the KEY rather than on what
-  it is applied to, which makes it total over indirections nobody has thought of yet. The gate hit
-  198 code lines and was SPLIT into scripts/local_truth_ast.py, loaded by file path so 07-03's
-  standalone property survives; both halves checked explicitly at 140 and 102. What is STILL open is
-  written into the gate's own docstring rather than papered over -- a parameter named state is
-  beyond a single-module AST walk, and the gate still cannot see a coordinate that is DRAWN, so it
-  is nowhere cited as evidence about these panels. gui/ IS 200 CODE LINES OF PURE CONSTRUCTION
-  across five files, 34.5% of the 579 new src/ lines, and the coverage omission is made safe rather
-  than tolerated: zero arithmetic BinOps (annotation BitOr excluded), zero f-strings/.join/.format,
-  every pursuit import under pursuit.sdk or pursuit.gui, each scan paired with a control proving it
-  can fail -- and the plan's grep is clean AS PROSE too, the four forbidden spellings absent from
-  docstrings as well. All four new sdk modules at 100%. OQ-6 RESOLVED WITH ZERO NUMBERS IN src/:
-  --refresh-ms is required=True with no default and LiveDashboard takes it keyword-only with no
-  default (the Watchdog/TokenBucket precedent); --help exits 0 showing it required, and omitting it
-  exits 2. EIGHTEEN REVERT PROBES, every count real, anchor asserted present and mutation asserted
-  landed before each run: quantisation 4; lit_cells inert 6; publisher re-raises 2; published before
-  both slots 1; view_history shared 1; strategy map republished 14; fabricated uniform panel 1; idle
-  0.00 instead of unknown 1; half-written file raises 2; package-marker guard neutered 2; .pyw
-  dropped 1; state_aliases emptied 1; accessor_key None 1; direct .state chain dropped 5; belief
-  panel blanked 1; shared scent scale 3; outgoing hint never recorded 2; raw scent republished 4.
-  FOUR HOLES THE SELF-AUDIT FOUND IN MY OWN WORK: (i) lit_cells() had TEST-ONLY reachability -- the
-  D7-3 finding in my own code, found by grepping production callers for all 33 new public names, and
-  WIRED rather than excused (view_text._support now counts what the panel actually lights, so the
-  caption and the picture are one fact); (ii) one unguarded assert-bearing loop over fx.BARRIERS,
-  rewritten as a set comparison which FAILS on an empty source instead of passing; (iii) both
-  parametrize tables were inline literals -- named and floored, because a thinned table skips
-  silently; (iv) coverage exposed the one uncovered branch, a scent-free view that
-  view_builder._scent_view genuinely produces. D7-7 also CLOSED: HintHistory.record_outgoing had no
-  caller AT ALL and is now called from turn_language_io after the hint goes out, so the sidebar
-  shows a whole conversation. Zero numbers invented: every constant is presentation (CELL_PIXELS,
-  PANEL_PAD, DECIMALS...), the bucket count is len(HEAT_RAMP) everywhere, and the one number a live
-  GUI genuinely needs is deliberately not in the repository.
+  in code with citations; OQ-4 is CLOSED by this plan as a recorded INTERPRETATION with both
+  citations (one result_ per SERIES, rewritten with .prev rotation and emailed after every
+  sub-game); OQ-6 is CLOSED structurally by 07-06. OQ-5 -- the games-played VALUE -- remains the
+  human's at 07-10, before any live send. NOTHING IN THIS REPO TRANSMITS: both shipped
+  reporting.json files still read mode dry_run (git diff on both is empty), no test anywhere can
+  reach the network, and the only thing the game-end hook produces is files on this machine's disk.
+stopped_at: PHASE 7 PLAN 07 EXECUTED (2026-08-17) -- THE MANDATORY REPORT IS ONE DURABLE FILE PER
+  SERIES WHOSE TOKEN TOTAL IS ACCUMULATED IN THE FILE, AND ONE MEASUREMENT IS THE WHOLE PLAN: the
+  same mutation that drops the accumulation fails 2 tests over two sub-games and PASSES 9/9 when
+  only single-sub-game tests run, because with one game played the per-game and per-series figures
+  are equal. Rule 54 needs both, and the series one CANNOT come from budget.report() -- the outline
+  said it could -- since Gatekeeper.__init__:81 builds a fresh TokenBudget, the gatekeeper is built
+  once per PROCESS, and budget.py:44-52 says "a fresh instance per series only". Two sub-games of
+  140 and 10 tokens give a series total of 150: strictly greater than either and EQUAL to their sum,
+  asserted strictly rather than with >=. `agreed` IS THREE-VALUED and defaulting it is a false
+  declaration under the one rule whose sanction is ZERO FOR BOTH TEAMS: capture_declaration sends
+  GAME_OVER only when the outcome is a capture AND this side is the cop, so a survival game has no
+  peer claim on either side and even a capture leaves the COP with none -- measured on the real game
+  a5dd2a98827f4df5, police agreed=null with NO_PEER_CLAIM and thief agreed=true; the naive
+  own==peer with peer defaulted to own fails 6 of 9. A malformed peer claim is a NAMED
+  non-agreement, never a ValueError (security/audit.py's boundary rule, six Phase-5 defects deep).
+  THE WATCHDOG CONTAINMENT WAS CHOSEN AND RECORDED WITH ITS ARITHMETIC: the mail ladder is
+  30x4 + 30x3 = 210 s against a 60 s watchdog_threshold, so a touch per bounded attempt (entry and
+  finally, wrapping the sink) rather than a total bound -- a bound short enough to fit would be an
+  INVENTED number and would also give up before rule 32 wants. Driven on an injected clock with
+  ZERO real sleeps: 4 attempts, armed.clock.now exactly 210.0, fired == [], and two paired controls
+  -- the same ladder unwrapped IS killed (freeze then exit, in that order) and a genuinely frozen
+  agent is still killed while one touch inside the window still saves it. A REPORTING FAILURE
+  CANNOT REACH THE EXIT CODE, which since 06-05 MEANS an audit mismatch: contained at its own
+  boundary with except Exception (never BaseException -- CancelledError must still propagate), and
+  driven with REAL causes because the failing-SINK path never reaches that branch at all. AND THEN
+  ONE REAL GAME FOUND A RULE-35 DISQUALIFIER NO UNIT TEST COULD HAVE POSED: at commit 4d68886,
+  dev_launch produced log_<uid>_g01 AND log_<uid>_g02 for a SINGLE game plus one
+  result_<uid>.json carrying role:police, BOTH seats' entries and games_measured:2 -- the thief
+  reported first, the police read that file as "the previous generation of this series", appended
+  its own entry and rewrote it, and THE THIEF'S REPORT WAS GONE. Fixed to <artifact_dir>/<role>/
+  without editing reporting.json (its value is the artifact ROOT); the re-run gives two separate
+  reports, one sub-game each, both logs _g01, each carrying its own role, and probe 15 fails 2.
+  test_end_of_game_wiring.py exists because every other test drives report_game_end directly, so
+  deleting the ONE line in agent_entrypoint.py would have left the suite green while no league game
+  ever reported -- and its position assertion was WRONG-SHAPED on the first draft, comparing source
+  offsets and passing against a mutation that moved the call to the top of the very finally it
+  forbids; rewritten on the AST, probe 14 now fails 2. Three more of my own assertions measured
+  nothing and were replaced: `tokens != 0` (a dict never equals an int -- and the SECOND draft,
+  `0 not in tokens.values()`, failed too because present:False IS 0 under ==), an artifact-path
+  check that could never exist once artifacts moved per-role, and a chain test that asserted only a
+  filename's suffix and now SENDS and looks for the file. Eighteen revert probes, every count real,
+  anchor asserted present and mutation asserted landed before each run. Games-played is emitted as
+  an absent MARKER naming GAMES-PLAYED-RECONSTRUCTION.md and declaration_<game_id>.json; nothing
+  here sets, defaults or reads around the value.
+---
+
+Last session: 2026-08-17T23:55:00+03:00
+Stopped at: Completed 07-07-PLAN.md (end-of-game reporting + `result_`) in full. Three tasks, each
+  committed atomically: Task 1 the rule-35 agreement record, three-valued and never inferred
+  (`e61b46c`); Task 2 `result_<game_id>.json` as one durable file per series with both token totals
+  (`8377916`); Task 3 the game-end hook, contained, watchdog-touching, and wired at ONE call site
+  beside `record_completed_game` (`4d68886`). Two further commits closed findings in my own work:
+  the per-role artifact directory that a real game proved was a rule-35 disqualifier (`5aa9ec1`),
+  and three assertions of mine that measured nothing (`7081515`). Gates: `ruff check .` 0
+  violations; 2090 passed / 0 failed against the 2047 baseline; coverage 97.29% (baseline 97.19%);
+  `check_line_limit.sh` exit 0 with all nineteen new `.py` files ALSO checked explicitly by path;
+  `check_no_llm_in_strategy.py` OK; `check_local_truth.py` -> `OK: 5 module(s) scanned`, exit 0;
+  every new `.py` and both new PRDs confirmed NOT ignored by git (D7-10's guard);
+  `git diff config/{police,thief}/reporting.json` EMPTY and both still `dry_run`;
+  `scripts/dev_launch.py` exit 0, game `a5dd2a98827f4df5`, both seats `matched=true` at turn 5,
+  ZERO `technical_win` and ZERO `watchdog_incident`, and both seats wrote their OWN `log_` and
+  `result_` under `game_artifacts/<role>/`. Rule-38 counters, all four: the full suite moved police
+  1920->1920 and thief 1913->1913 (delta 0/0); one real game moved 1919->1920 and 1912->1913
+  (delta 1/1). All six new source modules at 100% coverage -- `result_agreement.py`,
+  `result_agreement_fields.py`, `artifact_result.py`, `result_artifact_fields.py`,
+  `end_of_game.py`, `end_of_game_chain.py` -- and so is every other module in
+  `services/reporting/`. `agent_entrypoint.py` measured 103 -> 107 of its 150 permitted code lines.
+  AST scan over all thirteen of this plan's test/fixture files: 0 parametrize sites, 4
+  assert-bearing loops, every one floored. Production-caller grep over all 25 new public names:
+  every one referenced in `src/` outside its defining module, and `report_game_end` reaches
+  `network/agent_entrypoint.py` -- D7-14 closed, and `test_log_artifact_reachability.py` now NAMES
+  the `log_` builder's five reachers so its empty-list assertion cannot be green because the
+  builder is dead code. Two per-mechanism PRDs written per CLAUDE.md Sec2.3:
+  `docs/PRD_result_artifact.md` and `docs/PRD_end_of_game.md`. Graphify refreshed -- 10027 nodes /
+  17957 edges / 575 communities; `graphify explain report_game_end` resolves to
+  `end_of_game.py:89` (degree 16, `--> _report()`) and `record_sub_game` to
+  `artifact_result.py:147` (degree 9). `07-07-SUMMARY.md` written with every number from a run in
+  this session, self-check PASSED (26 paths verified present AND tracked, 5 task commits verified
+  reachable, and five file-size numbers CORRECTED rather than left as written).
+  `docs/phases/phase-7/TODO.md` gains a ticked 07-07 row and a refreshed 07-96; D7-14 closed, and
+  D7-17 (`game_id` is minted per GAME while PARAMETERS reads it as the SERIES id) and D7-18 (a
+  QuotaManager path is unguarded against the shipped `config/` tree) filed in the phase's
+  `deferred-items.md`.
+Resume file: None -- the tree is clean and 07-07 is closed. Next is `/gsd:execute-phase 7`
+  continuing into 07-08 (the replay viewer), which must floor `verify_log_turns` on
+  `committed > 0`, inherits D7-8 and the 07-06 quantisation rule, and now also reads `result_`
+  from `game_artifacts/<role>/`; then 07-09 and the human-in-the-loop 07-10.
 ---
 
 Last session: 2026-08-17T22:40:00+03:00
