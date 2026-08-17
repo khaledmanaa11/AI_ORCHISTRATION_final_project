@@ -19,11 +19,17 @@ fabricated reading -- and `turn_language.py` repeats it for the belief
 snapshot ("an honest 'not run', never fabricated"). A zero presented as a
 measurement is a rule-38-class misstatement, so `ctx.language is None` and the
 deliberately unset games-played value each get a marker that says so.
+
+08-04: the marker's SHAPE moved to `shared/absent.py` when a third caller
+needed it (rule 49's repo links). The two markers below are rebuilt from
+`stated_absent` and their dict values are unchanged, byte for byte -- which is
+what `tests/unit/test_absent_marker.py` asserts rather than assumes.
 """
 
 from __future__ import annotations
 
 from pursuit.services.reporting.artifacts import ArtifactField
+from pursuit.shared.absent import ABSENT_DETAIL_KEY, ABSENT_PRESENT_KEY, stated_absent
 
 __all__ = (
     "GAMES_PLAYED_UNSET",
@@ -73,29 +79,23 @@ class TokensField:
     OUTPUT_TOKENS = "output_tokens"
     TOTAL_TOKENS = "total_tokens"
     GAMES_MEASURED = "games_measured"
-    PRESENT = "present"
-    DETAIL = "detail"
+    PRESENT = ABSENT_PRESENT_KEY
+    DETAIL = ABSENT_DETAIL_KEY
 
 
-TOKENS_ABSENT = {
-    TokensField.PRESENT: False,
-    TokensField.DETAIL: (
-        "the language layer was off for this game (agent_context.language is None), "
-        "so no token spend exists to report -- an honest absence, never a zero "
-        "presented as a measurement"
-    ),
-}
+TOKENS_ABSENT = stated_absent(
+    "the language layer was off for this game (agent_context.language is None), "
+    "so no token spend exists to report -- an honest absence, never a zero "
+    "presented as a measurement"
+)
 
-GAMES_PLAYED_UNSET = {
-    TokensField.PRESENT: False,
-    TokensField.DETAIL: (
-        "deliberately unset. 07-00 fixed the rule-37/38 counter MECHANISM and left "
-        "its VALUE to a human decision (docs/phases/phase-7/"
-        "GAMES-PLAYED-RECONSTRUCTION.md); rule 38 makes a false games-played "
-        "declaration an ABSOLUTE disqualification, so nothing here may choose it. "
-        "This game's declared figure is in declaration_<game_id>.json"
-    ),
-}
+GAMES_PLAYED_UNSET = stated_absent(
+    "deliberately unset. 07-00 fixed the rule-37/38 counter MECHANISM and left "
+    "its VALUE to a human decision (docs/phases/phase-7/"
+    "GAMES-PLAYED-RECONSTRUCTION.md); rule 38 makes a false games-played "
+    "declaration an ABSOLUTE disqualification, so nothing here may choose it. "
+    "This game's declared figure is in declaration_<game_id>.json"
+)
 
 _ACCUMULATED = (
     TokensField.CALLS,

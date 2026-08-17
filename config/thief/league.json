@@ -1,0 +1,23 @@
+{
+  "version": "1.00",
+  "_sources": {
+    "_note": "JSON carries no comment syntax, so every leaf below is cited here instead. Nothing in this file is an engineering default and nothing is invented. Keys beginning with _ are documentation and are ignored by shared/league_config.py.",
+    "league.repo_urls": "docs/RULES.md:98 -- rule 49 MUST: two separate GitHub repos (cop and thief), a cross-link in each README, two links in the submission form, and FOUR links in both teams' JSON. The four slots are named here rather than counted, so four copies of one link cannot satisfy the rule by arithmetic. ALL FOUR ARE null: the two own-team repositories do not exist until a human creates and pushes them at 08-12, and the opponent's two are supplied by the opponent on league day. A guessed github.com literal would be an invented value (CLAUDE.md prohibition 1) shipped inside a grader-facing artifact where it reads as a claim.",
+    "league.mcp_server_addresses": "docs/PARAMETERS.md:165 -- declaration_<game_id>.json carries 'MCP server addresses'. null for the same reason: this seat's public address is whatever the tunnel publishes on league day (config/thief/tunnel.json's domain env var), and the opponent's is theirs.",
+    "league.token_ceiling": "docs/PARAMETERS.md:83 Table 18 row 4 -- '[token budget per series]', the language-model token budget a lead team may require, ~200,000, status NEGOTIABLE. Written as the book's figure. NEGOTIABLE means a lead team may agree a different number on league day; it is edited here when that happens, never inside the code. shared/league_config.py supplies NO default for this leaf and DeclarationContext.__post_init__ refuses to default it either.",
+    "_games_played": "DELIBERATELY ABSENT FROM THIS FILE. The games-played value is rule 38 territory (docs/RULES.md:79, ABSOLUTE disqualification). 07-00 fixed the counter MECHANISM and left the VALUE to a human working from docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md. A config leaf is exactly the quiet place a chosen number would hide in, so there is no such leaf. config/thief/games_played.json is the raw counter and is not a declaration."
+  },
+  "league": {
+    "repo_urls": {
+      "own_cop": null,
+      "own_thief": null,
+      "opponent_cop": null,
+      "opponent_thief": null
+    },
+    "mcp_server_addresses": {
+      "own": null,
+      "opponent": null
+    },
+    "token_ceiling": 200000
+  }
+}
