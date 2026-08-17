@@ -63,9 +63,16 @@ from pursuit.services.reporting.message import (
     report_filename,
 )
 from pursuit.services.reporting.quota import QuotaField, QuotaManager
+from pursuit.services.reporting.result_agreement import (
+    AgreementField,
+    AgreementRecord,
+    build_agreement,
+)
 from pursuit.services.reporting.sink import DryRunSink, MailSink, SendReceipt
 
 __all__ = (
+    "AgreementField",
+    "AgreementRecord",
     "ArtifactField",
     "ArtifactPrefix",
     "ConfigArtifactField",
@@ -85,6 +92,7 @@ __all__ = (
     "artifact_digest_matches",
     "artifact_header",
     "build_config_artifact",
+    "build_agreement",
     "build_declaration_artifact",
     "build_log_artifact",
     "build_report_message",
