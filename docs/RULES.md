@@ -94,7 +94,7 @@ completeness, with their source chapter.
 |---|---|---|---|
 | 46 | **MUST** | A barrier placed on the cell where the thief stands at the moment of contact counts as a **capture** (the cop wins) | Ch. 3 |
 | 47 | **MUST** | A thief left with **no legal move** counts as captured | Ch. 3 |
-| 48 | **MUST** | Score every end scenario per the scoring table — capture 20/5, survival 10/5, technical loss 0/0 | Ch. 3 + Appendix F |
+| 48 | **MUST** | Score every end scenario per the scoring table — capture 20/5, survival 5/10, technical loss 0/0 (every pair is cop-first — **[corrected, see below](#corrections-to-this-extract)**) | Ch. 3 + Appendix F |
 | 49 | **MUST** | Submit **two separate GitHub repos** — cop and thief — with a cross-link in each README, two links in the submission form, and four links in both teams' JSON | Ch. 9 |
 | 50 | **MUST** | Include in every repo at minimum: `README`, config file (`config/`), PRD files, a PLAN file, and TODO files | Ch. 9 |
 | 51 | **MUST** | Send the automatic completion reports to the lecturer's `[agent reporting address]` | Ch. 9 |
@@ -119,3 +119,41 @@ Ranked by how easily they happen by accident rather than intent:
    mail code, not after.
 7. **Free-text instead of JSON in the report** (34).
 8. **A false declaration** about a capture (22), a barrier (16), or the game count (38).
+
+---
+
+## Corrections to this extract
+
+This file is a **translated extract**, not the book. Where it has been found to disagree
+with the book or with [PARAMETERS.md](PARAMETERS.md), the disagreement is corrected **and
+recorded here with both citations** — never silently re-derived, and never by changing a
+value marked **fixed**.
+
+### C1 — rule 48's survival pair was written in the wrong order (2026-08-17, plan 08-03)
+
+| | |
+|---|---|
+| **Was** | rule 48 read *"capture 20/5, survival `10/5`, technical loss 0/0"* |
+| **Now** | *"capture 20/5, survival `5/10`, technical loss 0/0"* |
+| **Citation 1** | [`PARAMETERS.md`](PARAMETERS.md) **Table 17 rows 3–4**: `[survival score – cop]` = **5**, `[survival score – thief]` = **10**, both **fixed** |
+| **Citation 2** | [`RULES.md`](RULES.md) rule 48 itself, whose *capture* pair `20/5` is cop-first — Table 17 rows 1–2 give cop **20** / thief **5** — so its survival pair must be cop-first too |
+| **Found by** | `scripts/check_submission.py` row **G1-15**, which parses the pair out of *both* documents and compares them rather than carrying a number of its own |
+
+**No fixed value was changed.** Both numbers — 5 and 10 — were already in this line and are
+still in it; only the order was wrong, and the order is what says which number is the cop's.
+Under the old ordering rule 48 awarded the **cop** 10 points for failing to make a capture
+and the **thief** 5 for succeeding, which inverts the incentive Table 17 sets and would have
+been read straight off this page by anyone checking our scoring.
+
+**Why this extract yielded to that one.** Two grader-facing extracts disagreed, and this
+file's own header settles it in as many words: *"All numeric values referenced here live in
+[PARAMETERS.md](PARAMETERS.md)."* Table 17 states the two survival values on **separate,
+role-labelled rows** with a **fixed** status, while rule 48 compresses them into an unlabelled
+pair; a labelled source outranks an unlabelled compression of it. `.planning/REQUIREMENTS.md`
+BASE-07 had already been written as `5/10`, so this line was the sole outlier in the tree.
+
+**The book itself was not re-read for this.** `police_thief_p2p.pdf` is untracked here and in
+Hebrew, and CLAUDE.md's instruction is to work from the extracts and to *surface* a
+contradiction rather than re-derive one. This entry is that surfacing. If the book's own
+Appendix F table is ever checked and disagrees with Table 17, **both** documents must move
+together and this entry must be superseded rather than deleted.
