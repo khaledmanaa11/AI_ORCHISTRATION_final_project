@@ -1,6 +1,7 @@
 # Submission Checklist — the §17 + Table-5 gap register
 
-**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 · **Status:** 32 GAP / 41 PASS / 13 UNJUDGED
+**Version:** 1.00 · **Owner:** 08-01 · **Measured:** 2026-08-17 (re-measured after 08-03) ·
+**Status:** 24 GAP / 49 PASS / 13 UNJUDGED
 
 > **This file is a report, not a source.** Every number in it comes from
 > `uv run python scripts/check_submission.py`, which re-derives all 86 rows from the tree on
@@ -29,22 +30,55 @@ in their own column and never folded into the pass count.
 
 ## Measured state at HEAD
 
-| Group | PASS | GAP | UNJUDGED |
-|---|---:|---:|---:|
-| 1. Structure & documentation | 12 | 16 | 0 |
-| 2. Architecture & code | 5 | 2 | 3 |
-| 3. Testing & quality | 3 | 1 | 3 |
-| 4. Configuration & security | 12 | 3 | 0 |
-| 5. Research & visualization | 1 | 4 | 0 |
-| 6. Extensibility & standards | 1 | 5 | 2 |
-| T5. Table 5 (§19.1) | 7 | 1 | 5 |
-| **Total (86 rows, 73 judged)** | **41** | **32** | **13** |
+| Group | PASS | GAP | UNJUDGED | GAP was (08-01) |
+|---|---:|---:|---:|---:|
+| 1. Structure & documentation | 13 | 15 | 0 | 16 |
+| 2. Architecture & code | 7 | 0 | 3 | 2 |
+| 3. Testing & quality | 4 | 0 | 3 | 1 |
+| 4. Configuration & security | 15 | 0 | 0 | 3 |
+| 5. Research & visualization | 1 | 4 | 0 | 4 |
+| 6. Extensibility & standards | 2 | 4 | 2 | 5 |
+| T5. Table 5 (§19.1) | 7 | 1 | 5 | 1 |
+| **Total (86 rows, 73 judged)** | **49** | **24** | **13** | **32** |
 
 Evidence JSON: [`docs/phases/phase-8/submission_audit_evidence.json`](phases/phase-8/submission_audit_evidence.json).
 
+### What moved, row by row — 08-03, 2026-08-17
+
+**32 GAP → 24 GAP. Eight rows, and exactly the eight 08-03 owned.** No other row changed
+verdict in either direction, which is the counter-control: a hygiene plan that moved a row
+it did not own would have changed something it did not measure.
+
+| Row | Was | Now | What actually changed |
+|---|---|---|---|
+| **G1-15** | GAP | PASS | `docs/RULES.md:97` rule 48 now writes `survival 5/10`, cop-first, agreeing with Table 17 rows 3–4. **No fixed value was touched** — both numbers were already on the line; the *order* was wrong, and the order is what says whose number it is. Recorded in RULES.md's new "Corrections to this extract" section with both citations |
+| **G2-05** | GAP | PASS | all **11 of 11** packages declare `__all__` (was 4 of 11). The seven that import nothing declare their submodule inventory — 10/6/54/10/9/3/36 names — derived from `git ls-files` by `tests/unit/test_package_exports.py`, so it cannot decay into decoration |
+| **G2-06** | GAP | PASS | `src/pursuit/__init__.py` re-exports `__version__` from `shared/version.py`. Re-exported, never re-typed: `tests/unit/test_package_version.py` refuses any version literal in that file |
+| **G3-03** | GAP | PASS | the CI job now runs `--cov-report=xml --junitxml=reports/junit.xml` and stores both with `upload-artifact`, `if: always()`. Proven by running the identical command locally: 2321 passed, 97.44%, `coverage.xml` 290597 B and `reports/junit.xml` 309353 B |
+| **G4-06** | GAP | PASS | `git check-ignore -q graph.json` → **exit 0** (was 1) |
+| **G4-07** | GAP | PASS | `git check-ignore -q graph.html` → **exit 0** (was 1). Both anchored `/graph.json`, `/graph.html`, so a subdirectory's own file cannot be hidden |
+| **G4-21** | GAP | PASS | **28 of 28** tracked config JSONs carry `version` (was 24 of 28). Neither `resolution.json` nor `role.json` feeds a peer-compared digest — `config_digest` is taken over `game_params.json` only — so rule 11 is untouched |
+| **G6-03** | GAP | PASS | `LICENSE` exists, and `pyproject.toml` declares `license` and `authors`. **Structurally closed, legally open** — see the licence block below |
+
+**Group 4 is now 15 PASS / 0 GAP, and group 2 and group 3 are 0 GAP.** The 24 that remain
+belong to 08-06 (README, 9 rows), 08-07 (architecture/25010/extension points, 4), 08-08 (the
+three per-mechanism PRDs, 3), 08-09 (research and visualization, 4), 08-11/08-12 (the tag and
+T5-06's version reconciliation, 2), and 08-06+07-10 jointly (screenshots, 2).
+
+Two things 08-03 deliberately did **not** move:
+
+- **G1-05 and G1-06 stay GAP.** They judge the *README's* headings, not the existence of
+  `CONTRIBUTING.md` and `LICENSE`. Both files now exist; adding the two headings is part of
+  08-06's rewrite of a file whose opening paragraph is still factually wrong about the
+  shipped strategy. Closing a README row from a hygiene plan would have meant editing around
+  that.
+- **T5-06 stays GAP.** `version.py` reads `1.00` and `pyproject.toml` reads `1.00.0`. D-79
+  derives the tag name from the reconciled value, so reconciling it is 08-11's, not a
+  drive-by in a plan that was editing `pyproject.toml` anyway.
+
 ---
 
-## Group 1 — Structure & documentation · 16 GAP
+## Group 1 — Structure & documentation · 15 GAP  *(was 16; G1-15 closed by 08-03)*
 
 ### The root README describes a system this repository does not ship
 
@@ -135,12 +169,29 @@ ordering, in two documents a grader will open.
 
 The gate derives both halves — it parses the pair out of PARAMETERS and out of RULES and
 compares them — so **no number is written down here and no fixed value is touched.**
-Correcting the extract against the book is a separate decision; this row registers the
-disagreement. **Owner: 08-02 records it; the extract edit needs the book.**
+
+**CLOSED by 08-03, 2026-08-17. `docs/RULES.md:97` now reads `survival 5/10`.** No fixed value
+was changed: both numbers were already on that line and still are, and only the *order* was
+wrong — which is precisely what says whose number it is. Under the old ordering rule 48
+awarded the **cop** 10 for failing to capture and the **thief** 5 for surviving, inverting the
+incentive Table 17 sets, on a page a grader reads.
+
+The correction is **recorded, not slipped in**: `docs/RULES.md` gains a
+"Corrections to this extract" section carrying entry **C1** with both citations (PARAMETERS
+Table 17 rows 3–4; rule 48's own cop-first capture pair `20/5`), the row that found it, and
+the honest limit — **the book itself was not re-read.** `police_thief_p2p.pdf` is untracked
+and in Hebrew, and CLAUDE.md's instruction is to work from the extracts and *surface* a
+contradiction rather than re-derive one. This extract yielded to PARAMETERS because its own
+header says it must: *"All numeric values referenced here live in PARAMETERS.md."* If the
+book's Appendix F table is ever checked and disagrees, **both** documents move together and
+C1 is superseded rather than deleted.
+
+`tests/unit/test_extract_consistency.py` parses both pairs out of both documents and compares
+them, so no number is typed into the test and it cannot pass while the two drift together.
 
 ---
 
-## Group 2 — Architecture & code · 2 GAP
+## Group 2 — Architecture & code · 0 GAP  *(was 2; both closed by 08-03)*
 
 **PASS:** SDK layer (11 modules) · gatekeeper with rate limits in config · `ruff check .` **0
 violations** · every source and test file ≤ 150 code lines over **488 enumerated files** (the
@@ -148,35 +199,53 @@ row refuses a zero count, because `check_line_limit.sh`'s no-argument form enume
 `git ls-files` and exits 0 vacuously on an empty list — the vacuity already on record in
 `05-18-SUMMARY.md`) · a module docstring on all **195** `src/` modules.
 
-| Row | Gap | Evidence | Fix lands in |
+| Row | Was | Now | Evidence at HEAD |
 |---|---|---|---|
-| G2-05 | 7 of 11 packages declare no `__all__` | only `strategy/` and the three child packages do; `src/pursuit/`, `gui/`, `network/`, `sdk/`, `security/`, `services/`, `shared/` do not | `src/pursuit/*/__init__.py` |
-| G2-06 | `__version__` is declared in **0** `__init__.py` files | it exists only as `VERSION` in `shared/version.py` | `src/pursuit/__init__.py` |
+| G2-05 | 7 of 11 packages declared no `__all__` | **PASS** | **11 of 11** declare one. The four API packages list exactly the names they import; the seven that import nothing list their submodule inventory (10/6/54/10/9/3/36 names) |
+| G2-06 | `__version__` in **0** `__init__.py` files | **PASS** | `src/pursuit/__init__.py` re-exports it from `shared/version.py` — the single source T5-06 reads |
 
-§14 "professional Python packaging". **Owner: 08-03.**
+§14 "professional Python packaging". **Owner: 08-03 — CLOSED 2026-08-17.**
+
+Neither row can decay into decoration. `tests/unit/test_package_exports.py` derives each
+inventory from `git ls-files` and fails on a module added without being exported *or* a name
+exported after its module was deleted; `tests/unit/test_package_version.py` parses
+`__init__.py` and refuses any version literal written there, so only a re-export passes.
+Adding `__all__` to `gui/__init__.py` correctly made the rules 8–9 firewall start judging
+that file; `local_truth_ast.is_package_marker` was widened **by shape, never by filename**
+(one `__dunder__` target whose value `ast.literal_eval` accepts), and
+`tests/unit/test_package_marker_admission.py` holds eight refusal cases plus a leaky
+`__init__.py` that must still be reported as a violation.
 
 **UNJUDGED (3):** G2-08 OOP/no duplication · G2-09 consistent style and descriptive names ·
 G2-10 zero hardcoded values. All three are `Code review` rows in Table 5.
 
 ---
 
-## Group 3 — Testing & quality · 1 GAP
+## Group 3 — Testing & quality · 0 GAP  *(was 1; closed by 08-03)*
 
 **PASS:** `fail_under` wired in `pyproject.toml` · CI runs `ruff check` **and** `pytest --cov`
 · the tracked test suite exists.
 
-| Row | Gap | Evidence | Fix lands in |
+| Row | Was | Now | Evidence at HEAD |
 |---|---|---|---|
-| G3-03 | no automated test-report artifact is produced or stored | no tracked `coverage.xml`, `junit.xml`, `test-results.xml` or `htmlcov/`; the workflow carries no `--cov-report=xml`, `--junitxml` or `upload-artifact` directive | `.github/workflows/quality-gate.yml` |
+| G3-03 | no test-report artifact produced or stored | **PASS** | the `lint-and-test` job runs `uv run pytest --cov --cov-report=term-missing --cov-report=xml --junitxml=reports/junit.xml` and stores both with `actions/upload-artifact`, `if: always()` so a FAILING run's report is kept too |
 
-§17 names "automated test reports" explicitly. **Owner: 08-03.**
+§17 names "automated test reports" explicitly. **Owner: 08-03 — CLOSED 2026-08-17.**
+
+**Proven by running it, not by writing it.** The identical command was executed locally:
+2321 passed, coverage **97.44%**, `coverage.xml` 290597 bytes and `reports/junit.xml` 309353
+bytes, and neither file appeared in `git status` — both are anchored gitignore entries,
+because a per-run report committed by reflex is the failure on the other side of this row.
+`tests/unit/test_test_report_artifacts.py` parses the workflow's **non-comment lines only**:
+its first draft grepped the whole file and passed with the flags deleted, because the
+explanatory comment quotes them.
 
 **UNJUDGED (3):** G3-05 measured coverage (run `--run-suite`, or the standing
 `uv run pytest --cov`) · G3-06 TDD · G3-07 edge-case documentation.
 
 ---
 
-## Group 4 — Configuration & security · 3 GAP
+## Group 4 — Configuration & security · 0 GAP  *(was 3; all three closed by 08-03)*
 
 **PASS (12):** `.env-example` with 12 placeholder key lines and no real credential shape ·
 **886 tracked text files scanned** for credentials with **0 provider-shape hits and 0
@@ -185,13 +254,30 @@ unexempted generic hits**, both positive controls firing · `.env`, `.venv/`, `l
 `.coverage` and `police_thief_p2p.pdf` each proven ignored by its **own** `git check-ignore`
 call · `uv.lock` + `pyproject.toml` present with no `requirements.txt`.
 
-| Row | Gap | Evidence | Fix lands in |
+| Row | Was | Now | Evidence at HEAD |
 |---|---|---|---|
-| G4-06 | root-level `graph.json` is **not** ignored | `git check-ignore -q graph.json` → exit 1. `.gitignore:151-152` covers only `.planning/graphs/graph.json`. CLAUDE.md states these are gitignored build artifacts; at the repo root they are not | `.gitignore` |
-| G4-07 | root-level `graph.html` is **not** ignored | `git check-ignore -q graph.html` → exit 1, same cause | `.gitignore` |
-| G4-21 | 4 of 26 tracked config JSON files carry no `version` field | `config/{police,thief}/resolution.json` and `config/{police,thief}/role.json`. The two `games_played*.json` counters are excluded **by name and visibly in the row's evidence** — they are live rule-37 state, not configuration | `config/` |
+| G4-06 | `git check-ignore -q graph.json` → exit **1** | **PASS** | exit **0**, via an anchored `/graph.json` rule |
+| G4-07 | `git check-ignore -q graph.html` → exit **1** | **PASS** | exit **0**, via an anchored `/graph.html` rule |
+| G4-21 | 4 of 26 tracked config JSONs carried no `version` | **PASS** | **28 of 28** carry one (the denominator grew by two when 08-04 added `league.json`) |
 
-**Owner: 08-03.**
+**Owner: 08-03 — all three CLOSED 2026-08-17.**
+
+**On G4-06/G4-07.** `graphify update .` writes `graphify-out/` *and* drops `graph.json` /
+`graph.html` (~2 MB each) at the repository root; only the `graphify-out/` and
+`.planning/graphs/` copies were covered, so **CLAUDE.md:178 asserted something that was
+false**. The rules are anchored with a leading slash, so they cover exactly those two root
+artifacts and cannot hide a `graph.json` a future subdirectory legitimately tracks.
+`tests/unit/test_publication_ignore_rules.py` **parses the claim out of CLAUDE.md** and holds
+git to it, so the sentence and the ignore file cannot disagree again.
+
+**On G4-21.** Neither `resolution.json` nor `role.json` feeds a peer-compared digest —
+`config_hash.config_digest` is taken over `game_params.json` **only**
+(`config_hash.py:14-17`) — so rule 11's byte-identity requirement is untouched and no
+handshake changed; 97 integration tests pass unmodified. `tests/unit/test_config_versioning.py`
+asserts **value**, not just presence: every tracked config version equals
+`shared/version.py`'s `VERSION`, with `weights.json`'s `2.00` the one named exception (it is
+versioned on its training generation) and a staleness check so a dropped exception cannot
+linger.
 
 ### The credential allowlist, and why it cannot rot
 
@@ -225,7 +311,7 @@ episode 1.
 
 ---
 
-## Group 6 — Extensibility & standards · 5 GAP
+## Group 6 — Extensibility & standards · 4 GAP  *(was 5; G6-03 closed by 08-03)*
 
 **PASS:** git history — **100%** of the last 200 commits carry a conventional prefix.
 

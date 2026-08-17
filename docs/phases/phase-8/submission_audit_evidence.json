@@ -1,15 +1,15 @@
 {
   "counts": {
-    "gap": 32,
+    "gap": 24,
     "judged": 73,
-    "pass": 41,
+    "pass": 49,
     "total": 86,
     "unjudged": 13
   },
   "empty_evidence_reasons": [],
   "exit_code": 1,
   "gate": "Segal Sec17 final checklist + Sec19.1 Table 5",
-  "generated_at": "2026-08-17T10:56:12.000337+00:00",
+  "generated_at": "2026-08-17T12:46:13.417279+00:00",
   "mechanisms_discovered": 10,
   "readme_rows": 10,
   "rows": [
@@ -206,7 +206,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked: True; non-blank lines: 167 (stub floor 20)",
+      "evidence": "tracked: True; non-blank lines: 202 (stub floor 20)",
       "fix_path": "docs/TODO.md",
       "group": "1. Structure & documentation",
       "id": "G1-12",
@@ -230,12 +230,12 @@
       "verdict": "GAP"
     },
     {
-      "evidence": "PARAMETERS Table 17 rows 3-4 (cop, thief) = (5, 10); RULES.md rule 48 writes survival 10/5",
+      "evidence": "PARAMETERS Table 17 rows 3-4 (cop, thief) = (5, 10); RULES.md rule 48 writes survival 5/10",
       "fix_path": "docs/RULES.md",
       "group": "1. Structure & documentation",
       "id": "G1-15",
       "requirement": "Sec17 grader-facing extracts agree on the fixed scoring values (rule 48 vs Table 17)",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "tracked modules under src/pursuit/sdk/: 11",
@@ -246,7 +246,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "src/pursuit/services/llm/gatekeeper.py tracked: True; config files carrying rate/token-bucket fields: 8",
+      "evidence": "src/pursuit/services/llm/gatekeeper.py tracked: True; config files carrying rate/token-bucket fields: 10",
       "fix_path": "src/pursuit/services/llm/gatekeeper.py",
       "group": "2. Architecture & code",
       "id": "G2-02",
@@ -254,7 +254,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 488 (a zero count is a vacuous pass and fails this row)",
+      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 517 (a zero count is a vacuous pass and fails this row)",
       "fix_path": "scripts/check_line_limit.sh",
       "group": "2. Architecture & code",
       "id": "G2-03",
@@ -270,23 +270,23 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "packages: 11; without `__all__`: 7 ['src/pursuit/__init__.py', 'src/pursuit/gui/__init__.py', 'src/pursuit/network/__init__.py', 'src/pursuit/sdk/__init__.py', 'src/pursuit/security/__init__.py', 'src/pursuit/services/__init__.py', 'src/pursuit/shared/__init__.py']",
+      "evidence": "packages: 11; without `__all__`: 0 []",
       "fix_path": "src/pursuit/*/__init__.py",
       "group": "2. Architecture & code",
       "id": "G2-05",
       "requirement": "Sec14 professional packaging -- every package declares `__all__`",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "tracked `__init__.py` files declaring `__version__`: 0 []",
+      "evidence": "tracked `__init__.py` files declaring `__version__`: 2 ['src/pursuit/__init__.py', 'src/pursuit/__init__.py']",
       "fix_path": "src/pursuit/__init__.py",
       "group": "2. Architecture & code",
       "id": "G2-06",
       "requirement": "Sec14 professional packaging -- `__version__` on the package",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "src modules parsed: 195; without a module docstring: 0 []",
+      "evidence": "src modules parsed: 202; without a module docstring: 0 []",
       "fix_path": "src/pursuit/",
       "group": "2. Architecture & code",
       "id": "G2-07",
@@ -334,15 +334,15 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked report artifacts: none; CI directives that would produce one: none",
+      "evidence": "tracked report artifacts: none; CI directives that would produce one: ['--cov-report=xml', '--junitxml', 'upload-artifact']",
       "fix_path": ".github/workflows/quality-gate.yml",
       "group": "3. Testing & quality",
       "id": "G3-03",
       "requirement": "Sec17 automated test reports produced or stored",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "tracked files under tests/: 282",
+      "evidence": "tracked files under tests/: 304",
       "fix_path": "tests/",
       "group": "3. Testing & quality",
       "id": "G3-04",
@@ -382,7 +382,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 886; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
+      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 931; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-02",
@@ -414,20 +414,20 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "`git check-ignore -q graph.json` exit 1 (0 = ignored)",
+      "evidence": "`git check-ignore -q graph.json` exit 0 (0 = ignored)",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-06",
       "requirement": "rule 40 `graph.json` is ignored by git",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
-      "evidence": "`git check-ignore -q graph.html` exit 1 (0 = ignored)",
+      "evidence": "`git check-ignore -q graph.html` exit 0 (0 = ignored)",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-07",
       "requirement": "rule 40 `graph.html` is ignored by git",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "`git check-ignore -q .planning/graphs/graph.json` exit 0 (0 = ignored)",
@@ -486,12 +486,12 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked config JSON files: 26, of which 0 are live counters excluded as state (['games_played.json', 'games_played.prev.json']); of the remaining 26, without a `version` field: 4 ['config/police/resolution.json', 'config/police/role.json', 'config/thief/resolution.json', 'config/thief/role.json']",
+      "evidence": "tracked config JSON files: 28, of which 0 are live counters excluded as state (['games_played.json', 'games_played.prev.json']); of the remaining 28, without a `version` field: 0 []",
       "fix_path": "config/",
       "group": "4. Configuration & security",
       "id": "G4-21",
       "requirement": "Sec17 separate, VERSIONED configuration files",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "tracked artifacts under artifacts/curves/: 4 ['artifacts/curves/curves.csv', 'artifacts/curves/mean_reward.png', 'artifacts/curves/winrate_cop.png', 'artifacts/curves/winrate_thief.png']",
@@ -550,12 +550,12 @@
       "verdict": "GAP"
     },
     {
-      "evidence": "LICENSE tracked with 0 non-blank lines (floor 1)",
+      "evidence": "LICENSE tracked with 34 non-blank lines (floor 1)",
       "fix_path": "LICENSE",
       "group": "6. Extensibility & standards",
       "id": "G6-03",
       "requirement": "Sec17 licence file at the repo root",
-      "verdict": "GAP"
+      "verdict": "PASS"
     },
     {
       "evidence": "characteristics parsed from Sec13: ['functional suitability', 'performance efficiency', 'compatibility', 'usability', 'reliability', 'security', 'maintainability', 'portability']; tracked docs naming all eight AND citing at least eight repo paths: none",
@@ -703,6 +703,6 @@
     }
   ],
   "suite_was_run": false,
-  "tracked_files": 914,
+  "tracked_files": 960,
   "verdict": "GAPS_FOUND"
 }
