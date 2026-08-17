@@ -494,3 +494,34 @@ Production is not affected: `end_of_game` passes `ctx.log_path.parent`, and
 the STRUCTURAL guard covers one writer while the rule ("no test writes the shipped config
 tree") is about the tree. Widening it means guarding `durable_write_json` at its own module,
 which is a change to a shared primitive and out of 07-07's scope.
+
+
+---
+
+## D7-19 · Every `dev_launch` run leaves untracked artifacts that a careless `git add -A` would commit
+
+**Found by:** 07-08 verification · **Owner:** 07-10 (which owns the league-game artifacts rule 50
+actually requires committing)
+
+`game_artifacts/` is deliberately NOT ignored -- that is D7-1's whole resolution, because rule 50
+and Appendix F rule 4 require the four artifacts to be committable. Only
+`game_artifacts/README.md` has ever been tracked. So every `scripts/dev_launch.py` run leaves
+`game_artifacts/{police,thief}/` full of untracked `log_`, `result_` and `.eml` files from a
+throwaway local game.
+
+07-05, 07-07 and 07-08 each removed them by hand and each recorded a clean tree; none of the three
+wrote down that the next executor has to. Recorded now, because the failure mode is silent: a
+single `git add -A` -- which CLAUDE.md already forbids for other reasons -- would put a dev game's
+artifacts into the repository under filenames a grader will read as league evidence, and rule 38
+territory is one directory away.
+
+**Not fixed here, deliberately.** Ignoring `game_artifacts/` would undo D7-1. Ignoring
+`game_artifacts/*/` but not the root would work today and would silently exclude the real
+per-role league artifacts the moment 07-07's `<artifact_dir>/<role>/` layout is used for a real
+game -- which is exactly what 07-10 does. The right owner is therefore 07-10, which knows which
+files are real evidence and which are debris.
+
+**Measured on this plan's run:** `dev_launch.py` produced 8 untracked files across the two role
+directories (`log_55fa28cbef618a19_g01.json`, `result_55fa28cbef618a19.json`,
+`result_55fa28cbef618a19.prev.json` and `result_55fa28cbef618a19.eml`, per seat), none ignored by
+`git check-ignore`.
