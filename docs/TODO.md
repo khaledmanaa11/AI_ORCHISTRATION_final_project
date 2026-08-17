@@ -1,6 +1,8 @@
 # TODO — Task List
 
-**Version:** 1.00 · **Owner:** Khaled (solo) · **Last updated:** 2026-07-27
+**Version:** 1.00 · **Owner:** Khaled (solo) · **Last updated:** 2026-08-17
+**Reconciled project-wide 2026-08-17 by plan 08-02**, from the `NN-VERIFICATION.md` and
+`GATE-N-MEASUREMENT.md` artifacts — never from this file's own prior claims.
 
 > Task tracker per [SEGAL_GUIDELINES.md](SEGAL_GUIDELINES.md) §2.2 / §2.5 step 6 — **kept
 > current as work progresses.** Split into phases (see [.planning/ROADMAP.md](../.planning/ROADMAP.md)),
@@ -16,26 +18,31 @@
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| `uv init`, `pyproject.toml` (name/version 1.00/deps), `uv.lock` | P0 | ☐ | Khaled | `uv sync` works; no `requirements.txt`; `uv.lock` committed (QUAL-13) |
-| Ruff + pytest + coverage config (`fail_under=85`, ruff select set) | P0 | ☐ | Khaled | `uv run ruff check` clean; `uv run pytest --cov` enforces ≥85% (QUAL-09/10) |
-| `.gitignore` (`.env`, `*.key`, `*.pem`, `credentials.json`) + `.env-example` dummies | P0 | ☐ | Khaled | Secrets ignored; `.env-example` committed (QUAL-12, SUB-04) |
-| `src/<pkg>/shared/version.py` = 1.00; SDK skeleton; `constants.py` | P0 | ☐ | Khaled | Version module reads 1.00; SDK is the single entry point (QUAL-01/06) |
-| `config/police/` + `config/thief/` skeleton dirs | P0 | ☐ | Khaled | Two separate config dirs exist; no shared live state (NET-01/02) |
-| Approve PRD/PLAN/TODO before development (§2.5 step 5) | P0 | ◐ | Khaled | Docs reviewed and approved by owner |
+| `uv init`, `pyproject.toml` (name/version 1.00/deps), `uv.lock` | P0 | ☑ | Khaled | `uv sync` works; no `requirements.txt`; `uv.lock` committed (QUAL-13) |
+| Ruff + pytest + coverage config (`fail_under=85`, ruff select set) | P0 | ☑ | Khaled | `uv run ruff check` clean; `uv run pytest --cov` enforces ≥85% (QUAL-09/10) |
+| `.gitignore` (`.env`, `*.key`, `*.pem`, `credentials.json`) + `.env-example` dummies | P0 | ☑ | Khaled | Secrets ignored; `.env-example` committed (QUAL-12, SUB-04) |
+| `src/<pkg>/shared/version.py` = 1.00; SDK skeleton; `constants.py` | P0 | ☑ | Khaled | Version module reads 1.00; SDK is the single entry point (QUAL-01/06) |
+| `config/police/` + `config/thief/` skeleton dirs | P0 | ☑ | Khaled | Two separate config dirs exist; no shared live state (NET-01/02) |
+| Approve PRD/PLAN/TODO before development (§2.5 step 5) | P0 | ☑ | Khaled | Docs reviewed and approved by owner |
 
 ---
 
 ## Phase 1 — Base Logic  *(Milestone M1)*
 
 Gate: legal movement; over-quota barrier rejected; capture on overlap.
+**Gate met and phase VERIFIED — [01-VERIFICATION.md](../.planning/phases/01-base-logic/01-VERIFICATION.md)
+`status: passed`, 3/3 must-haves, 2026-07-28.** BASE-01…BASE-08 plus QUAL-01 and QUAL-06 are each
+recorded SATISFIED there. This section carried **no banner and every row ☐ for three weeks after
+that verification landed** — the largest doc/reality gap in the repository, closed 2026-08-17 by
+plan 08-02 together with `docs/phases/phase-1/TODO.md`.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 01-01 Board + orthogonal movement from config | P0 | ☐ | Khaled | Diagonal rejected; values from config; unit tests happy+error (BASE-01/08) |
-| 01-02 Barrier placement + quota enforcement | P0 | ☐ | Khaled | Barrier beyond quota rejected; tested (BASE-02) |
-| 01-03 Capture + end conditions + scoring | P0 | ☐ | Khaled | 3 capture conditions + survival + scoring table pass tests (BASE-03…07) |
-| 01-04 SDK facade + integration gate + doc triplet | P0 | ☐ | Khaled | engine.py thin facade (QUAL-01); GATE-1/2/3 pass; docs/phases/phase-1/{PRD,PLAN,TODO}.md created (BASE-03/04/05, QUAL-01) |
-| 01-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | This table marked ☑; DoD rolled (DOC-01) |
+| 01-01 Board + orthogonal movement from config | P0 | ☑ | Khaled | Diagonal rejected; values from config; unit tests happy+error (BASE-01/08) |
+| 01-02 Barrier placement + quota enforcement | P0 | ☑ | Khaled | Barrier beyond quota rejected; tested (BASE-02) |
+| 01-03 Capture + end conditions + scoring | P0 | ☑ | Khaled | 3 capture conditions + survival + scoring table pass tests (BASE-03…07) |
+| 01-04 SDK facade + integration gate + doc triplet | P0 | ☑ | Khaled | engine.py thin facade (QUAL-01); GATE-1/2/3 pass; docs/phases/phase-1/{PRD,PLAN,TODO}.md created (BASE-03/04/05, QUAL-01) |
+| 01-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | This table marked ☑; DoD rolled (DOC-01) |
 
 ---
 
@@ -86,14 +93,22 @@ are a deliberate, book-cited descope (§5.3.2 p.35), not unfinished work.**
 ## Phase 4 — Language and Scent  *(Milestone M4)*
 
 Gate: hint→inference; scent decays; LLM emits a hint each turn (true or false).
+**14/14 plans executed; phase verdict `human_needed` —
+[04-VERIFICATION.md](../.planning/phases/04-language-and-scent/04-VERIFICATION.md), 3/3 book
+success-criteria mechanisms verified (mocked) + 1/1 robustness item.** Criterion 2 (scent) has
+**no live-API dependency** and is verified outright; criteria 1 and 3 read
+`✓ VERIFIED (mocked) / ? PENDING (live)`. The task rows below are ticked because the work landed;
+**the phase gate is not met** and `LANG-01` / `LANG-06` are deliberately held open in
+[REQUIREMENTS.md](../.planning/REQUIREMENTS.md) — a live GATE-4 run is needed, and the responder
+side has been unmeasured since 05-06 changed responder hint composition on 2026-08-14.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 04-01 Scent emission/decay + pre-game crypto lock | P0 | ☐ | Khaled | 0.9/0.10/5×5 exact; decay model locked (LANG-04/07) |
-| 04-02 Bayesian belief map (scent + hints) | P0 | ☐ | Khaled | Belief updates via Bayes; tested (LANG-05) |
-| 04-03 LLM hint decode + bluff gen with `intent` flag | P0 | ☐ | Khaled | ≤15-word hint each turn; intent committed; NL-only (LANG-01/02/03/06) |
-| 04-04 Write `docs/PRD_scent_map.md`, `PRD_belief_map.md`, `PRD_deception.md` | P1 | ☐ | Khaled | Three per-mechanism PRDs committed (DOC-02) |
-| 04-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
+| 04-01 Scent emission/decay + pre-game crypto lock | P0 | ☑ | Khaled | 0.9/0.10/5×5 exact; decay model locked (LANG-04/07) |
+| 04-02 Bayesian belief map (scent + hints) | P0 | ☑ | Khaled | Belief updates via Bayes; tested (LANG-05) |
+| 04-03 LLM hint decode + bluff gen with `intent` flag | P0 | ☑ | Khaled | ≤15-word hint each turn; intent committed; NL-only (LANG-01/02/03/06) |
+| 04-04 Write `docs/PRD_scent_map.md`, `PRD_belief_map.md`, `PRD_deception.md` | P1 | ☑ | Khaled | Three per-mechanism PRDs committed (DOC-02) |
+| 04-99 Update `docs/TODO.md` on phase completion | P1 | ☑ | Khaled | Table marked ☑ (DOC-01) |
 
 ---
 
@@ -153,20 +168,37 @@ afterwards, still PASS.**
 ## Phase 7 — Reporting and Visualization Shell  *(Milestone M7)*
 
 Gate: summary mailed; GUI displays state (local truth); replay shows `Verified OK`.
+**11 of 12 plans executed. Gate PARTIALLY met and the phase is NOT verified — no
+`07-VERIFICATION.md` exists; `/gsd:verify-work 7` has never run.**
+[GATE-7-MEASUREMENT.md](phases/phase-7/GATE-7-MEASUREMENT.md): **criterion 2 PASS**
+(7 modules scanned, 0 local-truth violations, both seats' published snapshots free of
+`cop`/`thief`/`barriers`), **criterion 3 PASS** (one real game, all three replay verdicts shown
+with both sources deleted first), **criterion 1 dry-run PASS + live PENDING** — both shipped
+`reporting.json` files still read `dry_run` and `measure_gate7.py` clears the Gmail credential
+environment variables at import, so nothing here can have transmitted. The five rows below are
+the ROADMAP's coarse groups, not the twelve plans; the plan-level record is
+[docs/phases/phase-7/TODO.md](phases/phase-7/TODO.md).
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
-| 07-01 Gmail send-only + gatekeeper (quota/token-bucket/DOS) | P0 | ☐ | Khaled | 429 backoff; overflow queues; send-only scope (REPORT-02/03/04) |
-| 07-02 Four JSON artifacts + auto end-game report + tokens | P0 | ☐ | Khaled | JSON attached, not free text; both sides report; tokens counted (REPORT-01/05/06/07) |
-| 07-03 Local-truth live GUI + verifying replay viewer | P0 | ☐ | Khaled | GUI shows only local truth; replay = `Verified OK` (REPORT-08/09) |
-| 07-04 Write `docs/PRD_gatekeeper.md` | P1 | ☐ | Khaled | Full per-mechanism PRD committed (DOC-02) |
-| 07-99 Update `docs/TODO.md` on phase completion | P1 | ☐ | Khaled | Table marked ☑ (DOC-01) |
+| 07-01 Gmail send-only + gatekeeper (quota/token-bucket/DOS) | P0 | ☑ | Khaled | Built and gate-measured in dry run: 429 backoff ladder matches config, overflow queues then drains, send-only scope enforced at 2 guard call sites (plans 07-01/07-02/07-04). **Live scope never exercised** — 07-10 (REPORT-02/03/04) |
+| 07-02 Four JSON artifacts + auto end-game report + tokens | P0 | ◐ | Khaled | `config_`, `log_`, `result_` written by a real game; JSON **attached** (`application/json`), body carries no report content; both token totals present. **`declaration_` has ZERO production callers** — 08-04 wires it; the live send is 07-10 (REPORT-01/05/06/07) |
+| 07-03 Local-truth live GUI + verifying replay viewer | P0 | ☑ | Khaled | Both built (plans 07-06/07-08) and both gate-measured PASS; `check_local_truth.sh` is a CI job and its empty-scan control exits 2 (REPORT-08/09) |
+| 07-04 Write `docs/PRD_gatekeeper.md` | P1 | ☑ | Khaled | Committed in 07-09; every number sourced to a file and line, and the two with no book source (OQ-1, OQ-2) named rather than invented (DOC-02) |
+| 07-99 Update `docs/TODO.md` on phase completion | P1 | ◐ | Khaled | This section reconciled by 08-02; **rolls to ☑ only when 07-10 lands the live send and `07-VERIFICATION.md` is written** (DOC-01) |
 
 ---
 
 ## Phase 8 — Submission and League Operations  *(Milestone M8)*
 
 Gate: two cross-linked public repos; ≥2 scored league games played and reported.
+**In progress — 2 of 14 plans executed (08-01, 08-02) as of 2026-08-17.** The four rows below
+are the ROADMAP's deliverable **groups**; §17 is wider than they are, so the phase needs fourteen
+plans and the row IDs are **not** 1:1 with plan IDs. The plan-level record is
+[docs/phases/phase-8/TODO.md](phases/phase-8/TODO.md); the live §17 gap register is
+[docs/SUBMISSION-CHECKLIST.md](SUBMISSION-CHECKLIST.md). Three of the four groups are structurally
+**human-completed** — Claude does not create public repositories, push tags, mail the lecturer,
+play league games or fill submission forms.
 
 | Task | Pri | Status | Owner | Definition of Done |
 |------|-----|--------|-------|--------------------|
@@ -184,14 +216,14 @@ Verified on every commit; blocks merge if failing (Table 5 / QUAL-01…13).
 
 | Check | Pri | Status | Owner | Definition of Done |
 |-------|-----|--------|-------|--------------------|
-| `uv run ruff check` → 0 violations | P0 | ☐ | Khaled | Clean on all committed code (QUAL-09) |
-| `uv run pytest --cov` ≥ 85% | P0 | ☐ | Khaled | `fail_under=85` enforced (QUAL-10) |
+| `uv run ruff check` → 0 violations | P0 | ☑ | Khaled | **0 violations** at HEAD; a CI job since Phase 1 (QUAL-09) |
+| `uv run pytest --cov` ≥ 85% | P0 | ☑ | Khaled | **2174 passed / 0 failed, coverage 97.37%** against a `fail_under = 85` floor; a CI job (QUAL-10) |
 | Every source/test file ≤ 150 lines | P0 | ☑ | Khaled | **Hard-enforced**: `scripts/check_line_limit.sh` via pre-commit hook (`core.hooksPath=scripts/hooks`) + CI (`.github/workflows/quality-gate.yml`); never `--no-verify` (QUAL-08) |
-| Build/refresh graphify graph (Phase 3+) | P1 | ☐ | Khaled | `/gsd:graphify` at plan-phase & after execute for phases 3–8; `.planning/graphs/` current |
-| 0 hardcoded values / 0 secrets | P0 | ☐ | Khaled | config/constants/Enum; `os.environ.get()` only (QUAL-11/12) |
-| SDK layer + single gatekeeper + no duplication | P1 | ☐ | Khaled | Logic behind SDK; all external calls via gatekeeper (QUAL-01/02/03) |
-| TDD + versioning 1.00 | P1 | ☐ | Khaled | Tests before/with code; version tracked (QUAL-06/07) |
-| Prompt-engineering log maintained (§8.3) | P2 | ☐ | Khaled | Significant prompts logged with context/outputs |
+| Build/refresh graphify graph (Phase 3+) | P1 | ◐ | Khaled | `.planning/graphs/GRAPH_REPORT.md` refreshed through 07-09 (10473 nodes / 18679 edges / 597 communities); Phase 8's refresh is task 08-96, owned by plan 08-11 |
+| 0 hardcoded values / 0 secrets | P0 | ◐ | Khaled | Secrets: **886 tracked text files scanned, 0 provider-shape hits**, both scanner controls firing (audit row G4-02). Hardcoded values: Table 5 marks that row `Code review` and the audit prints it **UNJUDGED** rather than claiming a pass no script earned (QUAL-11/12) |
+| SDK layer + single gatekeeper + no duplication | P1 | ◐ | Khaled | SDK layer (11 modules) and the one gatekeeper reused as two instances are both audit-PASS; "no duplication" is a Table-5 `Code review` row and stays **UNJUDGED** (QUAL-01/02/03) |
+| TDD + versioning 1.00 | P1 | ◐ | Khaled | `version.py` reads `1.00`, but `pyproject.toml` reads `1.00.0` — audit row **T5-06 GAP**, and D-79 derives the tag name from the reconciled value (08-11). TDD is a Table-5 `Work process` row: **UNJUDGED** (QUAL-06/07) |
+| Prompt-engineering log maintained (§8.3) | P2 | ☐ | Khaled | `docs/PROMPT_LOG.md` **does not exist** — audit row G1-14 GAP; owned by plan 08-09 |
 
 ---
 
@@ -202,14 +234,17 @@ standing rule in [CLAUDE.md](../CLAUDE.md). A phase is not verified until its ro
 
 | Phase | PRD.md | PLAN.md | TODO.md | All TODOs ☑ |
 |-------|--------|---------|---------|-------------|
-| 1 Base Logic | ◐ | ◐ | ◐ | ☐ |
-| 2 FastMCP Infrastructure | ☑ | ☑ | ☑ | ☐ |
-| 3 Blind Strategy (RL) | ☑ | ☑ | ☑ | ☐ |
-| 4 Language & Scent | ☐ | ☐ | ☐ | ☐ |
-| 5 Cloud Tunneling | ☐ | ☐ | ☐ | ☐ |
-| 6 Security & Crypto | ☐ | ☐ | ☐ | ☐ |
-| 7 Reporting Shell | ☐ | ☐ | ☐ | ☐ |
-| 8 Submission & League | ☐ | ☐ | ☐ | ☐ |
+| 1 Base Logic | ☑ | ☑ | ☑ | ☑ — closed 2026-08-17 by 08-02 |
+| 2 FastMCP Infrastructure | ☑ | ☑ | ☑ | ☑ |
+| 3 Blind Strategy (matrix mover) | ☑ | ☑ | ☑ | ☑ |
+| 4 Language & Scent | ☑ | ☑ | ☑ | ☐ — phase verdict `human_needed`, live GATE-4 run outstanding |
+| 5 Cloud Tunneling | ☑ | ☑ | ☑ | ☑ — GATE-5 MET, both §10.4 criteria PASS |
+| 6 Security & Crypto | ☑ | ☑ | ☑ | ☑ |
+| 7 Reporting Shell | ☑ | ☑ | ☑ | ☐ — 11/12 plans; no `07-VERIFICATION.md` exists |
+| 8 Submission & League | ☑ | ☑ | ☑ | ☐ — 2/14 plans executed |
 
 ---
 *Keep this file updated with progress (§2.5 step 6). Each `0N-99` task rolls its phase to ☑.*
+*Reconciled project-wide 2026-08-17 by plan 08-02 — from `NN-VERIFICATION.md` and
+`GATE-N-MEASUREMENT.md`, never from a tracker's own banner. Phases 4, 7 and 8 are shown
+**incomplete**, because that is what their artifacts say.*

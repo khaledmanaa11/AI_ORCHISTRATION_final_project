@@ -274,6 +274,11 @@ These apply to all phases and are verified continuously, not in a single phase:
 **Execution Order:**
 Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
+> **Progress reconciled 2026-08-17 by plan 08-02**, from each phase's own `NN-VERIFICATION.md` and
+> `GATE-N-MEASUREMENT.md`. Phases 4, 7 and 8 are shown **incomplete** because that is what their
+> artifacts say: Phase 4 is `human_needed` with a live-API item open, Phase 7 has 11 of 12 plans and
+> no verification document at all, and Phase 8 has executed 2 of 14 plans.
+
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Base Logic | 5/5 | Complete -- 01-VERIFICATION.md `passed`, 3/3 must-haves | 2026-07-28 |
@@ -282,5 +287,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Language and Scent | 14/14 | Executed -- 04-VERIFICATION.md `human_needed`: 3/3 book success-criteria mechanisms verified (mocked) + 1/1 robustness item. **Live-API confirmation is the sole open item** | - |
 | 5. Cloud Exposure and Tunneling | 18/18 | **Complete — GATE-5 MET** (both §10.4 criteria PASS; criterion 2 closed by remote-round attempt 4 and re-derived from raw JSONL by script in three separate verification passes). 05-VERIFICATION.md `human_needed` 20/21, **no code gap** — the one open item is the repo-wide REQUIREMENTS.md status table, a scope decision, not a Phase-5 defect. Two adversarial rounds beyond the gate found ten further defects (G6-G10, deferred #4/#10, and the envelope-boundary class), closed by 05-12..05-18; the class is now held by a source-enumerated guard over all 12 queue-pull sites | 2026-08-17 |
 | 6. Security and Cryptography | 6/6 | Complete -- GATE-6 all 3 criteria PASS, 06-VERIFICATION.md `passed` 11/11 must-haves | 2026-08-09 |
-| 7. Reporting and Visualization Shell | 0/— | Not started -- not yet planned, so the plan count is unknown | - |
-| 8. Submission and League Operations | 0/— | Not started -- not yet planned, so the plan count is unknown | - |
+| 7. Reporting and Visualization Shell | 11/12 | **Executed, NOT verified.** 11 of 12 plans have SUMMARY files (07-00..07-09, 07-11); 07-10 is the phase's one `autonomous: false` plan and has not run. **No `07-VERIFICATION.md` exists** -- `/gsd:verify-work 7` has never run. `GATE-7-MEASUREMENT.md`: criterion 2 PASS, criterion 3 PASS, criterion 1 dry-run PASS + **live PENDING** (both shipped `reporting.json` files still read `dry_run`). REPORT-01..09 are therefore all held OPEN in REQUIREMENTS.md -- gate-measured is not phase-verified | - |
+| 8. Submission and League Operations | 2/14 | **In progress.** `08-PLAN-OUTLINE.md` defines 14 plans across 7 waves; 08-01 (the §17 + Table-5 audit gate, 86 rows, 32 GAPs registered in `docs/SUBMISSION-CHECKLIST.md`) and 08-02 (the project-wide tracker reconciliation) are executed. Plans 08-12/08-13/08-14 are `autonomous: false` -- publishing repos, playing league games and submitting are human-only, and 08-13 additionally needs 07-10 | - |
