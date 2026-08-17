@@ -106,8 +106,15 @@ def test_a_game_without_the_language_layer_reports_absence_never_zero(tmp_path):
     tokens = artifact[ResultArtifactField.SUB_GAMES][0][SubGameField.TOKENS]
 
     assert tokens[TokensField.PRESENT] is False
-    assert tokens.get(TokensField.TOTAL_TOKENS) is None
-    assert tokens != 0
+    # `tokens != 0` was the first draft and it is vacuous -- a dict never
+    # equals an int. The check that means something is that NO count appears
+    # at all, so there is no zero for a reader to mistake for a measurement.
+    # `bool` is excluded explicitly: `present: False` IS `0` under `==`, and
+    # the second draft of this line failed on exactly that.
+    counts = [v for v in tokens.values() if isinstance(v, int) and not isinstance(v, bool)]
+    assert counts == []
+    assert TokensField.TOTAL_TOKENS not in tokens
+    assert TokensField.INPUT_TOKENS not in tokens
     assert TokensField.DETAIL in tokens
     series = artifact[ResultArtifactField.SERIES_TOKENS]
     assert series[TokensField.GAMES_MEASURED] == 0, "an unmeasured game must not be counted"

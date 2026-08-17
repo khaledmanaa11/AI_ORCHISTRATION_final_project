@@ -75,16 +75,27 @@ def test_a_live_config_with_an_injected_transport_is_allowed(params, tmp_path):
     assert chain.pending == 0
 
 
-def test_the_shipped_config_builds_a_chain_and_names_the_quota_file(params, tmp_path):
-    """The quota counter lands beside the run output, NOT in the shipped
-    `config/` tree -- `tests/_shipped_config_guard.py` makes that structural."""
+async def test_the_quota_counter_lands_beside_the_run_output_not_in_config(
+    params, tmp_path
+):
+    """`tests/_shipped_config_guard.py` makes "no test writes the shipped
+    `config/` tree" structural, and 07-00's whole defect was a counter written
+    to the wrong place. So this SENDS, then looks for the file: asserting on
+    `QUOTA_FILENAME`'s spelling alone would pass against a chain that wrote it
+    anywhere at all."""
     assert params.mode is ReportingMode.DRY_RUN, "every shipped config is dry_run"
-    build_reporting_chain(
+    run_dir = tmp_path / "run"
+    chain = build_reporting_chain(
         params, watchdog=CountingWatchdog(), artifact_dir=tmp_path / "art",
-        quota_dir=tmp_path / "run",
+        quota_dir=run_dir, sink=OneShotSink(fail=False),
     )
-    assert QUOTA_FILENAME.endswith(".json")
-    assert "config" not in QUOTA_FILENAME
+    assert not run_dir.exists(), "nothing is written before a send"
+
+    outcome = await chain.send({"game_id": "quota"})
+
+    assert outcome.sent is True
+    assert (run_dir / QUOTA_FILENAME).exists()
+    assert not (POLICE_CONFIG / QUOTA_FILENAME).exists()
 
 
 async def test_the_wrapper_touches_on_entry_and_on_the_way_out():

@@ -18,7 +18,7 @@ a technical loss.
 from __future__ import annotations
 
 from pursuit.services.reporting.artifact_declaration import ENVELOPE_DECLARATION_KEY
-from pursuit.services.reporting.artifacts import IGNORED_RUN_DIR, result_filename
+from pursuit.services.reporting.artifacts import IGNORED_RUN_DIR
 from pursuit.services.reporting.end_of_game import report_game_end
 from tests.integration.end_of_game_harness import played_game
 
@@ -55,7 +55,12 @@ async def test_an_artifact_directory_under_logs_is_contained_not_raised(
     )
 
     assert report is None
-    assert not (forbidden / result_filename("containb")).exists()
+    # WRONG-SHAPED IN THE FIRST DRAFT, and worth naming: this used to assert
+    # `not (forbidden / result_filename(...)).exists()`, a path that could
+    # never exist anyway once artifacts moved to `<root>/<role>/`. The check
+    # that means something is that NOTHING was created at all -- an unrefused
+    # write would have `mkdir(parents=True)`d its way there.
+    assert not forbidden.exists()
 
 
 async def test_a_game_that_produced_no_outcome_is_not_reported(tmp_path, monkeypatch):
