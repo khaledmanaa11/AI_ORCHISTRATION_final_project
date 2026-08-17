@@ -23,8 +23,8 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
-from pursuit.sdk.local_view import BeliefView, HintView, LocalView, ScentView
 
+from pursuit.sdk.local_view import BeliefView, HintView, LocalView, ScentView
 from tests.unit import local_view_fixtures as fx
 
 _SERIALISED_FORMS = ("asdict", "json")
@@ -103,6 +103,7 @@ def test_every_leak_encoding_the_scanner_claims_is_actually_reported(view):
 def test_local_view_field_set_is_closed(view):
     """The field set IS the mitigation: no `GameState`, no `AgentContext`,
     no free-form dict and no 'extras' escape hatch."""
+    assert len(_EXPECTED_FIELDS) == 12 and len(_FORBIDDEN_ANNOTATIONS) == 5
     names = tuple(f.name for f in dataclasses.fields(LocalView))
     assert names == _EXPECTED_FIELDS
     annotations = " ".join(str(f.type) for f in dataclasses.fields(LocalView))

@@ -38,6 +38,7 @@ def _reads_true_position(path: pathlib.Path) -> bool:
 
 def test_view_builder_is_the_only_sdk_module_that_reads_the_true_position():
     """D-74: `view_builder` is the ONE place the projection happens."""
+    assert len(_TRUE_POSITION_FIELDS) == 3, "GameState's three position fields"
     modules = sorted(_SDK_ROOT.rglob("*.py"))
     assert len(modules) >= 5, f"the sdk scan found only {len(modules)} modules"
     readers = {p.name for p in modules if _reads_true_position(p)}

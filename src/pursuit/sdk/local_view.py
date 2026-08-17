@@ -54,7 +54,7 @@ class BeliefView:
     rows: Grid
     entropy: float
     argmax: Coord
-    reliability: float | None
+    reliability: float
 
 
 @dataclass(frozen=True)

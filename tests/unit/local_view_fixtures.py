@@ -23,7 +23,6 @@ import pathlib
 import random
 
 from pursuit.sdk.view_builder import HintHistory, build_local_view
-
 from pursuit.shared.belief_config import load_belief_config
 from pursuit.shared.scent_config import load_scent_model
 from pursuit.strategy.beliefadapter import BeliefAdapter
