@@ -1,7 +1,14 @@
-"""Crash-safe JSON write/read sequence shared by QTable (03-05) and the
-future training/checkpoint.py (03-08) -- lives under src/pursuit/shared/
-because training/ must never be imported by src/, so the shared home has
-to sit under src/ instead (QUAL-02).
+"""Crash-safe write/read sequence shared by QTable (03-05), the future
+training/checkpoint.py (03-08), 07-01's QuotaManager, 07-02's artifact spine
+and 07-04's `.eml` -- lives under src/pursuit/shared/ because training/ must
+never be imported by src/, so the shared home has to sit under src/ instead
+(QUAL-02).
+
+`durable_write_bytes` is the scheme; `durable_write_json` is that scheme over
+`json.dumps`. Measured when the two were separated: the JSON bytes are
+IDENTICAL either way (98 bytes for a payload carrying a newline, a tab and
+Hebrew), because `json.dumps` escapes newlines and defaults to ASCII, so the
+old text-mode write had nothing for Windows to translate.
 
 Why this is not just os.replace(): an overnight run checkpointing every
 few thousand episodes WILL be interrupted eventually, and this repo sits
@@ -45,23 +52,30 @@ def _prev_path(target: Path) -> Path:
     return target.with_name(f"{target.stem}.prev{target.suffix}")
 
 
-def durable_write_json(
-    path: "Path | str", payload: object, *, retries: int, backoff: float
+def durable_write_bytes(
+    path: "Path | str", data: bytes, *, retries: int, backoff: float
 ) -> None:
-    """Write `payload` to `path` as JSON, crash-safely (D-15, D-24).
+    """Write `data` to `path` crash-safely (D-15, D-24) -- THE write scheme.
 
     1. write to a temp file in the SAME directory, flush(), os.fsync(fd)
     2. rotate the existing target (if any) to its `.prev` generation
     3. os.replace(tmp, target), retried with linear backoff on
        PermissionError -- OneDrive, Defender, or an editor holding the
        destination open (WinError 32)
+
+    Extracted from `durable_write_json` at its second payload shape (07-04's
+    `.eml`), rather than copied: two write-and-rotate sequences would be two
+    crash-safety schemes, and the one that is not the JSON one is the one that
+    would stop being maintained (CLAUDE.md Table 5, no duplication). Binary
+    mode is the primitive on purpose -- text mode on Windows translates "\\n"
+    to "\\r\\n", which would silently rewrite an RFC 5322 message.
     """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = _tmp_path(target)
 
-    with tmp_path.open("w", encoding="utf-8") as fh:
-        json.dump(payload, fh)
+    with tmp_path.open("wb") as fh:
+        fh.write(data)
         fh.flush()
         os.fsync(fh.fileno())
 
@@ -69,6 +83,22 @@ def durable_write_json(
         os.replace(target, _prev_path(target))
 
     _replace_with_retry(tmp_path, target, retries=retries, backoff=backoff)
+
+
+def durable_write_json(
+    path: "Path | str", payload: object, *, retries: int, backoff: float
+) -> None:
+    """Write `payload` to `path` as JSON, crash-safely -- `durable_write_bytes`
+    over `json.dumps`.
+
+    The bytes are unchanged by the extraction: `json.dumps` defaults to
+    `ensure_ascii=True` and emits no literal newline (a newline inside a string
+    value is escaped as the two characters `\\n`), so the previous text-mode
+    write had nothing for Windows' newline translation to act on.
+    """
+    durable_write_bytes(
+        path, json.dumps(payload).encode("utf-8"), retries=retries, backoff=backoff
+    )
 
 
 def _replace_with_retry(tmp_path: Path, target: Path, *, retries: int, backoff: float) -> None:

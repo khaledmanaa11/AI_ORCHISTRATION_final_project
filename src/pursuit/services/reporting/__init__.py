@@ -37,10 +37,17 @@ from pursuit.services.reporting.artifacts import (
     result_filename,
     sub_game_suffix,
     write_artifact,
+    write_artifact_bytes,
 )
 from pursuit.services.reporting.chain import Refusal, ReportingChain, SendOutcome
 from pursuit.services.reporting.dos import DosDetector
+from pursuit.services.reporting.message import (
+    build_report_message,
+    render_message,
+    report_filename,
+)
 from pursuit.services.reporting.quota import QuotaField, QuotaManager
+from pursuit.services.reporting.sink import DryRunSink, MailSink, SendReceipt
 
 __all__ = (
     "ArtifactField",
@@ -49,24 +56,31 @@ __all__ = (
     "DeclarationArtifactField",
     "DeclarationContext",
     "DosDetector",
+    "DryRunSink",
+    "MailSink",
     "QuotaField",
     "QuotaManager",
     "Refusal",
     "ReportingChain",
     "SendOutcome",
+    "SendReceipt",
     "artifact_digest",
     "artifact_digest_matches",
     "artifact_header",
     "build_config_artifact",
     "build_declaration_artifact",
+    "build_report_message",
     "config_filename",
     "declaration_filename",
     "log_filename",
     "next_sub_game_index",
+    "render_message",
+    "report_filename",
     "result_filename",
     "sub_game_suffix",
     "verify_embedded_declarations",
     "write_artifact",
+    "write_artifact_bytes",
     "write_config_artifact",
     "write_declaration_artifact",
 )

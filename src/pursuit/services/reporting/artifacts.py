@@ -38,6 +38,7 @@ from pursuit.services.reporting.artifact_names import (
 from pursuit.shared.durable_write import (
     DURABLE_WRITE_BACKOFF_SECONDS,
     DURABLE_WRITE_RETRIES,
+    durable_write_bytes,
     durable_write_json,
 )
 
@@ -58,6 +59,7 @@ __all__ = (
     "result_filename",
     "sub_game_suffix",
     "write_artifact",
+    "write_artifact_bytes",
 )
 
 # `agent_lifecycle.py:86` fixes the per-run output tree and `.gitignore`
@@ -116,13 +118,34 @@ def write_artifact(artifact_dir: Path | str, filename: str, payload: object) -> 
     than a convention every caller has to remember: an artifact path under
     `logs/` is a programming error, not a preference.
     """
+    path = _permitted_artifact_path(artifact_dir, filename)
+    durable_write_json(
+        path, payload, retries=DURABLE_WRITE_RETRIES, backoff=DURABLE_WRITE_BACKOFF_SECONDS,
+    )
+    return path
+
+
+def write_artifact_bytes(artifact_dir: Path | str, filename: str, data: bytes) -> Path:
+    """`write_artifact` for a payload that is already bytes -- 07-04's `.eml`.
+
+    Same directory, same D7-1 refusal, same crash-safe rotation. It exists so
+    that the dry-run sink's rendered message goes through the ONE gated write
+    site rather than round a hand-rolled `Path.write_bytes` that no rule
+    governs.
+    """
+    path = _permitted_artifact_path(artifact_dir, filename)
+    durable_write_bytes(
+        path, data, retries=DURABLE_WRITE_RETRIES, backoff=DURABLE_WRITE_BACKOFF_SECONDS,
+    )
+    return path
+
+
+def _permitted_artifact_path(artifact_dir: Path | str, filename: str) -> Path:
+    """The D7-1 gate, named once so the two writers cannot drift apart."""
     path = Path(artifact_dir) / filename
     if IGNORED_RUN_DIR in path.parts:
         raise ValueError(
             f"artifact path {path} is under {IGNORED_RUN_DIR}/, which .gitignore "
             "ignores wholesale; the four required artifacts must be committable (D7-1)"
         )
-    durable_write_json(
-        path, payload, retries=DURABLE_WRITE_RETRIES, backoff=DURABLE_WRITE_BACKOFF_SECONDS,
-    )
     return path
