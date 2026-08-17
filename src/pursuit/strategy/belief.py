@@ -18,6 +18,7 @@ am I in".
 
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
 
@@ -85,6 +86,17 @@ class BeliefMap:
     def posterior(self) -> tuple:
         """Return an immutable snapshot of the current grid."""
         return tuple(tuple(row) for row in self._grid)
+
+    def entropy(self) -> float:
+        """Shannon entropy of the current posterior, in bits.
+
+        Lives on the map that owns the grid because it has two consumers:
+        `network/turn_language.belief_snapshot` (the JSONL language record)
+        and `sdk/view_builder` (the 07-03 LocalView sidebar). Zero-mass
+        cells are skipped rather than special-cased -- 0*log2(0) is 0 in
+        the limit, and `math.log2(0.0)` raises.
+        """
+        return -sum(p * math.log2(p) for row in self._grid for p in row if p > 0.0)
 
     def argmax(self) -> Coord:
         """Return the single most likely cell, ties broken by row-major scan

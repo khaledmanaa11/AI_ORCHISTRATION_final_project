@@ -12,7 +12,6 @@ event (rules 8-9: only what THIS peer believed/observed).
 
 from __future__ import annotations
 
-import math
 from dataclasses import replace
 
 from pursuit.network.brain_wiring import inner_brain
@@ -136,6 +135,8 @@ def belief_snapshot(ctx: AgentContext) -> tuple[float | None, Coord | None, floa
     belief is disabled this game (an honest "not run"), never fabricated."""
     if not isinstance(ctx.brain, BeliefAdapter):
         return None, None, None
-    posterior = ctx.brain.belief.posterior()
-    entropy = -sum(p * math.log2(p) for row in posterior for p in row if p > 0.0)
-    return entropy, ctx.brain.belief.argmax(), ctx.brain.reliability.value
+    return (
+        ctx.brain.belief.entropy(),
+        ctx.brain.belief.argmax(),
+        ctx.brain.reliability.value,
+    )

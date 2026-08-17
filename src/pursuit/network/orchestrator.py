@@ -34,6 +34,12 @@ one-directional dependency holds regardless of import order.
 and are re-exported below UNCHANGED so every existing
 `from pursuit.network.orchestrator import AgentContext` call site keeps
 working with zero edits.
+
+`engine_agent`/`opponent_role` moved the same way in 07-03, to
+`shared/roles.py`, and are re-exported below unchanged. They had to leave
+`network/` because `sdk/view_builder.py` (D-74) and the 07-06 GUI both need
+the role vocabulary and neither may import `pursuit.network` -- see that
+module's docstring for why a second copy of the literals was not an option.
 """
 
 from __future__ import annotations
@@ -50,31 +56,10 @@ from pursuit.network.state_machine import TERMINAL_STATES, State
 from pursuit.network.verdict import peer_protocol_verdict
 from pursuit.sdk import engine
 from pursuit.shared.config import GameParams
+from pursuit.shared.roles import engine_agent, opponent_role  # noqa: F401 -- re-export
 from pursuit.shared.state import GameState
 
 __all__ = ("AgentContext", "ChooseMove", "Coord", "engine_agent", "first_legal_move", "run_turn_loop")
-
-
-def engine_agent(role: str) -> str:
-    """Bridge role.json's {"police","thief"} to the SDK's {"cop","thief"}
-    (D-01) -- the one place this Phase-2 name mismatch is resolved."""
-    if role == "police":
-        return "cop"
-    if role == "thief":
-        return "thief"
-    raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
-
-
-def opponent_role(role: str) -> str:
-    """The role this agent expects on every inbound envelope's `sender`
-    (06-06). Lives here beside `engine_agent` because this module already
-    owns the {"police","thief"} vocabulary -- adding the literals anywhere
-    else would be a second, driftable copy."""
-    if role == "police":
-        return "thief"
-    if role == "thief":
-        return "police"
-    raise ValueError(f"unknown role {role!r}; expected 'police' or 'thief'")
 
 
 def first_legal_move(state: GameState, agent: str, params: GameParams) -> Coord:
