@@ -9,7 +9,7 @@
   "empty_evidence_reasons": [],
   "exit_code": 1,
   "gate": "Segal Sec17 final checklist + Sec19.1 Table 5",
-  "generated_at": "2026-08-17T12:46:13.417279+00:00",
+  "generated_at": "2026-08-17T13:23:15.940203+00:00",
   "mechanisms_discovered": 10,
   "readme_rows": 10,
   "rows": [
@@ -254,7 +254,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 517 (a zero count is a vacuous pass and fails this row)",
+      "evidence": "check_line_limit.sh exit 0; violations 0; files the same three globs enumerate: 520 (a zero count is a vacuous pass and fails this row)",
       "fix_path": "scripts/check_line_limit.sh",
       "group": "2. Architecture & code",
       "id": "G2-03",
@@ -286,7 +286,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "src modules parsed: 202; without a module docstring: 0 []",
+      "evidence": "src modules parsed: 203; without a module docstring: 0 []",
       "fix_path": "src/pursuit/",
       "group": "2. Architecture & code",
       "id": "G2-07",
@@ -342,7 +342,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "tracked files under tests/: 304",
+      "evidence": "tracked files under tests/: 306",
       "fix_path": "tests/",
       "group": "3. Testing & quality",
       "id": "G3-04",
@@ -382,7 +382,7 @@
       "verdict": "PASS"
     },
     {
-      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 931; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
+      "evidence": "controls fired (provider/generic): True/True; tracked text files scanned: 935; provider-shape hits: 0 []; unexempted generic hits: 0 []; allowlisted: 5; STALE allowlist entries: 0 []",
       "fix_path": ".gitignore",
       "group": "4. Configuration & security",
       "id": "G4-02",
@@ -703,6 +703,6 @@
     }
   ],
   "suite_was_run": false,
-  "tracked_files": 960,
+  "tracked_files": 964,
   "verdict": "GAPS_FOUND"
 }

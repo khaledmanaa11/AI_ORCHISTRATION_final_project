@@ -422,8 +422,32 @@ integration, two structural. Rule 49's four links are carried as stated-absence 
 ### Deferred items #13 and #19
 
 Two latent `commit_reveal=False` evidence defects recorded in a phase-5 file. Not re-measured
-by this plan. **Owner: 08-05**, which must either close both with a revert probe or accept
-both against shipped-config evidence **re-measured at HEAD**.
+by 08-01. **Owner: 08-05**, which must either close both with a revert probe or accept both
+against shipped-config evidence **re-measured at HEAD**.
+
+**BOTH CLOSED by 08-05, 2026-08-17** — `112e593` (#13) and `12c3a0c` (#19). Neither was
+accepted; the shipped config remains `"commit_reveal": true` on both seats, and both repairs
+are on the toggle-off path only.
+
+- **#13** — the second mover's MOVE envelope was stamped one turn into the future.
+  `send_move_only` now takes the played turn instead of re-reading `ctx.state.turn` after
+  `maybe_resolve`. **The shipped commit-reveal-ON path is byte-identical, measured:** a
+  nonce-pinned ON-path drive produced the same fingerprint
+  `c79f76aff77180…`, the same three pushes at turns `[0, 0, 0]`, the same `h_commit`
+  `6a34ee5c…` and the same single ledger record at turn 0, before and after. `turn =
+  ctx.state.turn` is textually unmoved, so **the D-59 hash input and the D-64 join key were
+  never in the change's path** — pinned structurally by
+  `tests/unit/test_shipped_path_turn_source.py`.
+- **#19** — `turn_buffer.await_move` had no type test. It now returns only a MOVE, buffers a
+  FINAL_REVEAL, and keeps waiting through anything else. `await_move` has exactly **one**
+  production caller — `turn_commit.await_and_respond`'s `if not ctx.security.commit_reveal`
+  branch — so a commit-reveal-ON game never reaches it.
+
+**The 05-18 bookmark that was supposed to fail on closure did not fail**, and that is the
+finding worth keeping: it counted all nine `MessageType` members, and the nine include MOVE,
+whose fixture payload is legitimately malformed. Nine = 1 buffered + 1 awaited + **7 foreign**;
+all seven are closed, and the test now derives that partition from `MessageType` and pins the
+malformed-MOVE row positively so it can never pad the count again.
 
 ---
 

@@ -787,6 +787,37 @@ its own small plan.
 
 ## 13. With `commit_reveal=False` the second mover's MOVE envelope is stamped one turn into the future
 
+> **CLOSED by 08-05** (2026-08-17, commit `112e593`). `turn_commit_send.send_move_only` no
+> longer reads `ctx.state.turn`: `take_my_turn` passes `pre_turn_state.turn` -- the same
+> pre-resolve snapshot 05-14 already threads to the hint stamp, by the same rule -- through a
+> **required, keyword-only** `played_turn` on `turn_commit.initiate`. A default was refused:
+> it is exactly how the next caller reintroduces this by omission.
+>
+> **The commit-reveal-ON path is byte-identical, measured rather than argued.** A
+> nonce-pinned deterministic ON-path drive, run before and after the change:
+>
+> ```
+> fingerprint  c79f76aff7718084b2273777e6c7735e311a9c22e006f00beaa785e8dc82c08d
+> pushes       3, turns [0, 0, 0]
+> h_commit     6a34ee5cf5ebb8084eae5fd541c0d1a8eeed4d889afded9e67956ebf650ce087
+> ledger turns [0]
+> ```
+>
+> identical on both sides. `turn = ctx.state.turn` is textually unmoved, so the D-59 hash
+> input and the D-64 ledger join key this entry warned about were never in the change's path.
+> `tests/unit/test_shipped_path_turn_source.py` pins that by AST: `played_turn` must stay
+> required and keyword-only, both committing entry points must still bind `turn` from
+> `ctx.state`, `commit_own_action` must still be fed the plain name `turn`, and `played_turn`
+> must be referenced ONLY inside the toggle-off branch.
+>
+> Reproduced RED first (`tests/unit/test_toggle_off_move_turn_stamp.py`): "claims turn 1 for
+> the action played on turn 0", with an anti-vacuity case proving `maybe_resolve` really did
+> advance the turn in the window under test -- without it the two values coincide and the
+> assertion is void. Two probes, each asserted landed and reverted by rewriting: the ON path
+> rerouted to `turn = played_turn` (2 structural failures) and `send_move_only` reading
+> `ctx.state.turn` again (2 reproduction failures).
+
+
 **Found:** 05-14 (2026-08-16), while building G8's ground truth. **Severity:** major on a
 latent path (evidence integrity, rule 20). **Status:** logged, deliberately NOT fixed here.
 
@@ -1003,6 +1034,42 @@ controls, and it interacts with #17's "does a late publisher get audited" questi
 
 ## #19 (05-18) -- `turn_buffer.await_move` has NO type test, so the toggle-off path reads any envelope as a move
 
+> **CLOSED by 08-05** (2026-08-17, commit `12c3a0c`). `await_move` now returns ONLY a MOVE,
+> buffers a FINAL_REVEAL on the way past, and keeps waiting through anything else -- the same
+> shape the other four `wait_for_*` legs have had since 05-18. The function moved to
+> `src/pursuit/network/turn_buffer_queue.py` along the seam **#20 named below**, together with
+> `drain_trailing_hint` and `HintProtocolError`; `turn_buffer` re-exports all three.
+>
+> **The buffering is load-bearing, not tidiness.** This leg pulls through `wait_for_opponent`
+> directly, so it does not inherit 05-17's FINAL_REVEAL buffering. Skipping without buffering
+> would have converted #19 into 05-17's defect on the same path -- the peer's published ledger
+> consumed and destroyed, our own audit then accusing an honest peer of silence. Probed:
+> removing `record_final_reveal` fails the class guard with "the peer's published ledger was
+> destroyed".
+>
+> **THE BOOKMARK THIS ENTRY RELIED ON DID NOT FIRE.** `test_toggle_off_move_boundary.py`
+> asserted `counts["off"] > 0` over all NINE `MessageType` members precisely so that whoever
+> closed #19 would be failed and sent here. It stayed GREEN after the fix, because the nine
+> include **MOVE** -- the type this leg awaits -- and the fixture builds it with a payload that
+> is not a legal move, so the decoder rightly complains about it. That row was never part of
+> #19; it inflated the count from 7 to 8 and would have kept "still reproduces" true forever.
+> Re-measured at HEAD and now accounted BY NAME rather than by total:
+>
+> ```
+> commit_reveal ON   0 of 9 unnamed reasons
+> commit_reveal OFF  1 of 9 -- and the one is MOVE itself
+> ```
+>
+> Nine members = 1 buffered (HINT) + 1 awaited (MOVE) + **7 FOREIGN**. All seven are closed on
+> BOTH toggle settings. Probe: the type test removed -> 7 failures, one per foreign type,
+> every one `'payload has neither direction nor x/y keys'`. The rewritten test derives the
+> foreign set from `MessageType`, asserts the partition covers every member, and pins the
+> malformed-MOVE row **positively** so it can never pad the count again.
+>
+> 07-18's source-enumerated guard followed the split unaided -- it now reports the site as
+> `await_move(turn_buffer_queue.py)` -- so moving the function did not blind the enumeration.
+
+
 **Found:** 05-18 Task 3, by the boundary enumeration ON ITS FIRST RUN -- not by grepping
 outward after a fix, which is how instances one through five were each found. **Severity:**
 major on a non-shipped toggle. **Status:** OPEN -- logged with a measurement, deliberately
@@ -1056,9 +1123,16 @@ reason to touch).
 |---|---|---|
 | `src/pursuit/network/turn_commit.py` | **149/150** | the three public entry points are already the minimum this module can hold; the next split is `initiate`/`reveal_pending` (the two `take_my_turn` halves) away from `await_and_respond` |
 | `tests/unit/_pull_site_drivers.py` | **136/150** | the twelve drivers away from `probe` + `_carries` (the measurement harness), the `_turn_loop_fixtures.py` precedent |
-| `src/pursuit/network/turn_buffer.py` | **146/150** | pre-existing; #19's repair needs this room, and the seam is `await_move`/`drain_trailing_hint` (the queue readers) away from `reject_peer_payload`/`log_illegal`/`send_hint` |
+| ~~`src/pursuit/network/turn_buffer.py`~~ **RELIEVED by 08-05** | 142 -> **114/150** | the named seam was taken exactly as written: `await_move`/`drain_trailing_hint` (plus `HintProtocolError`) moved to `turn_buffer_queue.py` (**93/150**) to make room for #19's repair |
 
 Recorded for the same reason #11 and #15 were: a file at the gate is a file the next plan
 cannot touch without an unrelated split, and discovering that mid-execution is how a repair
 turns into a refactor. `turn_commit_wait.py` went 135 -> 151 in this plan and was split to
 122 (`turn_commit_wait_reveal.py`), which is what that looks like when it is caught.
+
+**2026-08-17, 08-05.** Row 3 is relieved; rows 1 and 2 are re-measured and stay OPEN.
+`src/pursuit/network/turn_commit.py` is **149/150** at HEAD -- #13's repair added a
+keyword-only parameter for a net zero code lines, and the rationale went into `#` comments
+rather than the docstring **because the gate counts docstring lines as code**: the first
+draft put it in the docstring and took the file 149 -> **163**, a VIOLATION. Prose relocated,
+no code compressed. That counting rule is worth carrying: a long docstring is not free.
