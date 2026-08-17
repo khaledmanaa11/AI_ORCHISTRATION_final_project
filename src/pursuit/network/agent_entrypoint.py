@@ -145,8 +145,14 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
             # a value nobody reads, never raises, and cannot touch `outcome`
             # or this process's exit code, which since 06-05 MEANS an audit
             # mismatch (main.py:25-29).
+            # 08-04: `result.peer_step0_declaration` is threaded through
+            # because `declaration_<game_id>.json` embeds BOTH sides' signed
+            # envelopes (D-71) and this is the only place that holds the
+            # peer's. It is None when the peer sent a digest and no content,
+            # which the artifact records as an honest absence.
             await report_game_end(
                 ctx, cfg, outcome=outcome, declaration_envelope=declaration_envelope,
+                peer_declaration_envelope=result.peer_step0_declaration,
             )
             return outcome
         finally:

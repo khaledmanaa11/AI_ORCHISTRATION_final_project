@@ -61,6 +61,11 @@ DURABLE_WRITE_BINDERS = (
     "pursuit.sdk.view_publish",
     "pursuit.security.step0_collect",
     "pursuit.services.reporting.artifacts",
+    # 08-04's league ledger. It writes beside the role's run output and never
+    # under `config/`, which is exactly what a future edit could change without
+    # anyone noticing -- so it is patched like every other binder rather than
+    # exempted for being well-behaved today.
+    "pursuit.services.reporting.league_ledger",
     "pursuit.services.reporting.quota",
     "pursuit.shared.durable_write",
 )

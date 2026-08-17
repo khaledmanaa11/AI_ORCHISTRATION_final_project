@@ -28,6 +28,10 @@ WIRE TRUTH ONLY, and the `audit_verdict` is lifted out of the `log_` artifact
 this hook has just written, so the two artifacts cannot disagree about it.
 Both artifacts are written BEFORE the chain is built, so a transport that
 refuses to construct still leaves rule 50's committable files on disk.
+
+08-04: the THIRD artifact, `declaration_<game_id>.json`, is written here too,
+through `end_of_game_declaration.declare_game` and contained SEPARATELY --
+PRD Sec7 carries the reasoning.
 """
 
 from __future__ import annotations
@@ -38,8 +42,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pursuit.constants import Outcome
-from pursuit.security.step0_collect import DeclarationField
-from pursuit.services.reporting.artifact_declaration import ENVELOPE_DECLARATION_KEY
 from pursuit.services.reporting.artifact_log import LogArtifactField, write_log_artifact
 from pursuit.services.reporting.artifact_result import record_sub_game
 from pursuit.services.reporting.artifacts import next_sub_game_index
@@ -49,6 +51,7 @@ from pursuit.services.reporting.end_of_game_chain import (
     build_reporting_chain,
     watchdog_touching,
 )
+from pursuit.services.reporting.end_of_game_declaration import commit_hash_of, declare_game
 from pursuit.services.reporting.result_agreement import build_agreement
 from pursuit.services.reporting.sink import MailSink
 from pursuit.shared.reporting_config import REPORTING_CONFIG_SOURCE, load_reporting_config
@@ -67,23 +70,18 @@ _log = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class EndOfGameReport:
     """What one game-end hook produced. Returned for observation only -- no
-    caller on the production path reads it, and none may act on it."""
+    caller on the production path reads it, and none may act on it.
+
+    `declaration_artifact` is `None` when the declaration could not be built;
+    the field exists so that failure is observable rather than merely logged,
+    since a silently-absent mandatory artifact is the defect this plan closed.
+    """
 
     log_artifact: Path
     result_artifact: Path
     send: SendOutcome
     pending: int
-
-
-def _commit_hash(declaration_envelope: dict) -> str:
-    """THIS game's commit hash, out of the Step-0 declaration it ran under.
-
-    Never a second `git rev-parse`: `step0_collect._git_commit_hash` already
-    collected it, "raises loudly on failure -- never a blank hash", and the
-    handshake verified the envelope. Re-deriving it could name a different
-    commit from the one declared (rule 53, PARAMETERS mandatory rule 5).
-    """
-    return declaration_envelope[ENVELOPE_DECLARATION_KEY][DeclarationField.COMMIT_HASH]
+    declaration_artifact: Path | None = None
 
 
 async def report_game_end(
@@ -92,6 +90,7 @@ async def report_game_end(
     *,
     outcome: Outcome | None,
     declaration_envelope: dict,
+    peer_declaration_envelope: dict | None = None,
     artifact_dir: Path | str | None = None,
     sink: MailSink | None = None,
     chain: ReportingChain | None = None,
@@ -112,6 +111,7 @@ async def report_game_end(
     try:
         return await _report(
             ctx, cfg, outcome=outcome, declaration_envelope=declaration_envelope,
+            peer_declaration_envelope=peer_declaration_envelope,
             artifact_dir=artifact_dir, sink=sink, chain=chain,
         )
     except Exception:
@@ -128,6 +128,7 @@ async def _report(
     *,
     outcome: Outcome,
     declaration_envelope: dict,
+    peer_declaration_envelope: dict | None,
     artifact_dir: Path | str | None,
     sink: MailSink | None,
     chain: ReportingChain | None,
@@ -152,7 +153,14 @@ async def _report(
     artifact, result_path = record_sub_game(
         directory, game_uid=game_id, game_id=game_id, role=ctx.role, sub_game_index=index,
         agreement=agreement.to_dict(), budget=budget,
-        commit_hash=_commit_hash(declaration_envelope), log_artifact=log_path.name,
+        commit_hash=commit_hash_of(declaration_envelope), log_artifact=log_path.name,
+    )
+    # The third mandatory artifact, after the two sealed ones are on disk and
+    # before the chain is built. `declare_game` contains its own failures, so
+    # this line cannot stop the send below (rules 32, 35).
+    declaration_path = declare_game(
+        ctx, cfg, directory, own_envelope=declaration_envelope,
+        peer_envelope=peer_declaration_envelope, mode=params.mode,
     )
 
     sender = chain or build_reporting_chain(
@@ -162,5 +170,5 @@ async def _report(
     send = await sender.send(artifact)
     return EndOfGameReport(
         log_artifact=log_path, result_artifact=result_path,
-        send=send, pending=sender.pending,
+        send=send, pending=sender.pending, declaration_artifact=declaration_path,
     )

@@ -35,6 +35,7 @@ from pathlib import Path
 
 from pursuit.security.step0_sign import SignKey, verify_declaration
 from pursuit.services.reporting.artifact_declaration_fields import (
+    DECLARED_GAMES_PLAYED_UNSET,
     DeclarationArtifactField,
     DeclarationContext,
 )
@@ -46,6 +47,7 @@ from pursuit.services.reporting.artifacts import (
 )
 
 __all__ = (
+    "DECLARED_GAMES_PLAYED_UNSET",
     "ENVELOPE_DECLARATION_KEY",
     "PEER_ABSENT_DETAIL",
     "PEER_PRESENT_DETAIL",
@@ -92,6 +94,10 @@ def build_declaration_artifact(
     artifact[DeclarationArtifactField.PEER_STATUS] = (
         PEER_ABSENT_DETAIL if peer_envelope is None else PEER_PRESENT_DETAIL
     )
+    # 08-04, rule 38. Unconditional and unparameterised: the signed envelope's
+    # `games_played_so_far` is the raw counter, and nothing may present it as
+    # this team's declared figure. See the constant's own comment.
+    artifact[DeclarationArtifactField.GAMES_PLAYED_DECLARED] = dict(DECLARED_GAMES_PLAYED_UNSET)
     artifact[DeclarationArtifactField.REPO_URLS] = context.repo_urls
     artifact[DeclarationArtifactField.MCP_SERVER_ADDRESSES] = context.mcp_server_addresses
     artifact[DeclarationArtifactField.TOKEN_CEILING] = context.token_ceiling

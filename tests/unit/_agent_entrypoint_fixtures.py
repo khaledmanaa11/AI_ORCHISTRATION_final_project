@@ -72,8 +72,17 @@ class _FakeTunnel:
 
 
 class _HandshakeResult:
-    def __init__(self, agreed: bool) -> None:
+    """The two fields `run_agent` reads off a handshake result.
+
+    `peer_step0_declaration` defaults to None -- a digest-only peer -- which is
+    also the real `HandshakeResult`'s default (08-04 threads it into
+    `report_game_end`, because the declaration artifact embeds BOTH signed
+    envelopes and this is the only object that holds the peer's).
+    """
+
+    def __init__(self, agreed: bool, peer_step0_declaration: dict | None = None) -> None:
         self.agreed = agreed
+        self.peer_step0_declaration = peer_step0_declaration
 
 
 def _patch_common(

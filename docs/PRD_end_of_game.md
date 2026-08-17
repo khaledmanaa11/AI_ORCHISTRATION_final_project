@@ -100,3 +100,46 @@ never an inference. Both still report, which is what rule 35 asks of each team s
 Everything reported is read from this side's own JSONL, its nonce ledger and its Step-0
 declaration. No belief, no scent, nothing derived from `ctx.state`: 07-11 closed a rules 8-9
 disqualifying leak and a report field must not reopen it.
+
+## 7. The third artifact — `declaration_<game_id>.json` (08-04)
+
+**The defect this closed.** `build_declaration_artifact`, `write_declaration_artifact` and
+`DeclarationContext` were built by 07-02 and, at HEAD, had **zero production callers** — their
+own module, one docstring mention, the package re-export, and tests. 08-01 re-derived it. Since
+`declaration_<game_id>.json` is one of rule 50's **four mandatory** artifacts and rule 49 wants
+four repo links inside it, `docs/PARAMETERS.md:165`'s declaration content had never been written
+by a real game. That is the D7-3 standard — *test-only reachability is dead code* — applied to a
+deliverable rather than a helper.
+
+**Where the call site is.** `end_of_game._report`, after both sealed artifacts are on disk and
+before the chain is built, via `end_of_game_declaration.declare_game`. The module is separate
+because `end_of_game.py` measured 142/150 code lines (the `end_of_game_chain.py` precedent);
+`commit_hash_of` moved there in the same step, since it reads the Step-0 envelope.
+
+**Contained separately from the mail send, and the order is load-bearing.** Rule 32 disqualifies
+the points of an unreported game and rule 35 scores **zero for both teams** when one side fails to
+report. So a declaration that cannot be built must not be able to stop `result_` from being sent:
+`declare_game` catches everything, logs, and returns `None`. The failure is still *observable* —
+`EndOfGameReport.declaration_artifact` is `None` — rather than merely logged, because a silently
+absent mandatory artifact is precisely the defect being closed.
+
+**Start and end times are measured, not stamped.** They are the earliest and latest timestamps in
+this side's own JSONL wire log: events that really happened. A clock read at report time would put
+the end time late on a run whose reporting queued, and would invent a start time outright. A log
+with no usable timestamp raises rather than substituting `now` — `DeclarationContext` requires a
+non-empty `start_time` and a fabricated one is worse than a missing artifact. Section 6's rule
+holds unchanged: `ctx.state` is never read on this path, asserted by AST in
+`tests/unit/test_declaration_reachability.py`.
+
+**Rule 38, and what the artifact does *not* say.** The embedded Step-0 envelope carries
+`games_played_so_far` because rule 37 puts it there, and its value is the raw per-role counter —
+which 07-00 measured advancing +14 across one `pytest` run for zero games. The artifact's top level
+therefore carries `games_played_declared` as a stated-absence marker saying exactly that and naming
+`docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md`. The field is **unparameterised**: no caller
+can set it, so a number is not representable here until a human chooses one at 08-14.
+
+**Rule 49's four links are config, never literals.** `config/{police,thief}/league.json` (D-81)
+holds them; every slot ships as JSON `null` and is rendered into the artifact as a marker naming
+08-12, the plan where a human creates the repositories. `shared/league_config.py` refuses to load
+with `reporting.mode = live` while any slot is still absent, so the absence cannot survive into a
+scored game unnoticed.

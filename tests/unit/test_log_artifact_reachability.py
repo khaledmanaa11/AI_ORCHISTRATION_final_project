@@ -130,6 +130,9 @@ def test_the_builder_has_a_production_caller_and_it_is_the_game_end_hook(scan):
         "pursuit/services/reporting/__init__.py",  # the package re-export surface
         "pursuit/services/reporting/artifact_log.py",  # the builder itself
         "pursuit/services/reporting/end_of_game.py",  # THE production caller
+        # 08-04, a READER: `log_read` for the declaration's start/end times,
+        # which are wire-log timestamps rather than a clock read at report time.
+        "pursuit/services/reporting/end_of_game_declaration.py",
         "pursuit/services/reporting/log_join.py",  # the join, on log_read
         "pursuit/services/reporting/replay_session.py",  # 07-08, key names only
         "pursuit/services/reporting/replay_verify.py",  # 07-08, the replay READER

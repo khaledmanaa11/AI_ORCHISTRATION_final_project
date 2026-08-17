@@ -15,7 +15,29 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-__all__ = ("DeclarationArtifactField", "DeclarationContext")
+from pursuit.shared.absent import stated_absent
+
+__all__ = ("DECLARED_GAMES_PLAYED_UNSET", "DeclarationArtifactField", "DeclarationContext")
+
+#: 08-04. The embedded Step-0 envelope carries `games_played_so_far` because
+#: rule 37 puts it there, and its value is today's RAW per-role counter --
+#: which 07-00 measured advancing +14 across one `pytest` run for zero games,
+#: leaving the two shipped files disagreeing by seven. Left unmarked, a grader
+#: reads that number as this team's declaration. So the artifact's top level
+#: says what it is and what it is not. There is no parameter for this field and
+#: no caller may set it: rule 38 (`docs/RULES.md:79`) makes a false
+#: games-played declaration an ABSOLUTE disqualification, so the value is not
+#: representable here until a human chooses it.
+DECLARED_GAMES_PLAYED_UNSET = stated_absent(
+    "deliberately unset. The `games_played_so_far` inside the signed Step-0 "
+    "envelope below is the RAW per-role counter and is NOT this team's declared "
+    "figure: 07-00 measured one `pytest` run advancing it by +14 for zero games. "
+    "The declared value is a human's decision from docs/phases/phase-7/"
+    "GAMES-PLAYED-RECONSTRUCTION.md, taken at 08-14, and rule 38 "
+    "(docs/RULES.md:79) makes declaring it falsely an ABSOLUTE disqualification. "
+    "The per-game audit trail it will be derived from is the league ledger "
+    "(services/reporting/league_ledger.py)"
+)
 
 
 class DeclarationArtifactField:
@@ -28,6 +50,7 @@ class DeclarationArtifactField:
 
     DECLARATIONS = "declarations"
     PEER_STATUS = "peer_declaration_status"
+    GAMES_PLAYED_DECLARED = "games_played_declared"
     REPO_URLS = "repo_urls"
     MCP_SERVER_ADDRESSES = "mcp_server_addresses"
     TOKEN_CEILING = "token_ceiling"
