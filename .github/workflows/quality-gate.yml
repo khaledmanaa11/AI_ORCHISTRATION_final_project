@@ -15,6 +15,24 @@ jobs:
       - name: File line limit (<=150 code lines, blanks/comments excluded)
         run: sh scripts/check_line_limit.sh
 
+  # Rules 8-9 (docs/RULES.md:29-30): displaying the objective board state in the
+  # live interface is a PROJECT DISQUALIFICATION, so the structural check gets its
+  # own job rather than one assertion inside the pytest run.
+  #
+  # THIS JOB IS RED UNTIL 07-06 CREATES src/pursuit/gui/, AND THAT IS DELIBERATE.
+  # The gate exits 2 on an empty scan set, because a gate that prints OK for having
+  # looked at nothing is worse than no gate. Wiring it behind "skip if the directory
+  # is missing" would reintroduce exactly the vacuity it exists to prevent. 07-06
+  # owns turning it green (deferred-items.md, D7-6).
+  local-truth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - name: Local-truth firewall (no objective board state reachable from gui/)
+        run: sh scripts/check_local_truth.sh
+
   # Enabled 03-20: the uv project exists, so these no longer have to stay dormant.
   lint-and-test:
     runs-on: ubuntu-latest
