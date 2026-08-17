@@ -233,13 +233,46 @@ episode 1.
 |---|---|---|---|
 | G6-01 | no documented extension points | `docs/EXTENSION-POINTS.md` absent, though `BrainBase`, `MailSink` and the provider registry are real seams | `docs/EXTENSION-POINTS.md` |
 | G6-02 | no deployment instructions / architecture document | `docs/ARCHITECTURE.md` absent; deployment is one ASCII topology diagram in `docs/PLAN.md` | `docs/ARCHITECTURE.md` |
-| G6-03 | **no licence file** | `LICENSE` absent; `pyproject.toml` declares neither `license` nor `authors`. Blocked on **OQ8-5** — publishing a licence is a legal declaration, so the human names it | `LICENSE` |
+| G6-03 | ~~no licence file~~ **CLOSED by 08-03 — PREPARED, `AWAITING OWNER CONFIRMATION`** | `LICENSE` now exists (MIT, the conventional academic default) and `pyproject.toml` declares `license = { file = "LICENSE" }` and `authors`. See the block below — this row is structurally closed and **legally open** | `LICENSE` |
 | G6-05 | ISO/IEC 25010 is not mapped | the eight characteristic names are parsed out of `docs/SEGAL_GUIDELINES.md` §13 by the gate; **no** tracked document names all eight *and* cites at least eight repo paths. The whole repo has one line of content, `docs/PRD.md:94` | `docs/QUALITY-25010.md` |
 | G6-08 | no Git tag | `git tag -l` → empty. Rule 41. **The tag is cut in 08-11 and pushed by a HUMAN in 08-12 — this gate never creates or pushes one** | `docs/phases/phase-8/SUBMISSION-RUNBOOK.md` |
 
-**Owner: 08-07** (G6-01, G6-02, G6-05) · **08-03 pending OQ8-5** (G6-03) · **08-11/08-12** (G6-08).
+**Owner: 08-07** (G6-01, G6-02, G6-05) · **08-03** (G6-03) · **08-11/08-12** (G6-08).
 
 **UNJUDGED (2):** G6-04 thread safety · G6-07 building-block design.
+
+### The licence — the owner must confirm it before anything is published
+
+**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION
+
+**OQ8-5 is NOT closed.** 08-03 drafted `LICENSE` so the §17 structural gap could stop
+being open, and drafting is the whole of what an agent may do here: **a licence is a legal
+declaration about the repository owner's own coursework, and no agent is entitled to make
+one on their behalf.** The file therefore opens with a `PREPARED, NOT ADOPTED` block naming
+what the owner must confirm.
+
+**08-12 must not create a public repository until the owner has explicitly confirmed:**
+
+1. **that MIT is the licence they want** — BSD-3-Clause, Apache-2.0 and "all rights
+   reserved" are the usual alternatives, and the university may have a policy that overrides
+   the personal preference;
+2. **that `Copyright (c) 2026 Khaled Manaa` names the holder correctly** — taken from
+   `git config user.name`, which is an identity, not an authorisation;
+3. **that the year is right.**
+
+This sits in the same class as the two repo URLs (OQ8-6) and the games-played value
+(OQ8-2): prepared by a plan, decided by a human, and **visibly flagged rather than slipped
+in**. It is trivially reversible today because **nothing has been pushed** — `git tag -l` is
+empty and the mono-repo's commits sit unpublished ahead of `origin/main`. It stops being
+reversible the moment 08-12 runs.
+
+`tests/unit/test_packaging_metadata.py` holds the two halves together as a
+**biconditional** over the single **LICENCE STATUS** field above. While `LICENSE` carries
+its `PREPARED, NOT ADOPTED` block the field must read the awaiting-confirmation token;
+when the owner confirms and that block is deleted, the field must be changed to the
+confirmed token. Neither file can change its story without the other, so the flag cannot be
+dropped by tidying — and the test reads **one anchored line**, not a grep over the page,
+because its first draft failed against its own explanatory prose.
 
 ---
 

@@ -3,6 +3,17 @@ name = "pursuit"
 version = "1.00.0"
 requires-python = ">=3.10"
 description = "Cops-and-robbers pursuit engine"
+# §17 packaging metadata, added by 08-03.
+#
+# `license` POINTS AT THE FILE rather than declaring the SPDX string "MIT", and
+# that is deliberate. `license = "MIT"` is an assertion that MIT IS the licence;
+# the licence has not been adopted yet (OQ8-5 -- choosing one is a legal statement
+# about the owner's own coursework and needs their explicit confirmation at
+# 08-12). LICENSE carries a block saying exactly that, and referencing the file
+# means the caveat travels with the package metadata instead of being contradicted
+# by it.
+license = { file = "LICENSE" }
+authors = [{ name = "Khaled Manaa", email = "khaled.mnaa43@gmail.com" }]
 dependencies = [
     "anthropic>=0.121.0",
     "fastmcp>=3.4.5",
