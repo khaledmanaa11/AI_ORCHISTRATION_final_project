@@ -149,11 +149,32 @@ def unnamed_shipped_brain(text: str) -> list[str]:
     return [module for module in shipped_brain_modules() if module not in text]
 
 
-def games_played_leaks(text: str) -> list[str]:
-    """Rule 38: no counter value may be restated in this file as a claim."""
-    leaks = []
-    for path in sorted(REPO_ROOT.glob("config/*/games_played.json")):
-        value = str(json.loads(path.read_text(encoding="utf-8"))["games_played"])
-        if re.search(rf"(?<!\d){re.escape(value)}(?!\d)", text):
-            leaks.append(f"{path.parent.name}: {value}")
-    return leaks
+def counter_values() -> list[tuple[str, str]]:
+    """`(role, value)` for every shipped counter that EXISTS in this tree.
+
+    EMPTY IN EVERY PUBLISHED COPY, AND THAT HAS TO BE SAID OUT LOUD.
+    `config/*/games_played.json` is gitignored live state (D-77): a fresh clone,
+    a CI checkout and both split repositories have none. `games_played_leaks`
+    then has nothing to search for and returns `[]` -- which means "nothing to
+    compare", NOT "no leak found". Until 08-10 that distinction was invisible,
+    so the CI job standing guard over an absolute-disqualification rule was
+    standing guard over an empty list.
+    """
+    return [
+        (path.parent.name,
+         str(json.loads(path.read_text(encoding="utf-8"))["games_played"]))
+        for path in sorted(REPO_ROOT.glob("config/*/games_played.json"))
+    ]
+
+
+def games_played_leaks(text: str, values=None) -> list[str]:
+    """Rule 38: no counter value may be restated in this file as a claim.
+
+    `values` is injectable so the DETECTOR can be proven on a machine that has
+    no counters -- which is every machine except a developer's.
+    """
+    pairs = counter_values() if values is None else list(values)
+    return [
+        f"{role}: {value}" for role, value in pairs
+        if re.search(rf"(?<!\d){re.escape(value)}(?!\d)", text)
+    ]
