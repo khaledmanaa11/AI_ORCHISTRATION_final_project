@@ -50,11 +50,16 @@ def validate_model_group(model: dict, *, source: str) -> None:
     load-time error, so a keyless machine can still load config and start
     a game.
     """
-    # Deferred import: services.llm.gatekeeper imports language_config.py at
-    # ITS top level, and language_config.py imports this module at ITS top
-    # level, so importing services.llm back at our own top level would
-    # cycle. Safe here because by the time this function actually runs,
-    # this module has already finished its own top-level execution.
+    # Deferred import, and it stays deferred. It was written because
+    # services.llm.gatekeeper imported language_config.py at ITS top level,
+    # and language_config.py imports this module at ITS top level, so
+    # importing services.llm back here would cycle. 07-01 retyped
+    # `Gatekeeper.__init__` onto shared/gatekeeper_params.py, so that ONE arc
+    # of the cycle is gone as of 2026-08-17 -- but shared/ importing the whole
+    # services.llm package at module scope would still invert this project's
+    # dependency direction and re-arm the cycle the moment any services.llm
+    # module reaches back into shared/language_config.py. Safe here because by
+    # the time this function runs, this module's top level has finished.
     from pursuit.services.llm import get_provider_class
 
     provider_name = require_str(model, ModelKey.PROVIDER.value, source=source)

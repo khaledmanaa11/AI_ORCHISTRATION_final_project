@@ -16,9 +16,17 @@ queued call immediately, not just completed ones; ``settle(...)`` reconciles
 with the observed usage afterwards, topping up the running total when actual
 usage exceeds the estimate but never letting it fall back below where
 ``reserve()`` already pushed it.
+
+``budget_for_params`` at the foot of this module is the D-68 seam: it turns a
+config params object into the ladder above, or into ``None`` for a caller that
+has no concept of a token (Phase 7's mail gatekeeper). It lives here, beside
+the class it constructs, rather than in ``gatekeeper.py`` -- that file is at
+135 of its 150 permitted code lines and CLAUDE.md says split, never compress.
 """
 
 from enum import Enum
+
+from pursuit.shared.gatekeeper_params import BudgetParams
 
 
 class DegradeLevel(Enum):
@@ -104,3 +112,24 @@ class TokenBudget:
             "level": self._level.value,
             "budget": self._token_budget,
         }
+
+
+def budget_for_params(params: object) -> "TokenBudget | None":
+    """The D-35 ladder for a token-spending caller, or ``None`` for one that
+    spends no tokens (D-68).
+
+    Carrying Table 18's three budget rows IS what distinguishes the two
+    callers: ``LanguageParams`` has them and gets a real ``TokenBudget`` with
+    exactly the thresholds it always got; ``ReportingParams`` has none of them
+    and gets ``None``, because a Gmail send has no token concept
+    (``CallResult``'s docstring: "a call with no concept of tokens (Phase 7
+    Gmail) passes 0 for both"). No caller has to pass a flag, so no caller can
+    pass the wrong one.
+    """
+    if not isinstance(params, BudgetParams):
+        return None
+    return TokenBudget(
+        token_budget=params.token_budget_per_series,
+        short_prompt_threshold=params.short_prompt_threshold_tokens,
+        template_only_threshold=params.template_only_threshold_tokens,
+    )
