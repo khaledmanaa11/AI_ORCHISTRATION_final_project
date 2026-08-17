@@ -284,6 +284,22 @@ production caller). The gate cannot see this: a "dead code" row would need call-
 reachability, which `scripts/check_local_truth.py`'s AST walk does for imports but not for
 call sites.
 
+**CLOSED by 08-04, 2026-08-17.** `services/reporting/end_of_game_declaration.declare_game` is
+the production caller, called once from `end_of_game._report` after both sealed artifacts and
+before the reporting chain. Re-run the grep at HEAD and it returns that module. A real
+`uv run python scripts/dev_launch.py` game (`game_id` `397b3503b1bfa996`, exit 0) wrote
+`declaration_397b3503b1bfa996.json` on **both** seats, each carrying `repo_urls`,
+`mcp_server_addresses`, `token_ceiling`, `start_time`, `end_time` and both signed Step-0
+envelopes embedded verbatim; the two files are kept at
+[`docs/phases/phase-8/declaration-evidence/`](phases/phase-8/declaration-evidence/) with their
+keys tabled against `PARAMETERS.md:165`.
+
+Since the gate still cannot see call-graph reachability, the guard is a test:
+`tests/unit/test_declaration_reachability.py` asserts the shape of the real source, and probe F
+of 08-04 replaced the call site with `declaration_path = None` and made **7 tests fail** — five
+integration, two structural. Rule 49's four links are carried as stated-absence markers naming
+08-12 rather than guessed URLs, and the games-played figure is left explicitly unset.
+
 ### Deferred items #13 and #19
 
 Two latent `commit_reveal=False` evidence defects recorded in a phase-5 file. Not re-measured
