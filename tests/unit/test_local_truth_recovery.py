@@ -27,8 +27,10 @@ import dataclasses
 import pytest
 
 from pursuit.sdk.view_builder import HintHistory, build_local_view
+from pursuit.strategy.display_belief import DisplayBelief
 from tests.unit import local_view_fixtures as fx
 from tests.unit import local_view_production as prod
+from tests.unit import local_view_scanner as scan
 from tests.unit._fakes_agent import make_ctx
 
 #: The cop's win condition, not a corner case: the thief walled into a
@@ -122,6 +124,28 @@ def test_the_inversion_attack_is_not_a_no_op(default_params):
     assert len(leaked_support) == 5, "the legal-move plus is STAY plus four moves"
     assert prod.geometric_inversion(leaked_support, size) == [fx.OPPONENT_CELL]
     assert prod.geometric_inversion([], size) == []
+
+
+def test_the_argmax_only_fix_would_still_leak(
+    tmp_path, default_params, network_params, monkeypatch
+):
+    """THE TRAP, pinned permanently. Put the strategy maps back on the wire
+    (what HEAD published) and redact `argmax` from the payload -- which is
+    exactly what deleting `BeliefView.argmax` would achieve. 07-03's
+    coordinate scanner then returns a CLEAN verdict on a payload from which
+    the true cell is still recoverable twice over. Any fix validated by a
+    coordinate-absence test would have shipped the disqualification."""
+    monkeypatch.setattr(DisplayBelief, "published_belief", lambda self, strategy: strategy)
+    monkeypatch.setattr(DisplayBelief, "published_scent", lambda self, actual: actual)
+    view = fx.honest_view(tmp_path, default_params, network_params)
+    payload = scan.payloads(view)["asdict"]
+    assert payload["belief"].pop("argmax") == fx.OPPONENT_CELL, "the map is the truth"
+    assert scan.coordinate_hits(payload, fx.OPPONENT_CELL, view.board_size) == [], (
+        "the argmax-only fix does buy a clean scanner verdict -- that is the trap"
+    )
+    support = prod.support_cells(view.belief.rows)
+    assert prod.geometric_inversion(support, view.board_size) == [fx.OPPONENT_CELL]
+    assert prod.grid_argmax(view.scent.opponent) == fx.OPPONENT_CELL
 
 
 def test_the_scent_peak_reader_is_not_a_no_op(view):

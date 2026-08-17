@@ -86,6 +86,22 @@ def test_belief_view_carries_the_posterior_argmax_and_reliability(
     assert 0.0 <= view.belief.reliability <= 1.0
 
 
+def test_a_display_map_below_the_floors_publishes_no_belief_and_no_trail(
+    tmp_path, default_params, network_params
+):
+    """07-11's guard, at the publication point: a display map too sharp to
+    show yields the same honest `None` a disabled belief layer does, never a
+    stand-in -- and the opponent trail goes with it, because it is emitted
+    FROM that map. Our own trail survives: it is local truth by definition."""
+    ctx = fx.honest_context(tmp_path, default_params, network_params)
+    ctx.brain.display.belief.observe_exact(fx.OPPONENT_CELL)
+    assert ctx.brain.display.publishable() is False
+    view = build_local_view(ctx, HintHistory())
+    assert view.belief is None
+    assert sum(sum(row) for row in view.scent.opponent) == 0.0
+    assert sum(sum(row) for row in view.scent.own) > 0.0
+
+
 def test_entropy_is_shannon_bits_and_agrees_with_the_jsonl_snapshot(
     tmp_path, default_params, network_params
 ):

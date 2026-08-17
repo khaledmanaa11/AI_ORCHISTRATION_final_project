@@ -13,14 +13,11 @@ argmax target makes pursuit deterministic given the opponent's own model of
 our belief, and a deterministic pursuit is exploitable in a
 one-counted-game league (rule 52).
 
-This is Option A (docs/phases/phase-3/PRD.md Sec8), not Option B: the
-sampled cell substitutes the opponent's coordinate in a believed GameState,
-so the UNCHANGED matrix mover (valuebrain.py/matrix.py -- neither file is
-touched by this module) reasons over it exactly as it always has. Option B
-(expectation over the belief's whole support) was ruled out because it
-multiplies the payoff-matrix expansion by the candidate-cell count against
-the same `strategy.max_decision_ms` budget Phase 3 measured as the per-turn
-cost driver; Option A stays cheap by construction.
+This is Option A (docs/phases/phase-3/PRD.md Sec8, where the rejected Option
+B and its cost argument are written out): the sampled cell substitutes the
+opponent's coordinate in a believed GameState, so the UNCHANGED matrix mover
+(valuebrain.py/matrix.py -- neither touched by this module) reasons over it
+exactly as it always has.
 
 Honesty clause (04-PLAN-OUTLINE.md Sec1): in Regime A (this turn's Reveal
 was integrable) the substitution is the identity for a cornered opponent
@@ -29,6 +26,13 @@ there. Its value in Regime A is LANG-05 compliance, the opponent-action
 prior, the deception channel that shapes the OPPONENT's belief (via the fed
 `opponent_field`), and survival once a game degrades into Regime B
 (`known_cell=None` every turn).
+
+RULE 9 IS NOT THIS MODULE'S ANY MORE, AND THAT IS THE POINT (07-11). This
+docstring used to hand "local truth" to the display layer while
+`sdk/view_builder` published what `observe_exact` had just collapsed onto the
+engine's answer -- both delegated, neither owned. `self.display`
+(`strategy/display_belief.py`, `docs/PRD_display_belief.md`) owns it now.
+`self.belief` is UNCHANGED and still sees `known_cell`.
 
 Strategy-layer only (STRAT-07): imports nothing from `pursuit.services` or
 `pursuit.network`. Receives an already-decoded `Inference`; never calls a
@@ -50,6 +54,7 @@ from pursuit.strategy.base import BrainBase, Decision, Observation
 from pursuit.strategy.belief import BeliefMap
 from pursuit.strategy.belief_hint import hint_likelihood
 from pursuit.strategy.belief_scent import scent_likelihood
+from pursuit.strategy.display_belief import DisplayBelief, positive_cells
 from pursuit.strategy.reliability import Reliability
 from pursuit.strategy.scentfield import ScentField
 
@@ -96,6 +101,9 @@ class BeliefAdapter:
         self.rng = rng
         self.belief = BeliefMap(game_params.board_size, self.opponent_role)
         self.reliability = Reliability(belief_config.reliability)
+        self.display = DisplayBelief(
+            game_params.board_size, self.opponent_role, scent_model, belief_config.display
+        )
 
     def decide(
         self,
@@ -118,16 +126,19 @@ class BeliefAdapter:
         `known_cell` is the opponent's pre-turn cell when this turn's
         Reveal was integrable (Regime A) -- caller-supplied rather than
         read off `state` directly, because `state` keeps carrying the
-        engine's true joint position regardless of regime (rule 3's "local
-        truth" is a display-layer concern, not this one's). `None` means
-        Regime B, and `observe_exact` is skipped entirely.
+        engine's true joint position regardless of regime. It is used here
+        WITHOUT reservation: rule 9 governs what is DISPLAYED, not what is
+        known. `self.display` is advanced alongside from the hint and motion
+        models only, and is what a view publishes once this map has been
+        collapsed onto an exact cell (07-11). `None` means Regime B, and
+        `observe_exact` is skipped entirely.
         """
         our_cell = state.cop if self.role == "cop" else state.thief
         if known_cell is not None:
             self.belief.observe_exact(known_cell)
             opponent_field.emit_opponent(known_cell)
         else:
-            for cell, weight in _positive_cells(self.belief.posterior()):
+            for cell, weight in positive_cells(self.belief.posterior()):
                 opponent_field.emit_opponent(cell, weight)
         opponent_field.emit_own(our_cell)
 
@@ -148,6 +159,10 @@ class BeliefAdapter:
         )
         self.belief.update(hint_grid)
 
+        self.display.advance(
+            state, hint_grid, self.game_params, observed_exact=known_cell is not None
+        )
+
         sampled_cell = self.belief.sample(self.rng)
 
         obs = Observation(
@@ -159,16 +174,3 @@ class BeliefAdapter:
         )
         believed_state = replace(state, **{self.opponent_role: sampled_cell})
         return self.brain._decide_move(obs, believed_state)
-
-
-def _positive_cells(posterior: tuple) -> list[tuple[Coord, float]]:
-    """Every (cell, weight) pair in `posterior` carrying positive mass --
-    Regime B's weighted opponent-trail emission, skipping zero-mass cells
-    (barriers, or a delta's zero cells) rather than emitting board_size**2
-    no-op calls every turn."""
-    return [
-        ((row, col), value)
-        for row, cells in enumerate(posterior)
-        for col, value in enumerate(cells)
-        if value > 0.0
-    ]

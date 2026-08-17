@@ -110,9 +110,19 @@ def build_local_view(
 
 
 def _belief_view(ctx: AgentContext) -> BeliefView | None:
+    """The belief panel, via `DisplayBelief` -- rule 9's ONE owner (07-11).
+
+    Never `ctx.brain.belief` directly any more: on a seat that takes exact
+    observations that map IS the engine's answer, and publishing it made the
+    true cell recoverable by argmax, by scent peak and by geometric
+    inversion of its support. `None` here means the same honest "no belief to
+    show" a disabled belief layer already produces, never a stand-in.
+    """
     if not isinstance(ctx.brain, BeliefAdapter):
         return None
-    belief = ctx.brain.belief
+    belief = ctx.brain.display.published_belief(ctx.brain.belief)
+    if belief is None:
+        return None
     return BeliefView(
         rows=belief.posterior(), entropy=belief.entropy(),
         argmax=belief.argmax(), reliability=ctx.brain.reliability.value,
@@ -120,9 +130,16 @@ def _belief_view(ctx: AgentContext) -> BeliefView | None:
 
 
 def _scent_view(ctx: AgentContext) -> ScentView | None:
+    """The scent panel, via the same owner: `opponent` leaks INDEPENDENTLY of
+    the belief (`emit_opponent(known_cell)` stamps the kernel on the true
+    cell at full source strength), so redacting only the belief would be a
+    half fix. `own` is passed through untouched -- local truth by
+    definition."""
     scent = ctx.scent_field
     if scent is None:
         return None
+    if isinstance(ctx.brain, BeliefAdapter):
+        scent = ctx.brain.display.published_scent(scent)
     size = ctx.params.board_size
     return ScentView(own=_dense(scent.own, size), opponent=_dense(scent.opponent, size))
 
