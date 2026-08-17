@@ -55,6 +55,7 @@ from pursuit.network.orchestrator import run_turn_loop
 from pursuit.network.secret_wiring import resolve_shared_secret
 from pursuit.network.tunnel_wiring import build_tunnel_manager, run_with_tunnel
 from pursuit.network.verdict import peer_protocol_verdict
+from pursuit.services.reporting.end_of_game import report_game_end
 from pursuit.shared.scent_config import scent_digest
 
 
@@ -130,6 +131,23 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
             # "completed" means and records why; a false games-played
             # declaration is an absolute disqualification (docs/RULES.md:79).
             record_completed_game(cfg, outcome)
+            # 07-07, rules 32/35: THE game-end report, and it belongs HERE
+            # rather than in the `finally` below for two reasons that are not
+            # preferences. It needs the same definition of "completed" the
+            # line above uses -- a handshake that never became a game is not
+            # a game to report -- and it needs `ctx.language.gatekeeper` and
+            # the armed watchdog still alive, both of which `stop_runtime`
+            # and `stop_watchdog` end. Rule 32 disqualifies the points of any
+            # game that goes unreported and rule 35 scores ZERO FOR BOTH
+            # TEAMS when one side fails to report, so this is the most
+            # submission-critical call site in the codebase -- and precisely
+            # for that reason it is contained at its own boundary: it returns
+            # a value nobody reads, never raises, and cannot touch `outcome`
+            # or this process's exit code, which since 06-05 MEANS an audit
+            # mismatch (main.py:25-29).
+            await report_game_end(
+                ctx, cfg, outcome=outcome, declaration_envelope=declaration_envelope,
+            )
             return outcome
         finally:
             # 05-04: shutdown_cleanly's two halves, with a bounded grace

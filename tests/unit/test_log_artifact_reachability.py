@@ -104,14 +104,36 @@ def test_no_turn_loop_module_imports_the_log_artifact_builder(scan):
 
 
 def test_nothing_in_src_imports_the_log_artifact_builder_except_its_own_package(scan):
-    """07-07 wires it from the game-end path; until then the honest statement
-    is that no production caller exists, and this test says which."""
+    """07-07 wired it from the game-end path, and did so from INSIDE the
+    package (`end_of_game.py`) rather than from `network/` -- so this stays
+    empty while the builder is no longer dead code. See the next test, which
+    is what stops an empty list here from being green for the wrong reason."""
     importers = sorted(
         name for name, imports in scan.items()
         if (imports & LOG_ARTIFACT_MODULES or imports & LOG_ARTIFACT_NAMES)
         and not name.startswith("pursuit/services/reporting/")
     )
     assert importers == []
+
+
+def test_the_builder_has_a_production_caller_and_it_is_the_game_end_hook(scan):
+    """D7-14, closed by 07-07. Every `src/` module reaching the four `log_`
+    modules, named -- so the empty list above cannot be green because nothing
+    uses the builder at all, and a NEW reacher fails here rather than in a
+    grader's inbox. `end_of_game.py` is the production caller; the other four
+    are the package's own internals."""
+    reachers = sorted(
+        name for name, imports in scan.items()
+        if imports & LOG_ARTIFACT_MODULES or imports & LOG_ARTIFACT_NAMES
+    )
+    assert reachers == [
+        "pursuit/services/reporting/__init__.py",  # the package re-export surface
+        "pursuit/services/reporting/artifact_log.py",  # the builder itself
+        "pursuit/services/reporting/end_of_game.py",  # THE production caller
+        "pursuit/services/reporting/log_join.py",  # the join, on log_read
+        "pursuit/services/reporting/result_agreement.py",  # rule 35, on log_read
+    ]
+    assert "write_log_artifact" in scan["pursuit/services/reporting/end_of_game.py"]
 
 
 def test_the_builder_never_reaches_for_the_ledger_reader_itself(scan):

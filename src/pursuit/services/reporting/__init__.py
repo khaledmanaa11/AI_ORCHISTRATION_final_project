@@ -68,6 +68,11 @@ from pursuit.services.reporting.artifacts import (
 )
 from pursuit.services.reporting.chain import Refusal, ReportingChain, SendOutcome
 from pursuit.services.reporting.dos import DosDetector
+from pursuit.services.reporting.end_of_game import (
+    EndOfGameReport,
+    build_reporting_chain,
+    report_game_end,
+)
 from pursuit.services.reporting.message import (
     build_report_message,
     render_message,
@@ -98,6 +103,7 @@ __all__ = (
     "DeclarationContext",
     "DosDetector",
     "DryRunSink",
+    "EndOfGameReport",
     "LogArtifactField",
     "MailSink",
     "QuotaField",
@@ -117,6 +123,7 @@ __all__ = (
     "build_declaration_artifact",
     "build_log_artifact",
     "build_report_message",
+    "build_reporting_chain",
     "build_result_artifact",
     "config_filename",
     "declaration_filename",
@@ -126,6 +133,7 @@ __all__ = (
     "next_sub_game_index",
     "read_series",
     "record_sub_game",
+    "report_game_end",
     "render_message",
     "report_filename",
     "result_filename",
