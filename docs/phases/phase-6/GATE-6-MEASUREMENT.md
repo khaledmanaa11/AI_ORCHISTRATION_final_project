@@ -172,7 +172,16 @@ itself additionally clears `ANTHROPIC_API_KEY` unconditionally at import time
 `monkeypatch.delenv`, so a grader's own shell can never accidentally turn this into a live-API
 run.
 
-## An honest side effect, not a defect
+## An honest side effect, not a defect — ⚠ CORRECTED 2026-08-17: it WAS a defect
+
+> **CORRECTION (plan 07-00, 2026-08-17). The claim in this section is FALSE.** The paragraph
+> immediately below is preserved byte-for-byte as the record of what was believed on
+> 2026-08-09; it is not a measurement and nothing measured elsewhere in this document is
+> affected by withdrawing it. The specific sentence withdrawn is *"This is the shipped, correct
+> behavior of the counter, not a bug this script introduces"*. Attempts and measurements in this
+> project are append-only, but a **statement of fact that is wrong gets corrected** rather than
+> left to mislead the next reader — rule 38 cuts both ways. Read the correction underneath
+> before relying on anything in the paragraph.
 
 Every game this script plays runs through the REAL production `write_declaration`/
 `declare_step0` path against the real `config/{police,thief}/` directories, so — exactly like
@@ -181,6 +190,43 @@ increments the real, gitignored `config/{police,thief}/games_played.json` counte
 This is the shipped, correct behavior of the counter, not a bug this script introduces; it means
 repeated measurement runs (like repeated test runs) advance the same counter a real league game
 would.
+
+### The correction
+
+It was **not** correct behaviour, and this section saying so is a large part of why it survived
+from Phase 6 into Phase 7 unexamined.
+
+Two separate defects were behind that inflation, both closed by plan 07-00:
+
+1. **Wrong moment.** `step0_collect.record_game_played`'s own docstring reads *"increment by
+   exactly one, durably, **at game end only**"*. Its single production caller was the last line
+   of `write_declaration`, which runs inside the Step-0 **declaration** path — immediately after
+   an agreed handshake and **before** `run_turn_loop` is entered. Every run that reached a
+   handshake was counted, including runs that never played a move.
+2. **Wrong scope.** The path is `cfg.config_dir / "games_played.json"`, and three integration
+   files call `write_declaration` with `load_agent_config("config/police")`, so the suite was
+   writing the real, league-facing counter.
+
+Measured at HEAD `de32c0b` on 2026-08-17, one full `uv run pytest tests/`:
+
+| File | Before | After | Delta | Games actually played |
+|---|---|---|---|---|
+| `config/police/games_played.json` | 1895 | 1909 | **+14** | 0 |
+| `config/thief/games_played.json` | 1888 | 1902 | **+14** | 0 |
+
+The two files also differed by **7** although these two agents have only ever played each other
+— independent proof the number was not counting games. After 07-00 the same measurement is
+**+0 / +0**, and one real game via `scripts/dev_launch.py` advances each by exactly **+1**.
+
+The sentence *"repeated measurement runs (like repeated test runs) advance the same counter a
+real league game would"* was accurate as a description of the behaviour and wrong as a
+justification of it: that equivalence was the bug. This script no longer advances the counter at
+all, because its games run to a real outcome inside throwaway directories but the increment now
+happens only where `agent_entrypoint.run_agent` decides a game completed.
+
+**The counter's numeric value is NOT repaired by 07-00 and must not be read from this document.**
+The value is reconstructed and set by a human before any live send — see
+[`docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md`](../phase-7/GAMES-PLAYED-RECONSTRUCTION.md).
 
 ## Re-run command
 
