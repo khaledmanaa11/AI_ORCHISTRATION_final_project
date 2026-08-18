@@ -50,6 +50,8 @@ class ValueSearchBrain(BrainBase):
         iterations: int = DEFAULT_EQUILIBRIUM_ITERATIONS,
         epsilon: float = 0.0,
         rng: random.Random | None = None,
+        leaf_mode: str | None = None,
+        relax_turn: int | None = None,
     ) -> None:
         """Build a brain for *role*.
 
@@ -66,6 +68,8 @@ class ValueSearchBrain(BrainBase):
         self.epsilon = epsilon
         self.rng = rng if rng is not None else random.Random(DEFAULT_SEED)
         self.weights = weights if weights is not None else _weights_from(params)
+        self.leaf_mode = leaf_mode if leaf_mode is not None else _param(params, "leaf_mode", "stock")
+        self.relax_turn = relax_turn if relax_turn is not None else _param(params, "relax_turn", 0)
         self.last_value: float = 0.0
 
     def _pick_move(self, obs: Observation, state: GameState) -> Decision:
@@ -79,7 +83,10 @@ class ValueSearchBrain(BrainBase):
 
     def _decide_move(self, obs: Observation, state: GameState) -> Decision:
         """Solve the turn's matrix game and sample this seat's equilibrium."""
-        rows, columns, matrix = payoff_matrix(state, self.weights, self.game_params, self.rules)
+        rows, columns, matrix = payoff_matrix(
+            state, self.weights, self.game_params, self.rules,
+            forced_capture=self._forced_leaf(state),
+        )
         row_strategy, column_strategy, self.last_value = solve(matrix, self.iterations)
 
         if self.role == "cop":
@@ -99,6 +106,20 @@ class ValueSearchBrain(BrainBase):
             return self.rng.randrange(len(strategy))
         return sample(strategy, self.rng.random())
 
+    def _forced_leaf(self, state: GameState) -> bool:
+        """Whether rule 46's forced-capture leaf is active this turn.
+
+        "adaptive" arms it on EVIDENCE of a sealing opponent: every barrier on
+        the board is the cop's, so one placed barrier is proof, and the first
+        relax_turn turns stay cautious while evidence is still possible.
+        A pure function of the visible state -- no memory, replay-exact.
+        """
+        if self.leaf_mode == "cautious":
+            return True
+        if self.leaf_mode == "adaptive":
+            return state.barriers_placed > 0 or state.turn < self.relax_turn
+        return False
+
     def _source(self) -> MoveSource:
         """Report provenance truthfully -- it is asserted on, never inferred."""
         return MoveSource.EXPLORATION if self.epsilon else MoveSource.EQUILIBRIUM
@@ -106,6 +127,12 @@ class ValueSearchBrain(BrainBase):
     def seed(self, value: int) -> None:
         """Reseed the draw for a new game, so the log can reproduce it exactly."""
         self.rng = random.Random(value)
+
+
+def _param(params, name: str, default):
+    """Resolve an optional StrategyParams field, tolerating params=None."""
+    value = getattr(params, name, None) if params is not None else None
+    return value if value is not None else default
 
 
 def _weights_from(params) -> tuple:

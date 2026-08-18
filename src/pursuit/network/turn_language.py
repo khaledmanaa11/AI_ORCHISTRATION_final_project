@@ -93,7 +93,10 @@ def choose_destination(
             barriers_used=ctx.state.barriers_placed, turn_index=ctx.state.turn,
         )
         decision = ctx.brain._decide_move(obs, ctx.state)  # noqa: SLF001 (BrainBase's own seam)
-    ctx.commit_state.chosen_barrier = decision.barrier
+    # D-65/D-66: the pre-Phase-6 flat payload cannot carry a barrier, so with
+    # commit_reveal off a locally-applied barrier would diverge from the wire
+    # (rule 15). Stripping it here makes the barrier action a plain stay.
+    ctx.commit_state.chosen_barrier = decision.barrier if ctx.security.commit_reveal else None
     return decision.move
 
 

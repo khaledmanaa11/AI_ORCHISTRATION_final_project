@@ -32,6 +32,8 @@ class StrategyParams:
     weights_path: str
     epsilon_eval: float
     max_decision_ms: int
+    leaf_mode: str
+    relax_turn: int
 
 
 # (field_name, key, requirer, is_unit_interval [0, 1] range check)
@@ -39,4 +41,9 @@ SCHEMA = [
     ("weights_path", StrategyKey.WEIGHTS_PATH, require_str, False),
     ("epsilon_eval", StrategyKey.EPSILON_EVAL, require_float, True),
     ("max_decision_ms", StrategyKey.MAX_DECISION_MS, require_int, False),
+    ("leaf_mode", StrategyKey.LEAF_MODE, require_str, False),
+    ("relax_turn", StrategyKey.RELAX_TURN, require_int, False),
 ]
+
+#: The only leaf modes ValueSearchBrain implements; the loader rejects the rest.
+LEAF_MODES = frozenset({"stock", "adaptive", "cautious"})

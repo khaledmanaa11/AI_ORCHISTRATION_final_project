@@ -29,9 +29,20 @@ from pursuit.strategy.features import value as linear_value
 CAPTURE_VALUE = 1.0
 SURVIVAL_VALUE = -1.0
 
+#: Rule 46 makes distance 1 with quota remaining a capture ONE turn later (the
+#: seal lands on the cell the thief is leaving). Kept strictly below
+#: CAPTURE_VALUE so an immediate capture always outranks a forced one, and
+#: above every tanh leaf so no estimate can outrank the forced win.
+FORCED_CAPTURE_VALUE = 0.98
+
 
 def leaf_value(
-    state: GameState, outcome: Outcome | None, weights: tuple, params: GameParams
+    state: GameState,
+    outcome: Outcome | None,
+    weights: tuple,
+    params: GameParams,
+    *,
+    forced_capture: bool = False,
 ) -> float:
     """Value of a resolved successor, from the cop's point of view.
 
@@ -44,11 +55,20 @@ def leaf_value(
         return CAPTURE_VALUE
     if outcome is Outcome.SURVIVAL:
         return SURVIVAL_VALUE
+    if forced_capture and params.barrier_quota - state.barriers_placed > 0:
+        gap = abs(state.cop[0] - state.thief[0]) + abs(state.cop[1] - state.thief[1])
+        if gap == 1:
+            return FORCED_CAPTURE_VALUE
     return tanh(linear_value(weights, state, params))
 
 
 def payoff_matrix(
-    state: GameState, weights: tuple, params: GameParams, rules: ResolutionRules
+    state: GameState,
+    weights: tuple,
+    params: GameParams,
+    rules: ResolutionRules,
+    *,
+    forced_capture: bool = False,
 ) -> tuple:
     """Return (cop_actions, thief_moves, matrix) for the joint turn at *state*.
 
@@ -65,7 +85,7 @@ def payoff_matrix(
     rows = cop_actions(state, params)
     columns = thief_actions(state, params)
     matrix = [
-        [_entry(state, action, move, weights, params, rules) for move in columns]
+        [_entry(state, action, move, weights, params, rules, forced_capture) for move in columns]
         for action in rows
     ]
     return rows, columns, matrix
@@ -78,7 +98,8 @@ def _entry(
     weights: tuple,
     params: GameParams,
     rules: ResolutionRules,
+    forced_capture: bool = False,
 ) -> float:
     """Value of one joint action pair."""
     successor, outcome = resolve_turn(state, cop_action, thief_move, params, rules)
-    return leaf_value(successor, outcome, weights, params)
+    return leaf_value(successor, outcome, weights, params, forced_capture=forced_capture)

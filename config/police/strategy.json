@@ -4,6 +4,8 @@
     "police_class": "value_search",
     "weights_path": "config/police/weights.json",
     "epsilon_eval": 0.0,
-    "max_decision_ms": 50
+    "max_decision_ms": 50,
+    "leaf_mode": "stock",
+    "relax_turn": 10
   }
 }

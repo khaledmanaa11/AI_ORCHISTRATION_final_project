@@ -166,3 +166,34 @@ and dominated everything; the two-source Voronoi alone was ~120 µs per leaf.
   derive from `GameParams`, solver constants are named module constants).
 - **Rule 42** — the learning curve is written to `artifacts/*/curve.json` for the report,
   and `weights.describe()` renders the model as a named table.
+
+---
+
+## Run 3 — adaptive rule-46 terminal leaf (2026-08-18)
+
+Rule 46 makes Manhattan distance 1 with quota remaining a **forced capture one
+turn later**: the seal lands on the cell the thief is leaving, so no reply
+escapes. Run 2 encoded that fact as the learned `thief_in_kill_range` feature;
+run 3 promotes it to a **terminal leaf value** (`FORCED_CAPTURE_VALUE = 0.98`,
+a named module constant kept strictly below `CAPTURE_VALUE`), giving the
+one-ply mover exact two-ply trap vision.
+
+The leaf is **gated on evidence**, per seat, via two new validated
+`strategy.json` keys (engineering defaults, not PARAMETERS.md values):
+`leaf_mode` (`stock` | `adaptive` | `cautious`) and `relax_turn`. `adaptive`
+arms the leaf iff `barriers_placed > 0 or turn < relax_turn` — every barrier
+on the board is the cop''s, so one placed barrier is proof of a sealing
+opponent; a pure function of the visible state, no memory, replay-exact.
+
+Measurements (Wilson 95%, league opening). Always-cautious: sealing-chaser
+survival 59.3% but no-seal 72.0% (n=300) — the phantom-threat cost. Adaptive
+gate at n=1000/cell: sealing **57.4%** [54.3, 60.4] vs incumbent 51.1%
+[48.6, 53.7]; no-seal **90.4%** [88.4, 92.1] vs 30.0%; unchanged vs the
+strong search cop. The thief ships `leaf_mode=adaptive` with the promoted
+thief-only ES vector (`config/thief/weights.json` metadata carries the
+evidence); the cop ships `leaf_mode=stock`, byte-identical behaviour to run 2.
+
+A depth-2 backup (solved one-ply matrix value as the leaf) was tried first and
+**degraded** the thief 46% → 23% vs the sealing chaser (n=100, separated) —
+the classic pathology of deepening on a leaf fitted at depth 1; recorded as a
+negative result.

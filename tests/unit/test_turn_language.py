@@ -88,8 +88,13 @@ def test_choose_destination_stashes_a_barrier_from_a_raw_brain_and_resets_it(
     """D-66: choose_destination stays a bare-Coord return, but stashes the
     full Decision's barrier onto ctx.commit_state.chosen_barrier as a side
     effect -- set when the brain places one, reset to None on the very
-    next call when it does not (never left stale across turns)."""
+    next call when it does not (never left stale across turns). Stashing
+    requires commit_reveal ON: the pre-Phase-6 flat payload cannot carry a
+    barrier, so the off path strips it (rule 15)."""
+    import dataclasses
+
     ctx = make_ctx(tmp_path, default_params, network_params, label="barrier-choice")
+    ctx.security = dataclasses.replace(ctx.security, commit_reveal=True)
     own_cell = ctx.state.cop
     barrier_cell = own_cell  # the cop's own cell is always a legal barrier target
     ctx.brain = _FakeBarrierBrain(own_cell, barrier_cell)
@@ -99,6 +104,12 @@ def test_choose_destination_stashes_a_barrier_from_a_raw_brain_and_resets_it(
 
     assert dest == own_cell
     assert ctx.commit_state.chosen_barrier == barrier_cell
+
+    # The off path: same brain, same barrier -- stripped at the seam.
+    ctx.security = dataclasses.replace(ctx.security, commit_reveal=False)
+    turn_language.choose_destination(ctx, "cop", NO_EVIDENCE, known)
+    assert ctx.commit_state.chosen_barrier is None
+    ctx.security = dataclasses.replace(ctx.security, commit_reveal=True)
 
     ctx.brain = None  # a barrier-less branch on the very next call
     turn_language.choose_destination(ctx, "cop", NO_EVIDENCE, known)

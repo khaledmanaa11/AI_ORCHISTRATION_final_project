@@ -88,3 +88,5 @@ class StrategyKey(str, Enum):
     WEIGHTS_PATH = "weights_path"
     EPSILON_EVAL = "epsilon_eval"
     MAX_DECISION_MS = "max_decision_ms"
+    LEAF_MODE = "leaf_mode"
+    RELAX_TURN = "relax_turn"

@@ -4,6 +4,8 @@
     "thief_class": "value_search",
     "weights_path": "config/thief/weights.json",
     "epsilon_eval": 0.0,
-    "max_decision_ms": 50
+    "max_decision_ms": 50,
+    "leaf_mode": "adaptive",
+    "relax_turn": 10
   }
 }

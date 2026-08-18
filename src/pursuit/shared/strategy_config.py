@@ -18,7 +18,7 @@ from pathlib import Path
 
 from pursuit.config_keys import StrategyKey
 from pursuit.shared.loader_helpers import require_key, require_str
-from pursuit.shared.strategy_schema import SCHEMA, STRATEGY_GROUP, StrategyParams
+from pursuit.shared.strategy_schema import LEAF_MODES, SCHEMA, STRATEGY_GROUP, StrategyParams
 
 __all__ = ["StrategyParams", "load_strategy_config"]
 
@@ -53,4 +53,14 @@ def load_strategy_config(path: "Path | str") -> StrategyParams:
             _check_unit_interval(value, key.value, source=STRATEGY_CONFIG_SOURCE)
         fields[name] = value
 
+    if fields["leaf_mode"] not in LEAF_MODES:
+        raise ValueError(
+            f"{STRATEGY_CONFIG_SOURCE} field 'leaf_mode' must be one of "
+            f"{sorted(LEAF_MODES)}, got {fields['leaf_mode']!r}"
+        )
+    if fields["relax_turn"] < 0:
+        raise ValueError(
+            f"{STRATEGY_CONFIG_SOURCE} field 'relax_turn' must be >= 0, "
+            f"got {fields['relax_turn']}"
+        )
     return StrategyParams(**fields)
