@@ -198,18 +198,42 @@ uv run python -c "import json; d=json.load(open('config/police/weights.json')); 
 print(dict(zip(d['feature_names'], d['weights'])))"
 ```
 
-**Screenshots — NOT PRESENT.** Two are required by §9.4.2 item 5 and neither exists yet:
+**Screenshots.** Both are required by §9.4.2 item 5. Each was taken by a human against a real
+game (`2582a94c8a5ec618`), and the refresh interval is recorded beside it because **no document
+in this project states one** — the operator supplies it and the repository holds no default
+(OQ-6; both apps take it as a required argument with no fallback).
 
-| Slot | What it will show | Produced by |
-|---|---|---|
-| *(absent)* `docs/assets/live-gui-heatmap.png` | The live dashboard's belief heat map during a game — this seat's belief only, never the true position | plan 07-10 |
-| *(absent)* `docs/assets/replay-verified-ok.png` | The replay viewer's verdict banner reading `Verified OK` after re-hashing every turn | plan 07-10 |
+### The live dashboard — local truth only
 
-They are listed as empty slots on purpose. A placeholder image would render as a broken icon
-and read as a delivered asset — the same failure mode as a placeholder URL. Until 07-10 runs,
-the evidence for both is the machine-checked kind: `GATE-7-MEASUREMENT.md` criterion 3
-records the banner text, and records that removing the non-zero-turn guard made an **empty**
-artifact print `Verified OK`, which is precisely why that guard exists.
+![live dashboard showing this seat's own cell, its own declared barrier, and a near-uniform belief heat map over the opponent](docs/assets/live-gui-heatmap.png)
+
+*Police seat, turn 5, `--refresh-ms 500`.*
+
+Two cells are lit on the board panel: this seat's **own cell** `(2, 2)` and its **own declared
+barrier** `(2, 3)`. Both are local truth — a barrier this agent placed and declared under rule 22.
+The opponent's true position appears nowhere, in any panel.
+
+The belief panel is the visible half of the rules 8–9 firewall. It reads **entropy 5.60 bits
+against a 5.6147-bit maximum, 49 of 49 cells lit**, peak at `(1, 5)`. That near-uniformity is the
+point: the *strategy* layer's posterior on this turn is sharp, because the engine folds in the
+opponent's honest Reveal, and publishing it would have named the true cell by geometry alone. The
+published belief is a separate map that is never seeded from ground truth
+([`docs/PRD_display_belief.md`](docs/PRD_display_belief.md)). The structural half of the same
+guarantee is machine-checked by `scripts/check_local_truth.py`; this picture is the half a human
+has to judge.
+
+### The replay verifier
+
+![replay verifier showing a green Verified OK banner reading 5 of 5 committed turns re-hash](docs/assets/replay-verified-ok.png)
+
+*Same game's `log_` artifact, `--step-ms 400`.*
+
+`Verified OK`, **5/5 committed turns re-hash**, with the commit-reveal chain for the stepped turn
+beside it — `h_commit`, the commit sent and acknowledged, the commit received, and the reveal.
+Every hash is recomputed from the artifact alone; the verifier reproduces this with the wire log
+and the nonce ledger deleted from disk. The banner has three states and the other two are reachable
+and tested: a tampered artifact reads `FAILED` naming the offending turn, and a zero-turn artifact
+reads `Nothing to verify` rather than a vacuous pass.
 
 ---
 
