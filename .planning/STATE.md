@@ -602,58 +602,45 @@ Stopped at: Completed 03-11-PLAN.md (graph primitives, run-2 wave 1's first plan
   communities). `docs/phases/phase-3/TODO.md` deliberately not touched -- its
   03-11..03-16 row numbering predates the 15-plan wave breakdown and reconciling it is
   03-24's ("triplet refresh") explicit job.
-Resume file: None -- 07-00 is fully committed and closed. **Next step is the phase-7 plan
-  set**: `07-PLAN-OUTLINE.md` defines 10 plans across 5 waves (07-01..07-10), of which only
-  07-10 is `autonomous: false` (OAuth consent, one live send, presentation screenshots, and
-  the games-played value decision). Plans 07-01..07-09 are not written yet. Wave 1 is a
-  genuine three-way fan-out (07-01/07-02/07-03, no shared files) and would need WORKTREES to
-  run in parallel -- the shared git index otherwise mixes commits. Four open questions from
-  the outline still need deciding from the book/PARAMETERS rather than invented: OQ-1 daily
-  send ceiling, OQ-2 DOS trip threshold, OQ-3 backoff 'stricter value' ambiguity, OQ-4
-  result_ per-series vs per-game. OQ-5 was this plan.
----
+Resume file: None. **Phases 1-6 are complete and verified. Phase 7 is 11.5 of 12; phase 8 is
+  11 of 14. Everything that can be done without a human is done.**
 
-Last session: 2026-08-04T13:00:00+03:00
-Stopped at: Completed 03-12-PLAN.md (thief safety rule -- never step into N[cop], run-2
-  wave 1's second plan) in full. Both tasks committed atomically: Task 1 `safety.py`
-  (`71b201d`, test-first: `test_safety.py` confirmed red against a `ModuleNotFoundError`
-  before the module existed, green after -- 7 unit tests), Task 2 wiring + regression
-  guard (`20d87f6`). `src/pursuit/strategy/safety.py` -- `closed_neighbourhood`/
-  `safe_moves`, pure (D-03), never-empty guarantee, docstring carries the full D-31
-  296/300=0.987 vs 283/300=0.943 provenance plus the unsoftened "did not fully
-  reproduce, lost 3/20, flawed control" caveat. `fallback.py::_evade` filters legal
-  moves through `safe_moves` before ranking with the UNCHANGED
-  `(unreachable?, distance, onward)` key -- filter-then-rank, `_pursue` byte-identical.
-  `tests/unit/strategy/test_fallback.py` needed zero changes (verified before/after,
-  all 6 cases hold under the filtered behaviour). New
-  `tests/integration/test_thief_safety.py`: non-vacuous 160-game regression guard, two
-  arms differing ONLY by `monkeypatch.context()`-scoped patches of `fallback.safe_moves`
-  (real spy vs no-op) against the same 20 committed GATE-4 scenarios + 60 seeded random
-  starts (`n=60`, `REGRESSION_TOLERANCE=0.05`, `seed=314159`, named test-local
-  constants, D-19); asserts grid filtered-survival >= unfiltered, random-start rate
-  within one noise band, filter-bound counter > 0 (non-vacuous), and the per-turn
-  N[cop] invariant across all 160 games via a spy wrapper. Does not reproduce D-31's
-  own flawed disabled-barrier control. `03-12-SUMMARY.md` written (self-check PASSED).
-  One deviation, a documentation correction (not a code fix): the plan's own
-  ~100ms/game timing estimate did not reproduce -- measured ~34-38s for the 160-game
-  suite, `cProfile`-traced to 03-07's pre-existing `choose_barrier` (out of this plan's
-  scope), not this plan's own code. Recorded honestly in the test module's own
-  docstring; `n=60` was NOT reduced and barrier placement was NOT disabled to chase the
-  stale target. Full repo gates green: `ruff check .` 0 violations, line-limit clean
-  (new files 50/76/157 code lines, `fallback.py` still well inside its own ceiling),
-  464 passed / 2 skipped (same 2 pre-existing skips as 03-11), coverage 97.95%
-  (>=85% floor), `safety.py`/`fallback.py` both individually 100% covered. Full-repo
-  `--cov` run took 7m47s on this Windows machine, confirmed genuinely CPU-bound
-  throughout (`Get-Process ... CPU`), not the known Windows stdio-hang pattern.
-  Graphify rebuilt (3523 nodes/6406 edges/233 communities) and `GRAPH_REPORT.md`
-  refreshed and committed. `docs/phases/phase-3/TODO.md` deliberately not touched --
-  same rationale as 03-11 (03-24's "triplet refresh" job).
-Resume file: None -- 07-00 is fully committed and closed. **Next step is the phase-7 plan
-  set**: `07-PLAN-OUTLINE.md` defines 10 plans across 5 waves (07-01..07-10), of which only
-  07-10 is `autonomous: false` (OAuth consent, one live send, presentation screenshots, and
-  the games-played value decision). Plans 07-01..07-09 are not written yet. Wave 1 is a
-  genuine three-way fan-out (07-01/07-02/07-03, no shared files) and would need WORKTREES to
-  run in parallel -- the shared git index otherwise mixes commits. Four open questions from
-  the outline still need deciding from the book/PARAMETERS rather than invented: OQ-1 daily
-  send ceiling, OQ-2 DOS trip threshold, OQ-3 backoff 'stricter value' ambiguity, OQ-4
-  result_ per-series vs per-game. OQ-5 was this plan.
+  Phase 7: plans 07-01..07-09 and 07-11 all executed and committed. **07-10 is PARTIAL (row
+  marked in `docs/phases/phase-7/TODO.md`)** -- OAuth client, consent, cached send-only token
+  and BOTH README screenshots are DONE as of 2026-08-18; the one live send and the OQ-5
+  games-played decision remain. GATE-7: criteria 2 and 3 PASS, criterion 1 is `dry_run` PASS
+  with the live half honestly PENDING, and `GATE-7-MEASUREMENT.md` opens by saying criterion 1
+  is not closed by that document.
+
+  Phase 8: 08-01..08-11 executed. 08-12 (publish), 08-13 (league), 08-14 (submit) are all
+  `autonomous: false`. `scripts/check_submission.py` is at **73 PASS / 1 GAP / 13 UNJUDGED**;
+  the single remaining GAP is **G6-08, the Git tag**, which is cut and pushed by a human at
+  08-12 and never by the gate. GATE-8 opens with "GATE-8 IS NOT MET" and defines exit 0 as
+  "everything true before a human acts".
+
+  **Five decisions belong to the human and none is invented anywhere in the repo:** the
+  games-played VALUE (rule 38, absolute -- evidence in
+  `docs/phases/phase-7/GAMES-PLAYED-RECONSTRUCTION.md`, options A/B/C, none selected), the
+  self-assessment score, the licence (MIT PREPARED, `AWAITING_OWNER_CONFIRMATION`, and
+  `pyproject.toml` deliberately avoids the SPDX string), the four rule-49 repo URLs (all
+  `null` in `config/*/league.json`), and D7-17 (drafted, unsent, at
+  `docs/phases/phase-8/D7-17-QUESTION-FOR-THE-LECTURER.md`).
+
+  **Operational facts a new session needs.** The live send is deliberately deferred to league
+  day: `reporting.recipient` is FIXED to the lecturer's address and
+  `shared/reporting_config.py` rejects any other value, so any send before a real league game
+  mails the lecturer a report for a two-machine test game. Both `reporting.json` files ship
+  `dry_run` and must stay that way until 08-13. The OAuth token lives OUTSIDE the repo and is
+  reached only through the env-var NAMES in `config/*/reporting.json`
+  (`PURSUIT_GMAIL_CREDENTIALS_PATH`, `PURSUIT_GMAIL_TOKEN_PATH`); its granted scope was
+  measured as exactly `gmail.send`. While the user is still iterating on two of their own
+  machines, `game_artifacts/` is excluded LOCALLY via `.git/info/exclude` (not committed) so
+  test games are never published as league evidence -- that line is removed on league day, when
+  real evidence becomes committable. The user pushes to `origin` themselves; Claude does not
+  push, tag, or touch remotes.
+
+  The two split repositories are built and tagged under `C:/Users/Hp/pursuit-split-repos/`
+  (`pursuit-police`, `pursuit-thief`), each with `v1.00`, **zero remotes**, and each passing
+  the full Table-5 gate in its own tree. They are rebuilt from source by the 08-10 script, so
+  further code changes flow through on the next rebuild -- which is why 08-12 should be done
+  LAST, after the cop and thief are accepted.
