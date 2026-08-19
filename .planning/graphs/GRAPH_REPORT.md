@@ -1,16 +1,16 @@
-# Graph Report - final_project  (2026-08-17)
+# Graph Report - final_project  (2026-08-19)
 
 ## Corpus Check
-- 1025 files · ~1,152,287 words
+- 1029 files · ~1,176,709 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 12410 nodes · 21398 edges · 680 communities (622 shown, 58 thin omitted)
-- Extraction: 74% EXTRACTED · 26% INFERRED · 0% AMBIGUOUS · INFERRED: 5637 edges (avg confidence: 0.62)
+- 12479 nodes · 21493 edges · 682 communities (626 shown, 56 thin omitted)
+- Extraction: 74% EXTRACTED · 26% INFERRED · 0% AMBIGUOUS · INFERRED: 5644 edges (avg confidence: 0.62)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `445a0079`
+- Built from commit: `f3768f78`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -617,9 +617,11 @@
 - [[_COMMUNITY_Community 677|Community 677]]
 - [[_COMMUNITY_Community 678|Community 678]]
 - [[_COMMUNITY_Community 679|Community 679]]
+- [[_COMMUNITY_Community 680|Community 680]]
+- [[_COMMUNITY_Community 681|Community 681]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (679 total, 60 thin omitted)` - 542 edges
+1. `Communities (680 total, 58 thin omitted)` - 545 edges
 2. `GameParams` - 205 edges
 3. `GameState` - 167 edges
 4. `make_ctx()` - 141 edges
@@ -648,27 +650,27 @@
 - 1-file cycle: `tests/unit/test_tools.py -> tests/unit/test_tools.py`
 - 1-file cycle: `tests/unit/test_tools_dispatch.py -> tests/unit/test_tools_dispatch.py`
 
-## Communities (680 total, 58 thin omitted)
+## Communities (682 total, 56 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (39): 04-12 extension (Task 4): the real deception + bluff pipeline (D-33,     zero n, test_full_game_composes_a_legal_hint_every_turn_without_disrupting_it(), _all_slot_fillers(), HintBank, The template bank: `bluff.py`'s total, zero-token fallback (D-33, D-39, D-45, L, Every filler `kind` can ever be given, both flavours -- a superset     of "the, Every phrasing in `BANK`, filled with every filler it could ever     receive, m, A total, deterministic phrase bank -- `bluff.py`'s only fallback.      One ins (+31 more)
+Cohesion: 0.12
+Nodes (16): _all_slot_fillers(), The template bank: `bluff.py`'s total, zero-token fallback (D-33, D-39, D-45, L, Every filler `kind` can ever be given, both flavours -- a superset     of "the, Every phrasing in `BANK`, filled with every filler it could ever     receive, m, The real, currently-shipped `language.json` `model.hint_word_limit`.      Read, One phrasing for `plan`, filled with the real or generic slot         value dep, A freshly shuffled full cycle of `templates`, popped from the         end. Swap, The `{slot}` filler for `plan`, real-place or generic. (+8 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.11
-Nodes (28): HTTPStatusError, BaseException, FakeSend, FakeSleep, _forbidden(), _ladder(), NET-06, the httpx third of the exception taxonomy (05-09).  The third file of th, CONTROL. Both classes ARE `httpx.TransportError` subclasses, so the widened tupl (+20 more)
+Cohesion: 0.07
+Nodes (46): HTTPStatusError, BaseException, FakeClock, FakeSend, FakeSleep, _forbidden(), _ladder(), NET-06, the httpx third of the exception taxonomy (05-09).  The third file of th (+38 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.00
-Nodes (542): Communities (679 total, 60 thin omitted), Community 0 - "Community 0", Community 101 - "Community 101", Community 105 - "Community 105", Community 106 - "Community 106", Community 107 - "Community 107", Community 108 - "Community 108", Community 109 - "Community 109" (+534 more)
+Nodes (545): Communities (680 total, 58 thin omitted), Community 0 - "Community 0", Community 101 - "Community 101", Community 105 - "Community 105", Community 106 - "Community 106", Community 107 - "Community 107", Community 108 - "Community 108", Community 109 - "Community 109" (+537 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
 Nodes (33): 1. System Classification, 1b. Domain Context, 2. Framework Decision, 3. Framework Quick Reference, 4. Implementation Guidance, 4b. AI Systems Best Practices, 5. Evaluation Strategy, 6. Guardrails (+25 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.07
-Nodes (76): ChooseMove, HintHistory, build_context(), AgentContext -- split out of orchestrator.py/agent_lifecycle.py at the 150-code, PURE WIRING: every collaborator is injected, nothing is constructed     implici, default_context(), Build the REAL collaborators. THE ORDER IS LOAD-BEARING (design     note 12): t, AgentConfig (+68 more)
+Cohesion: 0.05
+Nodes (114): ChooseMove, HintHistory, AgentContext, build_context(), AgentContext -- split out of orchestrator.py/agent_lifecycle.py at the 150-code, PURE WIRING: every collaborator is injected, nothing is constructed     implici, Everything one process's turn loop needs -- an INSTANCE, never a     module-lev, default_context() (+106 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.05
@@ -676,19 +678,19 @@ Nodes (43): Alternatives Considered, Anti-Patterns to Avoid, Architecture Patter
 
 ### Community 6 - "Community 6"
 Cohesion: 0.05
-Nodes (97): AnthropicProvider, _AlwaysFailingProvider, _CountingProvider, Cycles through EVERY `LlmFailureReason` so no single mapping goes     untested, A provider that would succeed if called -- used to PROVE it is     never actual, _wire_failing_provider(), AnthropicProvider, _estimate_tokens() (+89 more)
+Nodes (74): AnthropicProvider, _AlwaysFailingProvider, _CountingProvider, Cycles through EVERY `LlmFailureReason` so no single mapping goes     untested, A provider that would succeed if called -- used to PROVE it is     never actual, _wire_failing_provider(), AnthropicProvider, _estimate_tokens() (+66 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.07
-Nodes (44): Sends still permitted in the current window; never negative., Claim one send. True and the claim is persisted; False and nothing         is w, The persisted window, or a fresh one. Never raises: a missing or         corrup, The live window, rolling it over if the persisted one has expired., _collect_cpu(), collect_declaration(), _collect_gpu(), GamesPlayedField (+36 more)
+Cohesion: 0.12
+Nodes (28): Sends still permitted in the current window; never negative., Claim one send. True and the claim is persisted; False and nothing         is w, The persisted window, or a fresh one. Never raises: a missing or         corrup, The live window, rolling it over if the persisted one has expired., durable_write_bytes(), durable_write_json(), load_json_with_fallback(), _prev_path() (+20 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.12
 Nodes (18): Event, _fake_serve(), Runtime tests: factory isolation, no module-level server, start/stop lifecycle, The seam has to survive BOTH construction paths (02-09 builds a     PeerRuntime, Lifecycle without a socket, via the injected `serve` seam., ERROR CASE — stopping a runtime that never started must not raise., Runs forever until cancelled; binds nothing (socket-free lifecycle test)., build_server wires register_tools onto a freshly constructed FastMCP. (+10 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.10
-Nodes (29): compare(), MatchResult, Held-out measurement: play a fixed matchup and report a rate with an interval., Report whether *candidate* beat *baseline*, and whether it is separable., One matchup's outcome: how often OUR seat achieved its win condition., Our win rate in this matchup., 95% Wilson interval on the rate., One aligned report row, rate with interval and points per game. (+21 more)
+Cohesion: 0.09
+Nodes (32): measure(), Run the one-factor-at-a-time sensitivity sweep and record every number it publis, Every matchup's rate under one configuration., compare(), MatchResult, Held-out measurement: play a fixed matchup and report a rate with an interval., Report whether *candidate* beat *baseline*, and whether it is separable., One matchup's outcome: how often OUR seat achieved its win condition. (+24 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.12
@@ -727,24 +729,24 @@ Cohesion: 0.08
 Nodes (24): 10. Final checklist (§17), 11. Quality model (§13), 1. Mandatory project structure (§2), 2. Code structure (§3), 3. SDK architecture and OOP (§4), 4. API Gatekeeper (§5), 5. TDD and testing (§6), 6. Linting and configuration (§7) (+16 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.06
-Nodes (53): The whole Final-Reveal/mutual-audit send-receive-verdict sequence -- the siblin, Game-end mutual audit (D-67, SEC-05/08): send this side's own     ledger as FIN, run_final_audit(), HTTPStatusError, _events(), _kinds(), 05-UAT.md G1: a failed OUTBOUND final-reveal push is evidence about US, never a, CONTROL. No board outcome means the turn loop never resolved: there     is noth (+45 more)
+Cohesion: 0.07
+Nodes (51): The whole Final-Reveal/mutual-audit send-receive-verdict sequence -- the siblin, Game-end mutual audit (D-67, SEC-05/08): send this side's own     ledger as FIN, run_final_audit(), HTTPStatusError, _events(), _kinds(), 05-UAT.md G1: a failed OUTBOUND final-reveal push is evidence about US, never a, CONTROL. No board outcome means the turn loop never resolved: there     is noth (+43 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.08
 Nodes (35): Attach the four D-05 handlers to `mcp`, closing over `queue`.      Takes the ser, register_tools(), FastMCP, Queue, FastMCP, Queue, Tool-dispatch tests: enqueue/ack, {x, y} round-trip, the handshake seam, and mal, THE SEAM TEST — 02-09 binds 02-08's respond_to_handshake through here. (+27 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.07
-Nodes (48): `seed`, or a logged deterministic fallback -- a missing seed is     never silen, _resolve_seed(), load_deception_config(), Load and validate config/{police,thief}/deception.json.      Raises     -----, Path, config(), Path, shared/deception_config.py: fail-loud loading of the one engineering- defaults (+40 more)
+Cohesion: 0.10
+Nodes (31): _float(), load_deception_config(), Fail-loud config loader for deception.json (D-37, D-38).  **Every number in th, `group[key]` as a float, naming deception.json on any failure., Raise ValueError naming the offending field; see load_deception_config., Load and validate config/{police,thief}/deception.json.      Raises     -----, _validate(), Path (+23 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.18
 Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - final_project  (2026-08-17), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.07
-Nodes (42): _cop_points(), evolve(), fitness(), mutate(), GameParams, Random, ResolutionRules, (1+lambda) evolution strategy on the TRUE objective: league points per game. (+34 more)
+Cohesion: 0.04
+Nodes (93): BrainBase, MoveSource, Knob, matchups(), The three fixed anchors, as `(label, our_seat, opponent_factory)`., One swept dimension: what it is, what it is allowed to be, how to set it., GameParams, Typed, immutable container for all values read from game_params.json.      Const (+85 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.25
@@ -763,8 +765,8 @@ Cohesion: 0.25
 Nodes (7): 1. Architecture, 2. Interfaces that other phases depend on, 3. Phase-specific ADRs, 4. Test plan, 5. Training regime, 6. Risk register, Phase 3 PLAN — run 2
 
 ### Community 28 - "Community 28"
-Cohesion: 0.09
-Nodes (29): resolve_turn: joint application, validation, and the three fixed engine defects., Book Sec3.4 bounds placement to the cop's own cell or a 4-neighbour., A spent quota makes every placement illegal, not a silently wasted turn., CopAction is move XOR barrier; the malformed shapes raise at construction., Start cells come from config -- book Sec3.3 marks them negotiated., The negotiated flags must not change any BOOK predicate., Build a GameState with only the fields a test cares about., The joint turn moves both agents from the same pre-turn snapshot. (+21 more)
+Cohesion: 0.10
+Nodes (27): resolve_turn: joint application, validation, and the three fixed engine defects., Book Sec3.4 bounds placement to the cop's own cell or a 4-neighbour., A spent quota makes every placement illegal, not a silently wasted turn., CopAction is move XOR barrier; the malformed shapes raise at construction., The negotiated flags must not change any BOOK predicate., Build a GameState with only the fields a test cares about., The joint turn moves both agents from the same pre-turn snapshot., One joint turn is one increment -- not one per agent. (+19 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.10
@@ -775,8 +777,8 @@ Cohesion: 0.10
 Nodes (19): Accomplishments, Auto-fixed Issues, Conditional Split, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Final ALLOWED_TRANSITIONS Table (for 02-08/02-09) (+11 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.15
-Nodes (21): Adagrad, evaluate_loss(), gradient(), GameParams, Outcome regression: fit the 15 weights so tanh(w.phi) predicts who won.  Delib, Mean squared error of *weights* on *samples*, without updating anything., Per-weight adaptive step sizes, accumulated across the whole run., Start every accumulator at zero; `rate` is the base step size. (+13 more)
+Cohesion: 0.11
+Nodes (25): Adagrad, evaluate_loss(), gradient(), GameParams, Outcome regression: fit the 15 weights so tanh(w.phi) predicts who won.  Delib, Mean squared error of *weights* on *samples*, without updating anything., Per-weight adaptive step sizes, accumulated across the whole run., Start every accumulator at zero; `rate` is the base step size. (+17 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.12
@@ -791,8 +793,8 @@ Cohesion: 0.29
 Nodes (6): Conflict resolutions, Decision IDs, Notes for the executor, OUTLINE COMPLETE, Phase 3 Plan Outline — Blind Strategy Module (RL policy), Plans
 
 ### Community 35 - "Community 35"
-Cohesion: 0.11
-Nodes (12): _DuplicateAckClient, D-58 jitter tolerance: a duplicate ACK arriving after the real one must be dropp, Wraps a real fastmcp `Client`: every `receive_ack` push is sent     TWICE -- the, test_a_duplicate_ack_is_tolerated_never_a_technical_loss(), make_client_caller(), D-06 wire adapter for the D-08 handshake: envelope shape + the fastmcp.Client br, Adapt 02-06's fastmcp.Client into a HandshakeCaller (see handshake.py). Drops th, Real-transport half of the D-08 handshake suite (NET-03, NET-08, NET-09).  Split (+4 more)
+Cohesion: 0.07
+Nodes (39): D-67 wire mechanics for the Final-Reveal mutual audit -- split from agent_audit, Block for the opponent's own FINAL_REVEAL -- the SAME bounded-wait     primitiv, receive_final_reveal(), await_and_respond(), initiate(), next_protocol_message(), `next_protocol_message` -- the D-58 pull primitive, split out of `turn_commit_w, Pull one non-HINT envelope off the wire, tolerant of an interleaved     HINT (b (+31 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.14
@@ -804,19 +806,19 @@ Nodes (17): §10.4 criterion 2 — real process evidence (Task 4), Accomplishmen
 
 ### Community 38 - "Community 38"
 Cohesion: 0.08
-Nodes (33): The real, currently-shipped `language.json` `model.hint_word_limit`.      Read, _shipped_word_limit(), load_display_floors(), Typed container + validation for belief.json's `display` group (07-11): the two, Read and validate the `display` group out of an already-parsed     belief.json, Raise ValueError naming the offending field.      `min_support_cells` is refus, validate_display_floors(), Shared fail-loud validation helpers for every JSON config loader in the project. (+25 more)
+Nodes (31): load_display_floors(), Typed container + validation for belief.json's `display` group (07-11): the two, Read and validate the `display` group out of an already-parsed     belief.json, Raise ValueError naming the offending field.      `min_support_cells` is refus, validate_display_floors(), Shared fail-loud validation helpers for every JSON config loader in the project., Return data[key]; raise KeyError naming source if key is absent.      Parameters, Return data[key] as int; raise TypeError if the value is not an int.      Raises (+23 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.10
-Nodes (39): BrainBase, Knob, matchups(), The three fixed anchors, as `(label, our_seat, opponent_factory)`., One swept dimension: what it is, what it is allowed to be, how to set it., ChaserCop, GreedyEvader, The two policies almost every team writes first -- our sparring anchors.  Thes (+31 more)
+Cohesion: 0.12
+Nodes (30): build_language_runtime(), _build_provider(), Build the LLM half of a process's language pipeline, once (D-34, D-35, D-52)., The configured `model.provider`, constructed with whatever that     class needs, Construct the whole language runtime for one process, one game.      `seed` is, `seed`, or a logged deterministic fallback -- a missing seed is     never silen, _resolve_seed(), ModelKey (+22 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.13
 Nodes (14): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics, Next Phase Readiness (+6 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.07
-Nodes (43): build_agreement(), AgreementField, AgreementRecord, The rule-35 agreement record's key names, its five named reasons, and the recor, The record's key names in the emitted artifact -- named once so the     builder, One game's rule-35 evidence.      `peer_claim_present` is carried BESIDE `peer, The JSON-native form the `result_` artifact embeds., _parsed_outcome() (+35 more)
+Cohesion: 0.09
+Nodes (36): build_agreement(), _parsed_outcome(), peer_outcome_claims(), Rule 35's agreement record -- what THIS side claims, what the peer claimed, and, The three-valued decision, with the reason that names the branch., This game's rule-35 record, read off this side's own wire log.      The LAST c, Every inbound GAME_OVER claim's RAW `outcome` value, in log order.      Raw on, A recognised `Outcome` value, or `None` for every other shape. (+28 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.22
@@ -931,8 +933,8 @@ Cohesion: 0.17
 Nodes (11): Anti-Patterns Found, Gaps Summary, Goal Achievement, Human Verification Required, Independent Checks Run, Key Link Verification, Observable Truths (§10.4 gate criteria), Per-Phase Documentation Triplet (CLAUDE.md requirement) (+3 more)
 
 ### Community 73 - "Community 73"
-Cohesion: 0.03
-Nodes (189): ArmedWatchdog, CallOutcome, ConnectError, push_final_reveal(), D-67 wire mechanics for the Final-Reveal mutual audit -- split from agent_audit, Send THIS side's own ledger as one FINAL_REVEAL envelope, via the     SAME call, Block for the opponent's own FINAL_REVEAL -- the SAME bounded-wait     primitiv, receive_final_reveal() (+181 more)
+Cohesion: 0.05
+Nodes (94): ConnectError, Envelope, EnvelopeKey, MessageType, D-06 typed message envelope.  Every message that crosses the wire between the, The nine message kinds on the wire (D-05, D-47, D-58).      Phase-4 added HINT, Protocol-local wire key names for Envelope.to_dict()/from_dict().      Lives h, Reject anything that is not a plain int, bool included (bool < int). (+86 more)
 
 ### Community 74 - "Community 74"
 Cohesion: 0.17
@@ -951,12 +953,12 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.10
-Nodes (31): Coord, Region, _band(), Turning the nine named sectors into actual cells, on the strategy side.  `shar, Which third of the axis `index` falls in, under `sign`.      A negative sign (, The sector `cell` sits in., Every cell in `region`.      Derived by asking `region_of` about each cell rat, The cell nearest the centroid of `region`, for distance scoring.      Ties bre (+23 more)
+Cohesion: 0.06
+Nodes (61): axis_signs(), `(row_sign, col_sign)` for `origin`.      Negate the row axis for a bottom-* c, Coord, Region, plan_cop_claim(), The cop's claim for this turn: the sector that, if believed, drives the     thi, _band(), Turning the nine named sectors into actual cells, on the strategy side.  `shar (+53 more)
 
 ### Community 80 - "Community 80"
-Cohesion: 0.07
-Nodes (31): HintKey, Hint payload key constants -- house pattern, mirrors ConfigKey /     EnvelopeKe, The two turn-cycle halves (D-01, D-07, D-09) -- split out of orchestrator.py at, One MY_TURN cycle. Branches on `ctx.commit_state.pending_action`:     None -> d, take_my_turn(), compose_and_send_hint(), decode_turn_hint(), _no_hint_log() (+23 more)
+Cohesion: 0.17
+Nodes (14): compose_and_send_hint(), decode_turn_hint(), _no_hint_log(), plan_turn_deception(), The AWAITED language stages of a turn -- split out of turn_actions.py at the 15, A fresh "nothing arrived" log dict per call -- never a shared     module-level, Stage 1: decode the opponent's hint, if any is cached (turn_buffer's     `recor, Stage 3 alone (06-02 split -- see module docstring): calls the bare     `build_ (+6 more)
 
 ### Community 81 - "Community 81"
 Cohesion: 0.13
@@ -987,20 +989,20 @@ Cohesion: 0.18
 Nodes (10): Academic README (SUB-03), Claude's Discretion, Deferred Ideas, Implementation Decisions, League operations (SUB-07, SUB-08), Phase 8: Submission and League Operations - Context, Phase Boundary, Repo split (SUB-01, SUB-02) (+2 more)
 
 ### Community 88 - "Community 88"
-Cohesion: 0.09
-Nodes (36): GameParams, GameState, _degree(), _kill_range(), _parity(), phi(), phi(s): the 14-component positional feature vector, always cop-perspective.  T, 1.0 when the thief stands where the cop can seal it next turn.      This is th (+28 more)
+Cohesion: 0.08
+Nodes (40): GameParams, GameState, _degree(), _kill_range(), _parity(), phi(), phi(s): the 14-component positional feature vector, always cop-perspective.  T, 1.0 when the thief stands where the cop can seal it next turn.      This is th (+32 more)
 
 ### Community 89 - "Community 89"
-Cohesion: 0.10
-Nodes (29): _check_unit_interval(), load_strategy_config(), Fail-loud config loader for strategy.json (D-18, QUAL-02, QUAL-11).  Run-2 (do, Read this role's own police_class/thief_class key, whichever is present., Raise ValueError if value falls outside the closed interval [0, 1]., Load and validate every field the live decision path reads; fails     loud with, _resolve_brain_class(), Tests for the strategy config loader (QUAL-02, QUAL-11, D-18).  Run-2 (docs/PR (+21 more)
+Cohesion: 0.07
+Nodes (42): _check_unit_interval(), load_strategy_config(), Fail-loud config loader for strategy.json (D-18, QUAL-02, QUAL-11).  Run-2 (do, Read this role's own police_class/thief_class key, whichever is present., Raise ValueError if value falls outside the closed interval [0, 1]., Load and validate every field the live decision path reads; fails     loud with, _resolve_brain_class(), leaf_value() (+34 more)
 
 ### Community 90 - "Community 90"
 Cohesion: 0.18
 Nodes (10): Chosen approach, Components, Deception policy, Known risk, Open questions for Phase 3, Strategy Module, Training, Where it plugs in (+2 more)
 
 ### Community 92 - "Community 92"
-Cohesion: 0.27
-Nodes (12): payoff_matrix(), Return (cop_actions, thief_moves, matrix) for the joint turn at *state*., payoff_matrix: one-ply expansion of the joint turn into a bounded [-1, 1] matrix, cop steps onto the thief's cell while the thief stays -- Sec3.5 same-cell     c, Far apart and early: no single joint move can trigger any of the six     predic, The single most important test in this file. Rule 46: a barrier landing     on, _state(), test_capture_entry_is_exactly_plus_one() (+4 more)
+Cohesion: 0.10
+Nodes (29): _OneShotBarrierBrain, A raw (non-`BeliefAdapter`) brain: on its FIRST `_decide_move` call     only, pl, barrier_cells(), cop_actions(), Action spaces for one simultaneous turn (RULES-RESOLUTION.md Sec2).  Both agen, Return every legal thief destination from the pre-turn state.      STAY is alw, Return every legal barrier target: the cop's own cell plus its 4 neighbours., Return every legal cop action: moves first, then barrier placements.      Move (+21 more)
 
 ### Community 93 - "Community 93"
 Cohesion: 0.10
@@ -1023,8 +1025,8 @@ Cohesion: 0.20
 Nodes (9): 1. Context & Problem, 2. Target Audience & "Market", 3. Goals, KPIs & Acceptance Criteria, 4. Functional Requirements, 5. Non-Functional Requirements, 6. User Stories & Use-Cases, 7. Assumptions, Dependencies, Out-of-Scope, 8. Timeline & Milestones (+1 more)
 
 ### Community 99 - "Community 99"
-Cohesion: 0.09
-Nodes (32): maybe_resolve(), Resolve the joint turn once both actions are known; a no-op     otherwise. Whic, idle_reading(), publish_view(), Publish one `LocalView` snapshot beside the wire log -- best-effort, and the on, `logs/<role>/<uid>.jsonl` -> `logs/<role>/<uid>.view.json`., Seconds since the watchdog's last `touch()`, or None when the injected     watc, Write this peer's current `LocalView` to its snapshot path.      NEVER RAISES. (+24 more)
+Cohesion: 0.10
+Nodes (28): maybe_resolve(), Resolve the joint turn once both actions are known; a no-op     otherwise. Whic, idle_reading(), publish_view(), Publish one `LocalView` snapshot beside the wire log -- best-effort, and the on, `logs/<role>/<uid>.jsonl` -> `logs/<role>/<uid>.view.json`., Seconds since the watchdog's last `touch()`, or None when the injected     watc, Write this peer's current `LocalView` to its snapshot path.      NEVER RAISES. (+20 more)
 
 ### Community 101 - "Community 101"
 Cohesion: 0.07
@@ -1067,8 +1069,8 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made Autonomously, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.15
-Nodes (17): Path, The prior remains shippable on its own -- book Sec6.3 makes RL optional., test_empty_weights_path_is_still_legal(), weights.py: the learned artefact -- fail-loud loading, round-trip, PRIOR.  A c, test_configured_but_missing_path_raises_file_not_found(), test_describe_names_every_feature(), test_load_weights_of_none_returns_the_prior(), test_save_and_load_round_trip() (+9 more)
+Cohesion: 0.10
+Nodes (25): Path, The prior remains shippable on its own -- book Sec6.3 makes RL optional., test_empty_weights_path_is_still_legal(), weights.py: the learned artefact -- fail-loud loading, round-trip, PRIOR.  A c, test_configured_but_missing_path_raises_file_not_found(), test_describe_names_every_feature(), test_load_weights_of_none_returns_the_prior(), test_save_and_load_round_trip() (+17 more)
 
 ### Community 118 - "Community 118"
 Cohesion: 0.06
@@ -1087,16 +1089,16 @@ Cohesion: 0.15
 Nodes (12): 4.1 The evaluation was 5× too slow, and the fix was not the obvious one, 4.2 Rule 46 makes distance 1 a forced loss — and a one-ply search cannot see it, 4.3 One negotiable rule was worth more than the whole learning run, Act 1 — a training run that looked fine and wasn't, Act 2 — the real defect: the game is simultaneous, Act 3 — what else was broken, found by running the engine rather than reading it, Act 4 — three measurements that changed the design, Act 5 — two optimisers, one shipped (+4 more)
 
 ### Community 122 - "Community 122"
-Cohesion: 0.11
-Nodes (31): _believing_step(), _herded_value(), plan_cop_claim(), D-38: the cop's claims herd, they do not hide.  The cop's objective is differe, Where a thief that trusts the claim steps.      Modelled with the SAME evaluat, The cop's claim for this turn: the sector that, if believed, drives the     thi, The cop-perspective value of the position a thief believing     `believed_regio, gains() (+23 more)
+Cohesion: 0.12
+Nodes (29): THE SECOND HALF OF THE SAME OMISSION (deferred item #10 / 05-16).     `turn_com, test_the_initiators_own_wait_marks_its_ladder_like_every_other_leg(), Deferred item #10: the TURN LOOP dies of the same wound the audit did -- and NE, THE CONTROL AGAINST THE WRONG FIX. A blanket `ctx.watchdog.stop()`     across t, THE FIX, receive leg. `wait_for_opponent_commit` is one of the four     D-58 wa, THE FIX, `turn_buffer.await_move` -- the fifth turn-loop wait leg,     reached, NET-07 PRESERVED, and this is the assertion that says the fix is not a     hear, test_a_genuinely_frozen_turn_loop_is_still_killed() (+21 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.25
 Nodes (7): Acceptance criteria (= §10.4 milestone gate), Dependencies, Goal, In scope / Out of scope (this phase), Phase <N> PRD — <Phase Name>, Requirements covered, Success metrics & test scenarios
 
 ### Community 124 - "Community 124"
-Cohesion: 0.07
-Nodes (43): epsilon_for(), GenerationResult, play_generation(), Random, Play one batch-synchronous generation of self-play games.  Weights are FROZEN, Linear exploration decay from *start* to *floor* across the run.      Linear r, Everything one generation produced, for the update and for the curve., Capture rate while the learner held the cop seat. (+35 more)
+Cohesion: 0.10
+Nodes (28): epsilon_for(), GenerationResult, play_generation(), Random, Play one batch-synchronous generation of self-play games.  Weights are FROZEN, Linear exploration decay from *start* to *floor* across the run.      Linear r, Everything one generation produced, for the update and for the curve., Capture rate while the learner held the cop seat. (+20 more)
 
 ### Community 125 - "Community 125"
 Cohesion: 0.12
@@ -1108,7 +1110,7 @@ Nodes (6): Decisions Coverage Trace, OUTLINE COMPLETE, Phase 1 — Base Logic: P
 
 ### Community 127 - "Community 127"
 Cohesion: 0.04
-Nodes (127): ABC, Action, DisplayFloors, build_brain_and_scent(), build_turn_collaborators(), inner_brain(), Build the mover (D-43) and its scent field, once per process (Task 2).  Deviat, The registry-built brain (raw, or `BeliefAdapter`-wrapped when     `belief.beli (+119 more)
+Nodes (111): DisplayFloors, belief_snapshot(), build_deception_plan(), choose_destination(), known_opponent_cell(), observe_reliability(), Figure 7 assembly (book Sec6.2, p.43/PDF 59) -- the SYNC decision-shaping helpe, The claim for this turn, decided AFTER the move (must_haves: "a lie     that co (+103 more)
 
 ### Community 128 - "Community 128"
 Cohesion: 0.29
@@ -1127,8 +1129,8 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made Autonomously, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 132 - "Community 132"
-Cohesion: 0.09
-Nodes (27): Credentials, build_gmail_transport(), load_send_only_credentials(), The cached token, refreshed or newly consented, verified send-only.      The c, The Gmail service `GmailSink` sends through (07-10 supplies the files).      O, Return `scopes` iff they are exactly `{gmail.send}`, else raise.      A set co, require_send_only_scope(), FakeCredentials (+19 more)
+Cohesion: 0.05
+Nodes (44): Credentials, build_gmail_transport(), GmailCredentialsError, GmailRetryableError, GmailScopeError, GmailSink, load_send_only_credentials(), The ONLY module in `src/` that imports `google-*` (D-70), and the live half of (+36 more)
 
 ### Community 133 - "Community 133"
 Cohesion: 0.29
@@ -1175,20 +1177,20 @@ Cohesion: 0.05
 Nodes (41): A.1 The textbook requirement: "exploring starts", A.2 Standard terminology for "trained on one start, evaluated on others", A.3 Practical recipes for randomising starts in a self-play grid game, A.4 Per-role note, (a) Confirming the γ = 1.0 spread — **your arithmetic is correct**, A. Start-state distribution, B.1 Potential-based reward shaping — the guarantee, verbatim, B.2 Terminal-state handling in Q-learning — the exact target (+33 more)
 
 ### Community 146 - "Community 146"
-Cohesion: 0.17
-Nodes (11): 1. The problem this mechanism solves, 2. What it does, 3. The evaluation φ(s) — 15 features, 4. The solver, 5. Cost — measured, not estimated, 6. Alternatives considered and rejected, 7. Risks and what is done about them, 8. Compliance (+3 more)
+Cohesion: 0.15
+Nodes (12): 1. The problem this mechanism solves, 2. What it does, 3. The evaluation φ(s) — 15 features, 4. The solver, 5. Cost — measured, not estimated, 6. Alternatives considered and rejected, 7. Risks and what is done about them, 8. Compliance (+4 more)
 
 ### Community 147 - "Community 147"
-Cohesion: 0.13
-Nodes (22): The Figure-13 composition (D-69, rules 28-29, REPORT-02).  The book's order, u, Re-attempt everything queued, oldest first, exactly once each.          Explic, Stages 2-4: the bucket (inside `submit`), the observation, the sink., Hold a refused report for the next `drain()`, or alert if full., The result of one `send()` or one drained attempt.      `sent` and `refusal` a, One report through the whole chain. Returns; never raises., SendOutcome, EndOfGameReport (+14 more)
+Cohesion: 0.11
+Nodes (20): GatekeeperParams, One rate-limited, timed-out, retried attempt ladder (steps 4-5).          Ever, Run ``fn`` through rate limit, parallel cap, queue and retry/backoff., CallResult, GatekeeperOverflow, ``Gatekeeper``'s two caller-facing contract types, split out of ``gatekeeper.py, The FIFO queue is already at ``queue_depth`` (Table 19 row 5, QUAL-05).      C, What every ``fn`` passed to ``Gatekeeper.submit()`` must return.      ``value` (+12 more)
 
 ### Community 148 - "Community 148"
 Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made Autonomously, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 149 - "Community 149"
-Cohesion: 0.20
-Nodes (14): load_belief_config(), Fail-loud config loader for belief.json -- the belief map's engineering default, Load and validate config/{police,thief}/belief.json.      Raises     ------, Tests for the belief.json loader: the scent_likelihood group (04-05, D-18 engin, A loader-level smoke test that both 04-09 groups are actually wired     into Be, test_loads_all_fields(), test_loads_the_reliability_and_hint_likelihood_groups(), test_missing_group_raises() (+6 more)
+Cohesion: 0.05
+Nodes (53): load_belief_config(), Fail-loud config loader for belief.json -- the belief map's engineering default, Load and validate config/{police,thief}/belief.json.      Raises     ------, BeliefToggleParams, Typed container + validation for belief.json's `belief` group (Task 3): the ada, Typed, immutable container for belief.json's `belief` group. Never     construc, Return data[key] as bool; raise TypeError if it is not one.      Raises     -, Return data[key] as int, or None when the JSON value is null.      Raises (+45 more)
 
 ### Community 150 - "Community 150"
 Cohesion: 0.12
@@ -1204,11 +1206,11 @@ Nodes (24): 10. GATE-5 criterion 2 — the genuine remote round (re-test of Roun
 
 ### Community 155 - "Community 155"
 Cohesion: 0.14
-Nodes (32): decode_hint(), Turn one opponent sentence into a bounded `Inference`, or into nothing.      E, context_for(), FakeProvider, load_cases(), decode.py: nothing an opponent can send, and nothing an API can do, gets past `, An opponent breaking rule 26 must not be able to bill us for it., D-52's zero-token mode has no model behind it; the belief map runs on     scent (+24 more)
+Nodes (33): decode_hint(), Turn one opponent sentence into a bounded `Inference`, or into nothing.      E, context_for(), FakeProvider, load_cases(), decode.py: nothing an opponent can send, and nothing an API can do, gets past `, An opponent breaking rule 26 must not be able to bill us for it., D-52's zero-token mode has no model behind it; the belief map runs on     scent (+25 more)
 
 ### Community 156 - "Community 156"
-Cohesion: 0.11
-Nodes (18): Companion repository, Configuration guide, Contributing, Credits and acknowledgements, Documentation map, Examples and screenshots, Installation, Learning curves (+10 more)
+Cohesion: 0.10
+Nodes (20): Companion repository, Configuration guide, Contributing, Credits and acknowledgements, Documentation map, Examples and screenshots, Installation, Learning curves (+12 more)
 
 ### Community 157 - "Community 157"
 Cohesion: 0.08
@@ -1219,12 +1221,12 @@ Cohesion: 0.06
 Nodes (35): 08-01 — The §17 audit, as a gate that can fail, 08-02 — Project-wide tracker reconciliation, one commit, 08-03 — Publication hygiene, made machine-checkable, 08-04 — League machinery, and the declaration artifact's first production caller, 08-05 — Deferred #13 and #19: closed, or accepted with evidence, 08-06 — The root README: user manual and academic report in one file, 08-07 — Architecture documentation with diagrams that resolve, 08-08 — The three missing per-mechanism PRDs (+27 more)
 
 ### Community 159 - "Community 159"
-Cohesion: 0.12
-Nodes (23): build_commit_payload(), commit(), _hash_payload(), Generate a fresh nonce and the commit hash (SEC-04, rule 18).      `nonce = secr, Rebuild the payload via `build_commit_payload` (never a second     builder), rec, Assemble the canonical `{state, move, intent, nonce}` dict (D-59).      Validate, SHA-256 hex digest of the canonical-JSON payload (SEC-01)., verify_reveal() (+15 more)
+Cohesion: 0.11
+Nodes (24): build_commit_payload(), commit(), _hash_payload(), D-59: the ONE payload-builder for the commit hash (SEC-01, SEC-03, SEC-04).  `bu, Generate a fresh nonce and the commit hash (SEC-04, rule 18).      `nonce = secr, Rebuild the payload via `build_commit_payload` (never a second     builder), rec, Assemble the canonical `{state, move, intent, nonce}` dict (D-59).      Validate, SHA-256 hex digest of the canonical-JSON payload (SEC-01). (+16 more)
 
 ### Community 160 - "Community 160"
-Cohesion: 0.20
-Nodes (17): TokenBudget, _budget(), `result_<game_id>.json`: one file per SERIES, and rule 54's TWO numbers.  THE, `ctx.language is None` -> an honest marker. The assertion that matters is     t, The series total absorbs no zero it did not measure., Rule 38. 07-00 fixed the mechanism; the VALUE is 07-10's human decision,     so, docs/PARAMETERS.md:152-153 mandatory rule 5: code may change between     games,, REPORT-07 / rule 54. Two games, ONE series file. (+9 more)
+Cohesion: 0.05
+Nodes (60): build_result_artifact(), `result_<game_id>.json` -- "Final results summary across all sub-games. **This, Read a written result artifact back and check its own seal -- off the     FILE,, Durably rewrite the series file, then re-read and re-check its seal --     the, Read the series, add this sub-game, rewrite it. THE entry point.      It exist, This series' file as it stands, or `None` when no sub-game has been     recorde, The next generation of this series' file: `previous` plus one sub-game.     `pr, read_series() (+52 more)
 
 ### Community 161 - "Community 161"
 Cohesion: 0.20
@@ -1239,16 +1241,16 @@ Cohesion: 0.15
 Nodes (24): Every row for one built repository, structural first, gates last., verify_one(), absence_row(), Check, config_row(), git_out(), line_limit_row(), line_limit_scope() (+16 more)
 
 ### Community 164 - "Community 164"
-Cohesion: 0.04
-Nodes (74): AgreementRecord, EventType, GATE-2, NET-01, NET-02, D-01, D-16 -- asserted POSITIVELY: mutate one     side,, test_two_runtimes_share_no_runtime_state(), D-67 verdict recording: how a Final-Reveal audit result becomes durable evidenc, Append one AUDIT_VERDICT record (symmetric honesty, CONTEXT locked:     a self-, The field assembly both verdict-shaped records share -- one copy,     two event, 05-UAT.md G1: THIS side's own FINAL_REVEAL push failed while the turn     loop (+66 more)
+Cohesion: 0.07
+Nodes (46): AgreementRecord, GATE-2, NET-01, NET-02, D-01, D-16 -- asserted POSITIVELY: mutate one     side,, test_two_runtimes_share_no_runtime_state(), append_event(), build_event(), console_line(), EventField, EventType (+38 more)
 
 ### Community 166 - "Community 166"
 Cohesion: 0.22
 Nodes (8): 03-10 Summary — §10.4 gate tests, evaluation CLI, and the run-1 GATE-4 measurement, E6 convergence — neither role converged, GATE-4, measured on the 20 held-out eval scenarios, Phase status, Task 4 — the run and the result, Two findings worth carrying forward, What landed, What was deliberately not done
 
 ### Community 167 - "Community 167"
-Cohesion: 0.16
-Nodes (22): observe(), play_game(), Play one simultaneous game between two brains and record what happened.  The s, Build the Observation a brain receives for *role* at *state*.      target_cell, Convert a cop Decision into the resolver's action type., Play one game to a terminal outcome and return the record.      A game that so, to_cop_action(), play_game: the one game loop, and the simultaneity property that defines it. (+14 more)
+Cohesion: 0.12
+Nodes (26): observe(), play_game(), CopAction, GameState, Play one simultaneous game between two brains and record what happened.  The s, Build the Observation a brain receives for *role* at *state*.      target_cell, Convert a cop Decision into the resolver's action type., Play one game to a terminal outcome and return the record.      A game that so (+18 more)
 
 ### Community 168 - "Community 168"
 Cohesion: 0.15
@@ -1267,16 +1269,16 @@ Cohesion: 0.22
 Nodes (8): 1. New decisions — D-26 … D-31, 2. Run-1 decisions now superseded, 3. Correctness defects R1–R6 (code bugs, not tuning), 4. Plans, 5. Per-plan files and where the 150-line split falls, 6. TODO row → plan mapping, 7. Standing constraints the executor must not re-derive, Phase 3 Plan Outline — RUN 2 (additive continuation)
 
 ### Community 173 - "Community 173"
-Cohesion: 0.11
-Nodes (28): lie_probability(), How likely we are to lie at `distance`, falling monotonically as the     estima, belief_on(), config(), lie_rate(), strategy/deception_thief.py: D-37's danger-adaptive lying.  The thief lies whe, The floor is a measured property of the policy, not just of the curve., Book Sec4.4's contradiction test, run on ourselves before committing:     a cla (+20 more)
+Cohesion: 0.09
+Nodes (37): _betrayed_region(), expected_opponent_distance(), lie_probability(), plan_thief_claim(), D-37: the thief lies more as the cop closes in, and never stops telling the tru, The sector our own freshest trail points at, or None when we have no     trail, A claimed sector that is neither where we are nor where our trail says     we a, Expected Manhattan distance to the opponent, over the WHOLE posterior.      De (+29 more)
 
 ### Community 174 - "Community 174"
 Cohesion: 0.06
-Nodes (55): _is_turn(), join_game(), local_turn(), peer_claimed_turn(), The `log_<game_id>_g<NN>` JOIN: this side's wire JSONL x its own nonce ledger,, Split an `audit_verdict` record's two ladders into per-turn entries., Join `log_path`'s wire JSONL to its `ledger_path_for` sibling., THE JOIN KEY: the turn THIS side stamped on the record (06-05). (+47 more)
+Nodes (58): _is_turn(), join_game(), JoinedGame, local_turn(), peer_claimed_turn(), The `log_<game_id>_g<NN>` JOIN: this side's wire JSONL x its own nonce ledger,, Split an `audit_verdict` record's two ladders into per-turn entries., Join `log_path`'s wire JSONL to its `ledger_path_for` sibling. (+50 more)
 
 ### Community 175 - "Community 175"
-Cohesion: 0.11
-Nodes (39): _as_payload(), load_scent_model(), Reconstruct the exact nested JSON shape load_scent_model() parses, for     scen, SHA-256 hex digest of the canonical JSON of the whole locked payload     (D-46), Load and validate a scent.json file into a ScentModel.      Raises     ------, scent_digest(), Path, Path (+31 more)
+Cohesion: 0.10
+Nodes (40): _as_payload(), load_scent_model(), Fail-loud config loader for scent.json -- the locked pheromone model (D-46, D-4, Reconstruct the exact nested JSON shape load_scent_model() parses, for     scen, SHA-256 hex digest of the canonical JSON of the whole locked payload     (D-46), Load and validate a scent.json file into a ScentModel.      Raises     ------, scent_digest(), Path (+32 more)
 
 ### Community 176 - "Community 176"
 Cohesion: 0.50
@@ -1291,28 +1293,28 @@ Cohesion: 0.50
 Nodes (4): Primary (HIGH confidence — read directly in this session), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
 
 ### Community 179 - "Community 179"
-Cohesion: 0.14
-Nodes (15): §2.3's "critical requirement" — a PRD per mechanism — held to the tree (08-08)., §2.3 and CLAUDE.md rule 1: a number without a source is disqualifying., A DO-NOT-IMPLEMENT banner is not coverage; the resolver refuses it., The derivation `PRD_tunnel.md` rests on. If the transport PRD ever     absorbs t, A PRD citing nothing would pass the test above having read nothing.      Two flo, _register(), test_each_new_prd_cites_only_paths_that_exist(), test_each_new_prd_traces_its_numbers_to_a_source() (+7 more)
+Cohesion: 0.09
+Nodes (26): cited_paths(), Resolve the repository paths a document cites (08-07).  Three documents now asse, Every distinct repository path *doc* cites in backticks, sorted.      A trailing, The cited paths `git ls-files` has neither as a file nor as a directory., unresolved_citations(), The diagrams are label-checked; the deployment instructions are not,     unless, test_the_prose_around_the_diagrams_cites_only_paths_that_exist(), The two gitignored counters are exempt by the same named list the runbooks use. (+18 more)
 
 ### Community 180 - "Community 180"
 Cohesion: 0.67
 Nodes (3): _command(), main(), Convenience launcher for local iteration. Each agent also starts standalone in i
 
 ### Community 181 - "Community 181"
-Cohesion: 0.17
-Nodes (21): Re-check a decoder response and turn it into an `Inference`, or None.      Ret, validate(), good(), decode_schema.py: the contract, re-checked on OUR side of the wire (D-41).  Ev, A well-formed response object, with named fields overridden., Not filtered -- rejected. An off-board cell means the model was working     fro, The prompt-injection failure mode: confident about nothing at all., The heading survives for 04-09's motion model; it is simply not     positional (+13 more)
+Cohesion: 0.16
+Nodes (22): Re-check a decoder response and turn it into an `Inference`, or None.      Ret, validate(), good(), decode_schema.py: the contract, re-checked on OUR side of the wire (D-41).  Ev, A well-formed response object, with named fields overridden., Not filtered -- rejected. An off-board cell means the model was working     fro, The prompt-injection failure mode: confident about nothing at all., The heading survives for 04-09's motion model; it is simply not     positional (+14 more)
 
 ### Community 196 - "Community 196"
-Cohesion: 0.05
-Nodes (76): `wait_for_reveal_capturing_early_ack` -- the D-58 tail wait, split out of `turn, BOTH roles' tail wait (D-58): block until the opponent's REVEAL     arrives. A, wait_for_reveal_capturing_early_ack(), opponent_role(), The two role vocabularies and the single bridge between them (D-01).  `role.js, The role this agent expects on every inbound envelope's `sender`     (06-06). L, Envelope, accusations() (+68 more)
+Cohesion: 0.06
+Nodes (62): opponent_role(), The two role vocabularies and the single bridge between them (D-01).  `role.js, The role this agent expects on every inbound envelope's `sender`     (06-06). L, Envelope, accusations(), audit_verdicts(), CountingQueue, envelope_of() (+54 more)
 
 ### Community 197 - "Community 197"
-Cohesion: 0.18
-Nodes (15): build_live_provider(), _describe(), FixtureResult, _load(), _matches(), GATE-4 criterion 1 (decode-fixture accuracy): replay tests/fixtures/hints_{en,he, Score every case in hints_<language>.json, one fresh     `_RecordedResponseProv, Score every case in hints_<language>.json against ONE real provider     instanc (+7 more)
+Cohesion: 0.08
+Nodes (24): agent_log_paths(), belief_cfg(), client_for(), peer_pair(), police_params(), Integration-only shared fixtures (QUAL-02): built exactly once here, reused by, A hand-advanced stand-in for 02-04's `Watchdog(clock=...)` seam., Move the fake clock forward by exactly `offset` -- always a         NetworkPara (+16 more)
 
 ### Community 198 - "Community 198"
-Cohesion: 0.11
-Nodes (25): cited_paths(), Resolve the repository paths a document cites (08-07).  Three documents now asse, Every distinct repository path *doc* cites in backticks, sorted.      A trailing, The cited paths `git ls-files` has neither as a file nor as a directory., unresolved_citations(), The diagrams are label-checked; the deployment instructions are not,     unless, test_the_prose_around_the_diagrams_cites_only_paths_that_exist(), The three human-run runbooks 08-11 owes (08-11).  08-12, 08-13 and 08-14 are the (+17 more)
+Cohesion: 0.15
+Nodes (16): The three human-run runbooks 08-11 owes (08-11).  08-12, 08-13 and 08-14 are the, The anti-vacuity floor: an untracked runbook reads as '' and cites nothing., The control for the two tests above., The trap the 08 outline names: `git push` typed in the wrong window., The boundary, in the document itself -- not only in a plan's summary., An exemption for a path that ships is a hole, not an exemption., A human on a fresh clone must not go looking for a file that is not there., test_all_three_runbooks_are_tracked_and_non_empty() (+8 more)
 
 ### Community 200 - "Community 200"
 Cohesion: 0.09
@@ -1327,8 +1329,8 @@ Cohesion: 0.50
 Nodes (3): Beyond the triplet: how a phase actually went, How they are produced (GSD loop), Per-phase documentation triplets
 
 ### Community 224 - "Community 224"
-Cohesion: 0.05
-Nodes (38): GatekeeperParams, Token bucket rate limiter -- docs/PARAMETERS.md Table 19's law, verbatim.  ``t, A Table-19 token bucket: ``tokens <- min(C, tokens + r*dt)``.      ``capacity`, Apply ``tokens <- min(C, tokens + r*dt)`` for the elapsed time., Admit one call now iff a token is available, else refuse.          Returns Tru, Seconds until ``try_acquire()`` would next succeed; 0.0 if ready now., Current token count, after applying any refill owed since the last call., TokenBucket (+30 more)
+Cohesion: 0.10
+Nodes (20): Token bucket rate limiter -- docs/PARAMETERS.md Table 19's law, verbatim.  ``t, A Table-19 token bucket: ``tokens <- min(C, tokens + r*dt)``.      ``capacity`, Apply ``tokens <- min(C, tokens + r*dt)`` for the elapsed time., Admit one call now iff a token is available, else refuse.          Returns Tru, Seconds until ``try_acquire()`` would next succeed; 0.0 if ready now., Current token count, after applying any refill owed since the last call., TokenBucket, Tests for TokenBucket -- docs/PARAMETERS.md Table 19's token-bucket law.  No ` (+12 more)
 
 ### Community 229 - "Community 229"
 Cohesion: 0.10
@@ -1340,7 +1342,7 @@ Nodes (7): hintbank_templates.py: pure data, no selection logic (04-10).  Every 
 
 ### Community 231 - "Community 231"
 Cohesion: 0.13
-Nodes (24): compose_outgoing(), decode_incoming(), One guarded entry point for the language half of a turn (D-33, LANG-06).  Two, The whole turn's language ceiling: the smaller of the two configured     bounds, `decode_hint`, abandoned at `timeout` -- a stalled provider yields     `NO_EVID, `compose()`, abandoned at `timeout` -- a stalled provider falls back     to the, turn_budget_seconds(), _bluff_ctx() (+16 more)
+Nodes (25): compose_outgoing(), decode_incoming(), One guarded entry point for the language half of a turn (D-33, LANG-06).  Two, The whole turn's language ceiling: the smaller of the two configured     bounds, `decode_hint`, abandoned at `timeout` -- a stalled provider yields     `NO_EVID, `compose()`, abandoned at `timeout` -- a stalled provider falls back     to the, turn_budget_seconds(), _bluff_ctx() (+17 more)
 
 ### Community 234 - "Community 234"
 Cohesion: 0.08
@@ -1351,8 +1353,8 @@ Cohesion: 0.11
 Nodes (26): build_system_prompt(), build_user_prompt(), The decode prompts, and the fact that the hint is hostile input.  The incoming, The system prompt, parameterised by the configured arena and board.      `aren, The user prompt: the opponent's sentence, delimited and quoted.      The delim, configured_arena(), decode_prompt.py: asks for a description, and takes no orders from the opponent, Haiku 4.5's cacheable prefix minimum is 4096 tokens. Padding toward it     woul (+18 more)
 
 ### Community 237 - "Community 237"
-Cohesion: 0.11
-Nodes (26): ScentModel, decay(), emission(), expected_strength_after(), The book's emission kernel and decay law, pure and I/O-free (D-50, Sec4.3).  T, Return the kernel's contribution to the field from an agent at centre.      Cl, Apply one turn of the Sec4.3 decay law with no re-emission.      tau(t+1) = ma, Strength a source cell (tau=source) retains after `turns` decay-only     steps (+18 more)
+Cohesion: 0.10
+Nodes (27): Coord, ScentModel, decay(), emission(), expected_strength_after(), The book's emission kernel and decay law, pure and I/O-free (D-50, Sec4.3).  T, Return the kernel's contribution to the field from an agent at centre.      Cl, Apply one turn of the Sec4.3 decay law with no re-emission.      tau(t+1) = ma (+19 more)
 
 ### Community 240 - "Community 240"
 Cohesion: 0.12
@@ -1371,8 +1373,8 @@ Cohesion: 0.17
 Nodes (11): 1. The problem this mechanism solves, 2. The locked model — every number sourced, 3. The locked payload and the digest — rule 23 in code, 4. Why the field is derived locally, never transmitted (D-49), 5. `ScentField` — the object every later mechanism reads, 6. Compliance, 7. Acceptance criteria and links to the plans that built it, PRD — the scent model (dynamic pheromones) (+3 more)
 
 ### Community 244 - "Community 244"
-Cohesion: 0.18
-Nodes (24): Validate model.{provider,model_id,max_tokens,timeout_seconds,     every_n_steps, validate_model_group(), Tests for language_model_config.py's validate_model_group() (D-32, D-52).  Add, D-05 discipline: every ModelKey value is a field name, not a number., 04-10, Table 14 row 2: the limit is our own, but it must be positive., Negotiable (Table 14 row 2), unlike the Table 19 minima -- no ceiling here., test_empty_game_arena_is_valid_and_means_generic_cues(), test_empty_model_id_raises_naming_the_key() (+16 more)
+Cohesion: 0.16
+Nodes (25): Validation for language.json's `model` group (D-32, D-52, Table 14, 04-06/04-10), Validate model.{provider,model_id,max_tokens,timeout_seconds,     every_n_steps, validate_model_group(), Tests for language_model_config.py's validate_model_group() (D-32, D-52).  Add, D-05 discipline: every ModelKey value is a field name, not a number., 04-10, Table 14 row 2: the limit is our own, but it must be positive., Negotiable (Table 14 row 2), unlike the Table 19 minima -- no ceiling here., test_empty_game_arena_is_valid_and_means_generic_cues() (+17 more)
 
 ### Community 245 - "Community 245"
 Cohesion: 0.13
@@ -1383,20 +1385,20 @@ Cohesion: 0.13
 Nodes (21): inverted_age(), Return the integer age in [0, age_cap] whose expected_strength_after()     is c, belief_cfg(), model(), params(), Tests for the D-42 scent-likelihood inversion (Task 3).  belief.json loader te, D-42's whole point: a trail deposited at `origin` and decayed for     several t, Sec1's Regime B: no observe_exact ever -- the SAME predict/update loop     stay (+13 more)
 
 ### Community 247 - "Community 247"
-Cohesion: 0.14
-Nodes (23): Action, action_for(), cell_for(), Canonical 5-action space (STRAT-01); order is FROZEN -- never renumber., Return the cell reached by taking action from own_cell., Return the Action from own_cell to dest; raises ValueError if not adjacent., _CompleteBrain, _IncompleteBrain (+15 more)
+Cohesion: 0.15
+Nodes (23): _at(), distance(), DistanceIgnoringCop, Harness for `test_shortest_path.py` -- GATE-3 criterion 1 (STRAT-04).  Split o, A cop that steps to whichever legal cell is FURTHEST from the target.      The, Build every start named in `SCENARIOS` from `params` alone., Barrier-aware BFS hop count from the cop's cell to *target*.      `None` when, Drive *brain* against a FROZEN thief until capture or the move ceiling.      T (+15 more)
 
 ### Community 248 - "Community 248"
-Cohesion: 0.09
-Nodes (24): linger_for_peer(), The bounded post-audit grace window (05-UAT.md G1) -- a sibling module, the est, Keep this process's server task alive, draining `ctx.runtime.queue`,     until, AgentContext, Queue, Watchdog, _Ctx, _NeverQuietQueue (+16 more)
+Cohesion: 0.11
+Nodes (20): linger_for_peer(), The bounded post-audit grace window (05-UAT.md G1) -- a sibling module, the est, Keep this process's server task alive, draining `ctx.runtime.queue`,     until, AgentContext, Watchdog, _NeverQuietQueue, 05-UAT.md G1: the bounded post-audit grace window, and the NET-07 hazard it mus, (b) A peer still pushing never gets cut off early, but the window is     still (+12 more)
 
 ### Community 249 - "Community 249"
-Cohesion: 0.11
-Nodes (18): GmailCredentialsError, GmailRetryableError, GmailScopeError, GmailSink, The ONLY module in `src/` that imports `google-*` (D-70), and the live half of, `reporting.mode = live`: one report, one `users().messages().send()`.      `tr, Send the report as an attached JSON file. Raises on failure., The blocking API call, off the event loop (`asyncio.to_thread`) so a         sl (+10 more)
+Cohesion: 0.17
+Nodes (24): BaseException, Path, ReportingChain, MailShapedParams, A caller with Table 19's seven rows and no token concept at all --     the shap, _chain(), OperatorAbort, ReportingChain -- the Figure-13 composition (D-69, rules 28-29).  The load-bea (+16 more)
 
 ### Community 250 - "Community 250"
-Cohesion: 0.10
-Nodes (46): ReportingKey, load_reporting_config(), Load and validate config/{police,thief}/reporting.json.      Raises     -----, Path, _police(), load_reporting_config's fail-loud half: every rejection, and every message nami, The control for the test above: exactly the floor must PASS, or the     rejecti, Control: `live` must load, or the rejection test above would be passing     aga (+38 more)
+Cohesion: 0.09
+Nodes (48): ReportingKey, load_reporting_config(), Fail-loud config loader for reporting.json -- the MAIL gatekeeper's limits and, Load and validate config/{police,thief}/reporting.json.      Raises     -----, Path, Path, _police(), load_reporting_config's fail-loud half: every rejection, and every message nami (+40 more)
 
 ### Community 251 - "Community 251"
 Cohesion: 0.20
@@ -1407,8 +1409,8 @@ Cohesion: 0.06
 Nodes (30): A mocked failure proved nothing about the wire shape — again, Accomplishments, Created, Decisions Made, Dependency graph, `dev_launch.py` — 05-04's measured state, not regressed, Deviations from Plan, Files Created/Modified (+22 more)
 
 ### Community 253 - "Community 253"
-Cohesion: 0.05
-Nodes (48): FailAfterClient, FakeClient, Stands in for 02-06's fastmcp.Client -- an async context manager,     never a s, Succeeds on the first `succeed_calls` pushes, fails every one after     -- 06-0, Tests for the per-agent turn loop (pursuit.network.orchestrator).  House style, Rules 16/22, D-13: the opponent never acking the move ends the game     cleanly, D-07 static guard: push-only, never a polling loop., Deterministic, algorithmic, no randomness, no LLM (rule 25). (+40 more)
+Cohesion: 0.10
+Nodes (20): FakeClient, _events(), capture_declaration.py: rule 21's Capture Claim on the wire (05-15, G10).  The, Best-effort by contract: the capture is already resolved and already     ledger, A ToolError here must not convert a resolved capture into a loss --     unlike, THE rule-22 property, measured end to end on a real resolved capture     (same, The paired control for the case above: a silent opponent ends the     same loop, No new MessageType and no reshaped envelope: what we build must     survive the (+12 more)
 
 ### Community 254 - "Community 254"
 Cohesion: 0.11
@@ -1435,8 +1437,8 @@ Cohesion: 0.11
 Nodes (17): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs (+9 more)
 
 ### Community 260 - "Community 260"
-Cohesion: 0.29
-Nodes (18): Return one joint turn of `prior` advanced through role's legal actions.      F, spread(), _delta(), Tests for the legal-motion model (Task 2, D-48 Sec1)., 5 moves (incl. move-to-self) + 5 barrier placements = 10 actions; the     barri, No barrier actions left -> cop_actions degenerates to plain moves,     same 5-w, _state(), test_action_weights_seam_overrides_the_uniform_split() (+10 more)
+Cohesion: 0.17
+Nodes (26): ActionWeights, GameParams, GameState, _destinations(), Legal-motion model for the belief map (D-48 Sec1, Task 2): spreads probability, Return one joint turn of `prior` advanced through role's legal actions.      F, Every resulting position for role's legal actions.      A cop's barrier action, One share of `mass` per destination -- uniform unless `action_weights`     is s (+18 more)
 
 ### Community 261 - "Community 261"
 Cohesion: 0.12
@@ -1459,24 +1461,24 @@ Cohesion: 0.08
 Nodes (27): Counter, main(), _check_trace_row(), emptiness(), Ledger, parse(), Path, Parser and rules for `.planning/REQUIREMENTS.md` (08-02).  THE FILE IS A LEDGER, (+19 more)
 
 ### Community 266 - "Community 266"
-Cohesion: 0.13
-Nodes (34): compose(), Turn `plan` into a legal hint -- total by construction. See the     module docs, _context(), FakeProvider, _plan(), _adversarial_outcome(), _AdversarialProvider, bluff.py: the structural no-raise/no-bare-except proof, and the adversarial pro (+26 more)
+Cohesion: 0.12
+Nodes (37): compose(), `compose()`: a `DeceptionPlan` becomes a legal hint, always (D-33, D-45, D-36,, `result.text`, stripped, or None when it is missing or blank -- an     empty co, Turn `plan` into a legal hint -- total by construction. See the     module docs, _usable_text(), _context(), FakeProvider, _plan() (+29 more)
 
 ### Community 267 - "Community 267"
 Cohesion: 0.17
 Nodes (25): OverflowingGatekeeper, Error-class-to-LlmFailureReason mapping tests for AnthropicProvider.  Split fr, _status_error(), test_every_error_class_maps_to_its_reason(), test_failure_message_names_the_exception_class(), test_gatekeeper_overflow_maps_to_overflow_without_calling_the_sdk(), FakeClient, FakeMessage (+17 more)
 
 ### Community 268 - "Community 268"
-Cohesion: 0.12
-Nodes (9): shared/inference.py: the decoder's output type and its one invariant., Zero confidence must leave the posterior untouched even when the     sentence n, A heading is carried for 04-09's motion model but implicates no cell     by its, 04-14 has to tell 'we failed to read it' apart from 'it said nothing'., The schema enum, the prompt and 04-08's claims all share these strings., test_a_bare_heading_is_not_positional_evidence(), test_a_region_at_zero_confidence_is_not_evidence(), test_no_evidence_for_preserves_the_sentence() (+1 more)
+Cohesion: 0.11
+Nodes (11): no_evidence_for(), NO_EVIDENCE, but carrying the text that produced it.      Same neutral weight;, shared/inference.py: the decoder's output type and its one invariant., Zero confidence must leave the posterior untouched even when the     sentence n, A heading is carried for 04-09's motion model but implicates no cell     by its, 04-14 has to tell 'we failed to read it' apart from 'it said nothing'., The schema enum, the prompt and 04-08's claims all share these strings., test_a_bare_heading_is_not_positional_evidence() (+3 more)
 
 ### Community 269 - "Community 269"
-Cohesion: 0.10
-Nodes (11): _prd_style_guide_block(), bluff_prompt.py: D-39's style guide, and the D-36 fence around `intent`.  No n, 05-UAT G5: machine A's turn-4 hint drifted to "The player is     currently posi, The exact wording that caused the drift: asked to write FOR someone,     the mo, The fenced block docs/PRD_deception.md Sec6 quotes from this module., The PRD says "verbatim", so this is the assertion that keeps it     true -- the, The guide explains WHY concreteness matters (it may say "lie" in     that ratio, test_style_guide_instructs_no_meta_commentary_about_honesty() (+3 more)
+Cohesion: 0.07
+Nodes (29): declaration(), _prd_style_guide_block(), bluff_prompt.py: D-39's style guide, and the D-36 fence around `intent`.  No n, 05-UAT G5: machine A's turn-4 hint drifted to "The player is     currently posi, The exact wording that caused the drift: asked to write FOR someone,     the mo, The fenced block docs/PRD_deception.md Sec6 quotes from this module., The PRD says "verbatim", so this is the assertion that keeps it     true -- the, The guide explains WHY concreteness matters (it may say "lie" in     that ratio (+21 more)
 
 ### Community 270 - "Community 270"
-Cohesion: 0.14
-Nodes (17): GameParams, Path, Tests for BASE-08 — config load and error path tests., Config loads board_size from game_params.json (no hardcoded value)., Config loads barrier_quota from game_params.json., Config loads the full scoring sub-dict from game_params.json., A missing required key raises an error at load time, not silently., A wrong-type field raises an error at load time. (+9 more)
+Cohesion: 0.13
+Nodes (21): load_game_params(), Fail-loud config loader for game_params.json (D-05).  load_game_params() is the, Load and validate game parameters from a game_params.json file.      Parameters, params(), GameParams, Path, Tests for BASE-08 — config load and error path tests., Config loads board_size from game_params.json (no hardcoded value). (+13 more)
 
 ### Community 271 - "Community 271"
 Cohesion: 0.15
@@ -1539,8 +1541,8 @@ Cohesion: 0.14
 Nodes (18): build_hint(), D-47 hint payload shape: free text plus the pre-committed intent flag.  Split, Structural check only (shape, not content): all three HintKey     fields presen, Construct one outgoing HINT envelope (mirrors handshake_wire.build_offer)., validate_hint_payload(), assert_no_coordinates(), LANG-02 / rule 27 outgoing coordinate guard, shared by transport AND language (, LANG-02 / rule 27 outgoing guard: raise ValueError if `text` carries     a digi (+10 more)
 
 ### Community 290 - "Community 290"
-Cohesion: 0.07
-Nodes (39): baseline(), _board(), config_paths(), _horizon(), _iterations(), knobs(), our_brain(), _quota() (+31 more)
+Cohesion: 0.12
+Nodes (23): baseline(), _board(), config_paths(), _horizon(), _iterations(), knobs(), our_brain(), _quota() (+15 more)
 
 ### Community 306 - "Community 306"
 Cohesion: 0.12
@@ -1555,8 +1557,8 @@ Cohesion: 0.12
 Nodes (12): _FakeTunnel, Tests for tunnel_wiring.py -- build_tunnel_manager, exchange_block, run_with_tu, Tunnel-off default: an agent config dir with no tunnel.json at all., Tunnel-off default: the file exists but the opt-in signal doesn't --     every, tunnel=None -- the test/dev default -- is a transparent pass-through., A tunnel that fails to start must abort BEFORE the runtime/handshake     -- a p, test_build_tunnel_manager_none_when_domain_env_unset(), test_build_tunnel_manager_none_when_tunnel_file_absent() (+4 more)
 
 ### Community 310 - "Community 310"
-Cohesion: 0.08
-Nodes (34): Connect the configured local port to the static domain.          Preflights NG, load_tunnel_config(), Load and validate a tunnel.json file into a TunnelParams.      Raises     ---, Resolve var_name from the environment; raise, naming it, if unset or     blank., require_env(), Path, MonkeyPatch, Path (+26 more)
+Cohesion: 0.10
+Nodes (27): load_tunnel_config(), Load and validate a tunnel.json file into a TunnelParams.      Raises     ---, Path, Path, Tests for the tunnel.json loader (CLOUD-01, D-54, D-55, QUAL-02, QUAL-11)., Sanity: the loader's declared return type is the dataclass it constructs., __str__ makes json.dumps({TunnelKey.PROVIDER: ...}) emit 'provider'., Write a mutated copy of the police tunnel.json to tmp_path. (+19 more)
 
 ### Community 311 - "Community 311"
 Cohesion: 0.08
@@ -1587,12 +1589,12 @@ Cohesion: 0.10
 Nodes (30): _barrier_count(), _both_locked_ordering(), _envelope_type_counts(), measure_clean_game(), Criterion-1 evidence (06-PLAN-OUTLINE.md Sec5 row 1): one clean game through the, D-58: this side's own REVEAL-sent line index must exceed the     opponent's COMM, events(), ledger_path() (+22 more)
 
 ### Community 318 - "Community 318"
-Cohesion: 0.11
-Nodes (25): counter_path(), declare_step0(), Step-0 declaration collect/sign/declare (D-62/D-63) and its on-disk persistence, Rule 37/38: advance the per-role games-played counter by exactly one,     AT GA, THE per-role counter file. One definition, so rule 37's READ     (`declare_step, Collect + sign THIS side's Step-0 declaration BEFORE the handshake     (D-62/D-, Persist THIS side's own signed Step-0 declaration beside the log,     named by, record_completed_game() (+17 more)
+Cohesion: 0.14
+Nodes (19): _play_with_different_uids(), 05-05 Task 2 (D-61, 05-UAT.md G2): one match, one id, across BOTH sides' logs, l, The WIRING assertion, driven through the real production path.      A `candidate, An honest game whose two sides started from different uids must still     audit, run_agent's own sequence, both directions, with DELIBERATELY DIFFERENT     per-s, _read_jsonl(), test_all_four_artifacts_join_on_one_negotiated_id(), test_the_candidate_set_has_two_elements_on_both_roles() (+11 more)
 
 ### Community 319 - "Community 319"
-Cohesion: 0.10
-Nodes (39): decode(), encode(), is_legal(), D-53 direction-token move/barrier payload codec.  Phase 2 sent {"x": int, "y":, Our own outgoing shape -- no integer ever names a cell (rule 27).      `post`, Extract and int-validate the D-53 legacy {"x","y"} pair: the (x, y)     tuple,, Accept EITHER the direction shape or the legacy {"x","y"} shape     (D-53) and, The resolved action must be in the mover's legal set from     sdk/actions.py -- (+31 more)
+Cohesion: 0.09
+Nodes (21): Accomplishments, Auto-fixed Issues, `check_submission.py` movement, row by row, Counter delta, Dependency graph, Deviations from Plan, GATE-8 — criteria and statuses, Gates (+13 more)
 
 ### Community 320 - "Community 320"
 Cohesion: 0.25
@@ -1603,36 +1605,36 @@ Cohesion: 0.19
 Nodes (21): _has_no_move_content_yet(), _play_full_game(), _play_to_turn_loop_end(), Task 4's own proof: Step-0 declared+verified before move 1, the shared game_id n, The audit half of a full game, split out so a tamper test can run     it AFTER c, `_play_to_turn_loop_end` + the audit, undisturbed -- the clean-game     shape th, True before any game-content envelope (move/commit/hint) has been     logged --, Build two REAL AgentContexts, declare+sign Step-0 on both, handshake     BOTH di (+13 more)
 
 ### Community 322 - "Community 322"
-Cohesion: 0.24
-Nodes (11): GameMeasurement, build_report(), extrapolate_series_cost(), Assembles the GATE-4 JSON result from every measured piece (04-14 Task 1/2) --, One game's real usage, scaled to a full six-opponent series     (PARAMETERS.md, must_haves #1: fraction of turns a hint became evidence, and the     mean absol, must_haves #3: hint every turn, within the word limit, both intents     observe, _stats() (+3 more)
+Cohesion: 0.14
+Nodes (19): GameMeasurement, build_report(), extrapolate_series_cost(), Assembles the GATE-4 JSON result from every measured piece (04-14 Task 1/2) --, One game's real usage, scaled to a full six-opponent series     (PARAMETERS.md, must_haves #1: fraction of turns a hint became evidence, and the     mean absol, must_haves #3: hint every turn, within the word limit, both intents     observe, _stats() (+11 more)
 
 ### Community 323 - "Community 323"
 Cohesion: 0.29
 Nodes (6): Components & files, Interfaces & contracts, Per-mechanism PRDs written this phase, Phase 4 PLAN — Language and Scent, Phase ADRs, Test plan (TDD)
 
 ### Community 324 - "Community 324"
-Cohesion: 0.13
-Nodes (22): _only(), _peers(), Counter-controls for the 08-07 diagram checker: every finding it can report, fir, Rule 2: a state store drawn inside both processes depicts the leak., D-76: `tk.mainloop()` inside the agent blocks the loop the watchdog times., `["engine (facade)"]` is legal mermaid; a naive paren count rejects it., `flowhcart` renders as a red error box on GitHub, not as a diagram., Prose between the marker and a later fence breaks the binding, so a     block ca (+14 more)
+Cohesion: 0.07
+Nodes (40): _only(), _peers(), Counter-controls for the 08-07 diagram checker: every finding it can report, fir, Rule 2: a state store drawn inside both processes depicts the leak., D-76: `tk.mainloop()` inside the agent blocks the loop the watchdog times., `["engine (facade)"]` is legal mermaid; a naive paren count rejects it., `flowhcart` renders as a red error box on GitHub, not as a diagram., Prose between the marker and a later fence breaks the binding, so a     block ca (+32 more)
 
 ### Community 325 - "Community 325"
-Cohesion: 0.09
-Nodes (32): The plan's five steps, in this order and no other., test_the_artifact_verifies_with_both_sources_deleted(), build_log_artifact(), `log_<game_id>_g<NN>.json` -- "turn-by-turn journal: commitments, moves, hints,, Re-hash every committed turn FROM THE ARTIFACT ALONE (07-08's entry).      Ret, Build, durably write, then re-read and re-check BOTH promises.      The seal c, Join one finished game's wire log to its ledger and seal the result.      The, Read a written log artifact back and check its own seal.      Reads the FILE, (+24 more)
+Cohesion: 0.08
+Nodes (39): _play(), A real two-peer game -> `log_<game_id>_g<NN>.json` -> 100% re-hash WITH BOTH SO, The peer's stamped envelope turn survives into the artifact unaltered,     for, One real recorded game on the shipped configs, THEN the final audit --     the, The plan's five steps, in this order and no other., The hint (with its rule-25 intent flag), the game's `audit_verdict`, and     th, test_the_artifact_carries_hints_verdict_and_no_internal_state(), test_the_artifact_verifies_with_both_sources_deleted() (+31 more)
 
 ### Community 326 - "Community 326"
 Cohesion: 0.15
 Nodes (12): 0. Why this document is late, and what that cost, 1. §10.4 milestone gate — criterion by criterion, 2. What was descoped, and why the phase tick is still honest, 3. Deferred items, 4. Gaps found by this pass, 5. Standing gates — re-run fresh at HEAD (2026-08-16), 6. What is NOT claimed, Criterion 1 — "Given a known target location, the agent computes and walks the shortest path with no manual intervention" (+4 more)
 
 ### Community 327 - "Community 327"
-Cohesion: 0.12
-Nodes (20): _client_at(), _push_to_a_dead_port(), 05-09: the REAL-SOCKET anchor for the connect-failure containment.  Everything e, The exact construction `PeerRuntime.client()` performs., MEASURED, not assumed. fastmcp 3.4.5 re-raises a connect-path fault as     `Runt, THE CONTAINMENT, end to end over loopback. Before 05-09 this call raised straigh, test_a_closed_peer_port_raises_fastmcps_wrapper_not_the_raw_httpx_error(), test_the_ladder_turns_a_closed_peer_port_into_a_verdict_over_a_real_socket() (+12 more)
+Cohesion: 0.27
+Nodes (10): _client_at(), _push_to_a_dead_port(), 05-09: the REAL-SOCKET anchor for the connect-failure containment.  Everything e, The exact construction `PeerRuntime.client()` performs., MEASURED, not assumed. fastmcp 3.4.5 re-raises a connect-path fault as     `Runt, THE CONTAINMENT, end to end over loopback. Before 05-09 this call raised straigh, test_a_closed_peer_port_raises_fastmcps_wrapper_not_the_raw_httpx_error(), test_the_ladder_turns_a_closed_peer_port_into_a_verdict_over_a_real_socket() (+2 more)
 
 ### Community 328 - "Community 328"
 Cohesion: 0.33
 Nodes (15): _brain(), _obs(), ValueSearchBrain: solve the turn's matrix game, sample the equilibrium.  One c, Rule 46: sealing the thief's pre-move cell wins regardless of its reply,     so, (3,3)/(4,4) has no pure saddle -- solve() genuinely mixes there (probed     off, seed() must swap the live RNG, not just record a number., _state(), test_cop_barrier_decision_leaves_the_move_at_the_cops_own_cell() (+7 more)
 
 ### Community 329 - "Community 329"
-Cohesion: 0.12
-Nodes (19): hold_peer_final_reveal_open(), The one-shot inbound gate that makes `late_peer_harness`'s teardown sequence a, Gate `ctx.runtime.queue` so the NEXT inbound FINAL_REVEAL is queued     and the, _handshake(), late_peer_round(), _paired_configs(), _play_over_real_sockets(), 05-UAT.md G1 missing[4]: the SEQUENCED two-peer harness, split from `test_late_ (+11 more)
+Cohesion: 0.27
+Nodes (9): late_peer_round(), A reaches the end of its turn loop first and audits; B arrives LATE     and pus, _events(), _of_kind(), 05-UAT.md G1 missing[4]: a late peer still completes with a matched verdict aga, The whole of G1, on real loopback sockets, in one sequence., NON-VACUITY, pinned permanently rather than run once and discarded.      The S, test_a_late_peer_still_completes_against_a_torn_down_peer() (+1 more)
 
 ### Community 330 - "Community 330"
 Cohesion: 0.10
@@ -1655,8 +1657,8 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Metrics (+7 more)
 
 ### Community 336 - "Community 336"
-Cohesion: 0.05
-Nodes (69): Exception, DeadlineExpired, The opponent did not answer inside the allowed response deadline.      Raised, StalledQueue, armed_from(), ArmedWatchdog, attempt_cost(), ManualClock (+61 more)
+Cohesion: 0.07
+Nodes (44): ArmedWatchdog, Exception, DeadlineExpired, The opponent did not answer inside the allowed response deadline.      Raised, StalledQueue, ArmedWatchdog, FakeClient, Stands in for 02-06's fastmcp.Client -- an async context manager,     never a s (+36 more)
 
 ### Community 337 - "Community 337"
 Cohesion: 0.11
@@ -1667,8 +1669,8 @@ Cohesion: 0.21
 Nodes (11): error_evidence(), _is_retryable(), NET-06 exception taxonomy: which failures are retried, which are raised.  Spli, True when *exc* is a WRAPPER around a retryable transport failure.      The de, The `last_error` text a TechnicalWin carries -- the ONE definition, used by ever, unwraps_to_retryable(), NET-06, the FOURTH decision: which HTTP STATUS answers are transient.  Split out, True only for an ``httpx.HTTPStatusError`` whose status is in the set above. (+3 more)
 
 ### Community 339 - "Community 339"
-Cohesion: 0.13
-Nodes (29): EmailMessage, build_report_message(), The RFC 5322 bytes that go on the wire or to the `.eml` on disk.      `email.p, Assemble the report as an ATTACHED JSON file with a boilerplate body.      `re, render_message(), _attachments(), _leak_free(), _non_attachment_text() (+21 more)
+Cohesion: 0.07
+Nodes (46): EmailMessage, ArtifactField, The join keys every artifact carries -- "all four carry a shared     `game_uid`, _permitted_artifact_path(), The artifact spine: the `game_uid` join, the ONE canonical-signing entry point, Durably write one artifact into the configured artifact directory.      D7-1,, `write_artifact` for a payload that is already bytes -- 07-04's `.eml`.      S, The D7-1 gate, named once so the two writers cannot drift apart. (+38 more)
 
 ### Community 340 - "Community 340"
 Cohesion: 0.17
@@ -1683,8 +1685,8 @@ Cohesion: 0.14
 Nodes (16): §10.4 criterion 2 — re-derived from the raw JSONL, again, by my own script, 1. The class guard — is it really source-enumerated, and can it fail?, 2. Rule 36 — is a genuinely silent peer still accused?, 3. Production callers — test-only reachability proves nothing, 4. Deferred items — does any block the phase goal or §10.4?, Anti-Patterns / Findings, Earned tracker rows — the trackers ARE now closable, Goal Achievement (+8 more)
 
 ### Community 343 - "Community 343"
-Cohesion: 0.02
-Nodes (87): Enum, ActionKind, MovePayloadKey, What a direction word names: a move, or a cop barrier target     relative to th, Wire key names for the direction-token payload shape., ConfigKey, Config key string constants for game_params.json / network.json / strategy.json., String keys matching the exact field names in game_params.json (D-05).      Us (+79 more)
+Cohesion: 0.04
+Nodes (87): Enum, ActionKind, decode(), encode(), is_legal(), MovePayloadKey, D-53 direction-token move/barrier payload codec.  Phase 2 sent {"x": int, "y":, Our own outgoing shape -- no integer ever names a cell (rule 27).      `post` (+79 more)
 
 ### Community 344 - "Community 344"
 Cohesion: 0.27
@@ -1747,8 +1749,8 @@ Cohesion: 0.12
 Nodes (16): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Exact Signatures for 06-03 (verbatim, do not re-derive), Files Created/Modified, Issues Encountered (+8 more)
 
 ### Community 359 - "Community 359"
-Cohesion: 0.12
-Nodes (19): AsyncAnthropic, build_client(), has_api_key(), Lazy construction of the Anthropic SDK's async client (D-32, D-33, D-34).  bui, Whether a usable key is present -- PRESENCE only, never the value.      Return, A fresh AsyncAnthropic client, or None if no key is set.      Called lazily by, test_build_client_constructs_when_a_key_is_present(), test_build_client_returns_none_without_a_key() (+11 more)
+Cohesion: 0.11
+Nodes (21): AsyncAnthropic, build_client(), has_api_key(), Lazy construction of the Anthropic SDK's async client (D-32, D-33, D-34).  bui, Whether a usable key is present -- PRESENCE only, never the value.      Return, A fresh AsyncAnthropic client, or None if no key is set.      Called lazily by, declared_llm_name(), What this process can ACTUALLY do this game, for the Step-0     declaration -- (+13 more)
 
 ### Community 360 - "Community 360"
 Cohesion: 0.12
@@ -1763,20 +1765,20 @@ Cohesion: 0.40
 Nodes (4): Phase 6 Plan 5: Gap closure — audit turn-binding + verdict durability, The design decision, and why, What is deliberately NOT touched, Why this is a plan and not a patch
 
 ### Community 367 - "Community 367"
-Cohesion: 0.18
-Nodes (18): _adapter(), belief_cfg(), _boxed_state(), _cop_brain(), _logging(), model(), _open_state(), params() (+10 more)
+Cohesion: 0.20
+Nodes (17): _adapter(), belief_cfg(), _boxed_state(), _cop_brain(), _logging(), model(), _open_state(), BeliefAdapter (D-43, D-48 Task 1+2): the Figure-7 per-turn order, seeded reprod (+9 more)
 
 ### Community 368 - "Community 368"
-Cohesion: 0.12
-Nodes (15): build_parser(), main(), The replay verifier's entry point -- a standalone process (REPORT-09).      uv, One transport frame, then re-arm on the Tk root's OWN timer. The         sessio, Verify first, then draw. A file that cannot be opened, or that is not     a `lo, One window over one verified artifact. Owns its own Tk root., ReplayViewer, The replay window's contents: the verdict banner, and one turn's record.  THE (+7 more)
+Cohesion: 0.14
+Nodes (13): build_parser(), main(), The replay verifier's entry point -- a standalone process (REPORT-09).      uv, One transport frame, then re-arm on the Tk root's OWN timer. The         sessio, Verify first, then draw. A file that cannot be opened, or that is not     a `lo, One window over one verified artifact. Owns its own Tk root., ReplayViewer, The replay window's contents: the verdict banner, and one turn's record.  THE (+5 more)
 
 ### Community 369 - "Community 369"
 Cohesion: 0.18
 Nodes (10): Anti-Patterns Found, Gaps Summary, Goal Achievement, Honesty-Critical Properties (verified in code, not just tests), Human Verification Required, Key Link Verification, Observable Truths (book §10.4 milestone-6 criteria, quoted from ROADMAP.md, plus the, Phase 6: Security and Cryptography Verification Report (+2 more)
 
 ### Community 370 - "Community 370"
-Cohesion: 0.12
-Nodes (20): build_manifest(), EmptyManifestError, exclusion_reason(), _forbidden_hits(), ForbiddenPathError, Manifest, manifest_for(), Path (+12 more)
+Cohesion: 0.13
+Nodes (19): build_manifest(), EmptyManifestError, exclusion_reason(), _forbidden_hits(), ForbiddenPathError, Manifest, manifest_for(), Path (+11 more)
 
 ### Community 371 - "Community 371"
 Cohesion: 0.22
@@ -1795,8 +1797,8 @@ Cohesion: 0.29
 Nodes (6): 1. Decisions — D-58 … D-65, 2. Numbers — all sourced, none invented, 3. Where the code goes, 4. Plans and waves, 5. Gate coverage, Phase 6 Plan Outline — Security and Cryptography
 
 ### Community 375 - "Community 375"
-Cohesion: 0.06
-Nodes (67): deque, articulation_points(), component_of(), degree(), edge_count(), free_cells(), neighbors(), Free-cell graph: adjacency, components, degree, iterative cut vertices.  The bas (+59 more)
+Cohesion: 0.15
+Nodes (26): articulation_points(), component_of(), degree(), edge_count(), free_cells(), neighbors(), Free-cell graph: adjacency, components, degree, iterative cut vertices.  The bas, In-bounds cells minus `state.barriers` -- the only function here taking     `(Ga (+18 more)
 
 ### Community 376 - "Community 376"
 Cohesion: 0.12
@@ -1812,7 +1814,7 @@ Nodes (3): Phase 6 TODO — Security and Cryptography, Phase gate (§10.4), The 
 
 ### Community 384 - "Community 384"
 Cohesion: 0.08
-Nodes (35): Path, build(), config_dir(), Shared builders for the config-artifact tests.  Extracted at the second consum, The shipped config tree for one role, asserted present -- a silently     missin, `config_<game_id>_g<NN>.json`: locked to the same config the game was.  The di, network.json (D-04) and role.json are excluded, so nothing that     differs bet, COUNTER-CONTROL: the same search over a config tree that DOES embed     network (+27 more)
+Nodes (37): canonical_json(), Return the project-wide canonical JSON form (SEC-03).      Keys are sorted rec, Path, build(), config_dir(), Shared builders for the config-artifact tests.  Extracted at the second consum, The shipped config tree for one role, asserted present -- a silently     missin, `config_<game_id>_g<NN>.json`: locked to the same config the game was.  The di (+29 more)
 
 ### Community 385 - "Community 385"
 Cohesion: 0.09
@@ -1827,16 +1829,16 @@ Cohesion: 0.12
 Nodes (15): Auto-fixed issues, Commits, Deviations from Plan, Found by self-audit, after the tasks were "done", Instance six, recorded not fixed (deferred #19), One assertion of mine could not fail, Phase 05 Plan 18: Close the Fifth Instance, Pin the Class — Summary, Probes — every one run, with real counts (+7 more)
 
 ### Community 388 - "Community 388"
-Cohesion: 0.11
-Nodes (19): _is_safe_filename_stem(), 05-12 / G7: the ONE safety gate a PEER-PUBLISHED game_id passes through.  Spli, Move the wire log onto `resolved`, reporting whether the id may now be     adop, True when *value* can serve as a single, self-contained filename stem.      Ev, Return *value* when it is safe to use as this game's id, else None.      None, relocate_log(), usable_peer_game_id(), AgentContext (+11 more)
+Cohesion: 0.16
+Nodes (13): Return *value* when it is safe to use as this game's id, else None.      None, usable_peer_game_id(), 05-12 / G7: the peer-game_id safety gate, and the line it must NOT cross.  Two, Each of these was measured at `0437559` to raise, relocate our log,     or buil, THE CONTROL THIS PLAN TURNS ON. `audit_state.py` checks the committed     game_, The length rule admits everything up to the derived structural limit     and re, ANTI-VACUITY. `UNSAFE` and `HONEST_FOREIGN` drive parametrised cases in     thi, `write_declaration` builds `declaration_{id}_peer.json` (22 fixed     character (+5 more)
 
 ### Community 389 - "Community 389"
 Cohesion: 0.33
 Nodes (5): THE per-agent single entry point (NET-04, D-01, CLOUD-01) -- split out of agent, One process, one orchestrator, one TurnStateMachine -- no referee, no     share, run_agent(), Outcome, Path
 
 ### Community 390 - "Community 390"
-Cohesion: 0.03
-Nodes (133): ActionWeights, MoveSource, decode_revealed_action(), The joint-turn action buffer (RULES-RESOLUTION.md) -- split out of turn_buffer., Store this turn's action into the joint-turn buffer slot for *role*.      For, Decode + validate one opponent's revealed action off the wire.      `composite, record_action(), Structural constants and enumerations for the pursuit engine.  No numeric game (+125 more)
+Cohesion: 0.04
+Nodes (71): decode_revealed_action(), The joint-turn action buffer (RULES-RESOLUTION.md) -- split out of turn_buffer., Store this turn's action into the joint-turn buffer slot for *role*.      For, Decode + validate one opponent's revealed action off the wire.      `composite, record_action(), Where the cop stands after this action: unchanged when placing., legal_moves(), SDK facade for the pursuit game engine (QUAL-01).  This module is the sole pub (+63 more)
 
 ### Community 392 - "Community 392"
 Cohesion: 0.20
@@ -1851,8 +1853,8 @@ Cohesion: 0.13
 Nodes (20): AST, gui_trees(), Loading the rules 8-9 gate BY FILE PATH -- once, for every test that asks it a, The REAL shipped package, parsed: `{path -> ast.Module}`., _arithmetic(), 07-03's rules 8-9 gate, run against the REAL `src/pursuit/gui/` package -- plus, Every pixel bound, grid position and bucket index is computed in     `sdk/view_, Every sidebar line, including the newline join, is built in     `sdk/view_text. (+12 more)
 
 ### Community 395 - "Community 395"
-Cohesion: 0.16
-Nodes (16): build_parser(), main(), Standalone per-agent league entry point (NET-01, NET-04, D-02).      uv run pyth, --config-dir names the per-agent directory (NET-01): role and both     endpoints, ArgumentParser, Path, _Ctx, _events() (+8 more)
+Cohesion: 0.10
+Nodes (35): EventType, D-67 verdict recording: how a Final-Reveal audit result becomes durable evidenc, Append one AUDIT_VERDICT record (symmetric honesty, CONTEXT locked:     a self-, The field assembly both verdict-shaped records share -- one copy,     two event, 05-UAT.md G1: THIS side's own FINAL_REVEAL push failed while the turn     loop, Mirrors turn_commit_send.technical_loss()'s log+return shape, MINUS     the mac, record_audit_incomplete(), record_audit_verdict() (+27 more)
 
 ### Community 396 - "Community 396"
 Cohesion: 0.15
@@ -1863,20 +1865,20 @@ Cohesion: 0.15
 Nodes (12): Dependency graph, Deviations from Plan, Issues Encountered, Metrics, Next Phase Readiness, Phase 6 Plan 5: Gap closure — audit turn-binding + verdict durability, Proof that the new tests are not vacuous, Task Commits (+4 more)
 
 ### Community 398 - "Community 398"
-Cohesion: 0.21
-Nodes (11): __getattr__(), Per-agent startup/wiring/shutdown (NET-01, NET-02, NET-04, NET-09, D-01).  Thi, Background this agent's FastMCP server on THIS process's event loop     (Pitfal, Teardown half one: stop the freeze-detector's daemon thread.     Idempotent. Sp, Teardown half two: ask the runtime to cancel its server task and     release it, GAME_OVER teardown, as the COMPOSITION of the two halves above --     never a t, PEP 562 lazy re-export: `run_agent` is implemented in     `agent_entrypoint.py`, shutdown_cleanly() (+3 more)
+Cohesion: 0.27
+Nodes (9): __getattr__(), Per-agent startup/wiring/shutdown (NET-01, NET-02, NET-04, NET-09, D-01).  Thi, Teardown half one: stop the freeze-detector's daemon thread.     Idempotent. Sp, Teardown half two: ask the runtime to cancel its server task and     release it, GAME_OVER teardown, as the COMPOSITION of the two halves above --     never a t, PEP 562 lazy re-export: `run_agent` is implemented in     `agent_entrypoint.py`, shutdown_cleanly(), stop_runtime() (+1 more)
 
 ### Community 399 - "Community 399"
-Cohesion: 0.12
-Nodes (23): _json_line(), 04-12 must_haves: a full two-peer game carrying a real hint + direction- token m, A complete two-peer game (04-12's own harness, RESEARCH Pattern 5):     every tu, Reconstruct the (cop_action, thief_move) sequence purely from ctx_a's     OWN JS, _replay_from_log(), test_two_peer_game_carries_a_direction_move_and_a_hint_every_turn(), _measure(), 04-12 verification bullet 6: per-turn wall time with the language layer ON and (+15 more)
+Cohesion: 0.07
+Nodes (43): D-66/SEC-07: a forced cop barrier placement travels over the wire inside the com, test_forced_cop_barrier_round_trips_identically_on_both_engines(), _wire_forced_barrier(), _envelope_types(), _events(), GATE-6 core: the D-58 both-locked Commit-Ack-Reveal exchange, proven end to end, §10.4 criterion 1: the four phases run, commit then reveal with a     valid non, D-65/D-66: `security.commit_reveal=False` is the exact pre-Phase-6     wire -- (+35 more)
 
 ### Community 400 - "Community 400"
-Cohesion: 0.04
-Nodes (80): AssertionError, FakeClient, Envelope, Envelope, make_ctx(), Assemble a fully-independent AgentContext from fakes plus a REAL     TurnStateM, Coverage-closing tests (Rule 2) for agent_audit_exchange.py's technical-loss an, test_observed_on_a_missing_log_file_returns_empty_dicts() (+72 more)
+Cohesion: 0.03
+Nodes (95): AssertionError, Envelope, FailAfterClient, make_ctx(), Shared network-layer test doubles + the AgentContext assembly helper (QUAL-02 a, Assemble a fully-independent AgentContext from fakes plus a REAL     TurnStateM, Succeeds on the first `succeed_calls` pushes, fails every one after     -- 06-0, Coverage-closing tests (Rule 2) for agent_audit_exchange.py's technical-loss an (+87 more)
 
 ### Community 401 - "Community 401"
-Cohesion: 0.19
-Nodes (18): DryRunSink, `reporting.mode = dry_run`: write the report and the message it would     have, SendReceipt, What a disk write can honestly assert, and nothing more.  This file makes NO c, Written in binary through `durable_write_bytes`: a text-mode write on     Windo, `durable_write_*` rotates the previous generation, so a re-sent series     repo, D7-1 is inherited from `write_artifact`, not re-implemented here., _report() (+10 more)
+Cohesion: 0.18
+Nodes (18): `result_<game_id>.json` -- NO `_g<NN>` (docs/PARAMETERS.md:168)., result_filename(), SendReceipt, What a disk write can honestly assert, and nothing more.  This file makes NO c, Written in binary through `durable_write_bytes`: a text-mode write on     Windo, `durable_write_*` rotates the previous generation, so a re-sent series     repo, D7-1 is inherited from `write_artifact`, not re-implemented here., _report() (+10 more)
 
 ### Community 403 - "Community 403"
 Cohesion: 0.53
@@ -1887,20 +1889,20 @@ Cohesion: 0.18
 Nodes (12): CountingWatchdog, OneShotSink, params(), The game-end chain's construction rules: no live transport builds itself, and t, Two touches per attempt, success AND failure, which is what bounds the     gap, 07-10 owns the one supervised live send. Nothing on the game-end path     may c, The paired control: the refusal is about building one, not about mode., `tests/_shipped_config_guard.py` makes "no test writes the shipped     `config/ (+4 more)
 
 ### Community 405 - "Community 405"
-Cohesion: 0.09
-Nodes (22): _brightest(), drawn(), Rules 8-9 asked of WHAT THE PANELS PAINT, at runtime, through the whole product, `scent.opponent` leaks INDEPENDENTLY of the belief, so it is attacked     indep, Rule 8 gives us our own cell; rule 22 makes declared barriers shared     knowle, ANTI-VACUITY: the identical scan over the identical blocks, asked for     a cel, THE COUNTER-CONTROL, and without it this whole file proves nothing.      Put H, THE TRAP, re-run at the RENDER layer. Deleting `BeliefView.argmax`     buys a c (+14 more)
+Cohesion: 0.10
+Nodes (24): _brightest(), drawn(), _published(), Rules 8-9 asked of WHAT THE PANELS PAINT, at runtime, through the whole product, `scent.opponent` leaks INDEPENDENTLY of the belief, so it is attacked     indep, Rule 8 gives us our own cell; rule 22 makes declared barriers shared     knowle, ANTI-VACUITY: the identical scan over the identical blocks, asked for     a cel, THE COUNTER-CONTROL, and without it this whole file proves nothing.      Put H (+16 more)
 
 ### Community 406 - "Community 406"
-Cohesion: 0.08
-Nodes (25): build_server(), Factory-built FastMCP server + fastmcp.Client in one process (NET-03).  Each a, The factory-built server (for in-memory `Client(runtime.server)`)., The per-process inbound queue, consumed by 02-07/02-09., Read-only accessor for the configuration this runtime was built from., Construct this agent's server and attach the D-05 tool surface.      Takes no, _accept(), Decode into an Envelope, enqueue, and ack immediately (D-06, D-07).      The try (+17 more)
+Cohesion: 0.16
+Nodes (14): _accept(), Decode into an Envelope, enqueue, and ack immediately (D-06, D-07).      The try, 06-06 item 4: an inbound envelope must actually come from the opponent.  `_accep, The spoof that matters: the peer claims to be US., Default None must leave every existing caller and test untouched., Not just the helper: prove it through a real FastMCP round trip, so     the wiri, The handshake NEGOTIATES the peer's role -- checking it there would     reject t, test_accept_enqueues_when_the_sender_is_the_expected_opponent() (+6 more)
 
 ### Community 407 - "Community 407"
 Cohesion: 0.33
 Nodes (5): 1. FINAL_REVEAL is never logged as a `message_sent`/`message_received` envelope record, 2. Measurement games advance the real `games_played.json` counter, 3. ~~An uncaught `ToolError` kills the agent mid-game~~ — **CLOSED by 06-06** (`877f617`), 4. ~~`_accept` never checks an inbound envelope's `sender`~~ — **CLOSED by 06-06** (`78ebb8c`), Deferred items — Phase 6 (found during 06-04 and 06-05)
 
 ### Community 408 - "Community 408"
-Cohesion: 0.10
-Nodes (31): LanguageKey, load_language_config(), Load and validate config/{police,thief}/language.json.      Raises     ------, Path, The extraction is only real if the SHIPPED LLM params satisfy it., test_shipped_language_params_satisfy_both_protocols(), Tests for the language.json loader (D-34/D-35, QUAL-02, QUAL-11).  Added beyon, Table 19's five minima may never be lowered by config (CLAUDE.md rule 1). (+23 more)
+Cohesion: 0.12
+Nodes (16): LanguageKey, Tests for the language.json loader (D-34/D-35, QUAL-02, QUAL-11).  Added beyon, Table 19's five minima may never be lowered by config (CLAUDE.md rule 1)., Raising a minimum-status field is a valid negotiated agreement., Sanity: the loader's declared return type is the dataclass it constructs., Every field loads from the real language.json -- no literal in this test., LanguageParams is immutable -- assignment raises FrozenInstanceError., NET-02 precedent: no module-level cache/singleton, ever. (+8 more)
 
 ### Community 409 - "Community 409"
 Cohesion: 0.13
@@ -1923,20 +1925,20 @@ Cohesion: 0.16
 Nodes (17): AsyncFunctionDef, If, AST, function_named(), The shipped commit-reveal-ON path's turn source, pinned structurally (08-05).  W, The containment that makes the ON path byte-identical BY CONSTRUCTION., The control. Every assertion above is over a parse that could be empty., The `if not ctx.security.commit_reveal:` guard inside *function*. (+9 more)
 
 ### Community 414 - "Community 414"
-Cohesion: 0.04
-Nodes (53): agent_log_paths(), belief_cfg(), client_for(), peer_pair(), police_params(), Integration-only shared fixtures (QUAL-02): built exactly once here, reused by, An injected async sleep double for 02-07's `call_with_retry` seam.      Return, A hand-advanced stand-in for 02-04's `Watchdog(clock=...)` seam. (+45 more)
+Cohesion: 0.05
+Nodes (39): An injected async sleep double for 02-07's `call_with_retry` seam.      Return, An injected clock double for 02-04's `Watchdog.check_once()` seam.      Return, Parse a JSONL log written by 02-04's append_event, in order.      Returns [] w, read_events(), recording_sleep(), stepping_clock(), _DuplicateAckClient, D-58 jitter tolerance: a duplicate ACK arriving after the real one must be dropp (+31 more)
 
 ### Community 415 - "Community 415"
-Cohesion: 0.09
-Nodes (33): _env_int(), _env_str(), load_network_config(), Return the environment override for var_name, or current if unset/empty., Return the environment override for var_name parsed as int, or current.      Rai, Load and validate network parameters from a network.json file.      Parameters, MonkeyPatch, Path (+25 more)
+Cohesion: 0.06
+Nodes (48): ConfigKey, NetworkConfigKey, Config key string constants for game_params.json / network.json / strategy.json., String keys matching the exact field names in game_params.json (D-05).      Us, Keys for the optional negotiated resolution block (RULES-RESOLUTION.md Sec5)., Return the bare key string so json.dumps emits the field name., String keys matching the exact field names in network.json (D-04).      Struct, ResolutionKey (+40 more)
 
 ### Community 416 - "Community 416"
-Cohesion: 0.08
-Nodes (37): artifact_header(), The join block every artifact opens with. `sub_game_index` is carried     only, _launch(), measure_replay(), _nothing_to_verify(), Path, Sec10.4 criterion 3 -- the replay app reconstructs a recorded round and shows `V, A live wire log by name: refused before any Tk root is built (rule 18).      The (+29 more)
+Cohesion: 0.11
+Nodes (21): artifact(), committed_turn(), _flip_intent(), _flip_move(), _flip_nonce(), _flip_state(), _payload(), A GENUINE `log_` artifact, built the way production builds one.  Not a hand-wr (+13 more)
 
 ### Community 417 - "Community 417"
-Cohesion: 0.14
-Nodes (26): _abort(), build_result(), _compare_offer(), evaluate(), HandshakeOutcome, not_attempted(), Decode-then-compare-then-abort machinery for the D-08 handshake (D-15, D-46, rul, Compare config, then -- only for each lock THIS call site opted into -- scent (D (+18 more)
+Cohesion: 0.06
+Nodes (58): _abort(), build_result(), _compare_offer(), evaluate(), HandshakeOutcome, HandshakeResult, not_attempted(), Decode-then-compare-then-abort machinery for the D-08 handshake (D-15, D-46, rul (+50 more)
 
 ### Community 419 - "Community 419"
 Cohesion: 0.50
@@ -1947,8 +1949,8 @@ Cohesion: 0.10
 Nodes (20): Addendum — `docs/phases/phase-7/TODO.md`, Anti-vacuity scans, Deviations from plan, Games-played counters — rule 38, Gates, Issues Encountered, Open, for the plans that own it, OQ-3 and the Phase-4 control (+12 more)
 
 ### Community 423 - "Community 423"
-Cohesion: 0.05
-Nodes (85): DeceptionPlan, _NetLike, DeceptionParams, Typed, immutable container for deception.json.      Constructed only by `load_, The ceiling the truth floor implies.          Derived, never configured twice:, ClaimKind, DeceptionPlan, Intent (+77 more)
+Cohesion: 0.08
+Nodes (73): 04-12 extension (Task 4): the real deception + bluff pipeline (D-33,     zero n, test_full_game_composes_a_legal_hint_every_turn_without_disrupting_it(), BluffContext, Everything one `compose()` call needs, and nothing about the game's     physica, DegradeLevel, D-35's three-rung ladder, ordered low-degrade to high-degrade., HintBank, A total, deterministic phrase bank -- `bluff.py`'s only fallback.      One ins (+65 more)
 
 ### Community 425 - "Community 425"
 Cohesion: 0.28
@@ -1960,7 +1962,7 @@ Nodes (27): `ctx.watchdog`'s surface, counting touches and freezing nothing.    
 
 ### Community 428 - "Community 428"
 Cohesion: 0.24
-Nodes (9): buffer_if_not_older(), consume_hint(), is_replay(), The two per-sender inbound-hint buffers and the rules that govern them -- split, Take *sender*'s buffered hint for decoding, and leave the consumed     marker `, The turn stamp on the payload already buffered for *sender*, or     None when t, Overwrite only with a hint at least as new as the one already     buffered for, True when this arrival would be decoded a SECOND time (05-14, G8).      "Alrea (+1 more)
+Nodes (10): buffer_if_not_older(), consume_hint(), is_replay(), The two per-sender inbound-hint buffers and the rules that govern them -- split, Take *sender*'s buffered hint for decoding, and leave the consumed     marker `, The turn stamp on the payload already buffered for *sender*, or     None when t, Overwrite only with a hint at least as new as the one already     buffered for, True when this arrival would be decoded a SECOND time (05-14, G8).      "Alrea (+2 more)
 
 ### Community 429 - "Community 429"
 Cohesion: 0.13
@@ -1968,11 +1970,11 @@ Nodes (14): Auto-fixed issues, Deviations from Plan, Measurements, Non-goals, fi
 
 ### Community 430 - "Community 430"
 Cohesion: 0.06
-Nodes (49): _at(), distance(), DistanceIgnoringCop, Harness for `test_shortest_path.py` -- GATE-3 criterion 1 (STRAT-04).  Split o, A cop that steps to whichever legal cell is FURTHEST from the target.      The, Build every start named in `SCENARIOS` from `params` alone., Barrier-aware BFS hop count from the cop's cell to *target*.      `None` when, Drive *brain* against a FROZEN thief until capture or the move ceiling.      T (+41 more)
+Nodes (50): Action, LogCaptureFixture, Action, action_for(), cell_for(), MoveSource, Decision.source provenance (AI-SPEC Sec5 E2/E3); every brain must set     it tr, Canonical 5-action space (STRAT-01); order is FROZEN -- never renumber. (+42 more)
 
 ### Community 432 - "Community 432"
-Cohesion: 0.27
-Nodes (10): _genuine_records(), D-67: the Final-Reveal mutual audit -- both tamper classes proven distinctly: (a, Build (observed_commits, observed_reveals, peer_records) via a REAL     `commit_, Payload/hash left UNTOUCHED (still verifies) -- only what we saw     actually pl, The fairness fix: CommitLedger.append runs BEFORE the REVEAL send,     so an abn, test_a_trailing_commit_without_an_observed_reveal_is_matched_not_a_false_accusation(), test_an_untampered_triple_audits_clean(), test_tamper_a_a_flipped_payload_field_fails_the_hash_check() (+2 more)
+Cohesion: 0.17
+Nodes (17): _audit_one(), audit_peer_records(), _missing_turns(), D-67: the Final-Reveal mutual audit.  Hash-verifying a revealed `{state,move,i, Per-entry checks, in order; the FIRST failing check's detail is     reported --, Rule 36 coverage check: a turn watched FULLY exchanged (committed     AND revea, Audit every `peer_records` entry (`{"turn","h_commit","payload":     {"state",", _genuine_records() (+9 more)
 
 ### Community 433 - "Community 433"
 Cohesion: 0.15
@@ -1991,8 +1993,8 @@ Cohesion: 0.50
 Nodes (3): AuditRecord, D-67 audit RESULT type: one turn's outcome, and "did every one of them match"., One turn's audit outcome.
 
 ### Community 437 - "Community 437"
-Cohesion: 0.10
-Nodes (20): Rules 8-9, asked as a RECOVERY question (07-11): not "does the true cell appear, The whole recovery set again, in the endgame where `spread` is the     identity, ANTI-VACUITY, and the reason this file is not another absence test:     the ide, THE TRAP, pinned permanently. Put the strategy maps back on the wire     (what, ANTI-VACUITY for assertion (2): `grid_argmax` must actually find the     strong, A cop view built through the production path -- `decide()` called with     `kno, (1) The cheapest recovery of all: read the brightest pixel., (2) `scent.opponent` leaks INDEPENDENTLY of the belief, so fixing only     the (+12 more)
+Cohesion: 0.05
+Nodes (43): belief_adapter(), belief_config(), honest_context(), honest_view(), Shared helpers for the 07-03 rules 8-9 firewall tests (D-74).  Not a `test_*.p, A REAL `AgentContext` holding the engine's true joint position --     which is, The SHIPPED police belief config -- never a hand-built stand-in, so a     test, The SHIPPED police scent model, for the same reason. (+35 more)
 
 ### Community 439 - "Community 439"
 Cohesion: 0.21
@@ -2002,17 +2004,21 @@ Nodes (18): _display(), _floors(), _neutral(), `DisplayBelief`: rule 9's one own
 Cohesion: 0.50
 Nodes (3): 05-11 — the tunnel watch: `ensure_connected()` finally has a caller, Dependency graph, Tech tracking
 
+### Community 441 - "Community 441"
+Cohesion: 0.20
+Nodes (9): Reconnect to the SAME domain while unhealthy, bounded by         network_params, Connect the configured local port to the static domain.          Preflights NG, True iff the local ngrok agent process reports itself healthy.          Detect, Resolve var_name from the environment; raise, naming it, if unset or     blank., require_env(), MonkeyPatch, test_require_env_raises_naming_the_missing_var(), test_require_env_rejects_a_blank_value() (+1 more)
+
 ### Community 442 - "Community 442"
 Cohesion: 0.11
 Nodes (22): _assert_names_the_tampered_turn(), The three verdicts, and the proof that each one is reachable.  A viewer that c, The counter-control for every `!= VERIFIED_OK` above: they differ     because t, `banner_colour`'s ONLY caller is `gui/replay_panels.py`, which     `pyproject.t, It has wire records and no ledger entry. Counting it would report     `4/5` on, `artifact_log.verify_log_turns` counts the same thing by a different     route, One field flipped, then RESEALED -- so the verdict below is earned by     the p, Sec10.4 criterion 3, verbatim -- equality, not a substring, so a     banner tha (+14 more)
 
 ### Community 443 - "Community 443"
-Cohesion: 0.13
-Nodes (21): build_one(), BuildPlan, main(), plan_build(), Path, One file list, one source commit, one timestamp -- shared by BOTH outputs., The single manifest, commit and timestamp every output is built from., Materialise one role's repository and return what was built, in numbers. (+13 more)
+Cohesion: 0.16
+Nodes (17): build_one(), BuildPlan, main(), plan_build(), Path, One file list, one source commit, one timestamp -- shared by BOTH outputs., The single manifest, commit and timestamp every output is built from., Materialise one role's repository and return what was built, in numbers. (+9 more)
 
 ### Community 444 - "Community 444"
-Cohesion: 0.16
-Nodes (18): `result_<game_id>.json` -- NO `_g<NN>` (docs/PARAMETERS.md:168)., result_filename(), build_result_artifact(), `result_<game_id>.json` -- "Final results summary across all sub-games. **This, Read a written result artifact back and check its own seal -- off the     FILE,, Durably rewrite the series file, then re-read and re-check its seal --     the, Read the series, add this sub-game, rewrite it. THE entry point.      It exist, This series' file as it stands, or `None` when no sub-game has been     recorde (+10 more)
+Cohesion: 0.17
+Nodes (20): cycle_rank(), is_forest(), Cycle rank, per-cell reduction value, and the forest predicate.  Barriers keep t, E - V + 1 for a connected cell set. Empty input is 0.      `cells` is assumed co, True iff `cycle_rank(cells) == 0` -- the thief's win condition., `degree(cells, cell) - 1` -- the acyclicity gained by barriering `cell`.      03, reduction_value(), Tests for pursuit.strategy.graph.cycles (03-11 Task 2).  Pins the cited identiti (+12 more)
 
 ### Community 446 - "Community 446"
 Cohesion: 0.08
@@ -2028,31 +2034,31 @@ Nodes (5): Bonus second game — `b22361aa93ccf310` (16:29 local), Extras retain
 
 ### Community 449 - "Community 449"
 Cohesion: 0.14
-Nodes (15): Pattern, ArtifactField, ArtifactPrefix, config_filename(), _indexed_name_pattern(), next_sub_game_index(), The four docs/PARAMETERS.md filenames and the `<NN>` sub-game index.  Split ou, Match ONLY the two indexed artifacts of exactly this `game_id`.      `game_id` (+7 more)
+Nodes (15): Pattern, ArtifactPrefix, config_filename(), _indexed_name_pattern(), next_sub_game_index(), The four docs/PARAMETERS.md filenames and the `<NN>` sub-game index.  Split ou, Match ONLY the two indexed artifacts of exactly this `game_id`.      `game_id`, The `<NN>` this game_id's NEXT sub-game gets: one past the highest     already (+7 more)
 
 ### Community 450 - "Community 450"
 Cohesion: 0.17
 Nodes (11): Tests for the pure D-11 record builders in pursuit.network.turn_events.  No I/O, D-11: every stable field present, states serialised as strings, JSON-safe., NET-05: the record names both the severity and the human reason., D-13, rules 16/22: retries_attempted reports what actually ran, never a constant, NET-07: the incident record stands alone -- no external lookup needed., The game_over record names the final Outcome as its JSON-safe .value., test_game_over_record_carries_the_outcome(), test_illegal_transition_record_names_the_severity() (+3 more)
 
 ### Community 451 - "Community 451"
-Cohesion: 0.21
-Nodes (11): _events(), _language_turns(), _moves(), GATE-4 frozen as a CI test (04-14 Task 3): the book's Sec10.4 milestone-4 STRUC, LANG-03/rule 25, frozen structurally under D-58's real cross-side     concurren, 06-02 (D-58): under commit_reveal (default true), the action rides a     `revea, The scent digest both peers compute and compare at handshake     (D-46, rule 23, LANG-01/LANG-02, frozen: over a full game, both sides send one     hint per tur (+3 more)
+Cohesion: 0.36
+Nodes (7): _events(), _language_turns(), _moves(), GATE-4 frozen as a CI test (04-14 Task 3): the book's Sec10.4 milestone-4 STRUC, 06-02 (D-58): under commit_reveal (default true), the action rides a     `revea, LANG-01/LANG-02, frozen: over a full game, both sides send one     hint per tur, test_a_hint_rides_every_turn_with_no_outgoing_coordinate()
 
 ### Community 452 - "Community 452"
 Cohesion: 0.18
 Nodes (18): _perform(), 05-12 / G9: NO peer-controlled digest slot can kill us at the handshake.  A sw, THE NO-NEW-ACCUSATION CONTROL for slot 3. Measured at `0437559`:     `step0_dig, Slot 4, the same probe. Resolved DIFFERENTLY on purpose: the hmac is     OPTION, Pins the docstring claim the probe disproved. The RESPONDER half runs     insid, The three outcomes that must NOT have moved: an agreeing peer still     agrees,, A raw handshake envelope dict -- built by hand, never via `build_offer`,     be, Slot 1, UNCONDITIONAL on every handshake either side ever performs. (+10 more)
 
 ### Community 453 - "Community 453"
-Cohesion: 0.24
-Nodes (9): _check_symmetry(), check_worked_example(), Pure validation for the Figure-4 emission kernel and the Sec4.5 worked example, Return raw as a window x window tuple of floats, or raise ValueError.      Eve, Raise ValueError unless worked_example is exactly what source/decay compute., Return one kernel row as a tuple of `window` floats within [0, source_value]., Raise ValueError unless kernel is symmetric under both axis     reflections and, validated_kernel() (+1 more)
+Cohesion: 0.08
+Nodes (27): Reject the two malformed shapes at construction time., The [0, 1] bound is enforced by the CONSTRUCTOR, so no code path         anywhe, reporting.json's key names, its two fixed strings, and the per-group validation, The structural leaves: mode, recipient, artifact dir, env-var NAMES., Rules 39-40: config names the VARIABLE, the environment holds the value., Field names for config/{police,thief}/reporting.json.      Structural only --, The named top-level object, or a KeyError/TypeError naming it., Table 19's seven rows plus SEGAL's hourly ceiling, all validated.      Rows 1- (+19 more)
 
 ### Community 458 - "Community 458"
 Cohesion: 0.20
 Nodes (9): 1. What it is, and what it deliberately is not, 2. The join key — local turn truth, and only that, 3. Crash tolerance — and what is *not* relaxed, 4. Two event names bypass `EventType`, 5. Re-hashing — one serializer, never two, 6. Nonce separation — during play, and only during play (D-64, SEC-04), 7. D-61 — one log can legitimately carry two game ids, 8. Zero numeric values introduced (+1 more)
 
 ### Community 459 - "Community 459"
-Cohesion: 0.18
-Nodes (14): canonical_json(), Return the project-wide canonical JSON form (SEC-03).      Keys are sorted rec, digest_declaration(), _hmac_hex(), D-62: Step-0 declaration signing -- digest always, HMAC when a shared secret exi, Payload key names -- mirrors `CommitKey`/`HandshakeKey`., SHA-256 hex digest of the canonical-JSON declaration (D-62, always run)., Digest always; HMAC-SHA256 additionally when *secret* is given.      `signed` is (+6 more)
+Cohesion: 0.25
+Nodes (10): digest_declaration(), _hmac_hex(), D-62: Step-0 declaration signing -- digest always, HMAC when a shared secret exi, Payload key names -- mirrors `CommitKey`/`HandshakeKey`., SHA-256 hex digest of the canonical-JSON declaration (D-62, always run)., Digest always; HMAC-SHA256 additionally when *secret* is given.      `signed` is, Recompute and compare BOTH the digest (always) and the HMAC (only     when both, sign_declaration() (+2 more)
 
 ### Community 460 - "Community 460"
 Cohesion: 0.13
@@ -2063,56 +2069,56 @@ Cohesion: 0.08
 Nodes (17): The four artifact filenames pinned to docs/PARAMETERS.md:165-168, and the `<NN>, Both indexed names count -- a run that wrote log_ but crashed before     config, `durable_write_json` leaves `.prev`/`.tmp` generations beside its     target; c, `game_id` is NEGOTIATED WITH A PEER (D-61), so it is not ours to trust     as a, The index exists so the NEXT write cannot collide, and a directory     occupyin, ANTI-VACUITY GUARD -- every parametrize in this file draws on one of     these, THE NEGATIVE HALF. Without it the check above is shape-only: it would     pass, And the mirror: a builder that forgot `_g<NN>` must not pass either. (+9 more)
 
 ### Community 462 - "Community 462"
-Cohesion: 0.15
-Nodes (15): _mutate(), `shared/league_config.py` -- the loader's happy path, its refusals, and the two, Dry-run play is not a submission; the refusal is scoped to `live`., The absences cannot survive into a scored game unnoticed (rule 49)., docs/PARAMETERS.md:83 -- ~200,000, NEGOTIABLE. Read, never defaulted., Rule 38 is an ABSOLUTE disqualification and the value is a human's.     A config, The invented-value failure in its most reasonable disguise: a guessed     `https, test_a_non_url_slot_value_is_refused_in_both_modes() (+7 more)
+Cohesion: 0.14
+Nodes (19): ReportingMode, load_league_config(), Load and validate config/{police,thief}/league.json.      `mode` is `reporting.j, Path, _mutate(), `shared/league_config.py` -- the loader's happy path, its refusals, and the two, Dry-run play is not a submission; the refusal is scoped to `live`., The absences cannot survive into a scored game unnoticed (rule 49). (+11 more)
 
 ### Community 464 - "Community 464"
 Cohesion: 0.20
 Nodes (9): Deviations from plan, Gates, Phase 05 Plan 14: The Hint Channel Is Correct on Every Supported Path — Summary, Revert probes — all five fail, with real counts, Self-audit findings on my own diff, Self-Check: PASSED, Task 1 — one inbound hint is decoded at most once (`f6bbc0f`, `54619a1`), Task 2 — both branches stamp the turn actually played (`91dbc86`) (+1 more)
 
 ### Community 465 - "Community 465"
-Cohesion: 0.21
-Nodes (17): config_digest(), Return the SHA-256 hex digest of canonical_json(json.loads(path)).      FileNo, Tests for the NET-09 canonical-JSON config digest (D-08, D-15, D-46)., D-46 happy path: matching digests, detail names the check by `name`., THE NET-09 gate test, run against the real repo files., THE point of canonicalisation (RESEARCH Pitfall 5)., test_compare_named_digest_agrees(), test_digest_is_lowercase_sha256_hex() (+9 more)
+Cohesion: 0.19
+Nodes (18): config_digest(), Return the SHA-256 hex digest of canonical_json(json.loads(path)).      FileNo, Tests for the NET-09 canonical-JSON config digest (D-08, D-15, D-46)., D-46 happy path: matching digests, detail names the check by `name`., THE NET-09 gate test, run against the real repo files., THE point of canonicalisation (RESEARCH Pitfall 5)., test_canonical_json_form(), test_compare_named_digest_agrees() (+10 more)
 
 ### Community 466 - "Community 466"
-Cohesion: 0.09
-Nodes (19): The `game_uid` join, the one canonical seal, and D7-1's write refusal.  Split, D7-1 ENFORCED, not merely documented. `.gitignore` ignores `logs/`     wholesal, THE COUNTER-CONTROL for the refusal above: the same call with the one     forbi, The guard runs ahead of `durable_write_json`'s mkdir, so a refused     write le, ANTI-VACUITY GUARD for the one parametrize below., docs/PARAMETERS.md gives `_g<NN>` to config_/log_ only, so only those     two c, One validation, so a header cannot carry an index no filename can., The join docs/PARAMETERS.md:159 requires: one `game_uid` across all     four, a (+11 more)
+Cohesion: 0.08
+Nodes (20): The `game_uid` join, the one canonical seal, and D7-1's write refusal.  Split, D7-1 ENFORCED, not merely documented. `.gitignore` ignores `logs/`     wholesal, THE COUNTER-CONTROL for the refusal above: the same call with the one     forbi, The guard runs ahead of `durable_write_json`'s mkdir, so a refused     write le, ANTI-VACUITY GUARD for the one parametrize below., docs/PARAMETERS.md gives `_g<NN>` to config_/log_ only, so only those     two c, One validation, so a header cannot carry an index no filename can., The join docs/PARAMETERS.md:159 requires: one `game_uid` across all     four, a (+12 more)
 
 ### Community 467 - "Community 467"
 Cohesion: 0.19
 Nodes (18): Path, QuotaManager, FakeWallClock, _manager(), QuotaManager -- the durable hourly ceiling (Figure 13 stage 1, OQ-1).  Every c, The durable_write_json contract, exercised on THIS counter rather than     assu, A settable wall clock. Wall, not monotonic: this counter has to survive     a p, A refusal must not burn quota, or a caller that retries would dig itself     pe (+10 more)
 
 ### Community 468 - "Community 468"
-Cohesion: 0.22
-Nodes (9): default_params(), network_params(), police_network_config(), Shared pytest fixtures for all test waves., 07-00, rules 37/38: no test may advance the shipped games-played     counter. S, Load and return the canonical game parameters from config/police/game_params.jso, Path to config/police/network.json (Waves 1-5 read or copy it)., Load config/police/network.json through the Phase-2 loader.      The import is (+1 more)
+Cohesion: 0.15
+Nodes (14): default_params(), network_params(), police_network_config(), GameParams, GameState, Path, Shared pytest fixtures for all test waves., 07-00, rules 37/38: no test may advance the shipped games-played     counter. S (+6 more)
 
 ### Community 469 - "Community 469"
-Cohesion: 0.14
-Nodes (31): BeliefView, HintView, LocalView, The rules 8-9 read model (D-74): everything a live view may render, and structu, One hint as it was received or sent.      `claimed_intent` is the SENDER's own, One peer's whole renderable truth for one refresh tick.      Frozen so a calle, A posterior over where the opponent MIGHT be, chosen by     `strategy/display_b, Both scent grids (D-49). `own` is this peer's real trail -- local     truth, wh (+23 more)
+Cohesion: 0.10
+Nodes (40): HintKey, Hint payload key constants -- house pattern, mirrors ConfigKey /     EnvelopeKe, BeliefView, HintView, LocalView, The rules 8-9 read model (D-74): everything a live view may render, and structu, One hint as it was received or sent.      `claimed_intent` is the SENDER's own, One peer's whole renderable truth for one refresh tick.      Frozen so a calle (+32 more)
 
 ### Community 470 - "Community 470"
 Cohesion: 0.17
 Nodes (13): declared_keys(), licence_status(), project_section(), Sec17 packaging metadata, and the licence flag that must not go quiet (08-03)., Anti-vacuity: a missing field would make the branch below unreachable., The biconditional. Neither file may change its story without the other., The `[project]` table's own lines, and nothing from any other table., Control: a parser that read the whole file would find `line-length` too. (+5 more)
 
 ### Community 471 - "Community 471"
-Cohesion: 0.07
-Nodes (38): failed_banner(), ratio_detail(), `FAILED` NAMING THE TURN. A viewer that reports failure without saying     whic, `FAILED` for a body that re-hashes turn by turn but whose seal does     not: so, The counts line. Shown under every banner including     `NOTHING_TO_VERIFY`, wh, seal_failed_banner(), check_turn(), check_turns() (+30 more)
+Cohesion: 0.08
+Nodes (36): ratio_detail(), `FAILED` for a body that re-hashes turn by turn but whose seal does     not: so, The counts line. Shown under every banner including     `NOTHING_TO_VERIFY`, wh, seal_failed_banner(), check_turn(), check_turns(), open_replay(), Verify a `log_` artifact and reach ONE of three verdicts (REPORT-09).  Rule 20 (+28 more)
 
 ### Community 472 - "Community 472"
-Cohesion: 0.20
-Nodes (14): belief_adapter(), belief_config(), honest_context(), honest_view(), Shared helpers for the 07-03 rules 8-9 firewall tests (D-74).  Not a `test_*.p, A REAL `AgentContext` holding the engine's true joint position --     which is, The SHIPPED police belief config -- never a hand-built stand-in, so a     test, The SHIPPED police scent model, for the same reason. (+6 more)
+Cohesion: 0.09
+Nodes (20): config(), strategy/deception.py: the dispatcher, and the claims that can never lie.  Rul, The constructor gate is the last line, not the only one., LANG-03 / book Sec5.3.1: the flag is committed in advance. The returned     obj, CLAUDE.md rule 2: no shared live object between the cop and the thief., The structural proof of rule 25 and STRAT-07, run as a unit test as     well as, LANG-01: a turn always carries a hint, so a policy that cannot think of     a g, 05-15 (G10) re-specification of `test_declare_truthfully_builds_the_     always (+12 more)
 
 ### Community 473 - "Community 473"
 Cohesion: 0.11
 Nodes (18): 10. Task Commits, 11. What 07-08, 07-09 and 07-10 must know, 1. The two facts this plan was written around, and what happened to each, 2. The measurement that makes the accumulation a proof, not a claim, 3. Task 1 — the agreement record, and the asymmetry it must not smooth, 4. Task 3 — the watchdog arithmetic, and which containment was chosen, 5. What a real game found that no unit test could have posed, 6. Revert probes — eighteen numbered, twenty-two runs, every count real (+10 more)
 
 ### Community 474 - "Community 474"
-Cohesion: 0.04
-Nodes (103): BaseException, Protocol, FakeClock, A settable monotonic clock -- ``advance()`` moves it forward explicitly., FakeSleep, _params(), Tests for Gatekeeper -- D-34's one door, D-35's budget, QUAL-05's queue.  Happ, Records what was asked to wait, in order; never actually waits. (+95 more)
+Cohesion: 0.14
+Nodes (23): FakeClock, A settable monotonic clock -- ``advance()`` moves it forward explicitly., FakeSleep, _params(), Tests for Gatekeeper -- D-34's one door, D-35's budget, QUAL-05's queue.  Happ, Records what was asked to wait, in order; never actually waits., Test-only LanguageParams. Unoverridden fields keep Table-19-sourced     magnitu, Step 4 of submit()'s order: an empty bucket is awaited, not busy-polled. (+15 more)
 
 ### Community 475 - "Community 475"
-Cohesion: 0.11
-Nodes (22): is_shipped_config_path(), Path, A test tried to write inside the repository's real `config/` tree.      Its own, True when *path* lands inside the repository's real `config/`     directory. Bot, ShippedConfigWriteError, Path, _binds_the_writer(), _module_name() (+14 more)
+Cohesion: 0.12
+Nodes (20): is_shipped_config_path(), Path, True when *path* lands inside the repository's real `config/`     directory. Bot, Path, _binds_the_writer(), _module_name(), D7-18: the shipped-config guard covers the RULE, not one writer.  `config/{polic, The guard has to DISCRIMINATE. A binding that refused every target     would pas (+12 more)
 
 ### Community 476 - "Community 476"
 Cohesion: 0.11
@@ -2120,35 +2126,35 @@ Nodes (18): Addendum — `docs/phases/phase-7/TODO.md`, D7-1 — the decision, a
 
 ### Community 477 - "Community 477"
 Cohesion: 0.12
-Nodes (23): One `LocalView` as the plain tree `view_snapshot.read_snapshot` reads     back., snapshot_payload(), _belief(), _coord(), decode_view(), _grid(), _hint(), _optional_float() (+15 more)
+Nodes (25): One `LocalView` as the plain tree `view_snapshot.read_snapshot` reads     back., snapshot_payload(), _belief(), _coord(), decode_view(), _grid(), _hint(), _optional_float() (+17 more)
 
 ### Community 479 - "Community 479"
 Cohesion: 0.11
 Nodes (18): Deviations from plan, Four holes the self-audit found in my own work, Games-played counters — rule 38, Gates, Issues Encountered, Open, for the plans that own it, Phase 7 Plan 03: The Local-Truth Firewall Summary, Production reachability, grepped (+10 more)
 
 ### Community 481 - "Community 481"
-Cohesion: 0.08
-Nodes (27): DosDetector, Figure 13, composed around the shipped `Gatekeeper` (D-68/D-69)., Reports queued and still owed., ReportingChain, DosDetector, The DOS detector -- stage 3 of the book's Figure-13 chain (rule 29, D-69).  OQ, A latching lock on a runaway outgoing-send loop (rule 29).      `retries_befor, Record one attempt's bucket readiness, read off the gatekeeper seam. (+19 more)
+Cohesion: 0.06
+Nodes (53): DosDetector, The Figure-13 composition (D-69, rules 28-29, REPORT-02).  The book's order, u, Re-attempt everything queued, oldest first, exactly once each.          Explic, Stages 2-4: the bucket (inside `submit`), the observation, the sink., Hold a refused report for the next `drain()`, or alert if full., Why a send did not go out. Every value is caller-handled, never raised., The result of one `send()` or one drained attempt.      `sent` and `refusal` a, Figure 13, composed around the shipped `Gatekeeper` (D-68/D-69). (+45 more)
 
 ### Community 482 - "Community 482"
 Cohesion: 0.11
 Nodes (18): 10. Deviations from Plan, 11. Task Commits, 12. What 07-09 and 07-10 must know, 1. The headline measurement, on a real game with the sources gone, 2. The three states, and why the third one is the plan, 3. Tamper detection, field by field, and why each one reseals, 4. The measurement that matters most: a second serializer, on real data, 5. Rules 8-9 and rule 18 — decided, not assumed (+10 more)
 
 ### Community 483 - "Community 483"
-Cohesion: 0.13
-Nodes (18): FakeClock, mcp_error(), Tests for the NET-06 deadline tracker: wait_for_opponent + call_with_retry.  Tas, A transient failure recovers on the next attempt without escalating., Build a McpError the way the real MCP client raises one., Scripted monotonic readings; deterministic elapsed time., A same-attempt success never retries or sleeps., NET-06 retry-ladder tests: technical win, ToolError, hung opponent, evidence.  T (+10 more)
+Cohesion: 0.16
+Nodes (19): Real per-role `strategy.json` (Phase-3 §10.4 gate tests, QUAL-02) --     the on, strategy_params(), decide(), _observation(), play(), Registry wiring (Task 3, D-43): belief.enabled toggling reproduces Phase 3 exac, A BeliefAdapter gets .decide() (Regime A: the true opponent cell is     always, Unlike Phase 3 (ValueSearchBrain never read obs.target_cell -- the     matrix c (+11 more)
 
 ### Community 484 - "Community 484"
-Cohesion: 0.12
-Nodes (17): Path, `view_builder` as a projection: the ONE reader of `ctx.state` outside the turn, A coordinate-KEYED grid would put every cell on the board into the     view as, Counter-control for the densification: a builder returning an     all-zero boar, True when this module contains a `<anything>.state.<cop|thief|barriers>`     at, D-74: `view_builder` is the ONE place the projection happens., Counter-control for the scan: a module that DOES read `ctx.state.thief`     is, The honest-`None` convention `turn_language.belief_snapshot` already     uses: (+9 more)
+Cohesion: 0.10
+Nodes (19): Path, `view_builder` as a projection: the ONE reader of `ctx.state` outside the turn, A coordinate-KEYED grid would put every cell on the board into the     view as, Counter-control for the densification: a builder returning an     all-zero boar, True when this module contains a `<anything>.state.<cop|thief|barriers>`     at, D-74: `view_builder` is the ONE place the projection happens., Counter-control for the scan: a module that DOES read `ctx.state.thief`     is, The honest-`None` convention `turn_language.belief_snapshot` already     uses: (+11 more)
 
 ### Community 485 - "Community 485"
 Cohesion: 0.21
 Nodes (16): _Board, _canonical(), _play_regime_b(), THE THIEF CONTROL for 07-11's cop-side fix: the thief's published belief and sc, ANTI-VACUITY. The two byte-comparisons above would pass just as well     agains, The substitution keys on PROVENANCE, not on the role name, so a future     path, ANTI-VACUITY FOR THE MECHANISM ITSELF, and the one this plan is most     at ris, Exactly the three attributes `_belief_view`/`_scent_view` read, and     nothing (+8 more)
 
 ### Community 486 - "Community 486"
-Cohesion: 0.10
-Nodes (32): D-15 abort suite: mismatch aborts before move 1, symmetric responder abort, malf, A reply that is not a valid envelope is a protocol violation, NOT connectivity., THE core D-15 / NET-09 / rule-11 assertion., Truthful-evidence assertion (RULES.md; design note 6)., Design note 4 — the responder must not raise, and must still hand back its diges, NET-03 — the responder escalates its OWN machine; it does not wait to be told., test_abort_report_records_both_digests(), test_malformed_peer_reply_is_protocol_violation() (+24 more)
+Cohesion: 0.05
+Nodes (73): McpError, D-15 abort suite: mismatch aborts before move 1, symmetric responder abort, malf, A reply that is not a valid envelope is a protocol violation, NOT connectivity., RESEARCH Pitfall 4 — only McpError means "unreachable"., THE core D-15 / NET-09 / rule-11 assertion., Truthful-evidence assertion (RULES.md; design note 6)., Design note 4 — the responder must not raise, and must still hand back its diges, NET-03 — the responder escalates its OWN machine; it does not wait to be told. (+65 more)
 
 ### Community 487 - "Community 487"
 Cohesion: 0.22
@@ -2175,8 +2181,8 @@ Cohesion: 0.16
 Nodes (17): measured_pair(), The Act 4.3 survival pair, corrected everywhere it is quoted (08-11).  08-09's s, Append-with-correction. A silent overwrite passes the two tests above., Positive and negative control for the one regex the test above trusts., `('32.0%', '7.5%')` -- rendered from the artifact, never typed., `('89%', '1%')` -- the claim being corrected, also read from the artifact., The control: a correction written into an untracked file ships nowhere., A parser that returns nothing would make every assertion below vacuous. (+9 more)
 
 ### Community 493 - "Community 493"
-Cohesion: 0.13
-Nodes (21): The six terminal predicates, in the order RULES-RESOLUTION.md Sec3 fixes.  BOO, The book's condition is about the four adjacent cells, not about STAY.      ST, Sec3.5: the thief survives the agreed number of valid steps., Order matters: a capture landed on the last turn is a capture., The ordinary case: both agents move, nothing terminates., Build a GameState with only the fields a test cares about., Rule 46 / Sec3.4: 'the cell where the thief stands at that moment'., The thief stepped into the cell being sealed -- undefined by the book. (+13 more)
+Cohesion: 0.09
+Nodes (34): is_terminal(), The joint turn resolver -- the single place a turn is applied (D-12 superseded)., True when *outcome* ends the game. Kept as a named predicate so callers     nev, Raise ValueError if either action is illegal from the pre-turn state., Apply both actions to *state* at once and return (new_state, outcome).      Bo, resolve_turn(), _validate(), Coord (+26 more)
 
 ### Community 494 - "Community 494"
 Cohesion: 0.13
@@ -2208,7 +2214,7 @@ Nodes (13): The rules 8-9 firewall (D-74): a serialised `LocalView` cannot carry
 
 ### Community 502 - "Community 502"
 Cohesion: 0.07
-Nodes (28): A defect in a grader-facing extract — rule 48's survival pair, Deferred items #13 and #19, Group 1 — Structure & documentation · 1 GAP  *(was 6; G1-13 closed by 08-07, the three mechanism rows by 08-08, G1-14 by 08-09)*, Group 2 — Architecture & code · 0 GAP  *(was 2; both closed by 08-03)*, Group 3 — Testing & quality · 0 GAP  *(was 1; closed by 08-03)*, Group 4 — Configuration & security · 0 GAP  *(was 3; all three closed by 08-03)*, Group 5 — Research & visualization · 1 GAP  *(was 4; G5-02, G5-03 and G5-05 closed by 08-09)*, Group 6 — Extensibility & standards · 1 GAP  *(was 4; G6-01, G6-02 and G6-05 closed by 08-07)* (+20 more)
+Nodes (29): A defect in a grader-facing extract — rule 48's survival pair, Deferred items #13 and #19, Group 1 — Structure & documentation · 1 GAP  *(was 6; G1-13 closed by 08-07, the three mechanism rows by 08-08, G1-14 by 08-09)*, Group 2 — Architecture & code · 0 GAP  *(was 2; both closed by 08-03)*, Group 3 — Testing & quality · 0 GAP  *(was 1; closed by 08-03)*, Group 4 — Configuration & security · 0 GAP  *(was 3; all three closed by 08-03)*, Group 5 — Research & visualization · 1 GAP  *(was 4; G5-02, G5-03 and G5-05 closed by 08-09)*, Group 6 — Extensibility & standards · 1 GAP  *(was 4; G6-01, G6-02 and G6-05 closed by 08-07)* (+21 more)
 
 ### Community 503 - "Community 503"
 Cohesion: 0.22
@@ -2239,8 +2245,8 @@ Cohesion: 0.11
 Nodes (17): #13 — the toggle-off MOVE turn stamp, #19 — the toggle-off move wait had no type test, Auto-fixed Issues, Byte-identity of the shipped path — measured, not argued, Dependency graph, Deviations from Plan, Gate run, against the orchestrator's baseline, Issues Encountered (+9 more)
 
 ### Community 510 - "Community 510"
-Cohesion: 0.32
-Nodes (7): The early-FINAL_REVEAL buffer (05-17): a peer's published ledger is never lost,, Buffer *envelope* as the peer's Final Reveal, first arrival wins.      The cal, Pop the buffered Final Reveal, or None if none arrived early.      Consuming r, record_final_reveal(), take_final_reveal(), AgentContext, Envelope
+Cohesion: 0.05
+Nodes (40): CallOutcome, push_final_reveal(), Send THIS side's own ledger as one FINAL_REVEAL envelope, via the     SAME call, call_with_retry(), NET-06 deadline tracker: bounded waits, narrow retry ladder, technical win.  RUL, Call send through a bounded, narrow retry ladder (D-13, RESEARCH Pitfall 4)., The early-FINAL_REVEAL buffer (05-17): a peer's published ledger is never lost,, Buffer *envelope* as the peer's Final Reveal, first arrival wins.      The cal (+32 more)
 
 ### Community 511 - "Community 511"
 Cohesion: 0.18
@@ -2251,8 +2257,8 @@ Cohesion: 0.23
 Nodes (11): _called_names(), The hook has a production call site, and it is in the RIGHT place.  WHY THIS G, By AST, so a docstring that names it cannot satisfy this., One call, after the counter and before the return -- the two lines that     def, `stop_watchdog` disarms the freeze detector and `stop_runtime` closes the     s, A second call site would report the same game twice -- two `result_`     rewrit, _source(), test_exactly_one_module_in_src_calls_the_hook() (+3 more)
 
 ### Community 513 - "Community 513"
-Cohesion: 0.29
-Nodes (7): guarded(), install(), THE SEAM that keeps the test suite out of the shipped `config/` tree.  WHY IT EX, Wrap EVERY binding in `DURABLE_WRITE_BINDERS`, returning the names     patched s, Raw snapshot of both shipped counters: file text, or None when the     file is a, Wrap a `durable_write_json`-shaped callable so a shipped-config     target raise, read_counters()
+Cohesion: 0.22
+Nodes (9): guarded(), install(), THE SEAM that keeps the test suite out of the shipped `config/` tree.  WHY IT EX, Wrap EVERY binding in `DURABLE_WRITE_BINDERS`, returning the names     patched s, Raw snapshot of both shipped counters: file text, or None when the     file is a, A test tried to write inside the repository's real `config/` tree.      Its own, Wrap a `durable_write_json`-shaped callable so a shipped-config     target raise, read_counters() (+1 more)
 
 ### Community 514 - "Community 514"
 Cohesion: 0.25
@@ -2263,8 +2269,8 @@ Cohesion: 0.08
 Nodes (25): D7-10 · A `.gitignore` secret pattern can swallow a source or test file silently, D7-11 · `durable_write_json`'s two older copies of the retry/backoff pair are still un-folded, D7-12 · Nothing in `src/` sends a report yet — D7-3, fourth occurrence, D7-13 · One wire log can legitimately carry TWO `game_uid`s (D-61), D7-14 · The `log_` builder has no production caller yet — D7-3, fifth occurrence, D7-15 · `snapshot_path_for` and `ledger_path_for` are two spellings of one sibling convention, D7-16 · A view's own legal cell can collide with the leak scan's reversed-pair branch, D7-17 · `game_id` is minted per GAME, while PARAMETERS reads it as the SERIES id (+17 more)
 
 ### Community 516 - "Community 516"
-Cohesion: 0.13
-Nodes (14): get_provider_class(), The registered class for name.      Raises     ------     ValueError, declared_llm_name(), What this process can ACTUALLY do this game, for the Step-0     declaration --, Tests for provider.py's Protocol/registry and TemplateProvider (D-33, D-52)., grep -rn "raise LlmFailure" src/pursuit/services/llm -- must be empty (D-33)., test_empty_phrases_raises(), test_llm_failure_is_never_raised_in_the_package() (+6 more)
+Cohesion: 0.11
+Nodes (18): get_provider_class(), The registered class for name.      Raises     ------     ValueError, Zero-token, zero-network provider (D-52's book default; D-33's floor).  The ac, Selects one phrase from an injected, non-empty sequence per call.      rng is, Selection only -- the prompts and schema are never read., TemplateProvider, Tests for provider.py's Protocol/registry and TemplateProvider (D-33, D-52)., grep -rn "raise LlmFailure" src/pursuit/services/llm -- must be empty (D-33). (+10 more)
 
 ### Community 517 - "Community 517"
 Cohesion: 0.20
@@ -2279,8 +2285,8 @@ Cohesion: 0.22
 Nodes (8): Components, Interfaces & contracts, Per-mechanism PRDs written this phase, Phase 7 PLAN — Reporting and Visualization Shell, Phase ADRs, Risks, Test plan (TDD), Wave graph
 
 ### Community 520 - "Community 520"
-Cohesion: 0.14
-Nodes (14): McpError, RESEARCH Pitfall 4 — only McpError means "unreachable"., test_tool_error_is_not_swallowed(), raising_caller(), Agreement + connectivity suite for the D-08 handshake (NET-03, NET-09, D-46)., Rule 11 / D-15 end to end on the ACTUAL repo files: both sides really agree., D-08 / startup-skew guard. The peer is not listening yet., Proves design note 3: a second perform_handshake on the SAME machine works. (+6 more)
+Cohesion: 0.13
+Nodes (19): budget_for_params(), The D-35 ladder for a token-spending caller, or ``None`` for one that     spend, Gatekeeper, _mail_gatekeeper(), D-68: ONE gatekeeper class, two shapes of caller -- and Phase 4 cannot tell the, Floors stay in language_config.py's GATEKEEPER_MINIMA; this module is     struc, Success criterion 1: zero tokens, no budget, still a completed call., The vacuity control for the test above: with a budget present, the very     sam (+11 more)
 
 ### Community 521 - "Community 521"
 Cohesion: 0.43
@@ -2291,28 +2297,28 @@ Cohesion: 0.17
 Nodes (18): accessor_key(), bound_module_names(), field_violations(), _is_literal_dunder(), is_package_marker(), is_state_read(), AST, Module (+10 more)
 
 ### Community 523 - "Community 523"
-Cohesion: 0.15
-Nodes (19): get_legal_moves(), Pure board functions: legal-move generation (D-08, D-13).  Stateless and side-, Return all legal destination cells for *agent* in the current state.      Para, load_game_params(), Load and validate game parameters from a game_params.json file.      Parameters, params(), params(), GameParams (+11 more)
+Cohesion: 0.12
+Nodes (21): Direction, Orthogonal movement directions plus stay-in-place.      Each value is a (row_d, get_legal_moves(), Pure board functions: legal-move generation (D-08, D-13).  Stateless and side-, Return all legal destination cells for *agent* in the current state.      Para, GameParams, GameState, GameParams (+13 more)
 
 ### Community 524 - "Community 524"
-Cohesion: 0.17
-Nodes (19): assert_no_remotes(), commit_identity(), copy_files(), _force_writable(), init_and_commit(), Path, Materialising one split repository on disk, outside this tree (08-10, D-76)., Copy every listed path, byte for byte, and return how many were copied. (+11 more)
+Cohesion: 0.14
+Nodes (24): assert_no_remotes(), commit_identity(), copy_files(), _force_writable(), init_and_commit(), prepare_destination(), Path, Materialising one split repository on disk, outside this tree (08-10, D-76). (+16 more)
 
 ### Community 525 - "Community 525"
-Cohesion: 0.15
-Nodes (14): Gatekeeper, _llm_gatekeeper(), The Phase-4 regression guard for 07-01: the LLM gatekeeper instance's EFFECTIVE, C = requests_per_minute, r = requests_per_minute / 60 -- the derivation     ``g, A drift between cop and thief would be an unfair-configuration finding     in i, The LLM instance exactly as ``network/language_wiring.py:160`` builds     it: `, The vacuity guard for the two parametrized tests below. An emptied or     thinn, ``bluff`` refreshes ``degrade_level`` off ``gatekeeper.budget.level``     every (+6 more)
+Cohesion: 0.12
+Nodes (20): _check_degrade_order(), load_language_config(), Load and validate config/{police,thief}/language.json.      Raises     ------, D-35's ladder must be strictly ordered: 0 < short < template <= budget., Gatekeeper, _llm_gatekeeper(), The Phase-4 regression guard for 07-01: the LLM gatekeeper instance's EFFECTIVE, C = requests_per_minute, r = requests_per_minute / 60 -- the derivation     ``g (+12 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.06
-Nodes (45): LogArtifactField, Key names for the log artifact -- structural, avoids magic strings., JoinedGame, One finished game, joined. `turns` is sorted by local turn.      `game_uids` i, CorruptLogError, Reading a possibly-interrupted JSONL file for the `log_` artifact.  Split out, A malformed line that is NOT the file's last line.      Distinct from a partia, What ONE turn of `log_<game_id>_g<NN>.json` contains -- WIRE TRUTH ONLY.  Spli (+37 more)
+Nodes (49): Render the verdict and the turn under the cursor.          The banner is re-re, LogArtifactField, Key names for the log artifact -- structural, avoids magic strings., What ONE turn of `log_<game_id>_g<NN>.json` contains -- WIRE TRUTH ONLY.  Spli, One turn record's key names. `docs/PARAMETERS.md:167` requires     commitments,, Which leg of the exchange a value came off., TurnField, WireSide (+41 more)
 
 ### Community 527 - "Community 527"
 Cohesion: 0.40
 Nodes (4): Open questions blocking parts of execution, Phase 7 TODO — Reporting and Visualization Shell, Phase gate (§10.4), The one human-gated item
 
 ### Community 528 - "Community 528"
-Cohesion: 0.14
-Nodes (19): _play_with_different_uids(), 05-05 Task 2 (D-61, 05-UAT.md G2): one match, one id, across BOTH sides' logs, l, The WIRING assertion, driven through the real production path.      A `candidate, An honest game whose two sides started from different uids must still     audit, run_agent's own sequence, both directions, with DELIBERATELY DIFFERENT     per-s, _read_jsonl(), test_all_four_artifacts_join_on_one_negotiated_id(), test_the_candidate_set_has_two_elements_on_both_roles() (+11 more)
+Cohesion: 0.19
+Nodes (17): deque, _advance(), Two-source Voronoi split and its cell-count / edge-count differences.  Imports `, Split `cells` by whichever of `first`/`second` is strictly closer.      One simu, One BFS layer out of every cell in `frontier`, recording newly     discovered ce, `(cell_diff, edge_diff)` between `first`'s and `second`'s Voronoi sides.      `e, territory_diff(), voronoi_split() (+9 more)
 
 ### Community 529 - "Community 529"
 Cohesion: 0.50
@@ -2335,36 +2341,36 @@ Cohesion: 0.22
 Nodes (8): 1. What it is, 2. OQ-4 — one file per series, emailed after every sub-game, 3. Rule 54 — and why the series total cannot come from `budget.report()`, 4. The honest absences, 5. The seal, 6. Failure posture, 7. Known limit — `game_id` is currently minted per game, not per series (D7-15), PRD — the `result_` artifact (the mandatory emailed report)
 
 ### Community 548 - "Community 548"
-Cohesion: 0.19
-Nodes (10): Tests for BeliefMap: the invariants, both regimes (Task 1, D-48)., _state(), _sum(), test_constructor_seeds_a_uniform_prior(), test_normalisation_holds_after_a_random_predict_update_sequence(), test_observe_exact_collapses_to_a_delta(), test_predict_clips_a_newly_barriered_cells_mass_to_zero(), test_predict_conserves_total_mass() (+2 more)
+Cohesion: 0.18
+Nodes (11): Tests for BeliefMap: the invariants, both regimes (Task 1, D-48)., _state(), _sum(), test_constructor_seeds_a_uniform_prior(), test_normalisation_holds_after_a_random_predict_update_sequence(), test_observe_exact_collapses_to_a_delta(), test_predict_clips_a_newly_barriered_cells_mass_to_zero(), test_predict_conserves_total_mass() (+3 more)
 
 ### Community 550 - "Community 550"
 Cohesion: 0.21
 Nodes (16): _display(), _draw(), load_curve(), main(), _parse(), Namespace, Path, Render the RUN-2 learning curves rule 42 / Sec9.4.2 item 4 ask for (08-06). (+8 more)
 
 ### Community 551 - "Community 551"
-Cohesion: 0.23
-Nodes (12): _handshake(), D-62 follow-up: Step-0 declaration CONTENT verification -- split from test_hands, 05-10, INSTANCE 6 of `audit.py`'s boundary rule, found by sweeping for a     six, Confirms the HMAC branch of verify_declaration is ALSO reached from     this rea, THE actual gap this follow-up closes: content mutated AFTER the     digest was c, An opponent team's own implementation might only ever send a     digest -- we ca, _reply(), test_a_declaration_container_that_is_not_an_object_does_not_kill_us() (+4 more)
+Cohesion: 0.19
+Nodes (17): distinct_start_count(), _draw_pair(), GameParams, GameState, Random, Randomised start-state distribution -- the fix run 1 most needed.  Run 1 playe, Return a start state: the negotiated opening, or a sampled position., Sample a legal mid-game position with partial barriers and a spent clock. (+9 more)
 
 ### Community 552 - "Community 552"
 Cohesion: 0.22
 Nodes (8): 1. What it does, and where it sits, 2. Containment — a reporting failure must not forge a technical loss, 3. The watchdog: 210 s of ladder inside a 60 s threshold, 4. The artifact directory is per role — a rule-35 fix found on a real game, 5. The asymmetry rule 21 creates, carried honestly, 6. Wire truth only, 7. The third artifact — `declaration_<game_id>.json` (08-04), PRD — the game-end reporting hook
 
 ### Community 553 - "Community 553"
-Cohesion: 0.13
-Nodes (18): language_turn_record(), The Task-3 per-turn language snapshot: the whole language channel,     once per, audit_verdict_record(), language_record(), ledger_entry(), over_record(), Synthetic wire-log + ledger pairs for the `log_` artifact tests.  Not a `test_, One real `{turn, h_commit, payload}` ledger record. (+10 more)
+Cohesion: 0.12
+Nodes (20): language_turn_record(), The Task-3 per-turn language snapshot: the whole language channel,     once per, audit_verdict_record(), language_record(), ledger_entry(), over_record(), Synthetic wire-log + ledger pairs for the `log_` artifact tests.  Not a `test_, One real `{turn, h_commit, payload}` ledger record. (+12 more)
 
 ### Community 554 - "Community 554"
-Cohesion: 0.11
-Nodes (25): axis_signs(), `(row_sign, col_sign)` for `origin`.      Negate the row axis for a bottom-* c, Coord, hint_likelihood(), _implied_distribution(), hint_likelihood: turning a decoded Inference into a Bayes likelihood grid, weig, How far `cell` sits toward `direction`, resolved against the     negotiated axi, Return the D-40 hint likelihood over a `board_size` x `board_size`     grid. (+17 more)
+Cohesion: 0.19
+Nodes (15): make_freeze_handler(), make_transition_reporter(), D-61's game identity: the ONE id a whole match runs under, and the mutable bind, NET-05 sink: every illegal transition persists to the JSONL log (D-11)     and, NET-07 sink (RESEARCH Pitfall 6): writes and fsyncs (via append_event)     a wa, Resolve `(log_path, game_uid)` AT CALL TIME. `identity is None` -- the     defa, _sink(), Path (+7 more)
 
 ### Community 555 - "Community 555"
-Cohesion: 0.06
-Nodes (56): Real per-role `strategy.json` (Phase-3 §10.4 gate tests, QUAL-02) --     the on, strategy_params(), decide(), _observation(), play(), Registry wiring (Task 3, D-43): belief.enabled toggling reproduces Phase 3 exac, A BeliefAdapter gets .decide() (Regime A: the true opponent cell is     always, Unlike Phase 3 (ValueSearchBrain never read obs.target_cell -- the     matrix c (+48 more)
+Cohesion: 0.09
+Nodes (44): ABC, _inside_git_work_tree(), _load_check_module(), _network_diff_snapshot(), _observation(), _params_for(), _play_full_game(), GATE-3 / E10 + E2 -- pluggable, separate, algorithm-decided (STRAT-03/07, PRD § (+36 more)
 
 ### Community 556 - "Community 556"
-Cohesion: 0.26
-Nodes (12): MonkeyPatch, Path, Integration tests: load_language_config() wires in model-group validation (04-0, 04-10: the emission side's word limit is validated on the same path     every o, A provider of claude_api with no key set is not a load-time error (D-33)., test_bad_provider_name_fails_at_load_naming_the_key(), test_empty_model_id_fails_at_load_through_the_full_file(), test_every_n_steps_zero_is_rejected_through_load() (+4 more)
+Cohesion: 0.13
+Nodes (23): MonkeyPatch, Path, Path, Integration tests: load_language_config() wires in model-group validation (04-0, 04-10: the emission side's word limit is validated on the same path     every o, A provider of claude_api with no key set is not a load-time error (D-33)., test_bad_provider_name_fails_at_load_naming_the_key(), test_empty_model_id_fails_at_load_through_the_full_file() (+15 more)
 
 ### Community 557 - "Community 557"
 Cohesion: 0.14
@@ -2395,8 +2401,8 @@ Cohesion: 0.12
 Nodes (16): Auto-fixed issues, Counters (rule 38), Dependency graph, Deviations from Plan, `docs/PRD_sdk.md`, `docs/PRD_tunnel.md`, GAP movement — row by row, Gates (+8 more)
 
 ### Community 564 - "Community 564"
-Cohesion: 0.14
-Nodes (15): barrier_cells(), cop_actions(), Action spaces for one simultaneous turn (RULES-RESOLUTION.md Sec2).  Both agen, Return every legal thief destination from the pre-turn state.      STAY is alw, Return every legal barrier target: the cop's own cell plus its 4 neighbours., Return every legal cop action: moves first, then barrier placements.      Move, thief_actions(), GameParams (+7 more)
+Cohesion: 0.25
+Nodes (5): Tests for `turn_resolve.py`'s D-66/SEC-07 additions: `record_action`'s optional, SEC-07: a barrier that fails is_legal (here: quota already     exhausted) reject, test_decode_revealed_action_composite_with_a_legal_barrier(), test_decode_revealed_action_rejects_an_illegal_forged_barrier(), test_record_action_builds_a_barrier_cop_action_never_both_fields()
 
 ### Community 566 - "Community 566"
 Cohesion: 0.12
@@ -2407,12 +2413,12 @@ Cohesion: 0.20
 Nodes (18): _count(), cross_link_row(), disjoint_history_row(), git_rows(), no_remote_row(), overall(), Check, Path (+10 more)
 
 ### Community 568 - "Community 568"
-Cohesion: 0.12
-Nodes (22): Decision, GameState, Observation, clear_caches(), cut_vertices(), distances(), passable(), passable_for_cop() (+14 more)
+Cohesion: 0.10
+Nodes (31): Decision, GameState, Observation, clear_caches(), distances(), passable(), passable_for_cop(), Memoised free-cell graph measurements -- the throughput-critical layer.  The e (+23 more)
 
 ### Community 569 - "Community 569"
-Cohesion: 0.14
-Nodes (22): collect(), main(), Every mermaid diagram in the tracked docs: does it parse, and does every module, A label resolves when it is a tracked file or a tracked directory., (blocks, structural problems, unresolved labels) over every tracked doc., _resolves(), code_items(), _docstring_row() (+14 more)
+Cohesion: 0.17
+Nodes (18): code_items(), _docstring_row(), _exports_row(), _gatekeeper_row(), _line_limit_row(), line_limit_scope(), _packages(), Sec17 group 2 -- architecture and code -- measured, not reviewed (08-01).  TWO O (+10 more)
 
 ### Community 570 - "Community 570"
 Cohesion: 0.25
@@ -2440,7 +2446,7 @@ Nodes (17): Accomplishments, Auto-fixed Issues, Decisions Made, Dependency graph
 
 ### Community 577 - "Community 577"
 Cohesion: 0.16
-Nodes (15): build_offer(), Build this agent's outbound/reply handshake envelope (D-06, D-46, D-61/D-62)., Wire-shape suite for the D-08 handshake envelope (D-06, D-46).  Isolated from, The key names are a fixed vocabulary (D-46) -- a typo here cannot silently produ, Pre-migration call sites (no local_scent_digest) build a legal, config-only offe, THE Task-1 gate: exactly the two documented keys, no others, once a scent digest, build_offer never grows a new envelope-level key -- only PAYLOAD carries the sec, Both digests survive a full wire round-trip; Envelope's REQUIRED_KEYS check (unt (+7 more)
+Nodes (15): collect(), main(), Every mermaid diagram in the tracked docs: does it parse, and does every module, A label resolves when it is a tracked file or a tracked directory., (blocks, structural problems, unresolved labels) over every tracked doc., _resolves(), is_tracked(), Shared vocabulary for the Sec17 + Table-5 submission audit (08-01).  THE AUDIT I (+7 more)
 
 ### Community 578 - "Community 578"
 Cohesion: 0.33
@@ -2475,8 +2481,8 @@ Cohesion: 0.18
 Nodes (14): Block, block_problems(), by_marker(), _delimiter_problems(), extract_blocks(), module_labels(), Mermaid block extraction and well-formedness, for the Sec17 diagram rows (08-07), Marked blocks keyed by their marker. Unmarked blocks are dropped. (+6 more)
 
 ### Community 586 - "Community 586"
-Cohesion: 0.07
-Nodes (32): AlwaysFailingSink, no_wait(), played_game(), One real two-peer game, its audit, and its real Step-0 declaration -- everythin, A transport that never delivers. Every attempt raises, which is exactly     wha, `Gatekeeper`'s injected sleep seam, wired to nothing., The police seat of `played_seats` -- the four things one process holds., The hook's containment boundary, given REAL causes.  WHY THIS FILE EXISTS AT A (+24 more)
+Cohesion: 0.06
+Nodes (38): AlwaysFailingSink, no_wait(), played_game(), played_seats(), One real two-peer game, its audit, and its real Step-0 declaration -- everythin, A transport that never delivers. Every attempt raises, which is exactly     wha, `Gatekeeper`'s injected sleep seam, wired to nothing., A finished, audited game, from BOTH seats.      Returns `[(cfg, ctx, outcome, (+30 more)
 
 ### Community 587 - "Community 587"
 Cohesion: 0.17
@@ -2495,12 +2501,12 @@ Cohesion: 0.16
 Nodes (17): coverage_floor(), GateOutputError, parse_coverage(), parse_pytest(), Check, Path, Running the Table-5 gates inside a built split repository (08-10).  THE GATES AR, A gate produced output no parser recognised. Never silently a zero. (+9 more)
 
 ### Community 591 - "Community 591"
-Cohesion: 0.18
-Nodes (15): FakeReporter, Records every reporter call. Mirrors 02-03's TransitionReporter Protocol., D-62 Step-0 digest-presence suite + D-61 game_id negotiation for the D-08 handsh, Evidence, not just success -- an abort report still names what     game_id the p, Local envelope builder carrying an optional STEP0_DIGEST/GAME_ID key., The core D-62 correction: unlike scent, step0 is presence-only., Case: we opted in, the peer's reply carries no step0 key at all --     rule 24's, Mirrors scent's own opt-out test: a call site not passing     local_step0_digest (+7 more)
+Cohesion: 0.23
+Nodes (16): _launch(), measure_replay(), _nothing_to_verify(), Path, Sec10.4 criterion 3 -- the replay app reconstructs a recorded round and shows `V, A live wire log by name: refused before any Tk root is built (rule 18).      The, Criterion 3's evidence, on the SAME real game criterion 2 measured., One committed turn's `move` swapped for another LEGAL direction --     `scripts/ (+8 more)
 
 ### Community 592 - "Community 592"
-Cohesion: 0.16
-Nodes (18): _parse(), `.planning/REQUIREMENTS.md`'s gate, and the hole its own probe found (08-02).  T, An undeclared row can never disagree with the checkboxes., PROBE 1 -- the case the first version of this gate let through., Rule 38 cuts both ways -- understating is a violation too., `**evidence:**` means satisfied; an open row uses `**status:**`., test_a_tick_citing_a_missing_artifact_fails(), test_a_tick_quoting_absent_text_fails() (+10 more)
+Cohesion: 0.15
+Nodes (16): _collect_cpu(), collect_declaration(), _collect_gpu(), GamesPlayedField, _git_commit_hash(), D-63: Step-0 declaration auto-collect + the persisted games-played counter.  Eve, Rule 37: the counter BEFORE this game. `0` for a fresh team/role, or     on any, Rule 37/38: increment by exactly one, durably, at game end only. (+8 more)
 
 ### Community 593 - "Community 593"
 Cohesion: 0.25
@@ -2515,8 +2521,8 @@ Cohesion: 0.12
 Nodes (16): Decisions Made, Deviations from Plan, Findings the outline did **not** predict, Findings the outline predicted, re-derived here, Issues Encountered, Mutation proofs — one counter-control per group, Next Phase Readiness, Performance (+8 more)
 
 ### Community 596 - "Community 596"
-Cohesion: 0.16
-Nodes (14): accumulate_series(), empty_series(), A series that has measured nothing yet -- all four totals at zero and     `game, THE REPORT-07 ARITHMETIC: the previous file's series total PLUS this     game's, _artifact(), The `result_` artifact's defensive branches, each given a REAL cause.  Two of, A corrupt list slot must not append this game onto a string., The post-write seal check, given a real cause: a body edited after its     dige (+6 more)
+Cohesion: 0.19
+Nodes (15): CallResult, _boom(), _gatekeeper(), _ladder_params(), _ok(), D-35's statement ORDER inside ``Gatekeeper.submit()`` -- the contract with no t, (b) The last exception surfaces, ``calls`` stays 0 because settle()     never r, (c) The failure path is the one that would raise AttributeError if the     None (+7 more)
 
 ### Community 597 - "Community 597"
 Cohesion: 0.18
@@ -2531,8 +2537,8 @@ Cohesion: 0.12
 Nodes (15): Before and after, Decisions Made, Deviations from Plan, Issues Encountered, Next Phase Readiness, Performance, Phase 8 Plan 02: Project-Wide Tracker Reconciliation Summary, Plan provenance — no `08-02-PLAN.md` exists (+7 more)
 
 ### Community 600 - "Community 600"
-Cohesion: 0.15
-Nodes (13): _count(), game_tokens(), `result_<game_id>.json`'s key names, its two honest-absence markers, the series, The sealed sub-object, named ONCE so the builder and the verifier can     never, THIS game's spend, or the honest absence marker.      `budget` is `ctx.languag, A non-negative-safe integer read. `bool` is excluded explicitly: it is     an `, Top-level key names -- structural, avoids magic strings., One sub-game's entry. `commit_hash` is carried PER SUB-GAME because     docs/PA (+5 more)
+Cohesion: 0.12
+Nodes (14): CallResult, _ok(), A mail-shaped call: no token concept, so 0 for both (CallResult docs)., DosDetector -- OQ-2's structural latch (Figure 13 stage 3, rule 29).  The thre, The boundary control. Without it, `test_latches...` would pass against a     de, A burst the rate limiter absorbs is not an attack., Rule 29's sanction is an interface lock -- there is no unlock and no     timeou, An empty parametrize list SKIPS silently. Assert the table has cases     before (+6 more)
 
 ### Community 601 - "Community 601"
 Cohesion: 0.13
@@ -2555,8 +2561,8 @@ Cohesion: 0.17
 Nodes (15): _declaration_of_a_real_game(), _parameters_row(), A REAL game writes a REAL `declaration_<game_id>.json`, and its keys are checked, Measured, not stamped: both values must be timestamps this game really     wrote, The `declaration_<game_id>.json` row of PARAMETERS' artifact table., ANTI-VACUITY GUARD. Every key assertion below is worth nothing if the     docume, THE TEST THAT MATTERS. Read off disk, not off the return value., Rule 49 wants FOUR links in both teams' JSON. None exists until a human     crea (+7 more)
 
 ### Community 606 - "Community 606"
-Cohesion: 0.10
-Nodes (22): ReportingMode, absent_slot(), LeagueKey, league.json's key names, rule 49's FOUR repo slots, and the placeholder refusal, Field names for config/{police,thief}/league.json. Structural only., The stated-absence marker for one unfilled slot, naming the owning plan., One slot. `None` is a stated absence; a string must look like an address., Validate one group of slots and return `{slot: url-or-None}`.      Every named (+14 more)
+Cohesion: 0.15
+Nodes (11): absent_slot(), The stated-absence marker for one unfilled slot, naming the owning plan., _for_declaration(), LeagueParams, Fail-loud config loader for league.json -- the league-day IDENTITY values `docs/, `token_ceiling`, refused rather than defaulted when it is unusable., Typed, immutable container for every value `load_league_config` reads.      `rep, Every still-unfilled slot, as `group.slot`. Empty is league-ready. (+3 more)
 
 ### Community 607 - "Community 607"
 Cohesion: 0.13
@@ -2575,28 +2581,28 @@ Cohesion: 0.25
 Nodes (12): _gap_row(), _pass_row(), The Sec17 audit's three-state exit contract (08-01).  THE LOAD-BEARING CASE IS E, UNJUDGED is not a pass, so a report made of them judged nothing., A run with real GAPs but an empty inventory is exit 2, never exit 1., test_all_pass_is_exit_zero(), test_counts_are_exhaustive(), test_empty_inventory_outranks_gaps() (+4 more)
 
 ### Community 611 - "Community 611"
-Cohesion: 0.09
-Nodes (28): build_config_artifact(), ConfigArtifactField, `config_<game_id>_g<NN>.json` -- "the agreed configuration: every numeric param, Assemble `config_<game_id>_g<NN>.json`'s content for one config dir.      The, Read a written config artifact back and check its own seal.      Not a tautolo, Build, durably write, then re-read and re-check the seal.      Writing goes th, Key names for the config artifact -- structural, avoids magic strings., Read one shipped config file verbatim.      `json.loads` on an explicitly utf- (+20 more)
+Cohesion: 0.17
+Nodes (16): build_config_artifact(), ConfigArtifactField, `config_<game_id>_g<NN>.json` -- "the agreed configuration: every numeric param, Assemble `config_<game_id>_g<NN>.json`'s content for one config dir.      The, Read a written config artifact back and check its own seal.      Not a tautolo, Build, durably write, then re-read and re-check the seal.      Writing goes th, Key names for the config artifact -- structural, avoids magic strings., Read one shipped config file verbatim.      `json.loads` on an explicitly utf- (+8 more)
 
 ### Community 612 - "Community 612"
-Cohesion: 0.12
-Nodes (19): is_tracked(), Item, Shared vocabulary for the Sec17 + Table-5 submission audit (08-01).  THE AUDIT I, Tracked, not merely present. An untracked file cannot reach a grader., Process exit codes -- structural, never a game parameter., One Sec17 / Table-5 row and the measurement behind its verdict.      `fix_path`, A Sec17 item no script can see. Never PASS -- see the module docstring., SubmissionExit (+11 more)
+Cohesion: 0.23
+Nodes (12): A Sec17 item no script can see. Never PASS -- see the module docstring., unjudged(), _ci_row(), _coverage_row(), _floor_row(), Sec17 group 3 -- testing and quality (08-01).  THE COVERAGE PERCENTAGE IS NOT GU, Group 3's rows. Two are measured only when the suite is actually run., Sec17 names "automated test reports" as a deliverable, not as a CI log line. (+4 more)
 
 ### Community 613 - "Community 613"
 Cohesion: 0.22
 Nodes (9): _controls(), _load_allowlist(), _provider_match(), The credential scan behind G4-02, split from `submission_security.py` (08-01)., The scanner run over synthetic values built here, not stored here., Every tracked text file, classified into the two pattern classes., One whole-tree scan, with every count the row needs to be non-vacuous., scan_tracked_set() (+1 more)
 
 ### Community 614 - "Community 614"
-Cohesion: 0.13
-Nodes (21): _audit_one(), audit_peer_records(), _missing_turns(), D-67: the Final-Reveal mutual audit.  Hash-verifying a revealed `{state,move,i, Per-entry checks, in order; the FIRST failing check's detail is     reported --, Rule 36 coverage check: a turn watched FULLY exchanged (committed     AND revea, Audit every `peer_records` entry (`{"turn","h_commit","payload":     {"state",", AuditRecord (+13 more)
+Cohesion: 0.17
+Nodes (13): _genuine(), 05-10: every shape a PEER can put in a FINAL_REVEAL reaches a verdict.  `audit_p, Distinguishable from `{"records": []}` on purpose: coercing an     unreadable co, THE side door: if the coverage check bailed on any malformed entry, a     peer w, JSON has no int/float distinction, and the shipped audit handled `3.0`     corre, The same fixture shape `test_audit_coverage.py` builds, via a REAL     `commit_p, test_a_records_container_that_is_not_a_list_is_one_named_mismatch(), test_an_unusable_join_key_is_a_named_mismatch_not_a_crash() (+5 more)
 
 ### Community 615 - "Community 615"
 Cohesion: 0.18
 Nodes (10): 0. Before anything — the two blockers, 1. Rebuild the two outputs — CHECK, 2. Re-cut the tag in each output — CHECK, 3. Create the two public repositories — **HUMAN**, 4. Add a remote and push — **HUMAN**, 5. Fill the four real links — **HUMAN**, then CHECK, 6. Re-run the publication scan against the pushed trees — CHECK, 7. Send the D7-17 question to the lecturer — **HUMAN** (+2 more)
 
 ### Community 616 - "Community 616"
-Cohesion: 0.12
-Nodes (29): _ruff_row(), judge(), Every path `git ls-files` reports, POSIX-separated, sorted.      Cached: the aud, A subprocess's exit code and combined output, never raising on failure., PASS/GAP from one measured boolean. `fix_path` is carried on both so a     row t, run(), tracked_files(), _doc_row() (+21 more)
+Cohesion: 0.27
+Nodes (14): judge(), PASS/GAP from one measured boolean. `fix_path` is carried on both so a     row t, _doc_row(), _experiments_row(), _history_row(), _iso_characteristics(), _iso_row(), _notebook_row() (+6 more)
 
 ### Community 617 - "Community 617"
 Cohesion: 0.22
@@ -2623,8 +2629,8 @@ Cohesion: 0.20
 Nodes (13): Path, A synthetic `gui/` tree -- the counter-control every clean verdict in     these, write_tree(), `scripts/check_local_truth.py`: the structural half of the rules 8-9 firewall,, The root is not a stray path: 07-06 creates exactly this package., The counter-control for the gate: it does not simply always report., A gate whose allowlist silently emptied would flag the replay     viewer's own, test_a_clean_tree_passes_and_prints_the_module_count() (+5 more)
 
 ### Community 624 - "Community 624"
-Cohesion: 0.33
-Nodes (9): _fix_path(), Item, Table 5 (Sec19.1) -- the hard summary -- reported WITHOUT re-measuring anything, The worst verdict among the cited rows, and the evidence naming them., Where the cited row says its own repair lands -- never re-invented here., Table 5's thirteen rows, twelve of them cited from the Sec17 measurements., table5_items(), _version_row() (+1 more)
+Cohesion: 0.23
+Nodes (11): Item, One Sec17 / Table-5 row and the measurement behind its verdict.      `fix_path`, _fix_path(), Item, Table 5 (Sec19.1) -- the hard summary -- reported WITHOUT re-measuring anything, The worst verdict among the cited rows, and the evidence naming them., Where the cited row says its own repair lands -- never re-invented here., Table 5's thirteen rows, twelve of them cited from the Sec17 measurements. (+3 more)
 
 ### Community 625 - "Community 625"
 Cohesion: 0.22
@@ -2695,16 +2701,20 @@ Cohesion: 0.23
 Nodes (11): hint_rounds(), main(), Measures what the shipped prompts actually produced, per remote round (08-09, Se, Print the block, so the document is never hand-typed., The negotiated hint word limit the prompt is parameterised by., Per remote round: every hint sentence it carried, in file order., One round's counts. `texts` is kept so a reader can check the calls., The generated block `docs/PROMPT_LOG.md` embeds. (+3 more)
 
 ### Community 642 - "Community 642"
-Cohesion: 0.21
-Nodes (10): load(), Loader for the `scripts/submission_*.py` audit modules (08-01).  Loaded BY PATH,, Import `scripts/<module_name>.py` under its own name.      `scripts/` is prepend, _mini_source(), The split-build driver, exercised end to end on a miniature repository (08-10)., Re-deriving per role would let a mid-build edit land in one repo only., test_both_outputs_are_built_from_one_manifest_and_one_timestamp(), test_build_one_produces_a_committed_repository_with_the_banner() (+2 more)
+Cohesion: 0.33
+Nodes (7): _mini_source(), The split-build driver, exercised end to end on a miniature repository (08-10)., Re-deriving per role would let a mid-build edit land in one repo only., test_both_outputs_are_built_from_one_manifest_and_one_timestamp(), test_build_one_produces_a_committed_repository_with_the_banner(), test_the_built_repository_has_one_commit_and_no_remote(), test_verify_one_returns_a_row_per_property_and_never_an_empty_list()
+
+### Community 643 - "Community 643"
+Cohesion: 0.13
+Nodes (4): load(), Loader for the `scripts/submission_*.py` audit modules (08-01).  Loaded BY PATH,, Import `scripts/<module_name>.py` under its own name.      `scripts/` is prepend, The rule-49 cross-link block a split repository's README carries (08-10).  THE C
 
 ### Community 645 - "Community 645"
 Cohesion: 0.18
 Nodes (10): A contradiction this sweep found, and did not resolve, Effect ranking, Fixed parameters the sweep did NOT vary, Negotiable parameters this sweep could not measure, Per-matchup detail, Read these limits first, Related, Sensitivity analysis (+2 more)
 
 ### Community 646 - "Community 646"
-Cohesion: 0.04
-Nodes (42): FakeReporter, FakeRuntime, FakeWatchdog, Shared network-layer test doubles + the AgentContext assembly helper (QUAL-02 a, Stands in for 02-06's PeerRuntime. Owns a real asyncio.Queue -- nothing     els, Records every illegal-transition report (NET-05), never touches disk., Stands in for 02-04's Watchdog. No real thread, no real clock., Tests for the 06-02 AgentContext split (agent_context.py): the new `security`/`c (+34 more)
+Cohesion: 0.05
+Nodes (30): FakeReporter, FakeRuntime, FakeWatchdog, Stands in for 02-06's PeerRuntime. Owns a real asyncio.Queue -- nothing     els, Records every illegal-transition report (NET-05), never touches disk., Stands in for 02-04's Watchdog. No real thread, no real clock., Tests for the 06-02 AgentContext split (agent_context.py): the new `security`/`c, security has NO default -- every construction site must be explicit     (06-02 m (+22 more)
 
 ### Community 647 - "Community 647"
 Cohesion: 0.25
@@ -2723,32 +2733,32 @@ Cohesion: 0.36
 Nodes (7): _adopted(), _Ctx, 05-05 Task 3, the WIRING half -- split from test_audit_state_binding.py at the, The fields `adopt_negotiated_game_id` actually touches., WIRING ASSERTION, not a unit case. The convention-swap control below     is VAC, _Result, test_the_production_path_builds_a_two_element_set_on_both_roles()
 
 ### Community 651 - "Community 651"
-Cohesion: 0.39
-Nodes (7): 05-14 G8: both branches stamp the turn ACTUALLY PLAYED -- on the `commit_reveal, Both sides, one assertion each, and the SECOND MOVER is the one that     used t, The stamp is only worth fixing if the number the PEER durably     records is th, _sent_hint_turns(), test_neither_side_stamps_a_hint_for_a_turn_it_has_not_played(), test_the_peer_receives_the_corrected_numbers_on_the_wire(), _toggled_off()
+Cohesion: 0.15
+Nodes (8): Cumulative token budget with a graded degrade ladder (D-35).  ``TokenBudget``, Current degrade level -- never regresses within this instance's life., A plain, ``json.dumps``-serializable spend summary for the league email., Cumulative spend tracker for one token-budget series (D-35).      ``token_budg, Optimistically count ``estimated_tokens`` before the call runs., Reconcile one call's real usage against its own prior ``reserve()``., Recompute the level from the current total; ratchet forward only., TokenBudget
 
 ### Community 652 - "Community 652"
-Cohesion: 0.39
-Nodes (7): Tests for belief.json's `hint_likelihood` group (04-09, D-40) -- the fixed mixi, D-40's asymmetry, enforced by the loader: a config that lets a hint     outweig, test_hint_weight_at_or_above_scent_weight_raises_naming_both_keys(), test_hint_weight_out_of_lower_range_raises(), test_missing_hint_likelihood_group_raises(), test_missing_hint_weight_key_raises(), _write_variant()
+Cohesion: 0.22
+Nodes (13): build_declaration(), declares_capture(), Rule 21's Capture Claim, on the wire (05-15, gap G10).  Book Sec3.5 p.22 Table, Log a peer's inbound Capture Claim as received evidence.      Called from `age, True when THIS side owes the Capture Claim for *outcome*.      Two conditions,, The Capture Claim envelope, read straight off the resolved outcome., Declare the capture to the peer, once, on the capturing turn.      A no-op for, record_received_declaration() (+5 more)
 
 ### Community 653 - "Community 653"
-Cohesion: 0.22
-Nodes (8): BeliefToggleParams, Typed container + validation for belief.json's `belief` group (Task 3): the ada, Typed, immutable container for belief.json's `belief` group. Never     construc, Return data[key] as bool; raise TypeError if it is not one.      Raises     -, Return data[key] as int, or None when the JSON value is null.      Raises, require_bool(), require_optional_int(), Path
+Cohesion: 0.19
+Nodes (13): _check_label(), fixed_parameters(), parameter_status(), What `docs/PARAMETERS.md` says a parameter's status is, and the two refusals th, Fail when a `minimum` knob is swept below the value the repo ships.      Only, Compare tuples by their first element -- the joint horizon knob., Every `[bracketed]` Appendix F parameter mapped to its status.      Raises whe, The labels no sweep may vary, in document order. (+5 more)
 
 ### Community 654 - "Community 654"
-Cohesion: 0.53
-Nodes (5): Tests for belief.json's `reliability` group (04-09, D-51) -- the bounds `strate, test_missing_reliability_group_raises(), test_missing_reliability_key_raises(), test_reliability_out_of_range_fields_raise(), _write_variant()
+Cohesion: 0.18
+Nodes (10): GameParams, Random, ResolutionRules, _param(), ValueSearchBrain: solve the turn's matrix game, then sample the equilibrium., Reseed the draw for a new game, so the log can reproduce it exactly., Resolve an optional StrategyParams field, tolerating params=None., Resolve the weight vector from StrategyParams, falling back to the prior. (+2 more)
 
 ### Community 655 - "Community 655"
-Cohesion: 0.20
-Nodes (9): display_floors(), geometric_inversion(), grid_argmax(), Drive a belief the way PRODUCTION drives it, and try to invert what gets publis, The SHIPPED publication floors (`belief.json`'s `display` group).      Read fr, Every cell in a dense row-major grid carrying strictly positive mass., The strongest cell in a dense row-major grid, ties broken row-major --     matc, Every board cell within one legal step of EVERY cell in `support`.      THE AT (+1 more)
+Cohesion: 0.26
+Nodes (12): Envelope, _capture_claim(), _final_reveal(), agent_audit_exchange.receive_final_reveal: which envelope actually IS the peer', The drop POLICY is unchanged -- only the "what counts as the     FINAL_REVEAL", The no-regression control: the ordinary path must be byte-equivalent     to pre, THE 05-15 case. Pre-fix this returned `([], None)` -- the peer's real     ledge, Rule 21's declaration is only evidence if both sides' logs carry it. (+4 more)
 
 ### Community 656 - "Community 656"
-Cohesion: 0.38
-Nodes (6): played_seats(), A finished, audited game, from BOTH seats.      Returns `[(cfg, ctx, outcome,, Rule 35: TWO seats sharing one repository must produce TWO separate reports., The asymmetry rule 21 creates, carried honestly rather than smoothed:     only, test_each_seat_reports_its_own_outcome_and_its_own_agreement(), test_two_seats_sharing_one_artifact_root_write_two_separate_reports()
+Cohesion: 0.24
+Nodes (12): `GATE-8-MEASUREMENT.md` may not drift from what was measured (08-11).  The gate, The anti-drift check. Hand-editing the prose fails; re-running fixes it., A criterion whose verdict is the single word PASS would defeat the test above., Control for the regex above, both directions., test_every_human_owner_is_named(), test_every_measured_verdict_string_appears_verbatim_in_the_record(), test_the_pending_detector_would_notice_a_softened_status(), test_the_record_and_the_evidence_json_are_both_tracked() (+4 more)
 
 ### Community 657 - "Community 657"
-Cohesion: 0.33
-Nodes (9): Tests for belief.json's `belief` group (04-11, D-43) -- the adapter's own on/of, A missing/null seed is NOT an error (module docstring): the caller     derives, test_enabled_wrong_type_raises(), test_missing_belief_group_raises(), test_missing_enabled_key_raises(), test_missing_seed_key_raises(), test_seed_null_is_accepted_as_none(), test_seed_wrong_type_raises() (+1 more)
+Cohesion: 0.21
+Nodes (11): Instance SIX of the envelope-boundary class -- CLOSED and pinned (05-18, 08-05)., The property that must not have been traded away for the type test., THE ROW THAT IS NOT #19, pinned so it is never mistaken for it.      `envelope_o, Whether one well-formed arrival of *message_type* makes this side accuse     the, ANTI-VACUITY. An emptied FOREIGN tuple would make the closure assertion     belo, #19, CLOSED. Asserted on BOTH toggle settings: the shipped path must     never r, test_a_buffered_hint_still_costs_the_peer_nothing(), test_a_malformed_move_is_still_rejected_as_a_malformed_move() (+3 more)
 
 ### Community 658 - "Community 658"
 Cohesion: 0.29
@@ -2763,8 +2773,8 @@ Cohesion: 0.31
 Nodes (8): HandshakeDigestResult, measure_decay_law(), measure_handshake_digest(), AgentConfig, GATE-4 criterion 2: the locked scent decay law, verified against the shipped `S, Emit once at `_SOURCE_CELL`, decay-only for `_DECAY_ONLY_TURNS`     turns (no r, The exact digest both real peers compute and exchange at handshake     (`agent_, ScentDecayResult
 
 ### Community 661 - "Community 661"
-Cohesion: 0.36
-Nodes (7): _envelope_types(), _events(), GATE-6 core: the D-58 both-locked Commit-Ack-Reveal exchange, proven end to end, §10.4 criterion 1: the four phases run, commit then reveal with a     valid non, D-65/D-66: `security.commit_reveal=False` is the exact pre-Phase-6     wire --, test_full_game_commits_acks_reveals_with_the_both_locked_gate(), test_toggle_off_is_byte_equivalent_to_pre_phase_6()
+Cohesion: 0.25
+Nodes (10): §10.4 gate criterion 1 (GATE-1): "A geometric message sent by agent A over local, The wire shares no `type` key (the tool name already carries the     kind, D-06), Compose a type=move Envelope and deliver it to `target`'s real     `receive_move, GATE-1, NET-03, NET-08, D-05, D-06, D-07., GATE-1, NET-08, D-06 -- every board position is fixture-derived.      `0` and `1, _send_move(), test_coordinates_survive_round_trip(), test_move_envelope_decoded_by_peer() (+2 more)
 
 ### Community 662 - "Community 662"
 Cohesion: 0.50
@@ -2775,71 +2785,79 @@ Cohesion: 0.33
 Nodes (4): The Windows "no console window" suffix -- exactly what a GUI entry     point ge, The counter-control for the widened allowlist: it admits the replay     verifie, test_a_gui_module_reaching_any_other_service_is_still_reported(), test_a_pyw_panel_is_scanned_alongside_the_py_modules()
 
 ### Community 665 - "Community 665"
-Cohesion: 0.29
-Nodes (5): _OneShotBarrierBrain, D-66/SEC-07: a forced cop barrier placement travels over the wire inside the com, A raw (non-`BeliefAdapter`) brain: on its FIRST `_decide_move` call     only, pl, test_forced_cop_barrier_round_trips_identically_on_both_engines(), _wire_forced_barrier()
+Cohesion: 0.24
+Nodes (9): _handshake(), _paired_configs(), _play_over_real_sockets(), 05-UAT.md G1 missing[4]: the SEQUENCED two-peer harness, split from `test_late_, Two real AgentConfigs aimed at each other over freshly-probed     loopback port, Both servers up on real loopback ports, Step-0 + handshake both     directions,, _wait_until_accepting(), Background this agent's FastMCP server on THIS process's event loop     (Pitfal (+1 more)
 
 ### Community 666 - "Community 666"
-Cohesion: 0.32
-Nodes (7): _play(), A real two-peer game -> `log_<game_id>_g<NN>.json` -> 100% re-hash WITH BOTH SO, The peer's stamped envelope turn survives into the artifact unaltered,     for, One real recorded game on the shipped configs, THEN the final audit --     the, The hint (with its rule-25 intent flag), the game's `audit_verdict`, and     th, test_the_artifact_carries_hints_verdict_and_no_internal_state(), test_the_peers_claimed_turns_are_carried_verbatim_from_a_real_game()
+Cohesion: 0.20
+Nodes (9): guarded_pair(), D-56 end-to-end, offline (Task 3): two REAL loopback `PeerRuntime`s with `Share, A client with a wrong secret fails every call -- proven twice, on     two indep, Two real, loopback-bound PeerRuntimes, both requiring the SAME     shared secre, A peer holding the exchanged secret plays normally., An unauthenticated request through the public URL dies at the     boundary with, test_correct_secret_completes_a_real_call(), test_missing_header_dies_at_the_boundary_before_mcp_routing() (+1 more)
 
 ### Community 667 - "Community 667"
-Cohesion: 0.29
-Nodes (7): _cells(), _confidence(), _member(), The decode contract, on both sides of the wire (D-41).  `DECODE_SCHEMA` is sen, The confidence as a bounded float, or None if it is not a real number     in [0, `value` as a member of `enum_type`, or None when it is null or outside     the, The implicated cells as in-bounds coordinate pairs, or None if the     list is
+Cohesion: 0.25
+Nodes (8): _cells(), _confidence(), _member(), The decode contract, on both sides of the wire (D-41).  `DECODE_SCHEMA` is sen, The confidence as a bounded float, or None if it is not a real number     in [0, `value` as a member of `enum_type`, or None when it is null or outside     the, The implicated cells as in-bounds coordinate pairs, or None if the     list is, Coord
 
 ### Community 668 - "Community 668"
 Cohesion: 0.29
 Nodes (6): One command, Split runbook — building the two submission repositories, What a human does next (08-12 — not this runbook), What is built, and from what, What is verified, inside each output, Working in an output repository
 
 ### Community 669 - "Community 669"
-Cohesion: 0.33
-Nodes (5): The one MIME shape the mandatory game report is ever sent in (rules 33-34, REPO, The attachment's filename: `result_<game_id>.json`.      Raises `KeyError` nam, report_filename(), test_report_filename_rejects_a_non_dict_report(), test_report_filename_rejects_a_report_with_no_game_id()
+Cohesion: 0.31
+Nodes (9): _config_version_row(), _env_example_row(), _ignore_rows(), Sec17 group 4 -- configuration and security (08-01).  THE SCANNER PROVES IT CAN, Group 4's rows -- the strongest group, and the one with a live control., Every key line must be a placeholder -- checked with the real patterns., _secret_scan_row(), security_items() (+1 more)
 
 ### Community 670 - "Community 670"
-Cohesion: 0.33
-Nodes (6): NetworkConfigKey, Keys for the optional negotiated resolution block (RULES-RESOLUTION.md Sec5)., String keys matching the exact field names in network.json (D-04).      Struct, NetworkParams, conftest's network_params fixture (02-00) matches a direct police load., test_fixture_matches_direct_load()
+Cohesion: 0.22
+Nodes (8): Criterion 1 — two cross-linked public repositories, each with a Git tag, Criterion 2 — academic README, screenshots, submission form as PDF, per member, Criterion 3 — at least two scored league games against different teams, GATE-8 measurement — Phase 8, the submission gate, The rule-38 counter, across this measurement, The three criteria — quoted verbatim from `.planning/ROADMAP.md` Phase 8, What was deliberately NOT done, and why, Why none of the three criteria can be closed from this repository alone
 
 ### Community 671 - "Community 671"
 Cohesion: 0.40
 Nodes (5): build_state_record(), D-60: the committer's own local-view state record.  `build_state_record()` retur, Reject anything that is not a plain int, bool included (bool < int).      A loca, Return the D-60 fixed field set.      Raises     ------     TypeError         If, _require_non_bool_int()
 
 ### Community 672 - "Community 672"
-Cohesion: 0.40
-Nodes (5): Typed container + validation for belief.json's `reliability` group (D-51).  Sp, Typed, immutable container for belief.json's `reliability` group --     `strate, Raise ValueError naming the offending field.      `r_min`/`r_max` must both si, ReliabilityParams, validate_reliability()
+Cohesion: 0.25
+Nodes (7): Integration gate tests for Phase 1 -- Sec10.4 milestone criteria, joint-turn ed, GATE-1: a legal joint turn -- both agents move at once -- runs     without erro, GATE-2: barrier placement at quota is REJECTED (ValueError), not     silently a, GATE-3: the cop-lands-on-thief, barrier-on-thief and walled-in     predicates e, test_all_capture_types(), test_barrier_quota_gate(), test_legal_turn_sequence()
 
 ### Community 673 - "Community 673"
-Cohesion: 0.50
-Nodes (3): Validation for belief.json's `scent_likelihood` group (04-05, D-18).  Split ou, Raise ValueError naming the offending field.      Raises     ------     Valu, validate_scent_likelihood()
+Cohesion: 0.43
+Nodes (6): _json_line(), 04-12 must_haves: a full two-peer game carrying a real hint + direction- token m, A complete two-peer game (04-12's own harness, RESEARCH Pattern 5):     every tu, Reconstruct the (cop_action, thief_move) sequence purely from ctx_a's     OWN JS, _replay_from_log(), test_two_peer_game_carries_a_direction_move_and_a_hint_every_turn()
 
 ### Community 674 - "Community 674"
-Cohesion: 0.50
-Nodes (3): increment_turn(), Immutable game-state snapshot for the pursuit engine (D-12).  GameState is a fro, Return a new GameState with the turn counter advanced by one step.
+Cohesion: 0.29
+Nodes (6): _is_safe_filename_stem(), 05-12 / G7: the ONE safety gate a PEER-PUBLISHED game_id passes through.  Spli, Move the wire log onto `resolved`, reporting whether the id may now be     adop, True when *value* can serve as a single, self-contained filename stem.      Ev, relocate_log(), AgentContext
 
 ### Community 675 - "Community 675"
-Cohesion: 0.40
-Nodes (5): HintLikelihoodParams, Typed container + validation for belief.json's `hint_likelihood` group (D-40)., Typed, immutable container for belief.json's `hint_likelihood` group     -- `st, Raise ValueError naming the offending field.      `weight` must be a genuine (, validate_hint_likelihood()
+Cohesion: 0.33
+Nodes (6): negotiated_game_id(), D-61's ONE policy definition (moved verbatim from the now-deleted     `agent_au, 05-12/G7: this function and `adopt_negotiated_game_id` must agree on     what ", Police keeps its own; the thief adopts the initiator's, falling back     to its, test_negotiated_game_id_consumes_the_same_absence_rule_as_adoption(), test_negotiated_game_id_is_the_one_d61_policy()
 
 ### Community 676 - "Community 676"
-Cohesion: 0.40
-Nodes (4): D-62 follow-up: Step-0 CONTENT verification -- split from handshake_evaluate.py, Digest presence is required; content verification runs only when     the peer A, _step0_verified(), Envelope
+Cohesion: 0.47
+Nodes (4): Queue, _Ctx, Minimal stand-in: `linger_for_peer` touches only ctx.net and     ctx.runtime.qu, _Runtime
 
 ### Community 677 - "Community 677"
 Cohesion: 0.50
 Nodes (3): D-60's committed state record, READ (05-05, 05-UAT.md G2).  Split out of `audi, D-60's committed state record, READ (05-05, 05-UAT.md G2) -- the     anti-repla, state_binding_detail()
 
+### Community 680 - "Community 680"
+Cohesion: 0.40
+Nodes (4): hold_peer_final_reveal_open(), The one-shot inbound gate that makes `late_peer_harness`'s teardown sequence a, Gate `ctx.runtime.queue` so the NEXT inbound FINAL_REVEAL is queued     and the, Event
+
+### Community 681 - "Community 681"
+Cohesion: 0.50
+Nodes (4): One slot. `None` is a stated absence; a string must look like an address., Validate one group of slots and return `{slot: url-or-None}`.      Every named, read_slots(), _validate_slot()
+
 ## Knowledge Gaps
-- **3214 isolated node(s):** `check_line_limit.sh script`, `Module`, `check_local_truth.sh script`, `check_no_llm_in_strategy.sh script`, `Path` (+3209 more)
+- **3245 isolated node(s):** `check_line_limit.sh script`, `Module`, `check_local_truth.sh script`, `check_no_llm_in_strategy.sh script`, `Path` (+3240 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **58 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `_inputs()` connect `Community 582` to `Community 400`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `load()` connect `Community 642` to `Community 643`, `Community 644`, `Community 648`, `Community 649`, `Community 530`, `Community 179`, `Community 574`, `Community 324`, `Community 582`, `Community 198`, `Community 460`, `Community 592`, `Community 594`, `Community 597`, `Community 608`, `Community 610`, `Community 617`, `Community 621`, `Community 639`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Why does `GameParams` connect `Community 390` to `Community 4`, `Community 9`, `Community 523`, `Community 270`, `Community 23`, `Community 31`, `Community 290`, `Community 39`, `Community 423`, `Community 555`, `Community 430`, `Community 564`, `Community 568`, `Community 319`, `Community 73`, `Community 77`, `Community 343`, `Community 88`, `Community 375`, `Community 124`, `Community 127`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+- **Why does `load()` connect `Community 643` to `Community 642`, `Community 644`, `Community 648`, `Community 649`, `Community 656`, `Community 530`, `Community 179`, `Community 574`, `Community 324`, `Community 582`, `Community 198`, `Community 460`, `Community 594`, `Community 597`, `Community 608`, `Community 610`, `Community 617`, `Community 621`, `Community 639`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `make_ctx()` connect `Community 400` to `Community 355`, `Community 196`, `Community 484`, `Community 646`, `Community 122`, `Community 425`, `Community 41`, `Community 11`, `Community 655`, `Community 336`, `Community 657`, `Community 19`, `Community 570`, `Community 437`, `Community 564`, `Community 506`, `Community 253`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Are the 202 inferred relationships involving `GameParams` (e.g. with `ActionWeights` and `ChooseMove`) actually correct?**
   _`GameParams` has 202 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 165 inferred relationships involving `GameState` (e.g. with `Action` and `ActionWeights`) actually correct?**
@@ -2847,4 +2865,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 118 inferred relationships involving `Outcome` (e.g. with `AgreementRecord` and `ArmedWatchdog`) actually correct?**
   _`Outcome` has 118 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `One file list, one source commit, one timestamp -- shared by BOTH outputs.`, `The single manifest, commit and timestamp every output is built from.`, `Materialise one role's repository and return what was built, in numbers.` to the rest of the system?**
-  _6228 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _6267 weakly-connected nodes found - possible documentation gaps or missing edges._
