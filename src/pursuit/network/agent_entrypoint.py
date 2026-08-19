@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import secrets
 import time
+from contextlib import AsyncExitStack
 from pathlib import Path
 
 from fastmcp.exceptions import ToolError
@@ -48,6 +49,7 @@ from pursuit.network.agent_lifecycle import (
 from pursuit.network.agent_step0_wiring import record_completed_game
 from pursuit.network.agent_teardown import linger_for_peer
 from pursuit.network.agent_wiring import load_agent_config
+from pursuit.network.client_connect import NEVER_CONNECTED_LINE, enter_client_with_retry
 from pursuit.network.config_hash import config_digest
 from pursuit.network.game_identity import adopt_negotiated_game_id
 from pursuit.network.handshake import make_client_caller, perform_handshake
@@ -80,10 +82,20 @@ async def run_agent(config_dir: Path | str, *, game_uid: str | None = None) -> O
         try:
             local_digest = config_digest(cfg.config_dir / "game_params.json")
             local_scent_digest = scent_digest(cfg.scent)
-            async with ctx.runtime.client() as client:
+            # The handshake enter rides the SAME D-13 ladder as every other
+            # outgoing call (client_connect.py): a merely-late peer is
+            # retried on a fresh client, and one that never comes up ends
+            # this process with NO GAME and no verdict -- printing retained
+            # evidence -- never the 2026-08-19 startup traceback.
+            async with AsyncExitStack() as stack:
+                connect = await enter_client_with_retry(stack, ctx.runtime.client, cfg.net)
+                if not connect.succeeded:
+                    print(NEVER_CONNECTED_LINE)
+                    print(f"last_error={connect.verdict.last_error}")
+                    return None
                 result = await perform_handshake(
                     machine=ctx.machine, reporter=ctx.reporter, local_digest=local_digest,
-                    local_role=ctx.role, call_peer=make_client_caller(client),
+                    local_role=ctx.role, call_peer=make_client_caller(connect.value),
                     local_scent_digest=local_scent_digest,
                     local_step0_digest=step0_digest, local_game_id=resolved_game_uid,
                     local_step0_declaration=declaration_envelope, shared_secret=shared_secret_value,

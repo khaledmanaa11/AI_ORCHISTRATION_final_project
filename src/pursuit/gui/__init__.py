@@ -34,5 +34,5 @@ Entry point::
 #: leaving a decorative list behind.
 __all__ = (
     "live_app", "live_panels", "live_sidebar", "replay_app", "replay_panels",
-    "widgets",
+    "replay_viewer", "widgets",
 )
