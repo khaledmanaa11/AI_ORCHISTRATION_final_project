@@ -16,7 +16,10 @@ that quietly reintroduces the flip-on-disk or routes this through
 
 from __future__ import annotations
 
+import ast
+import importlib
 import json
+import os
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -116,17 +119,60 @@ def test_the_cli_refuses_without_the_confirmation_flag(tmp_path, capsys):
     assert "--confirm-live-send" in capsys.readouterr().err
 
 
-def test_this_script_never_loads_the_league_config():
-    """It is not a game, so rule 49's four-URL gate is neither met nor weakened.
+def test_importing_this_script_does_not_disarm_the_credential_environment():
+    """THE BUG THIS FILE EXISTS TO NEVER REPEAT (2026-08-19).
 
-    Asserted over the source: routing this through `report_game_end` would pull
-    `load_league_config` back in, and that is the change this must catch.
+    `gate7_common` POPS the two Gmail env vars out of `os.environ` at IMPORT
+    time -- correct for a gate that must never let a grader's shell become a
+    live send. `live_send` imported it for a six-line watchdog and thereby
+    disarmed itself: three real runs died on "environment variable
+    PURSUIT_GMAIL_CREDENTIALS_PATH ... is unset" with the variable set in the
+    calling shell. A fake transport never touches the environment, so NO test
+    above this one could have caught it. This one imports for real.
     """
-    source = Path(live_send.__file__).read_text(encoding="utf-8")
-    body = "\n".join(
-        line for line in source.splitlines() if not line.lstrip().startswith("#")
-    )
-    _, _, code = body.partition('"""')[2].partition('"""')
-    for forbidden in ("load_league_config", "report_game_end", "league.json"):
-        assert forbidden not in code, f"{forbidden} reappeared in live_send.py"
-    assert "build_reporting_chain" in code, "the control: the shipped chain IS used"
+    for name in ("PURSUIT_GMAIL_CREDENTIALS_PATH", "PURSUIT_GMAIL_TOKEN_PATH"):
+        os.environ[name] = f"sentinel-for-{name}"
+    importlib.reload(live_send)
+    for name in ("PURSUIT_GMAIL_CREDENTIALS_PATH", "PURSUIT_GMAIL_TOKEN_PATH"):
+        assert os.environ.get(name) == f"sentinel-for-{name}", (
+            f"importing live_send cleared {name}; a live send is impossible"
+        )
+        del os.environ[name]
+
+
+def test_this_script_neither_imports_nor_calls_the_paths_that_would_break_it():
+    """Two claims the docstrings make, asserted over the PARSED module.
+
+    `ast`, not a substring scan: the first draft of this guard read the raw
+    source and failed on the `_SendWatchdog` docstring, which NAMES
+    `gate7_common` precisely to explain why it must not be imported. Prose
+    about a hazard is not the hazard.
+
+    `gate7_common` would disarm the credential environment at import;
+    `report_game_end` / `load_league_config` would drag rule 49's four-URL gate
+    back in and make this impossible before league day.
+    """
+    tree = ast.parse(Path(live_send.__file__).read_text(encoding="utf-8"))
+    imported, referenced = set(), set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported.add(node.module or "")
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.Name):
+            referenced.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            referenced.add(node.attr)
+    for forbidden in ("gate7_common", "load_league_config", "report_game_end"):
+        assert forbidden not in imported | referenced, f"{forbidden} reappeared"
+    assert "build_reporting_chain" in imported, "the control: the shipped chain IS used"
+
+
+def test_the_ast_guard_can_actually_fire():
+    """An all-clear from a scanner that matches nothing is not an all-clear."""
+    tree = ast.parse("from gate7_common import RecordingWatchdog")
+    modules = {
+        node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
+    }
+    assert "gate7_common" in modules

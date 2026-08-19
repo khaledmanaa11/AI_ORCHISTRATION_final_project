@@ -40,8 +40,6 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from gate7_common import RecordingWatchdog
-
 from pursuit.services.reporting.end_of_game import build_reporting_chain
 from pursuit.services.reporting.gmail_sink import GmailSink, build_gmail_transport
 from pursuit.shared.reporting_config import (
@@ -61,6 +59,31 @@ ALREADY_LIVE = (
 #: stdout is retained evidence for this step, the same channel the runbooks use.
 SENT_LINE = "=== PURSUIT LIVE SEND: message accepted by Gmail, id={message_id} ==="
 NOT_SENT_LINE = "=== PURSUIT LIVE SEND: NOT SENT ({refusal}); nothing was transmitted ==="
+
+
+class _SendWatchdog:
+    """`ctx.watchdog`'s surface for a one-shot send: counts, freezes nothing.
+
+    `watchdog_touching` marks activity on entry and in a `finally`; a real
+    freeze watchdog's action is `os._exit`, which is not what a supervised
+    single send a human is watching should ever do.
+
+    DELIBERATELY NOT `gate7_common.RecordingWatchdog`, whose surface is
+    identical. `gate7_common` POPS `PURSUIT_GMAIL_CREDENTIALS_PATH` and
+    `PURSUIT_GMAIL_TOKEN_PATH` OUT OF `os.environ` AT IMPORT TIME -- exactly
+    right for a gate that must never let a grader's shell become a live API
+    call, and fatal here, where the live send IS the point. Importing it for
+    these six lines disarmed this script: three runs on 2026-08-19 all died on
+    "environment variable PURSUIT_GMAIL_CREDENTIALS_PATH ... is unset" with the
+    variable demonstrably set in the calling shell. Six duplicated lines beat
+    an import whose documented purpose is to make this file impossible.
+    """
+
+    def __init__(self) -> None:
+        self.touches = 0
+
+    def touch(self) -> None:
+        self.touches += 1
 
 
 class _ReceiptCapturingSink:
@@ -114,7 +137,7 @@ async def send_once(
     )
     chain = build_reporting_chain(
         params,
-        watchdog=RecordingWatchdog(),
+        watchdog=_SendWatchdog(),
         artifact_dir=work_dir,
         quota_dir=work_dir,
         sink=capturing,
