@@ -88,6 +88,16 @@ five, then start B — starting together makes B's handshake fire into A's not-y
 listener. Note the trade: on this path B is outside the 05-11 in-process tunnel watch; a
 mid-game drop of B's tunnel is repaired only by the standalone agent's own reconnect.
 
+> **Swapping seats: restart B's ngrok, or the round dies before move 1.** The `8002` above
+> is the **thief's** port. When B takes the police seat its agent binds **8001**, and a
+> standalone ngrok still forwarding 8002 leaves B reachable in name only: B→A works, A→B
+> is dead, and the round ends `turn=0 thief illegal_transition handshake->handshake`. Kill
+> window 1 and re-run `ngrok http 8001 --domain=<B's reserved domain>` before every seat
+> swap. Machine A needs nothing — pyngrok reads the port from `--config-dir` and follows
+> the seat by itself. Measured 2026-08-19, 16:23 (the failed swap) and 16:35 (the same swap,
+> after the restart):
+> [`2026-08-19-remote-rehearsal...`](../../devlog/2026-08-19-remote-rehearsal-replay-board-final-rejections.md).
+
 ### Path B — Localtonet on machine B (fallback, D-57)
 
 Full install-through-use procedure: [`LOCALTONET-FALLBACK.md`](LOCALTONET-FALLBACK.md).
