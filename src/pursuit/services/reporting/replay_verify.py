@@ -38,6 +38,7 @@ from pursuit.security.commit_pack import verify_reveal
 from pursuit.services.reporting.artifacts import artifact_digest_matches
 from pursuit.services.reporting.log_artifact_fields import LogArtifactField, sealed_body
 from pursuit.services.reporting.log_turn_fields import TurnField
+from pursuit.services.reporting.replay_board import board_colour_frames
 from pursuit.services.reporting.replay_session import (
     SECTION_TITLES,
     WINDOW_TITLE,
@@ -69,6 +70,7 @@ __all__ = (
     "TurnCheck",
     "VerdictState",
     "banner_colour",
+    "board_colour_frames",
     "check_turn",
     "check_turns",
     "load_artifact",

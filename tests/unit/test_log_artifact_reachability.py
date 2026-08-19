@@ -6,28 +6,27 @@ as the game is live. Only SEC-04's end-of-game publication makes the ledger
 readable, so a builder that joins the ledger into an emailed artifact must be
 unreachable from the turn loop.
 
-A GREP IN A SUMMARY ROTS; THIS DOES NOT. The scan below runs over `src/` on
-every suite run, is floored so it cannot pass by having looked at nothing
-(D7-6's standard), and carries a control proving it can find an import that IS
-there. `pursuit.network.turn_commit_ledger` is the WRITER and is deliberately
-not on the forbidden list -- writing the ledger before the send is D-64 itself.
+A GREP IN A SUMMARY ROTS; THIS DOES NOT. The scan (shared with
+`test_ledger_reachability.py` via `reachability_helpers` since the
+150-code-line gate split the ledger pins out) runs over `src/` on every suite
+run, is floored so it cannot pass by having looked at nothing (D7-6's
+standard), and carries a control proving it can find an import that IS there.
+`pursuit.network.turn_commit_ledger` is the WRITER and is deliberately not on
+the forbidden list -- writing the ledger before the send is D-64 itself.
 """
 
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).resolve().parents[2] / "src"
-PACKAGE = "pursuit.services.reporting"
+from tests.unit.reachability_helpers import MIN_SCANNED, PACKAGE, SRC, scan_src
+
 LOG_ARTIFACT_MODULES = frozenset(
     f"{PACKAGE}.{name}" for name in ("artifact_log", "log_join", "log_read", "log_turn_fields")
 )
-LEDGER_MODULE = "pursuit.security.ledger"
 CONTROL_IMPORT = "pursuit.network.turn_commit_ledger"
-MIN_SCANNED = 100
 # The package re-exports these, so `from pursuit.services.reporting import
 # write_log_artifact` reaches the builder without ever naming its module. A
 # scan that watched module paths alone would miss the import form 07-07 is
@@ -41,34 +40,9 @@ LOG_ARTIFACT_NAMES = frozenset(
 )
 
 
-def _imported_modules(path: Path) -> set[str]:
-    """Every module this file imports, by AST -- not by substring, which a
-    docstring mention would trip.
-
-    A `from X import Y` contributes BOTH `X` and `X.Y`: the second form is what
-    makes `from pursuit.services.reporting import artifact_log` visible.
-    """
-    modules: set[str] = set()
-    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-        if isinstance(node, ast.Import):
-            modules.update(alias.name for alias in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
-            modules.add(node.module)
-            modules.update(f"{node.module}.{alias.name}" for alias in node.names)
-            if node.module.startswith(PACKAGE):
-                modules.update(alias.name for alias in node.names)
-    return modules
-
-
-def _scan() -> tuple[dict[str, set[str]], list[Path]]:
-    """`{module path -> imported modules}` for every `.py` under `src/`."""
-    files = sorted(SRC.rglob("*.py"))
-    return {p.relative_to(SRC).as_posix(): _imported_modules(p) for p in files}, files
-
-
 @pytest.fixture(scope="module")
 def scan():
-    imports, files = _scan()
+    imports, files = scan_src()
     assert len(files) > MIN_SCANNED, "the scan looked at almost nothing"
     return imports
 
@@ -134,6 +108,9 @@ def test_the_builder_has_a_production_caller_and_it_is_the_game_end_hook(scan):
         # which are wire-log timestamps rather than a clock read at report time.
         "pursuit/services/reporting/end_of_game_declaration.py",
         "pursuit/services/reporting/log_join.py",  # the join, on log_read
+        # run-3 board panel, a READER: key names only, to reconstruct the
+        # replay's board frames from the sealed turns.
+        "pursuit/services/reporting/replay_board.py",
         "pursuit/services/reporting/replay_session.py",  # 07-08, key names only
         "pursuit/services/reporting/replay_verify.py",  # 07-08, the replay READER
         "pursuit/services/reporting/result_agreement.py",  # rule 35, on log_read
@@ -163,31 +140,3 @@ def test_the_builder_never_reaches_for_the_ledger_reader_itself(scan):
         assert "CommitLedger" not in bound, f"{name} imports the ledger reader"
         attributes = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
         assert "read_all" not in attributes, f"{name} calls the audit path's reader"
-
-
-def test_every_importer_of_the_ledger_module_in_src_is_named(scan):
-    """Whoever imports `security.ledger` at all, named -- so a NEW importer,
-    on the wire path or anywhere else, fails here rather than in a grader's
-    inbox. Four of these six take only `LedgerField`'s key names; the writer
-    and the game-end audit are the two that touch a file."""
-    importers = sorted(name for name, imports in scan.items() if LEDGER_MODULE in imports)
-    assert importers == [
-        "pursuit/network/agent_audit_wiring.py",  # read_all, at game end
-        "pursuit/network/turn_commit_ledger.py",  # append, before the send (D-64)
-        "pursuit/security/audit_shape.py",  # LedgerField names only
-        "pursuit/security/audit_state.py",  # LedgerField names only
-        "pursuit/services/reporting/log_join.py",  # LedgerField names only
-        "pursuit/services/reporting/log_turn_fields.py",  # LedgerField names only
-    ]
-
-
-def test_read_all_has_exactly_one_production_call_site(scan):
-    """`CommitLedger.read_all()` is the nonce-publication read. Exactly one
-    module in `src/` calls it, and it is the game-end audit -- reached from
-    `agent_entrypoint.run_agent` only AFTER `run_turn_loop` has returned."""
-    callers = sorted(
-        name for name in scan if ".read_all()" in (SRC / name).read_text(encoding="utf-8")
-    )
-    assert callers == ["pursuit/network/agent_audit_wiring.py"]
-    entrypoint = (SRC / "pursuit/network/agent_entrypoint.py").read_text(encoding="utf-8")
-    assert entrypoint.index("run_turn_loop(ctx)") < entrypoint.index("run_final_audit(ctx")

@@ -141,9 +141,16 @@ def test_the_verdict_has_a_production_caller_and_it_is_the_shipped_screen():
     scanned = sorted(SRC.rglob("*.py"))
     assert len(scanned) > MIN_SCANNED, "the scan looked at almost nothing"
     reachers = sorted(p.relative_to(SRC).as_posix() for p in scanned if _imports_the_verifier(p))
-    assert reachers == ["pursuit/gui/replay_app.py", "pursuit/gui/replay_panels.py"]
-    assert "open_replay" in _bindings("pursuit/gui/replay_app.py")
+    assert reachers == [
+        "pursuit/gui/replay_app.py",
+        "pursuit/gui/replay_panels.py",
+        # run-3's 150-line split of the window class out of replay_app, plus
+        # the board panel's frames -- both still THE shipped screen's path.
+        "pursuit/gui/replay_viewer.py",
+    ]
+    assert {"open_replay", "board_colour_frames"} <= _bindings("pursuit/gui/replay_app.py")
     assert {"banner_colour", "SECTION_TITLES"} <= _bindings("pursuit/gui/replay_panels.py")
+    assert "ReplaySession" in _bindings("pursuit/gui/replay_viewer.py")
     # And the verdict function is on that path: `open_replay` calls it.
     source = (SRC / "pursuit/services/reporting/replay_verify.py").read_text(encoding="utf-8")
     body = next(

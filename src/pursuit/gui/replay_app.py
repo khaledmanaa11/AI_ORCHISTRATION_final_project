@@ -37,14 +37,12 @@ import argparse
 import sys
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk
 
-from pursuit.gui.replay_panels import ReplayPanels
-from pursuit.gui.widgets import PANEL_PAD
+from pursuit.gui.replay_viewer import ReplayViewer
 from pursuit.services.reporting.replay_verify import (
     WINDOW_TITLE,
     ReplayExit,
-    ReplaySession,
+    board_colour_frames,
     open_replay,
 )
 
@@ -59,66 +57,14 @@ STEP_HELP = (
     "interval, so the operator states it and the repository does not."
 )
 ONCE_HELP = "build every widget, render one frame and exit 0 -- the scripted launch gate"
+GAME_PARAMS_HELP = (
+    "path to the game's byte-identical shared game_params.json (rule 11). "
+    "Supplying it adds a reconstructed full-board panel -- legal only because "
+    "this viewer opens sealed FINISHED games (rule 9 restricts the live view); "
+    "the opponent's track integrates from their negotiated start plus their "
+    "revealed moves. Omit it for the text-only verifier."
+)
 REFUSED = "replay_app: cannot open that file --"
-
-BACK_LABEL = "back"
-STEP_LABEL = "step"
-PLAY_LABEL = "play"
-PAUSE_LABEL = "pause"
-
-
-class ReplayViewer:
-    """One window over one verified artifact. Owns its own Tk root."""
-
-    def __init__(self, root: tk.Misc, session: ReplaySession, *, step_ms: int) -> None:
-        self.root = root
-        self.session = session
-        self.step_ms = step_ms
-        self.panels = ReplayPanels(root)
-        self.controls = tk.Frame(root)
-        self.buttons = tuple(
-            ttk.Button(self.controls, text=label, command=command)
-            for label, command in (
-                (BACK_LABEL, self.back),
-                (STEP_LABEL, self.step),
-                (PLAY_LABEL, self.play),
-                (PAUSE_LABEL, self.pause),
-            )
-        )
-        for button in self.buttons:
-            button.pack(side=tk.LEFT, padx=PANEL_PAD, pady=PANEL_PAD)
-        self.panels.frame.pack(padx=PANEL_PAD, pady=PANEL_PAD, fill=tk.BOTH, expand=True)
-        self.controls.pack(padx=PANEL_PAD, pady=PANEL_PAD)
-
-    def show(self) -> None:
-        self.panels.show(self.session)
-
-    def back(self) -> None:
-        self.session.back()
-        self.show()
-
-    def step(self) -> None:
-        self.session.step()
-        self.show()
-
-    def play(self) -> None:
-        self.session.play()
-        self.show()
-
-    def pause(self) -> None:
-        self.session.pause()
-        self.show()
-
-    def tick(self) -> None:
-        """One transport frame, then re-arm on the Tk root's OWN timer. The
-        session decides whether a step happens and pauses itself at the end."""
-        if self.session.playing:
-            self.step()
-        self.root.after(self.step_ms, self.tick)
-
-    def start(self) -> None:
-        self.show()
-        self.root.after(self.step_ms, self.tick)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -126,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--artifact", type=Path, required=True, help=ARTIFACT_HELP)
     parser.add_argument("--step-ms", type=int, required=True, help=STEP_HELP)
     parser.add_argument("--once", action="store_true", help=ONCE_HELP)
+    parser.add_argument("--game-params", type=Path, default=None, help=GAME_PARAMS_HELP)
     return parser
 
 
@@ -138,12 +85,17 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         session = open_replay(args.artifact)
+        frames = (
+            board_colour_frames(session.artifact, args.game_params)
+            if args.game_params
+            else None
+        )
     except (OSError, ValueError) as exc:
         print(REFUSED, exc)
         return ReplayExit.UNREADABLE
     root = tk.Tk()
     root.title(WINDOW_TITLE)
-    viewer = ReplayViewer(root, session, step_ms=args.step_ms)
+    viewer = ReplayViewer(root, session, step_ms=args.step_ms, board_frames=frames)
     if args.once:
         viewer.show()
         root.update()
