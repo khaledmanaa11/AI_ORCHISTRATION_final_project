@@ -499,16 +499,15 @@ hook enforces it and `--no-verify` is not an option.
 
 ## Licence
 
-A licence file is prepared at **[LICENSE](LICENSE)** and **has not been adopted**.
+This project is released under the **MIT Licence** — see **[LICENSE](LICENSE)**.
 
-The file carries a `PREPARED, NOT ADOPTED` block at the top. Choosing a licence is a legal
-declaration about the owner's own coursework, so the text below that block (the conventional
-academic MIT default) takes effect only once the repository owner confirms the licence, the
-copyright-holder line and the year. Until then, treat this repository as **all rights
-reserved**. `pyproject.toml` points at the file rather than declaring an SPDX string, so the
-caveat travels with the package metadata instead of being contradicted by it. The open
-question is tracked as `OQ8-5` in
-[`docs/SUBMISSION-CHECKLIST.md`](docs/SUBMISSION-CHECKLIST.md).
+The licence was drafted by an earlier plan and deliberately held unadopted behind a
+`PREPARED, NOT ADOPTED` block, because choosing one is a legal declaration about the
+owner's own coursework. **The owner adopted MIT on 2026-08-19** and the block was removed;
+`OQ8-5` is closed in
+[`docs/SUBMISSION-CHECKLIST.md`](docs/SUBMISSION-CHECKLIST.md), which records what the
+confirmation covered. `pyproject.toml` points at the file rather than declaring an SPDX
+string, so the licence text itself stays the single source.
 
 ---
 

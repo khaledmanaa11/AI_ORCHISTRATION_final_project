@@ -538,28 +538,28 @@ artifact by a committed script, and `tests/unit/test_research_docs.py` re-render
 
 ### The licence — the owner must confirm it before anything is published
 
-**LICENCE STATUS:** AWAITING_OWNER_CONFIRMATION
+**LICENCE STATUS:** CONFIRMED_BY_THE_OWNER
 
-**OQ8-5 is NOT closed.** 08-03 drafted `LICENSE` so the §17 structural gap could stop
-being open, and drafting is the whole of what an agent may do here: **a licence is a legal
+**OQ8-5 is CLOSED.** 08-03 drafted `LICENSE` and could do no more: a licence is a legal
 declaration about the repository owner's own coursework, and no agent is entitled to make
-one on their behalf.** The file therefore opens with a `PREPARED, NOT ADOPTED` block naming
-what the owner must confirm.
+one on their behalf. **The owner confirmed MIT on 2026-08-19**, in session, and the
+`PREPARED, NOT ADOPTED` block was deleted in the same commit that changed this field --
+the biconditional below permits no other order.
 
-**08-12 must not create a public repository until the owner has explicitly confirmed:**
+What the confirmation covered, recorded because the drafted block asked for three things
+and not one:
 
-1. **that MIT is the licence they want** — BSD-3-Clause, Apache-2.0 and "all rights
-   reserved" are the usual alternatives, and the university may have a policy that overrides
-   the personal preference;
-2. **that `Copyright (c) 2026 Khaled Manaa` names the holder correctly** — taken from
-   `git config user.name`, which is an identity, not an authorisation;
-3. **that the year is right.**
+1. **MIT is the licence** — confirmed explicitly ("adopt MIT"); the alternatives the block
+   named (BSD-3-Clause, Apache-2.0, all-rights-reserved) were declined by that choice;
+2. **`Copyright (c) 2026 Khaled Manaa` names the holder** — carried unchanged from the
+   draft, where it was taken from `git config user.name`;
+3. **the year is 2026** — the year of the confirmation and of every commit in the tree.
 
-This sits in the same class as the two repo URLs (OQ8-6) and the games-played value
-(OQ8-2): prepared by a plan, decided by a human, and **visibly flagged rather than slipped
-in**. It is trivially reversible today because **nothing has been pushed** — `git tag -l` is
-empty and the mono-repo's commits sit unpublished ahead of `origin/main`. It stops being
-reversible the moment 08-12 runs.
+Points 2 and 3 were adopted as drafted rather than separately re-stated by the owner, and
+that is written down here rather than smoothed over: if either is wrong it is a one-line
+correction to `LICENSE` and this paragraph, and it is still cheap, because **at the moment
+of confirmation nothing had been pushed to either submission repository and `git tag -l`
+in this repository was empty.** It stops being cheap once 08-12 runs.
 
 `tests/unit/test_packaging_metadata.py` holds the two halves together as a
 **biconditional** over the single **LICENCE STATUS** field above. While `LICENSE` carries

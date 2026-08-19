@@ -103,6 +103,16 @@ nothing in this runbook may pre-empt any of the three options.
 6. Export the two environment variables whose NAMES `config/*/reporting.json` gives. Do not
    write the values into any file in the repository:
 
+   **PowerShell** (this project's shell -- `export` is not a PowerShell verb, and the
+   variable must be set in the SAME window that starts the agent):
+
+   ```powershell
+   $env:PURSUIT_GMAIL_CREDENTIALS_PATH = "<path to the downloaded client JSON>"
+   $env:PURSUIT_GMAIL_TOKEN_PATH       = "<path where the token cache may be written>"
+   ```
+
+   POSIX equivalent, for a bash shell:
+
    ```sh
    export PURSUIT_GMAIL_CREDENTIALS_PATH=<path to the downloaded client JSON>
    export PURSUIT_GMAIL_TOKEN_PATH=<path where the token cache may be written>
@@ -127,10 +137,12 @@ changes that, and it changes it back.
 
 1. Confirm the starting state:
 
-   ```sh
+   ```powershell
    git diff config/            # must be EMPTY
-   grep -h '"mode"' config/police/reporting.json config/thief/reporting.json
+   Select-String -Pattern '"mode"' -Path config/police/reporting.json,config/thief/reporting.json
    ```
+
+   (`grep` does not exist on this box -- `Select-String` is the PowerShell equivalent.)
 
 2. Flip **one** file — the seat that will send — to `"mode": "live"`. Leave the other at
    `dry_run`. (Rule 35 asks each team to send its own report; one live seat is what a

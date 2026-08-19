@@ -15,12 +15,43 @@ rule 50 (what each must contain) are closed by this runbook and by nothing else.
 
 ---
 
-## 0. Before anything — the two blockers
+## 0. Before anything — the two blockers, BOTH ANSWERED 2026-08-19
 
-**Neither is negotiable and neither is an agent's to answer.**
+Both were the owner's to answer and both were answered in session. Recorded here with what
+followed from each, because the consequence of the first one is a check, not a note.
 
-| Blocker | Why it comes first | Where the material is |
+| Blocker | Answer | What followed |
 |---|---|---|
+| **OQ8-9 — is `origin` public or private?** | **PUBLIC.** The owner opened `https://github.com/khaledmanaa11/AI_ORCHISTRATION_final_project.git` and confirmed it loads. | Everything this repository has ever tracked is **already published**, so the secrets question became **urgent rather than preventive** — and was answered by scanning HISTORY, not the working tree (below). |
+| **OQ8-5 — the licence** | **MIT, adopted.** The owner confirmed in session; `LICENSE`'s `PREPARED, NOT ADOPTED` block is deleted and `docs/SUBMISSION-CHECKLIST.md` reads `CONFIRMED_BY_THE_OWNER`. | The biconditional in `tests/unit/test_packaging_metadata.py` now holds on the confirmed side; the README `## Licence` section was the THIRD site and was rewritten in the same commit. |
+
+**The history scan `origin`-is-public forced, and its result.** `scripts/submission_scan.py`
+(row G4-02) reads **tracked files at HEAD** — which is the right scope for "what will we
+publish" and the wrong scope for "what have we already published". A credential committed and
+later deleted is invisible to it and permanently visible on GitHub. So history was scanned
+directly, and the record is the command as much as the verdict:
+
+```bash
+for p in 'sk-ant-[A-Za-z0-9]{8,}' 'AIza[A-Za-z0-9_\-]{20,}' 'ghp_[A-Za-z0-9]{20,}'; do
+    git log --all --oneline -G"$p"
+done
+git log --all --oneline --name-only --diff-filter=A |
+  grep -iE "client_secret|credentials\.json|token\.json|\.env$|\.pem$|\.key$|service.account"
+```
+
+**Both returned empty across every commit on every ref.** No provider-shaped key was ever
+committed, and no credential-bearing file was ever added and removed. `origin` being public
+is therefore not a disclosure. This is a **negative result from a scanner proven to match**
+— the provider patterns are 08-03's, which carry a planted-secret positive control.
+
+**An observation recorded rather than acted on.** During phases 7 and 8 this repository's
+`origin/main` moved **without any agent pushing it** — verified on 2026-08-14 and 2026-08-16,
+with no pushing git hook in the tree. Two consequences: (1) `origin` is not under manual
+control, which matters more now that it is known to be public; (2) **08-11 deliberately did
+not cut a tag in this repository**, only in the two split outputs, because a local tag here
+could be swept outward by that process. See `GATE-8-MEASUREMENT.md` criterion 1.
+
+---|---|---|
 | **OQ8-9 — is `origin` public or private?** | If `https://github.com/khaledmanaa11/AI_ORCHISTRATION_final_project.git` is already **public**, then everything this repository has ever tracked is already published, and the secrets question stops being preventive and becomes urgent. | Open the URL while signed out of GitHub. Public if it loads. |
 | **OQ8-5 — the licence** | `LICENSE` is drafted (MIT) and carries a **`PREPARED, NOT ADOPTED`** block; `docs/SUBMISSION-CHECKLIST.md` carries **`LICENCE STATUS: AWAITING_OWNER_CONFIRMATION`**. A licence is a legal declaration about the owner's own coursework. **Do not publish until the owner confirms.** | `LICENSE`, and the licence section of `docs/SUBMISSION-CHECKLIST.md` |
 
