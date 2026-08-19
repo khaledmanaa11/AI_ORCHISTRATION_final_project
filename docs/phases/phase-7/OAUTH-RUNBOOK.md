@@ -129,59 +129,68 @@ nothing in this runbook may pre-empt any of the three options.
 Once the token file exists, the automated path never opens a browser again — it loads the
 cached token, refreshes it if expired, and re-checks the granted scope before every send.
 
-## 4. Step 2 — one live send, then flip back
+## 4. Step 2 — one live send, with the config left alone
 
-**One config, one game, then restore.** Every `reporting.json` this repository ships reads
-`dry_run`, which writes the report to disk and transmits nothing. This is the only step that
-changes that, and it changes it back.
+**Corrected 2026-08-19, after this section's original procedure was run and failed.**
+It said: flip `reporting.json` to `live`, run `dev_launch.py`, flip back. That cannot work,
+and the code is right to refuse it. Recorded rather than quietly rewritten, because the
+refusals are the design and the next reader should know they are not obstacles:
 
-1. Confirm the starting state:
+| What fired | Why it is correct |
+|---|---|
+| `ValueError: reporting.mode is 'live' but no transport was injected` | `build_reporting_chain` refuses live-with-no-sink. **Nothing in the agent path injects one** — before `scripts/live_send.py` every `GmailSink` in the tree was built by a gate or a test around a FAKE transport. The game path is not allowed to construct a live transport (rules 31, 39-40). |
+| `league.json repo_urls.own_cop is not set and reporting.mode is 'live'` | Live mode demands all **four** rule-49 URLs. Two are ours (08-12); **two are the opponent's**, and do not exist until league day. |
+
+The second one matters beyond this step: it means a live send routed through the game path
+**cannot happen before league day at all**, so the first real transmission of this project's
+life would be during a scored game — with rule 35 zeroing *both* teams if it went wrong.
+
+### The corrected procedure
+
+`scripts/live_send.py` is the missing half — what this runbook meant by "07-10 constructs
+GmailSink itself". It sends a report **a real game already produced**, through the shipped
+chain, with a real `GmailSink` on the end. It never plays a game and never reads
+`league.json`, so the rule-49 gate is neither met nor weakened — this simply is not a game.
+**The shipped config is never edited**: `dry_run` on disk is a precondition, and LIVE is
+applied to an in-memory copy that is never written back.
+
+1. Play one ordinary game to produce a report (or use one you already have):
 
    ```powershell
-   git diff config/            # must be EMPTY
-   Select-String -Pattern '"mode"' -Path config/police/reporting.json,config/thief/reporting.json
+   uv run python scripts/dev_launch.py 2>&1 | Tee-Object -FilePath consoleA_oauth.log
    ```
 
-   (`grep` does not exist on this box -- `Select-String` is the PowerShell equivalent.)
+   Both configs stay `dry_run`. Confirm with `git diff config/` — it must be EMPTY, and
+   stays empty for the whole of this step.
 
-2. Flip **one** file — the seat that will send — to `"mode": "live"`. Leave the other at
-   `dry_run`. (Rule 35 asks each team to send its own report; one live seat is what a
-   supervised single send means here, and the second seat's `dry_run` `.eml` on disk is a
-   useful side-by-side control.)
-3. Record the shipped `game_artifacts/` state before the run, so debris and evidence can be
-   told apart afterwards:
+2. Set the two environment variables in the SAME window, then send:
 
-   ```sh
-   git status --short game_artifacts/
+   ```powershell
+   $env:PURSUIT_GMAIL_CREDENTIALS_PATH = "<path to the client JSON, OUTSIDE the repo>"
+   $env:PURSUIT_GMAIL_TOKEN_PATH       = "<path to the token cache, OUTSIDE the repo>"
+   uv run python scripts/live_send.py --config-dir config/police --result game_artifacts/police/result_<game_id>.json --confirm-live-send
    ```
 
-4. Run **one** game and keep the full console — stdout **and** stderr — of both seats:
+   `--confirm-live-send` is required and has no default: this transmits real mail to the
+   mandatory recipient and cannot be undone. On success the script prints the Gmail
+   **message id** — captured by wrapping the sink, because `ReportingChain` collapses a
+   success to `SendOutcome(sent=True)` and drops the receipt.
 
-   ```sh
-   uv run python scripts/dev_launch.py > consoleA_oauth.txt 2>&1
+3. **Confirm arrival, which is a different claim from "we sent it"** (rule 35). Open the
+   mandatory recipient's mailbox and check the message is there **with the
+   `result_<game_id>.json` ATTACHED**. A report sent as free text is rejected in processing
+   and scores zero (rule 34, [`RULES.md:75`](../../RULES.md)).
+
+4. Confirm nothing moved:
+
+   ```powershell
+   git diff config/            # still EMPTY -- this step never edited it
    ```
 
-   *Learned the hard way in Phase 5:* attempt 1 of the remote round kept one console and the
-   other side of the teardown is permanently unreconstructable
-   ([`REMOTE-ROUND-RUNBOOK.md`](../phase-5/REMOTE-ROUND-RUNBOOK.md) §5). Keep both.
+5. Confirm the counters advanced by exactly one each, for exactly one game:
 
-5. Confirm the send. The live seat's `SendReceipt` carries `mode = live` and a
-   `message_id`; the `result_<game_id>.json` and `result_<game_id>.eml` under
-   `game_artifacts/<role>/` are the same report and the same rendered message. Then open the
-   mandatory recipient's mailbox and confirm **arrival with the JSON ATTACHED**. A report
-   sent as free text is rejected in processing and scores zero (rule 34,
-   [`RULES.md:75`](../../RULES.md)) — so the check is not "an email arrived", it is "an
-   email arrived carrying a `result_<game_id>.json` attachment, with a boilerplate body".
-6. **Flip the config BACK to `dry_run`** and prove it:
-
-   ```sh
-   git diff config/            # must be EMPTY again
-   ```
-
-7. Confirm the counters advanced by exactly one each, for exactly one game:
-
-   ```sh
-   cat config/police/games_played.json config/thief/games_played.json
+   ```powershell
+   Get-Content config/police/games_played.json, config/thief/games_played.json
    ```
 
 ## 5. Step 3 — the two README assets
